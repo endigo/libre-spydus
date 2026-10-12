@@ -1,0 +1,124 @@
+{
+  "loans": [
+    {
+      "dueInDays": -2,
+      "item": {
+        "irn": "18000001",
+        "bibIrn": null,
+        "title": "The long night",
+        "bibUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ?SETLVL=&BRN=467086",
+        "author": "White, Christian",
+        "year": "2026",
+        "coverUrls": [
+          "https://secure.syndetics.com/index.aspx?isbn=9781399197809/lc.gif&client=citycanning&upc=&oclc=&issn="
+        ],
+        "isbn": "9781399197809",
+        "fields": {
+          "Due": ""
+        },
+        "actions": [
+          {
+            "label": "Renew loan",
+            "href": "https://canning.spydus.com/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/78500000/0/RL/1/LOANRENQ?SVL=18000001&SETDESC=x"
+          }
+        ]
+      }
+    },
+    {
+      "dueInDays": 2,
+      "item": {
+        "irn": "18000002",
+        "bibIrn": null,
+        "title": "Whistler",
+        "bibUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ?SETLVL=&BRN=465787",
+        "author": "Patchett, Ann",
+        "year": "2026",
+        "coverUrls": [
+          "https://secure.syndetics.com/index.aspx?isbn=9781037206498/lc.gif&client=citycanning&upc=&oclc=&issn="
+        ],
+        "isbn": "9781037206498",
+        "fields": {
+          "Due": ""
+        },
+        "actions": [
+          {
+            "label": "Renew loan",
+            "href": "https://canning.spydus.com/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/78500000/0/RL/1/LOANRENQ?SVL=18000002&SETDESC=x"
+          }
+        ]
+      }
+    },
+    {
+      "dueInDays": 5,
+      "item": {
+        "irn": "18000003",
+        "bibIrn": null,
+        "title": "The Love Library",
+        "bibUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ?SETLVL=&BRN=464989",
+        "author": "Manning, Sarra",
+        "year": "2026",
+        "coverUrls": [
+          "https://secure.syndetics.com/index.aspx?isbn=9781398727830/lc.gif&client=citycanning&upc=&oclc=&issn="
+        ],
+        "isbn": "9781398727830",
+        "fields": {
+          "Due": ""
+        },
+        "actions": [
+          {
+            "label": "Renew loan",
+            "href": "https://canning.spydus.com/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/78500000/0/RL/1/LOANRENQ?SVL=18000003&SETDESC=x"
+          }
+        ]
+      }
+    },
+    {
+      "dueInDays": 12,
+      "item": {
+        "irn": "18000004",
+        "bibIrn": null,
+        "title": "Everything to the sea",
+        "bibUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ?SETLVL=&BRN=465679",
+        "author": "Upano, Alicia",
+        "year": "2026",
+        "coverUrls": [
+          "https://secure.syndetics.com/index.aspx?isbn=9781526687791/lc.gif&client=citycanning&upc=&oclc=&issn="
+        ],
+        "isbn": "9781526687791",
+        "fields": {
+          "Due": ""
+        },
+        "actions": [
+          {
+            "label": "Renew loan",
+            "href": "https://canning.spydus.com/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/78500000/0/RL/1/LOANRENQ?SVL=18000004&SETDESC=x"
+          }
+        ]
+      }
+    },
+    {
+      "dueInDays": 19,
+      "item": {
+        "irn": "18000005",
+        "bibIrn": null,
+        "title": "The secret thread",
+        "bibUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ?SETLVL=&BRN=464950",
+        "author": "Chase, Eve",
+        "year": "2026",
+        "coverUrls": [
+          "https://secure.syndetics.com/index.aspx?isbn=9780241633946/lc.gif&client=citycanning&upc=&oclc=&issn="
+        ],
+        "isbn": "9780241633946",
+        "fields": {
+          "Due": ""
+        },
+        "actions": [
+          {
+            "label": "Renew loan",
+            "href": "https://canning.spydus.com/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/78500000/0/RL/1/LOANRENQ?SVL=18000005&SETDESC=x"
+          }
+        ]
+      }
+    }
+  ]
+}

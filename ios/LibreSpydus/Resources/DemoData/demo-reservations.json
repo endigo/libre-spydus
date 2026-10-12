@@ -1,0 +1,108 @@
+{
+  "ready": {
+    "total": 1,
+    "items": [
+      {
+        "irn": "19000001",
+        "bibIrn": "8753080",
+        "title": "The midnight library",
+        "bibUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/78500000?QRY=IRN(8753080)&SETLVL=SET",
+        "author": "Haig, Matt, author",
+        "year": "2020",
+        "coverUrls": [
+          "https://secure.syndetics.com/index.aspx?isbn=9780525559474/MC.GIF&client=canning"
+        ],
+        "isbn": "9780525559474",
+        "fields": {
+          "Status": "Awaiting pickup",
+          "Pickup location": "RIVERTON LIBRARY"
+        },
+        "actions": [
+          {
+            "label": "Cancel reservation",
+            "href": "https://canning.spydus.com/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/78500000/0/C/5/RSVCENQ?SVL=19000001&SETDESC=x"
+          },
+          {
+            "label": "Edit",
+            "href": "https://canning.spydus.com/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/78500000/0/ER/1/RSVCENQ?SVL=19000001&SETDESC=x"
+          }
+        ]
+      }
+    ]
+  },
+  "pending": {
+    "total": 3,
+    "items": [
+      {
+        "irn": "19000002",
+        "bibIrn": "17651573",
+        "title": "Baby-sitters club. 18, Boy-crazy Stacey",
+        "bibUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/78500000?SETLVL=&IRN=17651573",
+        "author": "Galligan, Gale, 1964- illustrator",
+        "year": "2025 - 2026",
+        "coverUrls": [],
+        "isbn": null,
+        "fields": {
+          "Status": "In transit"
+        },
+        "actions": []
+      },
+      {
+        "irn": "19000003",
+        "bibIrn": null,
+        "title": "Hollow bones",
+        "bibUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ?SETLVL=&BRN=465783",
+        "author": "Picoult, Jodi, 1966-",
+        "year": "2026",
+        "coverUrls": [
+          "https://secure.syndetics.com/index.aspx?isbn=9781761775642/lc.gif&client=citycanning&upc=&oclc=&issn="
+        ],
+        "isbn": "9781761775642",
+        "fields": {
+          "Status": "Pending",
+          "Rank": "4",
+          "Placed": "02 Oct 2026",
+          "Pickup location": "RIVERTON LIBRARY"
+        },
+        "actions": [
+          {
+            "label": "Cancel reservation",
+            "href": "https://canning.spydus.com/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/78500000/0/C/5/RSVCENQ?SVL=19000003&SETDESC=x"
+          },
+          {
+            "label": "Edit",
+            "href": "https://canning.spydus.com/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/78500000/0/ER/1/RSVCENQ?SVL=19000003&SETDESC=x"
+          }
+        ]
+      },
+      {
+        "irn": "19000004",
+        "bibIrn": null,
+        "title": "Time travel for beginners",
+        "bibUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ?SETLVL=&BRN=464918",
+        "author": "Moriarty, Jaclyn",
+        "year": "2026",
+        "coverUrls": [
+          "https://secure.syndetics.com/index.aspx?isbn=9781761153723/lc.gif&client=citycanning&upc=&oclc=&issn="
+        ],
+        "isbn": "9781761153723",
+        "fields": {
+          "Status": "Pending",
+          "Rank": "1",
+          "Placed": "28 Sep 2026",
+          "Pickup location": "CANNINGTON LIBRARY"
+        },
+        "actions": [
+          {
+            "label": "Cancel reservation",
+            "href": "https://canning.spydus.com/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/78500000/0/C/5/RSVCENQ?SVL=19000004&SETDESC=x"
+          },
+          {
+            "label": "Edit",
+            "href": "https://canning.spydus.com/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/78500000/0/ER/1/RSVCENQ?SVL=19000004&SETDESC=x"
+          }
+        ]
+      }
+    ]
+  }
+}

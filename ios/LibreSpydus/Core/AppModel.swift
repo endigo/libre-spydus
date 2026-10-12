@@ -1,0 +1,417 @@
+import Foundation
+import LibreSpydusCore
+import Observation
+
+/// App-wide state (docs/native-apps.md §5.2), injected with `.environment(model)`;
+/// read it in a view with `@Environment(AppModel.self) private var model`.
+@MainActor
+@Observable
+final class AppModel {
+    // MARK: Library
+
+    /// The selected library, persisted. Nil → onboarding (library picker).
+    private(set) var library: LibraryInfo?
+    /// One backend per selected origin, rebuilt when the library changes.
+    private(set) var backend: any LibraryBackend
+
+    // MARK: Account
+
+    /// Session token for the current origin (Keychain; in memory in demo mode).
+    private(set) var session: String?
+    /// `AccountLinks.name` once `refreshAccount()` succeeds.
+    private(set) var accountName: String?
+    var isSignedIn: Bool { session != nil }
+
+    // MARK: Local data
+
+    let favourites: FavouritesStore
+
+    // MARK: Navigation
+
+    var selectedTab: AppTab = .home
+    /// Each tab's `NavigationStack` path.
+    var paths: [AppTab: [Route]] = [:]
+    /// Query typed on Home, picked up by the Search tab (`takePendingSearch()`).
+    var pendingSearch: String?
+
+    // MARK: Root sheets (RootView presents `rootSheet`)
+
+    var loginNeeded = false
+    var verificationNeeded = false
+    var libraryPickerPresented = false
+    #if DEBUG
+    /// `-LSRoute gallery`: the DesignSystem components gallery.
+    var componentsGalleryPresented = false
+    #endif
+
+    // MARK: Reload triggers
+
+    /// Bumped when verification completes or is cleared: screens re-run their loads.
+    private(set) var verificationGeneration = 0
+    /// Bumped on sign-in, sign-out, session loss and library change.
+    private(set) var accountGeneration = 0
+    /// The current origin's verification cookie (`aws-waf-token=…`), if verified on this device.
+    private(set) var verificationCookie: String?
+
+    let isDemo: Bool
+
+    @ObservationIgnored private let dependencies: Dependencies
+    /// Bumped whenever `backend` is replaced, so late results for an old library are dropped.
+    @ObservationIgnored private var backendGeneration = 0
+    @ObservationIgnored private var verificationCompletions: [String: Int] = [:]
+
+    init(dependencies: Dependencies) {
+        self.dependencies = dependencies
+        isDemo = dependencies.isDemo
+        let stored = Self.loadLibrary(from: dependencies.defaults)
+        library = stored
+        backend = dependencies.makeBackend(stored?.origin)
+        favourites = FavouritesStore(directory: dependencies.favouritesDirectory)
+        installSecrets()
+    }
+
+    // MARK: Derived
+
+    /// The library's display name ("your library" before one is chosen).
+    var libraryName: String { library?.name ?? "your library" }
+    var isVerified: Bool { verificationCookie != nil }
+    var needsOnboarding: Bool { library == nil }
+
+    /// `.task(id: model.reloadKey)`: re-runs a screen's load on library change, verification
+    /// and sign-in/out.
+    var reloadKey: ReloadKey {
+        ReloadKey(origin: backend.origin, verification: verificationGeneration, account: accountGeneration)
+    }
+
+    struct ReloadKey: Hashable, Sendable {
+        var origin: String
+        var verification: Int
+        var account: Int
+    }
+
+    /// The sheet RootView shows; verification wins over login over the library picker.
+    var rootSheet: RootSheet? {
+        guard library != nil else { return nil }
+        if verificationNeeded { return .verification }
+        if loginNeeded { return .login }
+        if libraryPickerPresented { return .libraryPicker }
+        return nil
+    }
+
+    func dismiss(_ sheet: RootSheet) {
+        switch sheet {
+        case .verification: verificationNeeded = false
+        case .login: loginNeeded = false
+        case .libraryPicker: libraryPickerPresented = false
+        }
+    }
+
+    // MARK: Library selection
+
+    func selectLibrary(_ info: LibraryInfo) {
+        libraryPickerPresented = false
+        let changed = library?.origin != info.origin
+        library = info
+        Self.saveLibrary(info, to: dependencies.defaults)
+        if changed { install(dependencies.makeBackend(info.origin)) }
+    }
+
+    /// Selects a library by origin alone (`-LSLibraryOrigin`); name and region are guessed from
+    /// the host until `refreshLibraryInfo()` finds the directory entry.
+    func selectLibrary(origin: String) {
+        let newBackend = dependencies.makeBackend(origin)
+        guard library?.origin != newBackend.origin else { return }
+        let info = LibraryInfo.placeholder(origin: newBackend.origin)
+        libraryPickerPresented = false
+        library = info
+        Self.saveLibrary(info, to: dependencies.defaults)
+        install(newBackend)
+    }
+
+    /// Replaces a placeholder `library` with its Civica directory entry (one public GET).
+    func refreshLibraryInfo() async {
+        guard let current = library, current.isPlaceholder else { return }
+        guard let libraries = try? await listLibraries(includeTest: true),
+              let match = libraries.first(where: { $0.origin == current.origin }),
+              library?.origin == match.origin else { return }
+        library = match
+        Self.saveLibrary(match, to: dependencies.defaults)
+    }
+
+    // MARK: Account
+
+    /// Logs in and stores the session for this origin. Throws `SpydusError` (show it with
+    /// `UserFacingError(error, libraryName:)`; `report(_:)` for verification).
+    func signIn(username: String, password: String) async throws {
+        let generation = backendGeneration
+        let backend = self.backend
+        let token = try await backend.login(username: username, password: password)
+        guard generation == backendGeneration else { throw CancellationError() }
+        session = token
+        dependencies.sessions.setValue(token, for: backend.origin)
+        loginNeeded = false
+        accountGeneration += 1
+        await refreshAccount()
+    }
+
+    func signOut() {
+        clearSession()
+    }
+
+    /// Loads `accountName`; a lost session clears itself through `report`.
+    func refreshAccount() async {
+        guard let session else {
+            accountName = nil
+            return
+        }
+        let generation = backendGeneration
+        do {
+            let links = try await backend.account(session: session)
+            guard generation == backendGeneration, self.session == session else { return }
+            accountName = links.name
+        } catch {
+            guard generation == backendGeneration else { return }
+            report(error)
+        }
+    }
+
+    // MARK: Errors
+
+    /// Routes a failed call (docs/native-apps.md §5.7) and returns what to show, or nil for a
+    /// cancellation. `HumanVerificationRequired` presents the verification sheet; `NotLoggedIn`
+    /// clears the session and presents login.
+    @discardableResult
+    func report(_ error: any Error) -> UserFacingError? {
+        if error is CancellationError { return nil }
+        if let urlError = error as? URLError, urlError.code == .cancelled { return nil }
+        let userError = UserFacingError(error, libraryName: libraryName)
+        switch error as? SpydusError {
+        case .HumanVerificationRequired:
+            // README "Human verification": after two completed verifications that the library
+            // still rejects, stop asking and point to the website instead.
+            if verificationCompletions[backend.origin, default: 0] >= 2 {
+                return .verificationUnavailable(libraryName: libraryName)
+            }
+            verificationNeeded = true
+        case .NotLoggedIn:
+            clearSession()
+            loginNeeded = true
+        default:
+            break
+        }
+        return userError
+    }
+
+    // MARK: Verification (AWS WAF)
+
+    /// The user finished the check in the verification web view: store and apply
+    /// `"aws-waf-token=<value>"` for this origin, then let screens retry.
+    func completeVerification(cookie: String) {
+        let origin = backend.origin
+        dependencies.verificationCookies.setValue(cookie, for: origin)
+        verificationCookie = cookie
+        backend.setVerificationCookie(cookie)
+        verificationCompletions[origin, default: 0] += 1
+        verificationNeeded = false
+        verificationGeneration += 1
+    }
+
+    func clearVerification() {
+        let origin = backend.origin
+        dependencies.verificationCookies.setValue(nil, for: origin)
+        verificationCookie = nil
+        backend.setVerificationCookie(nil)
+        verificationCompletions[origin] = nil
+        verificationGeneration += 1
+    }
+
+    /// User-Agent for the verification web view: the WAF token may be tied to it.
+    ///
+    /// TODO(P): return the core's `userAgent()` once it lands (docs/native-apps.md §4.1); this is
+    /// a copy of `core/src/config.rs` `USER_AGENT`.
+    static let webViewUserAgent =
+        "Mozilla/5.0 (Linux; Android 14; Pixel 10 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Mobile Safari/537.36"
+
+    // MARK: Navigation
+
+    func path(for tab: AppTab) -> [Route] {
+        paths[tab] ?? []
+    }
+
+    func setPath(_ path: [Route], for tab: AppTab) {
+        paths[tab] = path
+    }
+
+    /// Pushes `route` on `tab`'s stack (default: the current tab) and shows that tab.
+    func push(_ route: Route, on tab: AppTab? = nil) {
+        let tab = tab ?? selectedTab
+        paths[tab, default: []].append(route)
+        selectedTab = tab
+    }
+
+    /// Tab bar tap: switch tabs, or pop to root when the tab is already selected.
+    func select(_ tab: AppTab) {
+        if tab == selectedTab {
+            paths[tab] = []
+        } else {
+            selectedTab = tab
+        }
+    }
+
+    /// Home's search field: switch to the Search tab, which focuses and runs `query`.
+    func openSearch(query: String? = nil) {
+        pendingSearch = query ?? ""
+        paths[.search] = []
+        selectedTab = .search
+    }
+
+    /// For the Search tab: the query Home handed over (nil if none), cleared once taken.
+    func takePendingSearch() -> String? {
+        defer { pendingSearch = nil }
+        return pendingSearch
+    }
+
+    // MARK: Private
+
+    private func install(_ newBackend: any LibraryBackend) {
+        backendGeneration += 1
+        backend = newBackend
+        paths = [:]
+        pendingSearch = nil
+        loginNeeded = false
+        verificationNeeded = false
+        installSecrets()
+        accountGeneration += 1
+        // RootView's `.task(id: backend.origin)` calls refreshAccount() for the new origin.
+    }
+
+    /// Loads this origin's verification cookie and session and re-applies the cookie to the
+    /// new client (§5.2).
+    private func installSecrets() {
+        let origin = backend.origin
+        verificationCookie = dependencies.verificationCookies.value(for: origin)
+        if let verificationCookie { backend.setVerificationCookie(verificationCookie) }
+        if library == nil {
+            session = nil
+        } else if isDemo {
+            // Demo mode starts signed in as the fixture's "Test Borrower".
+            session = dependencies.sessions.value(for: origin) ?? DemoBackend.session
+        } else {
+            session = dependencies.sessions.value(for: origin)
+        }
+        accountName = nil
+        favourites.load(origin: library == nil ? nil : origin)
+    }
+
+    private func clearSession() {
+        dependencies.sessions.setValue(nil, for: backend.origin)
+        session = nil
+        accountName = nil
+        accountGeneration += 1
+    }
+
+    nonisolated private static let libraryKey = "LibreSpydus.selectedLibrary"
+
+    private static func loadLibrary(from defaults: UserDefaults) -> LibraryInfo? {
+        guard let data = defaults.data(forKey: libraryKey),
+              let stored = try? JSONDecoder().decode(StoredLibrary.self, from: data) else { return nil }
+        return stored.info
+    }
+
+    private static func saveLibrary(_ info: LibraryInfo, to defaults: UserDefaults) {
+        if let data = try? JSONEncoder().encode(StoredLibrary(info)) {
+            defaults.set(data, forKey: libraryKey)
+        }
+    }
+}
+
+// MARK: - Dependencies
+
+extension AppModel {
+    /// Everything AppModel persists to or creates; tests pass in-memory stores and temp dirs.
+    struct Dependencies {
+        var defaults: UserDefaults
+        var sessions: any SecretStore
+        var verificationCookies: any SecretStore
+        var favouritesDirectory: URL
+        var isDemo: Bool
+        var makeBackend: @MainActor (_ origin: String?) -> any LibraryBackend
+
+        /// The app's real stores. Demo mode keeps its session in memory (never the Keychain).
+        static func live(demo: Bool) -> Dependencies {
+            Dependencies(
+                defaults: .standard,
+                sessions: demo ? InMemorySecretStore() : KeychainSecretStore(service: "com.librespydus.session"),
+                verificationCookies: KeychainSecretStore(service: "com.librespydus.verification"),
+                favouritesDirectory: FavouritesStore.defaultDirectory,
+                isDemo: demo,
+                makeBackend: { origin -> any LibraryBackend in
+                    demo ? DemoBackend.live(origin: origin) : CoreBackend(origin: origin)
+                }
+            )
+        }
+
+        /// `-LSReset`: forget the library, every session, verification and favourite.
+        func resetPersistentState() {
+            defaults.removeObject(forKey: AppModel.libraryKey)
+            sessions.removeAll()
+            verificationCookies.removeAll()
+            FavouritesStore.deleteAll(in: favouritesDirectory)
+        }
+    }
+}
+
+// MARK: - LibraryInfo helpers
+
+extension LibraryInfo {
+    /// Canning, the core's default library.
+    static let canning = LibraryInfo(
+        id: "canning", name: "Canning", origin: "https://canning.spydus.com", logoUrl: nil,
+        country: "Australia", region: "AU", isTest: false
+    )
+
+    /// A stand-in built from the origin alone, until the directory entry is known.
+    static func placeholder(origin: String) -> LibraryInfo {
+        if origin == canning.origin { return canning }
+        let host = URL(string: origin)?.host() ?? origin
+        let label = host.split(separator: ".").first.map(String.init) ?? host
+        let region: String
+        let country: String?
+        switch true {
+        case host.hasSuffix(".uk"): (region, country) = ("UK", "United Kingdom")
+        case host.hasSuffix(".nz"): (region, country) = ("NZ", "New Zealand")
+        case host.hasSuffix(".sg"): (region, country) = ("SG", "Singapore")
+        case host.hasSuffix(".au"): (region, country) = ("AU", "Australia")
+        default: (region, country) = ("OTHER", nil)
+        }
+        return LibraryInfo(id: "placeholder:\(origin)", name: label.prefix(1).uppercased() + label.dropFirst(),
+                           origin: origin, logoUrl: nil, country: country, region: region, isTest: false)
+    }
+
+    var isPlaceholder: Bool { id.hasPrefix("placeholder:") }
+}
+
+/// `LibraryInfo` as persisted in UserDefaults (UniFFI records aren't Codable).
+private struct StoredLibrary: Codable {
+    var id: String
+    var name: String
+    var origin: String
+    var logoUrl: String?
+    var country: String?
+    var region: String
+    var isTest: Bool
+
+    init(_ info: LibraryInfo) {
+        id = info.id
+        name = info.name
+        origin = info.origin
+        logoUrl = info.logoUrl
+        country = info.country
+        region = info.region
+        isTest = info.isTest
+    }
+
+    var info: LibraryInfo {
+        LibraryInfo(id: id, name: name, origin: origin, logoUrl: logoUrl, country: country, region: region, isTest: isTest)
+    }
+}
