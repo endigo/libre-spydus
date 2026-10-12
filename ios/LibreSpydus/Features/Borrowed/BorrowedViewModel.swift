@@ -35,6 +35,8 @@ final class BorrowedViewModel {
     var notice: Notice?
     /// The row whose "Cancel" was tapped, awaiting confirmation.
     var confirmingCancel: ReservationRow?
+    /// The reservation whose swipe actions are showing (one card at a time).
+    var swipedRowID: String?
     /// The row whose edit sheet is shown.
     var editing: ReservationRow?
     /// A sign-in or verification error from the edit sheet, reported once the sheet is gone
@@ -59,6 +61,7 @@ final class BorrowedViewModel {
             loans = .idle
             reservations = .idle
             busyRows = []
+            swipedRowID = nil
             return
         }
         let key = model.reloadKey
@@ -97,12 +100,20 @@ final class BorrowedViewModel {
         busyRows.contains(row.id)
     }
 
+    /// Asks to confirm cancelling `row` (not while it's busy). Its swipe actions stay out until
+    /// the user answers.
+    func requestCancel(_ row: ReservationRow) {
+        guard row.cancelHref != nil, !busyRows.contains(row.id) else { return }
+        confirmingCancel = row
+    }
+
     /// Cancels `row` after the user confirmed. Ignored while that row is busy or once it's gone.
     func cancel(_ row: ReservationRow, model: AppModel) async {
         guard let href = row.cancelHref, let session = model.session, !busyRows.contains(row.id),
               reservations.value?.row(id: row.id) != nil else { return }
         let key = model.reloadKey
         busyRows.insert(row.id)
+        if swipedRowID == row.id { swipedRowID = nil }
         reservationsVersion += 1
         defer { busyRows.remove(row.id) }
         do {
@@ -130,6 +141,7 @@ final class BorrowedViewModel {
     func edit(_ row: ReservationRow) {
         guard row.editHref != nil, !busyRows.contains(row.id) else { return }
         reservationsVersion += 1
+        swipedRowID = nil
         editing = row
     }
 

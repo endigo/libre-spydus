@@ -2,12 +2,14 @@ import SwiftUI
 
 /// "Your Books" (docs/native-apps.md §6 Borrowed): Loans | Reservations. Loans are sorted by due
 /// date with the danger colour when due within 3 days or overdue; reservations show "Ready for
-/// pickup" first, then pending, each with Cancel (confirmed) and Edit (sheet). Pull to refresh;
+/// pickup" first, then pending. A reservation's Edit (sheet) and Cancel (confirmed) sit behind a
+/// swipe to the left, in its long-press menu and in its VoiceOver actions. Pull to refresh;
 /// reloads on sign-in/out and library change.
 struct BorrowedView: View {
     @Environment(AppModel.self) private var model
     @State private var viewModel = BorrowedViewModel()
     @State private var lastLoad: Date?
+    @State private var scrollMark = ScrollMark()
 
     var body: some View {
         @Bindable var viewModel = viewModel
@@ -34,15 +36,27 @@ struct BorrowedView: View {
             .padding(.horizontal, Theme.Spacing.l)
             .padding(.bottom, Theme.Spacing.xxl)
             .animation(.default, value: viewModel.notice)
+            // A tap anywhere but a card or control closes an open card's swipe actions.
+            .contentShape(Rectangle())
+            .gesture(TapGesture().onEnded { closeSwipe() }, including: viewModel.swipedRowID == nil ? .subviews : .all)
+            .onGeometryChange(for: CGFloat.self) { $0.frame(in: .scrollView).minY } action: { y in
+                closeSwipeIfScrolled(to: y)
+            }
         }
         .defaultScrollAnchor(BorrowedDebugHooks.initialScrollAnchor)
         .screenBackground()
         .refreshable { await load(keepContent: true) }
         .task(id: model.reloadKey) { await load(keepContent: false) }
         .onChange(of: model.selectedTab) { _, tab in
+            viewModel.swipedRowID = nil
             // Back on the tab after a while (e.g. a reservation placed from a book): refresh quietly.
             guard tab == .borrowed, model.isSignedIn, let lastLoad, Date.now.timeIntervalSince(lastLoad) > 30 else { return }
             Task { await load(keepContent: true) }
+        }
+        .onChange(of: viewModel.segment) { viewModel.swipedRowID = nil }
+        .onChange(of: viewModel.confirmingCancel == nil) { _, answered in
+            // Confirmed or dismissed: either way the card closes.
+            if answered { closeSwipe() }
         }
         .onChange(of: viewModel.notice) { _, notice in
             if let notice { AccessibilityNotification.Announcement(notice.message).post() }
@@ -168,50 +182,81 @@ struct BorrowedView: View {
                     reservationCard(row)
                 }
             }
+            if sections.hasActions {
+                let hint = SwipeReveal.hint()
+                Label(hint.text, systemImage: hint.systemImage)
+                    .themeFont(.caption)
+                    .foregroundStyle(Theme.Colors.textMuted)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: .infinity)
+                    .padding(.top, Theme.Spacing.s)
+                    // VoiceOver lists Edit and Cancel as actions on each card instead.
+                    .accessibilityHidden(true)
+            }
         }
     }
 
     private func reservationCard(_ row: ReservationRow) -> some View {
         @Bindable var viewModel = viewModel
         let busy = viewModel.isBusy(row)
-        var actions: [BookRowCard.Action] = []
-        if row.cancelHref != nil {
-            actions.append(.init(title: "Cancel") { viewModel.confirmingCancel = row })
+        let actions = ReservationAction.available(for: row, busy: busy)
+        let cardShape = RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous)
+        return ReservationSwipeCard(id: row.id, actions: actions, openID: $viewModel.swipedRowID) { action in
+            perform(action, on: row)
+        } content: {
+            BookRowCard(row.ref, meta: row.meta,
+                        metaColor: row.isReady ? Theme.Colors.textPrimary : Theme.Colors.textSecondary,
+                        chips: [statusChip(row)], highlighted: row.isReady)
+                .overlay(alignment: .trailing) {
+                    if busy {
+                        ProgressView()
+                            .tint(Theme.Colors.textSecondary)
+                            .padding(.trailing, Theme.Spacing.xl)
+                    }
+                }
+                .contentShape(cardShape)
+                .contentShape(.contextMenuPreview, cardShape)
+                .onTapGesture { tapReservation(row) }
+                .contextMenu {
+                    ForEach(actions) { action in
+                        Button(action.menuTitle, systemImage: action.systemImage, role: action.role) {
+                            perform(action, on: row)
+                        }
+                    }
+                }
         }
-        if row.editHref != nil {
-            actions.append(.init(title: "Edit") { viewModel.edit(row) })
+        .opacity(busy ? 0.7 : 1)
+        .allowsHitTesting(!busy)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(accessibilityText([row.ref.title, Formatting.byline(row.ref.author), row.statusLabel,
+                                               row.meta?.replacingOccurrences(of: "\n", with: ", "),
+                                               busy ? "Updating" : nil]))
+        .accessibilityAddTraits(.isButton)
+        .accessibilityAction { open(row.ref) }
+        .accessibilityActions {
+            ForEach(actions) { action in
+                Button(action.menuTitle) { perform(action, on: row) }
+            }
         }
-        return BookRowCard(row.ref, meta: row.meta,
-                           metaColor: row.isReady ? Theme.Colors.textPrimary : Theme.Colors.textSecondary,
-                           chips: [statusChip(row)], actions: busy ? [] : actions, highlighted: row.isReady)
-            .overlay(alignment: .trailing) {
-                if busy {
-                    ProgressView()
-                        .tint(Theme.Colors.textSecondary)
-                        .padding(.trailing, Theme.Spacing.xl)
-                }
-            }
-            .opacity(busy ? 0.7 : 1)
-            .allowsHitTesting(!busy)
-            .contentShape(RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
-            .onTapGesture { open(row.ref) }
-            .accessibilityElement(children: .ignore)
-            .accessibilityLabel(accessibilityText([row.ref.title, Formatting.byline(row.ref.author), row.statusLabel,
-                                                   row.meta?.replacingOccurrences(of: "\n", with: ", "),
-                                                   busy ? "Updating" : nil]))
-            .accessibilityAddTraits(.isButton)
-            .accessibilityAction { open(row.ref) }
-            .accessibilityActions {
-                if !busy, row.cancelHref != nil {
-                    Button("Cancel reservation") { viewModel.confirmingCancel = row }
-                }
-                if !busy, row.editHref != nil {
-                    Button("Edit reservation") { viewModel.edit(row) }
-                }
-            }
-            .cancelReservationConfirmation(for: row, confirming: $viewModel.confirmingCancel) { row in
-                Task { await viewModel.cancel(row, model: model) }
-            }
+        .cancelReservationConfirmation(for: row, confirming: $viewModel.confirmingCancel) { row in
+            Task { await viewModel.cancel(row, model: model) }
+        }
+    }
+
+    private func perform(_ action: ReservationAction, on row: ReservationRow) {
+        switch action {
+        case .edit: viewModel.edit(row)
+        case .cancel: viewModel.requestCancel(row)
+        }
+    }
+
+    /// Opens the book, or only closes the swipe actions while a card shows them.
+    private func tapReservation(_ row: ReservationRow) {
+        if viewModel.swipedRowID != nil {
+            closeSwipe()
+        } else {
+            open(row.ref)
+        }
     }
 
     private func statusChip(_ row: ReservationRow) -> Chip {
@@ -240,7 +285,33 @@ struct BorrowedView: View {
         model.push(.detail(ref), on: .borrowed)
     }
 
+    private func closeSwipe() {
+        guard viewModel.swipedRowID != nil else { return }
+        withAnimation(SwipeReveal.animation) { viewModel.swipedRowID = nil }
+    }
+
+    /// Closes an open card once the list has scrolled a few points from where it was when the
+    /// card opened (a pull to refresh counts).
+    private func closeSwipeIfScrolled(to y: CGFloat) {
+        defer { scrollMark.y = y }
+        guard viewModel.swipedRowID != nil else {
+            scrollMark.openedAt = nil
+            return
+        }
+        let openedAt = scrollMark.openedAt ?? scrollMark.y
+        scrollMark.openedAt = openedAt
+        if abs(y - openedAt) > 6 { closeSwipe() }
+    }
+
     private func accessibilityText(_ parts: [String?]) -> String {
         parts.compactMap(\.self).filter { !$0.isEmpty }.joined(separator: ", ")
     }
+}
+
+/// The list's scroll position, updated every frame: a plain class, so writing it doesn't
+/// re-render the screen.
+private final class ScrollMark {
+    var y: CGFloat = 0
+    /// Where the list was when the open card's swipe actions appeared.
+    var openedAt: CGFloat?
 }
