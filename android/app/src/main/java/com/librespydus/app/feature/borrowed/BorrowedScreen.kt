@@ -114,6 +114,7 @@ fun BorrowedScreen(appState: AppState, navigator: AppNavigator, modifier: Modifi
     val accountRefreshing by appState.account.isRefreshing.collectAsStateWithLifecycle()
     val refreshError by appState.account.lastRefreshError.collectAsStateWithLifecycle()
     val segment by model.segment.collectAsStateWithLifecycle()
+    val pendingSegment by appState.pendingBorrowedSegment.collectAsStateWithLifecycle()
     val busy by model.busyRows.collectAsStateWithLifecycle()
     val notice by model.notice.collectAsStateWithLifecycle()
     val confirming by model.confirmingCancel.collectAsStateWithLifecycle()
@@ -130,6 +131,8 @@ fun BorrowedScreen(appState: AppState, navigator: AppNavigator, modifier: Modifi
     val reservations = content.reservations
 
     LaunchedEffect(backend, session) { vm.appear() }
+    // A book page's "On loan" / "Reserved" pill opens Your Books on that list.
+    LaunchedEffect(pendingSegment) { model.showPendingSegment() }
     LaunchedEffect(listState) {
         snapshotFlow { listState.isScrollInProgress }.collect { if (it) swipe.close() }
     }

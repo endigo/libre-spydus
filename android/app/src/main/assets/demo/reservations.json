@@ -1,19 +1,19 @@
 {
-  "_source": "core/tests/golden/synthetic/patron-items.json (+ one waiting row), split into ready/pending",
+  "_source": "core/tests/golden/synthetic/patron-items.json (+ one waiting row), split into ready/pending; the ready row is a Canning book not also on loan, and bibUrl has the real rows' session-set shape (offline records in catalogue.json)",
   "ready": {
     "total": 1,
     "items": [
       {
         "irn": "19000001",
-        "bibIrn": "8753080",
-        "title": "The midnight library",
-        "bibUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/78500000?QRY=IRN(8753080)&SETLVL=SET",
-        "author": "Haig, Matt, author",
-        "year": "2020",
+        "bibIrn": "15595347",
+        "title": "Tomorrow, and tomorrow, and tomorrow",
+        "bibUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/78500000?SETLVL=&QRY=IRN(15595347)&NAVLVL=SET",
+        "author": "Zevin, Gabrielle, author",
+        "year": "2023",
         "coverUrls": [
-          "https://secure.syndetics.com/index.aspx?isbn=9780525559474/MC.GIF&client=canning"
+          "https://secure.syndetics.com/index.aspx?isbn=9781529115543/lc.gif&client=citycanning&upc=&oclc=&issn="
         ],
-        "isbn": "9780525559474",
+        "isbn": "9781529115543",
         "fields": {
           "Status": "Awaiting pickup",
           "Pickup location": "RIVERTON LIBRARY"
@@ -38,7 +38,7 @@
         "irn": "19000002",
         "bibIrn": "17651573",
         "title": "Baby-sitters club. 18, Boy-crazy Stacey",
-        "bibUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/78500000?SETLVL=&IRN=17651573",
+        "bibUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/78500000?SETLVL=&QRY=IRN(17651573)&NAVLVL=SET",
         "author": "Galligan, Gale, 1964- illustrator",
         "year": "2025 - 2026",
         "coverUrls": [],
@@ -52,7 +52,7 @@
         "irn": "19000003",
         "bibIrn": "8753740",
         "title": "The Thursday Murder Club",
-        "bibUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ?SETLVL=&BRN=275705",
+        "bibUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/78500000?SETLVL=&QRY=IRN(8753740)&NAVLVL=SET",
         "author": "Osman, Richard, 1970-",
         "year": "2020",
         "coverUrls": [

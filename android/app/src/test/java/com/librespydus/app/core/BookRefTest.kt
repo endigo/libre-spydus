@@ -40,12 +40,13 @@ class BookRefTest {
     }
 
     @Test
-    fun fromPatronItemUsesBibIrn() {
+    fun fromPatronItemUsesBibIrnAndTheSessionFreeRecordUrl() {
         val item = PatronItem(
             irn = "19000001",
             bibIrn = "8753080",
             title = "The midnight library",
-            bibUrl = "$origin/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/78500000?QRY=IRN(8753080)&SETLVL=SET",
+            // The rows' real shape: a set in the patron's OPAC session, empty without it.
+            bibUrl = "$origin/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/78577835?SETLVL=&QRY=IRN(8753080)&NAVLVL=SET",
             author = "Haig, Matt, author",
             year = "2020",
             coverUrls = listOf("https://secure.syndetics.com/x.gif"),
@@ -56,10 +57,34 @@ class BookRefTest {
         val ref = BookRef.from(item)
         assertEquals("bib:8753080", ref.id)
         assertEquals("The midnight library", ref.title)
-        assertEquals(item.bibUrl, ref.url)
+        assertEquals("$origin/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ?SETLVL=&IRN=8753080", ref.url)
+        assertEquals("8753080", ref.bibIrn)
         assertEquals("https://secure.syndetics.com/x.gif", ref.coverUrl)
         assertEquals("9780525559474", ref.isbn)
         assertEquals(emptyList<FormatRef>(), ref.formats)
+    }
+
+    @Test
+    fun fromPatronItemWithoutABibIrnKeepsItsLink() {
+        val item = PatronItem(null, null, "Reserved title", "$origin/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/1/15643445,1", null, null, emptyList(), null, emptyMap(), emptyList())
+        val ref = BookRef.from(item)
+        assertEquals(item.bibUrl, ref.url)
+        assertNull(ref.bibIrn)
+        val bare = BookRef.from(item.copy(bibUrl = null))
+        assertNull(bare.url)
+        assertEquals("title:Reserved title", bare.id)
+    }
+
+    @Test
+    fun favouritesSavedBeforeBibIrnStillDecode() {
+        // A favourites.json entry written before BookRef had bibIrn.
+        val old = """{"id":"bib:8753080","title":"The midnight library","author":null,"coverUrl":null,""" +
+            """"url":"$origin/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/78500000?QRY=IRN(8753080)&SETLVL=SET",""" +
+            """"isbn":null,"year":null,"formats":[],"savedAt":42}"""
+        val ref = Json { ignoreUnknownKeys = true }.decodeFromString(BookRef.serializer(), old)
+        assertEquals("bib:8753080", ref.id)
+        assertEquals(42L, ref.savedAt)
+        assertNull(ref.bibIrn)
     }
 
     @Test
@@ -90,7 +115,7 @@ class BookRefTest {
 
     @Test
     fun serializesForNavigationAndFavourites() {
-        val ref = BookRef.from(FakeBackend.sampleRecord(origin)).copy(savedAt = 42)
+        val ref = BookRef.from(FakeBackend.sampleRecord(origin)).copy(savedAt = 42, bibIrn = "17665994")
         val json = Json.encodeToString(BookRef.serializer(), ref)
         assertEquals(ref, Json.decodeFromString(BookRef.serializer(), json))
         val route: Route = Route.Detail(ref)

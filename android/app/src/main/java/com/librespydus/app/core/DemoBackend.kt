@@ -1,5 +1,6 @@
 package com.librespydus.app.core
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -34,13 +35,17 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
 /**
- * Demo mode (§5.4, DEBUG builds only). Public reads go to the real [public] backend (public GETs
- * are allowed); every account call is served from [DemoData] and never touches the network.
- * `login("demo", "demo")` succeeds, anything else is `CredentialsRejected`. Mutations succeed
- * after [mutationDelay] and change the in-memory lists: cancel removes the row, reserve adds a
- * pending row, edit updates the pickup location. [accountSnapshot] takes [snapshotDelay], so the
- * refreshing state is visible, and with [refreshFails] (DEBUG `ls_demo_refresh_fails`) it fails
- * like an unreachable library.
+ * Demo mode (§5.4, DEBUG builds only). Every account call is served from [DemoData] and never
+ * touches the network. Public reads of the demo account's own books (their records, a search for
+ * their titles, their formats' availability) come from its offline [DemoCatalogue]; everything
+ * else goes to the real [public] backend (public GETs are allowed). Like the real OPAC, a demo
+ * row's own `bibUrl` loads an empty record; `CoreHelpers.patronItemRecordUrl` gives the one that
+ * loads. `login("demo", "demo")` succeeds, anything else is `CredentialsRejected`. Mutations
+ * succeed after [mutationDelay] and change the in-memory lists: cancel removes the row, reserve
+ * adds a pending row (with the reserved edition's bib IRN, so the book page shows "Reserved"),
+ * edit updates the pickup location. [accountSnapshot] takes [snapshotDelay], so the refreshing
+ * state is visible, and with [refreshFails] (DEBUG `ls_demo_refresh_fails`) it fails like an
+ * unreachable library.
  */
 class DemoBackend(
     private val public: LibraryBackend,
@@ -57,6 +62,7 @@ class DemoBackend(
     private val accountLinks = data.accountLinks
     private val reserveOptions = data.reserveOptions
     private val editOptions = data.editOptions
+    private val catalogue = data.catalogue
     private val mutex = Mutex()
     private val loanItems = data.loans.toMutableList()
     private val readyItems = data.ready.toMutableList()
@@ -68,12 +74,12 @@ class DemoBackend(
 
     override fun setVerificationCookie(cookie: String?) = public.setVerificationCookie(cookie)
 
-    override suspend fun search(query: String) = public.search(query).also(::remember)
+    override suspend fun search(query: String) = (catalogue.search(query) ?: public.search(query)).also(::remember)
     override suspend fun searchSorted(query: String, sort: ResultsSort) =
-        public.searchSorted(query, sort).also(::remember)
+        (catalogue.search(query) ?: public.searchSorted(query, sort)).also(::remember)
     override suspend fun page(url: String) = public.page(url).also(::remember)
-    override suspend fun availability(url: String) = public.availability(url)
-    override suspend fun record(url: String) = public.record(url)
+    override suspend fun availability(url: String) = catalogue.availability(url) ?: public.availability(url)
+    override suspend fun record(url: String) = catalogue.record(url) ?: public.record(url)
     override suspend fun related(url: String) = public.related(url)
 
     override suspend fun login(username: String, password: String): String {
@@ -119,15 +125,16 @@ class DemoBackend(
         requireSession(session)
         delay(mutationDelay)
         val record = reservable[url]
+        val bibIrn = reservedBibIrn(record, url)
         mutex.withLock {
             val irn = "demo-${nextIrn++}"
             pendingItems.add(
                 0,
                 PatronItem(
                     irn = irn,
-                    bibIrn = null,
+                    bibIrn = bibIrn,
                     title = record?.title ?: "Reserved title",
-                    bibUrl = record?.detailUrl,
+                    bibUrl = bibIrn?.let(catalogue::accountRowUrl) ?: record?.detailUrl,
                     author = record?.author,
                     year = record?.year,
                     coverUrls = record?.coverUrls ?: emptyList(),
@@ -177,6 +184,21 @@ class DemoBackend(
         else ReserveResult(ok = false, message = "This reservation can't be changed.")
     }
 
+    /**
+     * The bib IRN of the edition [reserveUrl] reserves: its format's `bibRecordIrn`, as the real
+     * reservation row names it. Null when it can't be found out.
+     */
+    private suspend fun reservedBibIrn(record: SearchRecord?, reserveUrl: String): String? {
+        val availabilityUrl = record?.formats?.firstOrNull { it.reserveUrl == reserveUrl }?.availabilityUrl ?: return null
+        return try {
+            availability(availabilityUrl).bibRecordIrn?.takeIf { it.isNotBlank() }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            null
+        }
+    }
+
     private fun remember(results: SearchResults) {
         for (record in results.records) for (format in record.formats) {
             format.reserveUrl?.let { reservable[it] = record }
@@ -220,11 +242,13 @@ class DemoData(
     val pending: List<PatronItem>,
     val reserveOptions: ReserveOptions,
     val editOptions: EditOptions,
+    /** The account's books, offline (`catalogue.json`). */
+    val catalogue: DemoCatalogue = DemoCatalogue(emptyList(), FIXTURE_ORIGIN),
 ) {
     companion object {
         const val ASSET_DIR = "demo"
         const val FIXTURE_ORIGIN = "https://canning.spydus.com"
-        val FILES = listOf("account-links.json", "loans.json", "reservations.json", "reserve-options.json", "edit-options.json")
+        val FILES = listOf("account-links.json", "loans.json", "reservations.json", "reserve-options.json", "edit-options.json", "catalogue.json")
 
         private val json = Json { ignoreUnknownKeys = true }
         private val DATE: DateTimeFormatter = DateTimeFormatter.ofPattern("d MMM yyyy", Locale.ENGLISH)
@@ -242,6 +266,7 @@ class DemoData(
             val reservations = obj("reservations.json")
             val reserve = obj("reserve-options.json")
             val edit = obj("edit-options.json")
+            val catalogue = DemoCatalogue.parse(obj("catalogue.json"), origin)
             return DemoData(
                 accountLinks = AccountLinks(
                     name = links.str("name"),
@@ -278,6 +303,7 @@ class DemoData(
                     notRequiredAfter = edit.str("notRequiredAfter"),
                     message = edit.str("message"),
                 ),
+                catalogue = catalogue,
             )
         }
 

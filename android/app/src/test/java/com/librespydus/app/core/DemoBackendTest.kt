@@ -4,6 +4,7 @@ import kotlinx.coroutines.test.currentTime
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Test
@@ -101,7 +102,8 @@ class DemoBackendTest {
         val public = FakeBackend(origin)
         val b = backend(public)
         val session = signedIn(b)
-        val record = b.search("project hail mary").records.single()
+        // Not a demo title: the real library's results (FakeBackend's Project Hail Mary).
+        val record = b.search("andy weir").records.single()
         val reserveUrl = record.formats.first { it.reserveUrl != null }.reserveUrl!!
 
         val result = b.placeReservation(reserveUrl, session, xdays = "30", pickup = "25353")
@@ -110,7 +112,10 @@ class DemoBackendTest {
         assertEquals("Project Hail Mary", row.title)
         assertEquals("CANNINGTON LIBRARY", row.fields["Pickup location"])
         assertEquals("12 Oct 2026", row.fields["Placed"])
-        assertEquals(listOf("project hail mary"), public.searches)
+        assertEquals(listOf("andy weir"), public.searches)
+        // FakeBackend's availability names no bib record, so the row keeps the search link.
+        assertNull(row.bibIrn)
+        assertEquals(record.detailUrl, row.bibUrl)
 
         val cancel = row.actions.first { it.label.contains("cancel", ignoreCase = true) }.href
         assertTrue(b.cancelReservation(cancel, session).ok)

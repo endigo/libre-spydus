@@ -12,6 +12,9 @@ enum class Tab(val label: String) {
     PROFILE("Profile"),
 }
 
+/** Your Books' two lists, for opening it on one (the book page's "On loan" / "Reserved" pill). */
+enum class BorrowedSegment { LOANS, RESERVATIONS }
+
 /**
  * Search result ordering: an app-side mirror of the core's `SearchSort` so routes stay
  * serializable; `NEWEST` = most recently added to the catalogue.

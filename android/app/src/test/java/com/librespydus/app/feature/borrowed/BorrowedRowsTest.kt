@@ -202,7 +202,8 @@ class BorrowedReservationTest {
         val sections = ReservationSections.from(
             Reservations(PatronList(null, data.ready), PatronList(null, data.pending)),
         )
-        assertEquals(listOf("The midnight library"), sections.ready.map { it.ref.title })
+        assertEquals(listOf("Tomorrow, and tomorrow, and tomorrow"), sections.ready.map { it.ref.title })
+        assertEquals("Riverton Library", sections.ready[0].pickup)
         assertNotNull(sections.ready[0].cancelHref)
         assertNotNull(sections.ready[0].editHref)
         assertEquals(2, sections.pending.size)

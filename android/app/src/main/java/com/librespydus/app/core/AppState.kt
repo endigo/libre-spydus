@@ -67,6 +67,7 @@ class AppState(
     private val _selectedTab = MutableStateFlow(Tab.HOME)
     private val _pendingSearch = MutableStateFlow<String?>(null)
     private val _pendingNavigation = MutableStateFlow<PendingNavigation?>(null)
+    private val _pendingBorrowedSegment = MutableStateFlow<BorrowedSegment?>(null)
     private val _verificationNeeded = MutableStateFlow(false)
     private val _verificationAttempts = MutableStateFlow(0)
     private val _hasVerificationCookie = MutableStateFlow(false)
@@ -110,6 +111,9 @@ class AppState(
 
     /** A route to push onto a tab's stack (launch routes, cross-tab links). */
     val pendingNavigation: StateFlow<PendingNavigation?> = _pendingNavigation.asStateFlow()
+
+    /** The list Your Books should show next ([openBorrowed]); Your Books consumes it. */
+    val pendingBorrowedSegment: StateFlow<BorrowedSegment?> = _pendingBorrowedSegment.asStateFlow()
 
     /** The library asked for human verification; the root presents the verification sheet. */
     val verificationNeeded: StateFlow<Boolean> = _verificationNeeded.asStateFlow()
@@ -400,6 +404,16 @@ class AppState(
         _pendingNavigation.value = null
         return pending.route
     }
+
+    /** Switches to Your Books, back at its list, showing [segment] (the book page's held-status pill). */
+    fun openBorrowed(segment: BorrowedSegment) {
+        _pendingBorrowedSegment.value = segment
+        navigate(Tab.BORROWED, Route.Borrowed)
+    }
+
+    /** Returns and clears the segment asked for by [openBorrowed]. */
+    fun consumePendingBorrowedSegment(): BorrowedSegment? =
+        _pendingBorrowedSegment.value.also { _pendingBorrowedSegment.value = null }
 
     fun dismissGallery() {
         _galleryVisible.value = false

@@ -145,7 +145,11 @@ private fun TabNavHost(tab: Tab, appState: AppState, reselects: Flow<Tab>) {
     val pending by appState.pendingNavigation.collectAsStateWithLifecycle()
 
     LaunchedEffect(pending) {
-        appState.consumePendingNavigation(tab)?.let { navController.navigate(it) }
+        appState.consumePendingNavigation(tab)?.let { route ->
+            // The tab's own root (AppState.openBorrowed) pops back to it instead of pushing another.
+            if (route == Route.root(tab)) navController.popBackStack(navController.graph.startDestinationId, inclusive = false)
+            else navController.navigate(route)
+        }
     }
     LaunchedEffect(navController) {
         // Re-selecting the current tab pops it to its root.

@@ -31,7 +31,8 @@ data class FormatRef(
  * [id] is a stable key, prefixed by its kind so keys from different sources never collide:
  * `bib:<bib IRN>`, `brn:<BRN>`, `work:<work IRN>`, else `url:<url>`.
  * [url] is what `record(url)` loads; prefer a [RecordDetail.bookmarkUrl] once known (see
- * [withDetail]) because search URLs embed a set id that expires.
+ * [withDetail]) because search URLs embed a set id that expires. A loan's or reservation's
+ * [url] is its session-free record URL (`CoreHelpers.patronItemRecordUrl`).
  */
 @Serializable
 data class BookRef(
@@ -45,6 +46,12 @@ data class BookRef(
     val formats: List<FormatRef> = emptyList(),
     /** Epoch millis when saved as a favourite; null elsewhere. */
     val savedAt: Long? = null,
+    /**
+     * The bib IRN of the loan or reservation this ref was opened from (Your Books, Home's loans
+     * shelf): the book page selects the format of that edition. Null elsewhere, and in favourites
+     * saved before it existed.
+     */
+    val bibIrn: String? = null,
 ) {
     /**
      * Upgrades this ref with a loaded record: bookmark URL (stable), bib IRN key, cover, ISBN.
@@ -73,15 +80,17 @@ data class BookRef(
             formats = record.formats.map(FormatRef::from),
         )
 
+        /** A loan or reservation: loads with the session-free record URL, remembers the row's bib IRN. */
         fun from(item: PatronItem): BookRef = BookRef(
             id = stableId(bibIrn = item.bibIrn, brn = null, workIrn = null, url = item.bibUrl)
                 ?: "title:${item.title.orEmpty()}",
             title = item.title.cleanTitle(),
             author = item.author,
             coverUrl = item.coverUrls.firstOrNull(),
-            url = item.bibUrl,
+            url = CoreHelpers.patronItemRecordUrl(item) ?: item.bibUrl,
             isbn = item.isbn,
             year = item.year,
+            bibIrn = item.bibIrn?.trim()?.takeIf { it.isNotEmpty() },
         )
 
         fun from(item: RelatedItem): BookRef = BookRef(

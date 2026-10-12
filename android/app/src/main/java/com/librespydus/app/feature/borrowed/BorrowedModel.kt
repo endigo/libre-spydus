@@ -3,6 +3,7 @@ package com.librespydus.app.feature.borrowed
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.librespydus.app.core.AppState
+import com.librespydus.app.core.BorrowedSegment
 import com.librespydus.app.core.Formatting
 import com.librespydus.app.core.LibraryBackend
 import com.librespydus.app.core.UserFacingError
@@ -91,7 +92,18 @@ sealed interface EditOutcome {
  * outlive a tab switch.
  */
 class BorrowedModel(private val appState: AppState) {
-    enum class Segment(val title: String) { LOANS("Loans"), RESERVATIONS("Reservations") }
+    enum class Segment(val title: String) {
+        LOANS("Loans"),
+        RESERVATIONS("Reservations"),
+        ;
+
+        companion object {
+            fun of(segment: BorrowedSegment): Segment = when (segment) {
+                BorrowedSegment.LOANS -> LOANS
+                BorrowedSegment.RESERVATIONS -> RESERVATIONS
+            }
+        }
+    }
 
     /** A cancel/edit result shown as a banner above the list. */
     data class Notice(val message: String, val isError: Boolean, val id: Long = ids.incrementAndGet())
@@ -131,6 +143,11 @@ class BorrowedModel(private val appState: AppState) {
 
     fun select(segment: Segment) {
         _segment.value = segment
+    }
+
+    /** Shows the list another screen asked for with [AppState.openBorrowed] (the book page's status pill). */
+    fun showPendingSegment() {
+        appState.consumePendingBorrowedSegment()?.let { select(Segment.of(it)) }
     }
 
     fun dismissNotice(id: Long? = null) {
