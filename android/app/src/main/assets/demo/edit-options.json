@@ -1,0 +1,21 @@
+{
+  "canEdit": true,
+  "pickupChoices": [
+    {
+      "code": "25353",
+      "name": "CANNINGTON LIBRARY"
+    },
+    {
+      "code": "25363",
+      "name": "RIVERTON LIBRARY"
+    },
+    {
+      "code": "25379",
+      "name": "WILLETTON & DISTRICT"
+    }
+  ],
+  "pickupSelected": "25363",
+  "delayUntil": "2026-11-01",
+  "notRequiredAfter": null,
+  "message": null
+}

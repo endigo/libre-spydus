@@ -1,0 +1,6 @@
+{
+  "name": "Test Borrower",
+  "loansUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/LOANRENQ/22222?NRECS=20&FMT=CL&SORTS=DTE.DUE",
+  "reservationsReadyUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/RSVCENQ/55555?FMT=AR",
+  "reservationsPendingUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/RSVCENQ/44444?FMT=WR&NRECS=20"
+}

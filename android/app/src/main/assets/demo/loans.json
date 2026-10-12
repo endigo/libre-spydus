@@ -1,0 +1,58 @@
+{
+  "_source": "Generated demo loans: public Canning catalogue records (bookmark URLs); dueInDays becomes fields.Due relative to today",
+  "total": 4,
+  "items": [
+    {
+      "irn": "29000001",
+      "bibIrn": "17665994",
+      "title": "Project Hail Mary",
+      "bibUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ?SETLVL=&BRN=457540",
+      "author": "Weir, Andy",
+      "year": "2021",
+      "coverUrls": ["https://secure.syndetics.com/index.aspx?isbn=9781804953693/lc.gif&client=citycanning&upc=&oclc=&issn="],
+      "isbn": "9781804953693",
+      "dueInDays": 2,
+      "fields": {},
+      "actions": [{ "label": "Renew loan", "href": "https://canning.spydus.com/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/78500000/0/R/1/LOANRENQ?SVL=29000001" }]
+    },
+    {
+      "irn": "29000002",
+      "bibIrn": "10958382",
+      "title": "Lessons in chemistry",
+      "bibUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ?SETLVL=&BRN=329293",
+      "author": "Garmus, Bonnie, author",
+      "year": "2022",
+      "coverUrls": ["https://secure.syndetics.com/index.aspx?isbn=9780857528131/lc.gif&client=citycanning&upc=&oclc=&issn="],
+      "isbn": "9780857528131",
+      "dueInDays": 9,
+      "fields": {},
+      "actions": [{ "label": "Renew loan", "href": "https://canning.spydus.com/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/78500000/0/R/1/LOANRENQ?SVL=29000002" }]
+    },
+    {
+      "irn": "29000003",
+      "bibIrn": "12130675",
+      "title": "Where the crawdads sing",
+      "bibUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ?SETLVL=&BRN=337249",
+      "author": "Owens, Delia, author",
+      "year": "2018",
+      "coverUrls": ["https://secure.syndetics.com/index.aspx?isbn=9781472157362/lc.gif&client=citycanning&upc=&oclc=&issn="],
+      "isbn": "9781472157362",
+      "dueInDays": 16,
+      "fields": {},
+      "actions": [{ "label": "Renew loan", "href": "https://canning.spydus.com/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/78500000/0/R/1/LOANRENQ?SVL=29000003" }]
+    },
+    {
+      "irn": "29000004",
+      "bibIrn": "8753080",
+      "title": "The midnight library",
+      "bibUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/78500000?QRY=IRN(8753080)&SETLVL=SET",
+      "author": "Haig, Matt, author",
+      "year": "2020",
+      "coverUrls": ["https://secure.syndetics.com/index.aspx?isbn=9780525559474/MC.GIF&client=canning"],
+      "isbn": "9780525559474",
+      "dueInDays": -1,
+      "fields": {},
+      "actions": [{ "label": "Renew loan", "href": "https://canning.spydus.com/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/78500000/0/R/1/LOANRENQ?SVL=29000004" }]
+    }
+  ]
+}
