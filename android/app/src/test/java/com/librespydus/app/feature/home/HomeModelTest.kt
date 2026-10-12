@@ -1,6 +1,7 @@
 package com.librespydus.app.feature.home
 
 import com.librespydus.app.core.CoreHelpers
+import com.librespydus.app.core.DemoBackend
 import com.librespydus.app.core.DemoData
 import com.librespydus.app.core.ResultsSort
 import com.librespydus.app.core.Route
@@ -20,8 +21,10 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
+import uniffi.librespydus_core.AccountSnapshot
 import uniffi.librespydus_core.PatronItem
 import uniffi.librespydus_core.PatronList
+import uniffi.librespydus_core.Reservations
 import uniffi.librespydus_core.SpydusException
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -118,56 +121,46 @@ class HomeModelTest {
     private val report: BrowseReporter = { UserFacingError.from(it, "Canning") }
     private val f = SearchFixtures
 
-    private fun context(backend: PagingFakeBackend, session: String?, account: Int = 0) =
-        HomeLoadContext(backend, session, HomeReloadKey(backend.origin, verification = 0, account = account), report)
+    private fun context(backend: PagingFakeBackend, verification: Int = 0) =
+        HomeLoadContext(backend, HomeReloadKey(backend.origin, verification), report)
 
     @Test
-    fun shelvesLoadIndependently() = runTest {
+    fun arrivalsLoadOncePerKey() = runTest {
         val records = (1..14).map { f.record(it.toString()) } + f.record("1")
         val backend = PagingFakeBackend(Result.success(f.page(records)))
-        backend.loansResult = Result.failure(SpydusException.Network("timed out"))
         val home = HomeModel()
 
-        home.loadIfNeeded(context(backend, session = "demo-session"))
+        home.loadIfNeeded(context(backend))
         assertEquals(HomeModel.SHELF_LIMIT, home.arrivals.value.valueOrNull?.size)
-        assertEquals(UserFacingError.Kind.NETWORK, home.loans.value.errorOrNull?.kind)
         // New arrivals is the first shelf, newest first.
         assertEquals(listOf("${CoreHelpers.homeShelves()[0].query}|NEWEST"), backend.searchCalls)
 
-        // Same key again (back from a pushed screen): nothing reloads.
-        home.loadIfNeeded(context(backend, session = "demo-session"))
+        // Same key again (back from a pushed screen, or a sign-in): nothing reloads.
+        home.loadIfNeeded(context(backend))
         assertEquals(1, backend.searchCalls.size)
 
-        backend.loansResult = Result.success(
-            PatronList(
-                1,
-                listOf(
-                    PatronItem("1", "1", "Whistler", null, null, null, emptyList(), null, mapOf("Due" to DemoData.formatDate(LocalDate.now())), emptyList()),
-                ),
-            ),
-        )
-        home.retryLoans(context(backend, session = "demo-session"))
-        assertEquals(listOf("Due today"), home.loans.value.valueOrNull?.map { it.caption })
+        // A new library or a completed verification reloads it.
+        home.loadIfNeeded(context(backend, verification = 1))
+        assertEquals(2, backend.searchCalls.size)
     }
 
     @Test
-    fun signedOutHasNoLoansAndSignInReloadsOnlyTheLoans() = runTest {
-        val backend = PagingFakeBackend(Result.success(f.page(listOf(f.record("1")))))
-        backend.loansResult = Result.success(PatronList(1, listOf(PatronItem("1", "1", "Whistler", null, null, null, emptyList(), null, emptyMap(), emptyList()))))
-        val home = HomeModel()
-        home.loadIfNeeded(context(backend, session = null))
-        assertEquals(BrowseLoadable.Idle, home.loans.value)
-        assertEquals(1, home.arrivals.value.valueOrNull?.size)
-
-        // Sign-in, sign-out or session expiry bumps accountGeneration: New arrivals are public
-        // and stay as they are; the loans shelf loads.
-        home.loadIfNeeded(context(backend, session = "demo-session", account = 1))
-        assertEquals(1, backend.searchCalls.size)
-        assertEquals(listOf("Whistler"), home.loans.value.valueOrNull?.map { it.ref.title })
-
-        // A new library or a completed verification reloads New arrivals.
-        home.loadIfNeeded(HomeLoadContext(backend, "demo-session", HomeReloadKey(backend.origin, verification = 1, account = 1), report))
-        assertEquals(2, backend.searchCalls.size)
+    fun theLoansShelfComesFromTheAccountSnapshot() {
+        val due = DemoData.formatDate(LocalDate.now())
+        val snapshot = AccountSnapshot(
+            DemoBackend.SNAPSHOT_VERSION, "Test Borrower",
+            PatronList(1, listOf(PatronItem("1", "1", "Whistler", null, null, null, emptyList(), null, mapOf("Due" to due), emptyList()))),
+            Reservations(PatronList(0, emptyList()), PatronList(0, emptyList())),
+            fetchedAtMs = 0,
+        )
+        val offline = UserFacingError(UserFacingError.Kind.NETWORK, "Can't reach Canning. Check your connection.")
+        assertEquals(listOf("Due today"), HomeLoans.state(snapshot, refreshing = false, error = null).valueOrNull?.map { it.caption })
+        // A failed refresh keeps the saved covers.
+        assertEquals(listOf("Whistler"), HomeLoans.state(snapshot, refreshing = false, error = offline).valueOrNull?.map { it.ref.title })
+        // Nothing saved yet: a skeleton while it loads, else the error card.
+        assertEquals(BrowseLoadable.Loading, HomeLoans.state(null, refreshing = true, error = null))
+        assertEquals(BrowseLoadable.Loading, HomeLoans.state(null, refreshing = true, error = offline))
+        assertEquals(UserFacingError.Kind.NETWORK, HomeLoans.state(null, refreshing = false, error = offline).errorOrNull?.kind)
     }
 
     @Test
@@ -176,9 +169,9 @@ class HomeModelTest {
         val backend = PagingFakeBackend(Result.success(f.page(listOf(f.record("1")))))
         backend.searchDelayMs = 100
         val home = HomeModel()
-        val first = launch { home.loadIfNeeded(context(backend, session = null)) }
+        val first = launch { home.loadIfNeeded(context(backend)) }
         advanceTimeBy(20)
-        home.loadIfNeeded(context(backend, session = null))
+        home.loadIfNeeded(context(backend))
         first.join()
         assertEquals(1, backend.searchCalls.size)
         assertEquals(1, home.arrivals.value.valueOrNull?.size)
@@ -188,9 +181,9 @@ class HomeModelTest {
     fun refreshKeepsTheCoversWhenItFails() = runTest {
         val backend = PagingFakeBackend(Result.success(f.page(listOf(f.record("1")))))
         val home = HomeModel()
-        home.loadIfNeeded(context(backend, session = null))
+        home.loadIfNeeded(context(backend))
         backend.first = Result.failure(SpydusException.Network("offline"))
-        home.refresh(context(backend, session = null))
+        home.refresh(context(backend))
         assertEquals(1, home.arrivals.value.valueOrNull?.size)
     }
 
@@ -198,7 +191,7 @@ class HomeModelTest {
     fun anUnrecognisedArrivalsPageIsAnError() = runTest {
         val backend = PagingFakeBackend(Result.success(f.page(emptyList(), noResults = false)))
         val home = HomeModel()
-        home.loadIfNeeded(context(backend, session = null))
+        home.loadIfNeeded(context(backend))
         assertEquals(SearchResultsModel.UNRECOGNISED_PAGE, home.arrivals.value.errorOrNull)
     }
 
@@ -206,7 +199,7 @@ class HomeModelTest {
     fun aGenuinelyEmptyShelfIsEmptyNotAnError() = runTest {
         val backend = PagingFakeBackend(Result.success(f.page(emptyList(), noResults = true)))
         val home = HomeModel()
-        home.loadIfNeeded(context(backend, session = null))
+        home.loadIfNeeded(context(backend))
         assertEquals(BrowseLoadable.Loaded(emptyList<Any>()), home.arrivals.value)
     }
 

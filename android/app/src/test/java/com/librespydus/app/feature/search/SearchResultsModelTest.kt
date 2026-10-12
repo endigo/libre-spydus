@@ -1,5 +1,6 @@
 package com.librespydus.app.feature.search
 
+import com.librespydus.app.core.DemoBackend
 import com.librespydus.app.core.LibraryBackend
 import com.librespydus.app.core.ResultsSort
 import com.librespydus.app.core.UserFacingError
@@ -15,6 +16,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import uniffi.librespydus_core.AccountLinks
+import uniffi.librespydus_core.AccountSnapshot
 import uniffi.librespydus_core.Availability
 import uniffi.librespydus_core.EditOptions
 import uniffi.librespydus_core.EditOverrides
@@ -69,6 +71,8 @@ class PagingFakeBackend(
     override suspend fun account(session: String) = AccountLinks("Borrower, Test", null, null, null)
     override suspend fun loans(session: String): PatronList = loansResult.getOrThrow()
     override suspend fun reservations(session: String) = Reservations(PatronList(0, emptyList()), PatronList(0, emptyList()))
+    override suspend fun accountSnapshot(session: String) =
+        AccountSnapshot(DemoBackend.SNAPSHOT_VERSION, account(session).name, loans(session), reservations(session), 0)
     override suspend fun reserveOptions(url: String, session: String): ReserveOptions = throw SpydusException.NotLoggedIn("")
     override suspend fun placeReservation(url: String, session: String, xdays: String?, pickup: String?): ReserveResult = error("never POST in tests")
     override suspend fun cancelReservation(url: String, session: String): ReserveResult = error("never POST in tests")

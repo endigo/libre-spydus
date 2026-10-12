@@ -46,8 +46,14 @@ class AppState(
     private val makeBackend: suspend (origin: String) -> LibraryBackend = { CoreBackend.create(it) },
     private val loadDemoData: (origin: String) -> DemoData = { error("demo data unavailable") },
     private val io: CoroutineDispatcher = Dispatchers.IO,
+    accountStorage: AccountSnapshotStorage = InMemoryAccountSnapshotStorage(),
+    now: () -> Long = System::currentTimeMillis,
 ) {
     private val ops = Mutex()
+
+    /** DEBUG demo options (`ls_demo_persist`, `ls_demo_refresh_fails`), see [LaunchOptions]. */
+    private var demoPersist = false
+    private var demoRefreshFails = false
 
     /** One backend (one `SpydusClient`) per origin, kept for the app's lifetime. */
     private val clients = mutableMapOf<String, LibraryBackend>()
@@ -56,7 +62,7 @@ class AppState(
     private val _library = MutableStateFlow<LibraryInfo?>(null)
     private val _backend = MutableStateFlow<LibraryBackend?>(null)
     private val _session = MutableStateFlow<String?>(null)
-    private val _accountName = MutableStateFlow<String?>(null)
+    private val _fallbackName = MutableStateFlow<String?>(null)
     private val _isDemo = MutableStateFlow(false)
     private val _selectedTab = MutableStateFlow(Tab.HOME)
     private val _pendingSearch = MutableStateFlow<String?>(null)
@@ -83,8 +89,16 @@ class AppState(
     val session: StateFlow<String?> = _session.asStateFlow()
     val isSignedIn: StateFlow<Boolean> = session.map { it != null }.stateIn(scope, SharingStarted.Eagerly, false)
 
-    /** From `account(session).name`, e.g. "Test Borrower". */
-    val accountName: StateFlow<String?> = _accountName.asStateFlow()
+    /**
+     * The signed-in borrower's account, saved on the device per library and refreshed in the
+     * background (§5.2a). Your Books, Home's loans shelf and the account name read it.
+     */
+    val account = AccountStore(scope, accountStorage, report = ::report, now = now, io = io)
+
+    /** The borrower's name, e.g. "Test Borrower": from [account]'s snapshot, else [refreshAccount]. */
+    val accountName: StateFlow<String?> =
+        combine(account.snapshot, _fallbackName) { snapshot, fallback -> snapshot?.accountName ?: fallback }
+            .stateIn(scope, SharingStarted.Eagerly, null)
 
     /** Demo mode (§5.4, debug `ls_demo`): fixture account data, no account network calls. */
     val isDemo: StateFlow<Boolean> = _isDemo.asStateFlow()
@@ -118,7 +132,7 @@ class AppState(
     /** Bumped after a verification completes or is cleared: screens re-run failed loads. */
     val verificationGeneration: StateFlow<Int> = _verificationGeneration.asStateFlow()
 
-    /** Bumped on sign-in, sign-out, session expiry and library change: account screens reload. */
+    /** Bumped on sign-in, sign-out, session expiry and library change. */
     val accountGeneration: StateFlow<Int> = _accountGeneration.asStateFlow()
 
     /** The selected library's favourites, newest first. */
@@ -156,7 +170,11 @@ class AppState(
         _libraryPickerVisible.value = false
     }
 
-    /** Builds (or reuses) the origin's backend and loads that origin's session and cookie. */
+    /**
+     * Builds (or reuses) the origin's backend and loads that origin's session, cookie and saved
+     * account, all before the library is shown, so its first frame already has the account. Then
+     * refreshes the account in the background.
+     */
     private suspend fun activate(info: LibraryInfo) {
         val origin = info.origin.trimEnd('/')
         val core = clients[origin] ?: try {
@@ -168,19 +186,34 @@ class AppState(
         val cookie = withContext(io) { secrets.get(verifyKey(origin)) }
         core.setVerificationCookie(cookie)
         val demo = _isDemo.value
-        val backend = if (demo) DemoBackend(core, withContext(io) { loadDemoData(origin) }) else core
+        val backend = if (demo) DemoBackend(core, withContext(io) { loadDemoData(origin) }, refreshFails = demoRefreshFails) else core
+        val session = if (demo) DemoBackend.SESSION else withContext(io) { secrets.get(sessionKey(origin)) }
+        val key = cacheKey(backend)
+        val saved = if (session != null && key != null) account.loadSaved(key) else null
 
+        // From here on nothing suspends: the store and the screens switch library together.
+        account.bind(backend, session, key, saved)
         _library.value = info
         _backend.value = backend
         _hasVerificationCookie.value = cookie != null
         _verificationNeeded.value = false
         _verificationAttempts.value = 0
         _loginNeeded.value = false
-        _accountName.value = null
-        _session.value = if (demo) DemoBackend.SESSION else withContext(io) { secrets.get(sessionKey(origin)) }
+        _fallbackName.value = null
+        _session.value = session
         _accountGeneration.update { it + 1 }
         _verificationGeneration.update { it + 1 }
-        if (_session.value != null) scope.launch { refreshAccount() }
+        if (session != null) account.refresh(force = true)
+    }
+
+    /**
+     * Where [backend]'s account is saved: under its origin. Demo data is kept in memory only,
+     * unless DEBUG `ls_demo_persist` asks to save it (under a key of its own).
+     */
+    private fun cacheKey(backend: LibraryBackend): String? = when {
+        !backend.isDemo -> backend.origin
+        demoPersist -> "demo:${backend.origin}"
+        else -> null
     }
 
     // endregion
@@ -198,33 +231,46 @@ class AppState(
             report(e)
             throw e
         }
-        if (backend !== _backend.value) return // the library changed meanwhile
-        if (!backend.isDemo) withContext(io) { secrets.put(sessionKey(backend.origin), token) }
-        _session.value = token
-        _loginNeeded.value = false
-        _accountGeneration.update { it + 1 }
-        refreshAccount()
+        // Committed under the ops lock, so a library switch can't interleave with it.
+        serial {
+            if (backend !== _backend.value) return@serial // the library changed meanwhile
+            if (!backend.isDemo) withContext(io) { secrets.put(sessionKey(backend.origin), token) }
+            // A new sign-in starts from nothing: the previous session's account stops (it can't
+            // save any more) and any copy saved for this library is deleted.
+            val key = cacheKey(backend)
+            account.bind(null, null, null)
+            if (key != null) account.deleteSaved(key)
+            account.bind(backend, token, key)
+            _fallbackName.value = null
+            _session.value = token
+            _loginNeeded.value = false
+            _accountGeneration.update { it + 1 }
+            account.refresh(force = true)
+        }
     }
 
+    /** Signs out of the selected library and deletes its saved account (other libraries keep theirs). */
     suspend fun signOut() {
         val origin = _backend.value?.origin ?: return
         _session.value = null
-        _accountName.value = null
+        _fallbackName.value = null
+        val forgotten = account.discard()
         withContext(io) { secrets.put(sessionKey(origin), null) }
+        forgotten.join()
         _accountGeneration.update { it + 1 }
     }
 
-    /** Reloads [accountName] (errors are routed through [report] and otherwise ignored). */
     /**
-     * Loads the signed-in borrower's name. Returns false only when the request failed; a library
-     * page without a name is a success with a null [accountName].
+     * Profile's fallback while there is no account snapshot (its refresh failed before one
+     * arrived): loads just the borrower's name with `account(session)`. Returns false only when
+     * the request failed; a library page without a name is a success with a null [accountName].
      */
     suspend fun refreshAccount(): Boolean {
         val backend = _backend.value ?: return true
         val session = _session.value ?: return true
         return try {
             val links = backend.account(session)
-            if (backend === _backend.value && session == _session.value) _accountName.value = links.name
+            if (backend === _backend.value && session == _session.value) _fallbackName.value = links.name
             true
         } catch (e: SpydusException) {
             report(e)
@@ -232,9 +278,17 @@ class AppState(
         }
     }
 
-    /** An account mutation succeeded (e.g. a reservation was placed): account screens reload. */
+    /**
+     * A reservation was placed, cancelled or edited: refreshes the account now (replacing a
+     * refresh that may have started before the change).
+     */
     fun accountDidChange() {
-        _accountGeneration.update { it + 1 }
+        account.refreshAfterChange()
+    }
+
+    /** The app came to the foreground (activity ON_START): refreshes the account if it is stale. */
+    fun onForeground() {
+        account.refresh()
     }
 
     fun requestLogin() {
@@ -259,7 +313,8 @@ class AppState(
                 val origin = _backend.value?.origin
                 if (_session.value != null) {
                     _session.value = null
-                    _accountName.value = null
+                    _fallbackName.value = null
+                    account.discard()
                     _accountGeneration.update { it + 1 }
                     if (origin != null) scope.launch(io) { secrets.put(sessionKey(origin), null) }
                 }
@@ -282,6 +337,8 @@ class AppState(
         _verificationNeeded.value = false
         _verificationAttempts.update { it + 1 }
         _verificationGeneration.update { it + 1 }
+        // The verification may have been for a failed account refresh: retry it now.
+        account.refresh(force = account.lastRefreshError.value != null)
     }
 
     suspend fun clearVerification() {
@@ -357,7 +414,11 @@ class AppState(
         scope.launch {
             ops.withLock {
                 if (options.reset) reset()
-                if (options.demo) _isDemo.value = true
+                if (options.demo) {
+                    _isDemo.value = true
+                    demoPersist = options.demoPersist
+                    demoRefreshFails = options.demoRefreshFails
+                }
                 val origin = options.origin
                 when {
                     origin != null -> {
@@ -376,11 +437,13 @@ class AppState(
         libraryStore.set(null)
         withContext(io) { secrets.clear() }
         favourites.clear()
+        account.bind(null, null, null)
+        account.deleteAllSaved()
         clients.values.forEach { it.setVerificationCookie(null) }
         _library.value = null
         _backend.value = null
         _session.value = null
-        _accountName.value = null
+        _fallbackName.value = null
         _hasVerificationCookie.value = false
         _selectedTab.value = Tab.HOME
     }
@@ -445,6 +508,11 @@ class AppState(
                 libraryStore = DataStoreLibraryStore(app),
                 secrets = KeystoreSecretStore(app),
                 favourites = FavouritesStore(File(app.filesDir, FavouritesStore.FILE_NAME)),
+                // Not backed up: noBackupFilesDir, sealed with the Keystore key of the session store.
+                accountStorage = FileAccountSnapshotStorage(
+                    File(app.noBackupFilesDir, FileAccountSnapshotStorage.DIR_NAME),
+                    AesGcmSealer { KeystoreKeys.aesKey(KeystoreSecretStore.KEY_ALIAS) },
+                ),
                 loadDemoData = { origin ->
                     DemoData.load(
                         read = { name -> app.assets.open("${DemoData.ASSET_DIR}/$name").bufferedReader().use { it.readText() } },

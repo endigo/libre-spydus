@@ -8,7 +8,9 @@ import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.indication
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -38,6 +40,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -47,12 +50,15 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
@@ -77,13 +83,19 @@ import com.librespydus.app.ui.theme.LsSpacing
 import com.librespydus.app.ui.theme.LsTabBar
 import com.librespydus.app.ui.theme.LsType
 import kotlinx.coroutines.delay
+import java.time.LocalDate
+import java.util.Date
 
 /**
  * "Your Books" (docs/native-apps.md §6 Borrowed): Loans | Reservations. Loans are sorted by due
  * date with the danger colour when due within 3 days or overdue; reservations show "Ready for
  * pickup" first, then pending. A reservation's Edit (sheet) and Cancel (confirmed) sit behind a
- * swipe toward the leading edge, in its long-press menu and in its TalkBack actions. Pull to
- * refresh; reloads on sign-in/out, library change and verification.
+ * swipe toward the leading edge, in its long-press menu and in its TalkBack actions.
+ *
+ * Both lists come from the account store's snapshot (§5.2a): the saved one shows at once with
+ * "Updated …" under the segments while a fresh one loads in the background (when it is over two
+ * minutes old as the screen opens, and on pull to refresh). A failed refresh keeps the lists and
+ * says so; only without any snapshot is there a loading or error state.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -97,12 +109,11 @@ fun BorrowedScreen(appState: AppState, navigator: AppNavigator, modifier: Modifi
     val library by appState.library.collectAsStateWithLifecycle()
     val backend by appState.backend.collectAsStateWithLifecycle()
     val session by appState.session.collectAsStateWithLifecycle()
-    val accountGeneration by appState.accountGeneration.collectAsStateWithLifecycle()
-    val verificationGeneration by appState.verificationGeneration.collectAsStateWithLifecycle()
     val demo by appState.isDemo.collectAsStateWithLifecycle()
+    val snapshot by appState.account.snapshot.collectAsStateWithLifecycle()
+    val accountRefreshing by appState.account.isRefreshing.collectAsStateWithLifecycle()
+    val refreshError by appState.account.lastRefreshError.collectAsStateWithLifecycle()
     val segment by model.segment.collectAsStateWithLifecycle()
-    val loans by model.loans.collectAsStateWithLifecycle()
-    val reservations by model.reservations.collectAsStateWithLifecycle()
     val busy by model.busyRows.collectAsStateWithLifecycle()
     val notice by model.notice.collectAsStateWithLifecycle()
     val confirming by model.confirmingCancel.collectAsStateWithLifecycle()
@@ -112,8 +123,13 @@ fun BorrowedScreen(appState: AppState, navigator: AppNavigator, modifier: Modifi
     val listState = rememberLazyListState()
     // The swiped-open reservation card (one at a time): closed by a scroll, a tap or a segment switch.
     val swipe = remember { ReservationSwipeController() }
+    val content = remember(snapshot, accountRefreshing, refreshError) {
+        BorrowedContent.of(snapshot, accountRefreshing, refreshError, LocalDate.now())
+    }
+    val loans = content.loans
+    val reservations = content.reservations
 
-    LaunchedEffect(backend, session, accountGeneration, verificationGeneration) { vm.appear() }
+    LaunchedEffect(backend, session) { vm.appear() }
     LaunchedEffect(listState) {
         snapshotFlow { listState.isScrollInProgress }.collect { if (it) swipe.close() }
     }
@@ -188,15 +204,18 @@ fun BorrowedScreen(appState: AppState, navigator: AppNavigator, modifier: Modifi
             item(key = "segments") {
                 val loanCount = loans.valueOrNull?.size
                 val reservationCount = reservations.valueOrNull?.count
-                SegmentedToggle(
-                    options = listOf(
-                        loanCount?.let { "Loans ($it)" } ?: "Loans",
-                        reservationCount?.let { "Reservations ($it)" } ?: "Reservations",
-                    ),
-                    selectedIndex = segment.ordinal,
-                    onSelect = { model.select(BorrowedModel.Segment.entries[it]) },
-                    modifier = Modifier.fillMaxWidth(),
-                )
+                Column(verticalArrangement = Arrangement.spacedBy(LsSpacing.s)) {
+                    SegmentedToggle(
+                        options = listOf(
+                            loanCount?.let { "Loans ($it)" } ?: "Loans",
+                            reservationCount?.let { "Reservations ($it)" } ?: "Reservations",
+                        ),
+                        selectedIndex = segment.ordinal,
+                        onSelect = { model.select(BorrowedModel.Segment.entries[it]) },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    content.status?.let { AccountStatusLine(it, onRetry = vm::retry) }
+                }
             }
             notice?.let { shown ->
                 item(key = "notice-${shown.id}") {
@@ -211,12 +230,12 @@ fun BorrowedScreen(appState: AppState, navigator: AppNavigator, modifier: Modifi
                 }
             }
             when (segment) {
-                BorrowedModel.Segment.LOANS -> loansContent(loans, libraryName, onRetry = vm::reload, onOpen = { navigator.openBook(it.ref) })
+                BorrowedModel.Segment.LOANS -> loansContent(loans, libraryName, onRetry = vm::retry, onOpen = { navigator.openBook(it.ref) })
                 BorrowedModel.Segment.RESERVATIONS -> reservationsContent(
                     reservations,
                     busy = busy,
                     swipe = swipe,
-                    onRetry = vm::reload,
+                    onRetry = vm::retry,
                     onOpen = { navigator.openBook(it.ref) },
                     onCancel = model::askToCancel,
                     onEdit = model::edit,
@@ -253,6 +272,68 @@ fun BorrowedScreen(appState: AppState, navigator: AppNavigator, modifier: Modifi
 }
 
 private val STATE_HEIGHT = 380.dp
+
+/**
+ * The muted line under the segments: "Updated 12 min ago" (ticking, in the device's time format)
+ * with a small spinner while a refresh runs, or "Couldn't refresh — showing saved data" + Retry.
+ */
+@Composable
+private fun AccountStatusLine(status: AccountStatus, onRetry: () -> Unit) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .heightIn(min = 24.dp)
+            .semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite },
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        when (status) {
+            is AccountStatus.Updated -> {
+                val context = LocalContext.current
+                val timeFormat = remember(context) { android.text.format.DateFormat.getTimeFormat(context) }
+                val now by produceState(System.currentTimeMillis(), status.fetchedAtMs) {
+                    while (true) {
+                        value = System.currentTimeMillis()
+                        delay(STATUS_TICK_MILLIS)
+                    }
+                }
+                if (status.refreshing) {
+                    CircularProgressIndicator(color = LsColors.textMuted, strokeWidth = 1.5.dp, modifier = Modifier.size(12.dp))
+                    Spacer(Modifier.width(LsSpacing.s))
+                }
+                Text(
+                    Formatting.updatedText(status.fetchedAtMs, now, time = { timeFormat.format(Date.from(it.toInstant())) }),
+                    style = LsType.caption,
+                    color = LsColors.textMuted,
+                )
+            }
+            is AccountStatus.RefreshFailed -> {
+                Icon(AccountIcons.Warning, contentDescription = null, tint = LsColors.warning, modifier = Modifier.size(14.dp))
+                Spacer(Modifier.width(LsSpacing.xs))
+                Text(
+                    AccountStatus.REFRESH_FAILED,
+                    style = LsType.caption,
+                    color = LsColors.textSecondary,
+                    modifier = Modifier.weight(1f, fill = false),
+                )
+                if (status.error.isRetryable) {
+                    Text(
+                        "Retry",
+                        style = LsType.caption.copy(fontWeight = FontWeight.SemiBold),
+                        color = LsColors.primary,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(LsRadius.pill))
+                            .clickable(role = Role.Button, onClick = onRetry)
+                            .padding(horizontal = LsSpacing.s, vertical = LsSpacing.xs),
+                    )
+                }
+            }
+        }
+    }
+}
+
+/** How often "Updated N min ago" is re-worded. */
+private const val STATUS_TICK_MILLIS = 30_000L
 
 private fun LazyListScope.stateItem(key: String, content: @Composable () -> Unit) {
     item(key = key) {

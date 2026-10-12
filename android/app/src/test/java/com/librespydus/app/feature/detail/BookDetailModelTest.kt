@@ -18,6 +18,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import uniffi.librespydus_core.AccountLinks
+import uniffi.librespydus_core.AccountSnapshot
 import uniffi.librespydus_core.Availability
 import uniffi.librespydus_core.EditOptions
 import uniffi.librespydus_core.EditOverrides
@@ -79,6 +80,7 @@ class DetailBackend(
     override suspend fun account(session: String): AccountLinks = throw SpydusException.NotLoggedIn("")
     override suspend fun loans(session: String): PatronList = throw SpydusException.NotLoggedIn("")
     override suspend fun reservations(session: String): Reservations = throw SpydusException.NotLoggedIn("")
+    override suspend fun accountSnapshot(session: String): AccountSnapshot = throw SpydusException.NotLoggedIn("")
     override suspend fun reserveOptions(url: String, session: String): ReserveOptions = throw SpydusException.NotLoggedIn("")
     override suspend fun placeReservation(url: String, session: String, xdays: String?, pickup: String?): ReserveResult = error("never POST in tests")
     override suspend fun cancelReservation(url: String, session: String): ReserveResult = error("never POST in tests")

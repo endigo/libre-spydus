@@ -3,6 +3,7 @@ package com.librespydus.app.core
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import uniffi.librespydus_core.AccountLinks
+import uniffi.librespydus_core.AccountSnapshot
 import uniffi.librespydus_core.Availability
 import uniffi.librespydus_core.EditOptions
 import uniffi.librespydus_core.EditOverrides
@@ -45,6 +46,9 @@ interface LibraryBackend {
     suspend fun account(session: String): AccountLinks
     suspend fun loans(session: String): PatronList
     suspend fun reservations(session: String): Reservations
+
+    /** Name, loans and both reservation lists in one call (what AccountStore saves and shows). */
+    suspend fun accountSnapshot(session: String): AccountSnapshot
     suspend fun reserveOptions(url: String, session: String): ReserveOptions
     suspend fun placeReservation(url: String, session: String, xdays: String?, pickup: String?): ReserveResult
     suspend fun cancelReservation(url: String, session: String): ReserveResult
@@ -75,6 +79,7 @@ class CoreBackend(private val client: SpydusClient) : LibraryBackend {
     override suspend fun account(session: String) = io { client.account(session) }
     override suspend fun loans(session: String) = io { client.loans(session) }
     override suspend fun reservations(session: String) = io { client.reservations(session) }
+    override suspend fun accountSnapshot(session: String) = io { client.accountSnapshot(session) }
     override suspend fun reserveOptions(url: String, session: String) = io { client.reserveOptions(url, session) }
 
     override suspend fun placeReservation(url: String, session: String, xdays: String?, pickup: String?) =
