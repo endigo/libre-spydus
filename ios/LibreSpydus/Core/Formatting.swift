@@ -57,16 +57,26 @@ enum Formatting {
     }
 }
 
+extension Calendar {
+    /// Library dates are Gregorian whatever the device calendar is (Buddhist, Japanese, …);
+    /// in the device's time zone.
+    static var library: Calendar {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = .current
+        return calendar
+    }
+}
+
 /// Due dates as the library writes them ("27 Oct 2026").
 enum DueDate {
     /// The core's `parseDueDate` ("27 Oct 2026", "27/10/2026", "2026-10-27", …) as a local date.
-    static func parse(_ text: String, calendar: Calendar = .current) -> Date? {
+    static func parse(_ text: String, calendar: Calendar = .library) -> Date? {
         guard let day = parseDueDate(text: text) else { return nil }
         return calendar.date(from: DateComponents(year: Int(day.year), month: Int(day.month), day: Int(day.day)))
     }
 
     /// The library's own format, "27 Oct 2026" (used by demo data).
-    static func format(_ date: Date, calendar: Calendar = .current) -> String {
+    static func format(_ date: Date, calendar: Calendar = .library) -> String {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "en_AU_POSIX")
         formatter.calendar = calendar
@@ -82,14 +92,14 @@ struct DueStatus: Equatable, Sendable {
     /// Whole days from today; negative when overdue.
     var daysLeft: Int
 
-    init(dueDate: Date, today: Date = .now, calendar: Calendar = .current) {
+    init(dueDate: Date, today: Date = .now, calendar: Calendar = .library) {
         self.dueDate = dueDate
         daysLeft = calendar.dateComponents([.day], from: calendar.startOfDay(for: today),
                                            to: calendar.startOfDay(for: dueDate)).day ?? 0
     }
 
     /// From `PatronItem.fields["Due"]`.
-    init?(dueText: String?, today: Date = .now, calendar: Calendar = .current) {
+    init?(dueText: String?, today: Date = .now, calendar: Calendar = .library) {
         guard let text = dueText.nonEmpty, let date = DueDate.parse(text, calendar: calendar) else { return nil }
         self.init(dueDate: date, today: today, calendar: calendar)
     }

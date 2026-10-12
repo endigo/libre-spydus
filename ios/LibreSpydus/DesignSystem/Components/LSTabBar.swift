@@ -72,3 +72,13 @@ struct LSTabBar: View {
         .accessibilityHidden(true)
     }
 }
+
+extension View {
+    /// Keeps scrolling content clear of the custom tab bar. RootView adds the bar with
+    /// `.safeAreaInset`, but on iOS 27 that inset doesn't reach content inside the tabs'
+    /// `NavigationStack`s (their safe area ends at the home indicator), so `TabStack` applies this
+    /// to every tab root and pushed screen. Screens don't add it themselves.
+    func tabBarClearance() -> some View {
+        safeAreaPadding(.bottom, Theme.TabBar.height)
+    }
+}

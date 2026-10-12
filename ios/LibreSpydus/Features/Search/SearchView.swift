@@ -27,7 +27,6 @@ struct SearchView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .tabBarClearance()
         .screenBackground()
         .toolbar(.hidden, for: .navigationBar)
         .task(id: request) {

@@ -348,9 +348,10 @@ extension AppModel {
             )
         }
 
-        /// `-LSReset`: forget the library, every session, verification and favourite.
+        /// `-LSReset`: forget the library, every session, verification, favourite and recent search.
         func resetPersistentState() {
             defaults.removeObject(forKey: AppModel.libraryKey)
+            defaults.removeObject(forKey: "LibreSpydus.recentSearches") // RecentSearchStore.defaultsKey
             sessions.removeAll()
             verificationCookies.removeAll()
             FavouritesStore.deleteAll(in: favouritesDirectory)
@@ -361,9 +362,12 @@ extension AppModel {
 // MARK: - LibraryInfo helpers
 
 extension LibraryInfo {
-    /// Canning, the core's default library.
+    /// Canning, the core's default library: its entry in Civica's directory (logo included), so
+    /// the app shows it correctly before or without a directory fetch.
     static let canning = LibraryInfo(
-        id: "canning", name: "Canning", origin: "https://canning.spydus.com", logoUrl: nil,
+        id: "24fdee8d-ae0f-41b3-b97e-c96059bd06f4", name: "City of Canning",
+        origin: "https://canning.spydus.com",
+        logoUrl: "https://canning.spydus.com/api/maintenance/1.0/imagebrowser/image?blobName=d226b0c4-06d6-44b7-ba98-e42f06b9fd15.png",
         country: "Australia", region: "AU", isTest: false
     )
 

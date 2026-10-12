@@ -31,7 +31,6 @@ struct HomeView: View {
             .task { await applyDebugHooks(proxy) }
             #endif
         }
-        .tabBarClearance()
         .screenBackground()
         .overlay(alignment: .top) {
             // Covers scrolled up pass under a navy status bar, not behind the clock.

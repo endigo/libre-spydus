@@ -21,6 +21,19 @@ struct RootView: View {
                 }
             }
         }
+        .overlay(alignment: .top) {
+            // Scrolled content never runs under the clock: the status bar gets a navy backdrop
+            // (the tab screens hide their navigation bars, so nothing else covers it).
+            GeometryReader { proxy in
+                // The reader sits inside the safe area; its insets say how tall the bar is.
+                Theme.Colors.background
+                    .frame(maxWidth: .infinity)
+                    .frame(height: proxy.safeAreaInsets.top)
+                    .offset(y: -proxy.safeAreaInsets.top)
+            }
+            .allowsHitTesting(false)
+            .accessibilityHidden(true)
+        }
         .safeAreaInset(edge: .bottom, spacing: 0) {
             LSTabBar(selection: model.selectedTab) { model.select($0) }
         }
@@ -76,13 +89,17 @@ private struct TabStack: View {
     var body: some View {
         NavigationStack(path: path) {
             root
+                .tabBarClearance()
                 .navigationDestination(for: Route.self) { route in
-                    switch route {
-                    case .detail(let ref):
-                        BookDetailView(ref: ref)
-                    case let .results(query, sort, title):
-                        SearchResultsView(query: query, sort: sort, title: title)
+                    Group {
+                        switch route {
+                        case .detail(let ref):
+                            BookDetailView(ref: ref)
+                        case let .results(query, sort, title):
+                            SearchResultsView(query: query, sort: sort, title: title)
+                        }
                     }
+                    .tabBarClearance()
                 }
         }
     }

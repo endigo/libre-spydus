@@ -179,7 +179,7 @@ struct LoanShelfItem: Identifiable, Hashable, Sendable {
 
     var id: String { ref.id }
 
-    init(_ item: PatronItem, today: Date = .now, calendar: Calendar = .current) {
+    init(_ item: PatronItem, today: Date = .now, calendar: Calendar = .library) {
         ref = BookRef(item)
         let dueText = item.fields["Due"].nonEmpty
         guard let status = DueStatus(dueText: dueText, today: today, calendar: calendar) else {
@@ -199,7 +199,7 @@ struct LoanShelfItem: Identifiable, Hashable, Sendable {
     }
 
     /// Loans in due order (overdue first); loans without a readable date last, in list order.
-    static func make(from items: [PatronItem], today: Date = .now, calendar: Calendar = .current) -> [LoanShelfItem] {
+    static func make(from items: [PatronItem], today: Date = .now, calendar: Calendar = .library) -> [LoanShelfItem] {
         var seen = Set<String>()
         let loans = items.map { LoanShelfItem($0, today: today, calendar: calendar) }
             .filter { seen.insert($0.id).inserted }

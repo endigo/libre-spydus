@@ -28,7 +28,6 @@ struct FavouritesView: View {
                 .animation(.default, value: items)
                 .animation(.default, value: isEditing)
             }
-            .safeAreaPadding(.bottom, Theme.TabBar.height)
             .defaultScrollAnchor(BorrowedDebugHooks.initialScrollAnchor)
         }
         .screenBackground()

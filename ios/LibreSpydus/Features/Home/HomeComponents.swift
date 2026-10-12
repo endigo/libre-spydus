@@ -150,48 +150,6 @@ struct SignInCard: View {
     }
 }
 
-/// The selected library's logo on a small white tile (its initial when there's no logo).
-struct LibraryLogo: View {
-    let name: String
-    let logoUrl: String?
-    var size: CGFloat = 44
-
-    var body: some View {
-        let shape = RoundedRectangle(cornerRadius: size * 0.28, style: .continuous)
-        ZStack {
-            shape.fill(Color.white)
-            if let url = logoUrl.nonEmpty.flatMap(URL.init(string:)) {
-                AsyncImage(url: url) { phase in
-                    if let image = phase.image {
-                        image.resizable().scaledToFit().padding(size * 0.12)
-                    } else {
-                        initial
-                    }
-                }
-            } else {
-                initial
-            }
-        }
-        .frame(width: size, height: size)
-        .clipShape(shape)
-        .themeShadow(.card)
-    }
-
-    private var initial: some View {
-        Text(name.first.map { String($0).uppercased() } ?? "L")
-            .font(.system(size: size * 0.45, weight: .bold, design: .rounded))
-            .foregroundStyle(Theme.Colors.background)
-    }
-}
-
-extension View {
-    /// Keeps scrolling content clear of the custom tab bar. RootView adds the bar with
-    /// `.safeAreaInset`, but that inset doesn't reach content inside the tabs' `NavigationStack`s
-    /// (the safe area there ends at the home indicator), so the Home and Search screens add it.
-    func tabBarClearance() -> some View {
-        safeAreaPadding(.bottom, Theme.TabBar.height)
-    }
-}
 
 extension View {
     /// Home's section card on `surface`.

@@ -16,8 +16,6 @@ struct ProfileView: View {
             ScrollView {
                 content
             }
-            // Tab-root convention (coordinator, iOS 27): clear the custom tab bar at max scroll.
-            .safeAreaPadding(.bottom, Theme.TabBar.height)
             #if DEBUG
             .onAppear {
                 // `-LSProfileAnchor bottom` (DEBUG, screenshots): start scrolled to the end.

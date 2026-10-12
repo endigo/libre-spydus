@@ -27,12 +27,11 @@ struct BookDetailView: View {
         GeometryReader { proxy in
             ScrollViewReader { scroller in
                 ScrollView {
-                    // At least a screen tall, so the white sheet reaches the tab bar.
+                    // At least a screen tall, so the white sheet reaches the tab bar (the proxy's
+                    // height already excludes the tab bar: TabStack applies `tabBarClearance()`).
                     content
-                        .frame(minHeight: max(proxy.size.height - Theme.TabBar.height, 0), alignment: .top)
+                        .frame(minHeight: max(proxy.size.height, 0), alignment: .top)
                 }
-                // Wave-2 convention: the tab bar's inset doesn't reach tab stacks on iOS 27.
-                .safeAreaPadding(.bottom, Theme.TabBar.height)
                 #if DEBUG
                 .task(id: model.record.value != nil) {
                     guard model.record.value != nil, let actions = DetailDebugActions.take() else { return }

@@ -22,7 +22,6 @@ struct SearchResultsView: View {
     var body: some View {
         SearchResultsList(results: results, query: query) { attempt += 1 }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .tabBarClearance()
             .screenBackground()
             .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)

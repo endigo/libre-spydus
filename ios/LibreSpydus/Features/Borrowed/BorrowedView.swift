@@ -35,7 +35,6 @@ struct BorrowedView: View {
             .padding(.bottom, Theme.Spacing.xxl)
             .animation(.default, value: viewModel.notice)
         }
-        .safeAreaPadding(.bottom, Theme.TabBar.height)
         .defaultScrollAnchor(BorrowedDebugHooks.initialScrollAnchor)
         .screenBackground()
         .refreshable { await load(keepContent: true) }
