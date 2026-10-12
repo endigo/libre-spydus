@@ -120,16 +120,18 @@ data class ReservationRow(
     val kind: Kind,
     val item: PatronItem,
     val ref: BookRef,
-    /** `fields["Status"]`, e.g. "Pending", "In transit", "Awaiting pickup". */
+    /** The library's status, e.g. "In transit"; null when it only names the pickup branch ([StatusText]). */
     val status: String?,
     /** `fields["Rank"]`: place in the queue. */
     val rank: String?,
     /** `fields["Placed"]` as the library wrote it. */
     val placed: String?,
-    /** `fields["Pickup location"]`, title-cased when the library shouts it ("RIVERTON LIBRARY"). */
+    /** `fields["Pickup location"]`, or the branch named in the status text; title-cased when the library shouts it. */
     val pickup: String?,
     val cancelHref: String?,
     val editHref: String?,
+    /** Ready reservations: the last day to collect, as the library wrote it ("17 Oct 2026"). */
+    val pickupBy: String? = null,
 ) {
     enum class Kind { READY, PENDING }
 
@@ -147,7 +149,10 @@ data class ReservationRow(
     val meta: String?
         get() {
             val pickupLine = pickup?.let { "Pick up at $it" }
-            if (isReady) return pickupLine
+            if (isReady) {
+                val by = pickupBy?.let { "by ${Formatting.parseDueDate(it)?.let(BorrowedDates::short) ?: it}" } ?: return pickupLine
+                return pickupLine?.let { "$it $by" } ?: "Pick up $by"
+            }
             val first = buildList {
                 rank?.let { add(if (it.toIntOrNull() != null) "#$it in queue" else "Rank $it") }
                 placed?.let { add("Placed ${Formatting.parseDueDate(it)?.let(BorrowedDates::short) ?: it}") }
@@ -159,17 +164,19 @@ data class ReservationRow(
     companion object {
         fun of(item: PatronItem, kind: Kind): ReservationRow {
             val ref = BookRef.from(item)
+            val statusText = StatusText.parse(item.fields["Status"])
             return ReservationRow(
                 id = item.irn.nonBlank() ?: item.cancelHref ?: item.editHref ?: ref.id,
                 kind = kind,
                 item = item,
                 ref = ref,
-                status = item.fields["Status"].nonBlank(),
+                status = statusText.status,
                 rank = item.fields["Rank"].nonBlank(),
                 placed = item.fields["Placed"].nonBlank(),
-                pickup = displayName(item.fields["Pickup location"]),
+                pickup = displayName(item.fields["Pickup location"]) ?: displayName(statusText.pickup),
                 cancelHref = item.cancelHref,
                 editHref = item.editHref,
+                pickupBy = statusText.pickupBy,
             )
         }
 
@@ -184,6 +191,26 @@ data class ReservationRow(
                     append(if (startsWord) c.titlecaseChar() else c)
                 }
             }
+        }
+    }
+}
+
+/**
+ * A reservation's `Status` field. Some libraries (Canning) put the pickup branch there instead of a
+ * status: "Requested pickup location: RIVERTON LIBRARY" while pending, "Please pickup from:
+ * RIVERTON LIBRARY by 17 Oct 2026" once ready. Those become a branch (and collect-by date) with no
+ * status; anything else is kept as the status.
+ */
+data class StatusText(val status: String? = null, val pickup: String? = null, val pickupBy: String? = null) {
+    companion object {
+        private val REQUESTED = Regex("""^requested\s+pick\s?-?up\s+location\s*:\s*(.+)$""", RegexOption.IGNORE_CASE)
+        private val READY = Regex("""^please\s+pick\s?-?up\s+from\s*:\s*(.+?)(?:\s+by\s+(.+))?$""", RegexOption.IGNORE_CASE)
+
+        fun parse(raw: String?): StatusText {
+            val text = raw.nonBlank() ?: return StatusText()
+            REQUESTED.find(text)?.let { return StatusText(pickup = it.groupValues[1].nonBlank()) }
+            READY.find(text)?.let { return StatusText(pickup = it.groupValues[1].nonBlank(), pickupBy = it.groupValues[2].nonBlank()) }
+            return StatusText(status = text)
         }
     }
 }

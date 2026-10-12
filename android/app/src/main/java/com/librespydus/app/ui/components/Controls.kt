@@ -322,7 +322,7 @@ fun Chip(
             .semantics { this.selected = selected }
             .padding(horizontal = LsSpacing.m, vertical = 6.dp),
     ) {
-        Text(text, style = LsType.caption, color = content, maxLines = 1)
+        Text(text, style = LsType.caption, color = content, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
 

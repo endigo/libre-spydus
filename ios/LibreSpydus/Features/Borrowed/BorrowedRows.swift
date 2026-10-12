@@ -103,14 +103,18 @@ struct ReservationRow: Identifiable, Equatable {
     let kind: Kind
     let item: PatronItem
     let ref: BookRef
-    /// `fields["Status"]`, e.g. "Pending", "In transit", "Awaiting pickup".
+    /// The library's status, e.g. "In transit"; nil when it only names the pickup branch (see
+    /// `StatusText`).
     let status: String?
     /// `fields["Rank"]`: place in the queue.
     let rank: String?
     /// `fields["Placed"]` as the library wrote it.
     let placed: String?
-    /// `fields["Pickup location"]`, title-cased when the library shouts it ("RIVERTON LIBRARY").
+    /// `fields["Pickup location"]`, or the branch named in the status text; title-cased when the
+    /// library shouts it ("RIVERTON LIBRARY").
     let pickup: String?
+    /// Ready reservations: the last day to collect, as the library wrote it ("17 Oct 2026").
+    let pickupBy: String?
     let cancelHref: String?
     let editHref: String?
 
@@ -119,10 +123,12 @@ struct ReservationRow: Identifiable, Equatable {
         self.kind = kind
         ref = BookRef(item)
         id = item.irn.nonEmpty ?? item.cancelHref ?? item.editHref ?? ref.id
-        status = item.fields["Status"].nonEmpty
+        let statusText = StatusText(item.fields["Status"])
+        status = statusText.status
         rank = item.fields["Rank"].nonEmpty
         placed = item.fields["Placed"].nonEmpty
-        pickup = Self.displayName(item.fields["Pickup location"])
+        pickup = Self.displayName(item.fields["Pickup location"]) ?? Self.displayName(statusText.pickup)
+        pickupBy = statusText.pickupBy
         cancelHref = item.cancelHref
         editHref = item.editHref
     }
@@ -138,7 +144,11 @@ struct ReservationRow: Identifiable, Equatable {
     /// pickup branch on a second line.
     var meta: String? {
         let pickupLine = pickup.map { "Pick up at \($0)" }
-        if isReady { return pickupLine }
+        if isReady {
+            guard let pickupBy else { return pickupLine }
+            let by = "by \(DueDate.parse(pickupBy, calendar: .libraryDates).map(Formatting.shortDate) ?? pickupBy)"
+            return pickupLine.map { "\($0) \(by)" } ?? "Pick up \(by)"
+        }
         var first: [String] = []
         if let rank { first.append(Int(rank) != nil ? "#\(rank) in queue" : "Rank \(rank)") }
         if let placed {
@@ -153,6 +163,34 @@ struct ReservationRow: Identifiable, Equatable {
         guard let name = raw.nonEmpty else { return nil }
         guard name == name.uppercased(), name.contains(where: \.isLetter) else { return name }
         return name.capitalized(with: Locale(identifier: "en_AU"))
+    }
+}
+
+/// A reservation's `Status` field. Some libraries (Canning) put the pickup branch there instead of
+/// a status: "Requested pickup location: RIVERTON LIBRARY" while pending, "Please pickup from:
+/// RIVERTON LIBRARY by 17 Oct 2026" once ready. Those become a branch (and collect-by date) with no
+/// status; anything else is kept as the status.
+struct StatusText: Equatable {
+    var status: String?
+    var pickup: String?
+    var pickupBy: String?
+
+    init(_ raw: String?) {
+        guard let text = raw.nonEmpty else { return }
+        if let match = text.firstMatch(of: /(?i)^requested\s+pick\s?-?up\s+location\s*:\s*(.+)$/) {
+            pickup = Optional(String(match.1)).nonEmpty
+        } else if let match = text.firstMatch(of: /(?i)^please\s+pick\s?-?up\s+from\s*:\s*(.+?)(?:\s+by\s+(.+))?$/) {
+            pickup = Optional(String(match.1)).nonEmpty
+            pickupBy = match.2.map(String.init).nonEmpty
+        } else {
+            status = text
+        }
+    }
+
+    init(status: String? = nil, pickup: String? = nil, pickupBy: String? = nil) {
+        self.status = status
+        self.pickup = pickup
+        self.pickupBy = pickupBy
     }
 }
 

@@ -74,7 +74,9 @@ fun BookRowCard(
                     .padding(top = rise + LsSpacing.m),
                 verticalArrangement = Arrangement.spacedBy(LsSpacing.xs),
             ) {
-                if (badge != null) Text(badge, style = LsType.caption, color = badgeColor, maxLines = 1)
+                if (badge != null) {
+                    Text(badge, style = LsType.caption, color = badgeColor, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
                 Text(title, style = LsType.bodyStrong, color = LsColors.textPrimary, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 if (byLine != null) Text(byLine, style = LsType.caption, color = LsColors.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 if (meta != null) {
