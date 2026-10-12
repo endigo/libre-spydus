@@ -3,22 +3,22 @@ package com.librespydus.app.feature.borrowed
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.librespydus.app.core.AppState
+import com.librespydus.app.core.Formatting
 import com.librespydus.app.core.LibraryBackend
 import com.librespydus.app.core.UserFacingError
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import uniffi.librespydus_core.AccountSnapshot
 import uniffi.librespydus_core.ReserveResult
 import uniffi.librespydus_core.SpydusException
 import java.time.LocalDate
 import java.util.concurrent.atomic.AtomicLong
 
-/** A screen section's load state (Borrowed's loans and reservations). */
+/** A screen section's load state (Your Books' loans and reservations). */
 sealed interface BorrowedLoad<out T> {
     data object Idle : BorrowedLoad<Nothing>
     data object Loading : BorrowedLoad<Nothing>
@@ -26,6 +26,48 @@ sealed interface BorrowedLoad<out T> {
     data class Failed(val error: UserFacingError) : BorrowedLoad<Nothing>
 
     val valueOrNull: T? get() = (this as? Loaded<T>)?.value
+}
+
+/**
+ * What "Your Books" shows for the account store's state (§5.2a): the lists come from the
+ * snapshot, saved or fresh. Only without one is there a loading or error state; a failed refresh
+ * with a snapshot keeps the lists and says so in [status].
+ */
+data class BorrowedContent(
+    val loans: BorrowedLoad<List<LoanRow>>,
+    val reservations: BorrowedLoad<ReservationSections>,
+    /** The line under the segments; null without a snapshot. */
+    val status: AccountStatus?,
+) {
+    companion object {
+        fun of(snapshot: AccountSnapshot?, refreshing: Boolean, error: UserFacingError?, today: LocalDate): BorrowedContent {
+            if (snapshot == null) {
+                val state = if (error != null && !refreshing) BorrowedLoad.Failed(error) else BorrowedLoad.Loading
+                return BorrowedContent(state, state, status = null)
+            }
+            return BorrowedContent(
+                loans = BorrowedLoad.Loaded(LoanRow.rows(snapshot.loans.items, today)),
+                reservations = BorrowedLoad.Loaded(ReservationSections.from(snapshot.reservations)),
+                status = AccountStatus.of(snapshot, refreshing, error),
+            )
+        }
+    }
+}
+
+/** The muted line under Your Books' segments, for a snapshot on screen. */
+sealed interface AccountStatus {
+    /** "Updated 12 min ago" ([Formatting.updatedText]), with a spinner while [refreshing]. */
+    data class Updated(val fetchedAtMs: Long, val refreshing: Boolean) : AccountStatus
+
+    /** The last refresh failed: "Couldn't refresh — showing saved data" + Retry. */
+    data class RefreshFailed(val error: UserFacingError) : AccountStatus
+
+    companion object {
+        const val REFRESH_FAILED = "Couldn't refresh — showing saved data"
+
+        fun of(snapshot: AccountSnapshot, refreshing: Boolean, error: UserFacingError?): AccountStatus =
+            if (error != null && !refreshing) RefreshFailed(error) else Updated(snapshot.fetchedAtMs, refreshing)
+    }
 }
 
 /** How the edit sheet ended. */
@@ -41,35 +83,29 @@ sealed interface EditOutcome {
 }
 
 /**
- * State for "Your Books": loans and reservations from the core, cancel/edit results, and which
- * rows have a mutation in flight (one at a time per row, so nothing is submitted twice).
- * Plain suspend functions over StateFlows, so it is unit-tested without Android; the screen runs
- * it through [BorrowedViewModel] so loads and mutations outlive a tab switch.
+ * State for "Your Books" around the account store ([AppState.account], which holds the loans and
+ * reservations): the segment, cancel/edit results, and which rows have a mutation in flight (one
+ * at a time per row, so nothing is submitted twice). A successful cancel takes the row out at once
+ * and every successful change refreshes the account. Plain suspend functions over StateFlows, so
+ * it is unit-tested without Android; the screen runs it through [BorrowedViewModel] so mutations
+ * outlive a tab switch.
  */
-class BorrowedModel(
-    private val appState: AppState,
-    private val today: () -> LocalDate = LocalDate::now,
-    private val now: () -> Long = System::currentTimeMillis,
-) {
+class BorrowedModel(private val appState: AppState) {
     enum class Segment(val title: String) { LOANS("Loans"), RESERVATIONS("Reservations") }
 
     /** A cancel/edit result shown as a banner above the list. */
     data class Notice(val message: String, val isError: Boolean, val id: Long = ids.incrementAndGet())
 
-    /** What a load depends on: a sign-in/out, library switch or verification makes it stale. */
-    data class ReloadKey(val backend: LibraryBackend?, val session: String?, val account: Int, val verification: Int)
+    /** What a mutation was started for: a sign-in/out or library switch meanwhile makes its result stale. */
+    data class MutationKey(val backend: LibraryBackend?, val session: String?)
 
     private val _segment = MutableStateFlow(Segment.LOANS)
-    private val _loans = MutableStateFlow<BorrowedLoad<List<LoanRow>>>(BorrowedLoad.Idle)
-    private val _reservations = MutableStateFlow<BorrowedLoad<ReservationSections>>(BorrowedLoad.Idle)
     private val _busyRows = MutableStateFlow<Set<String>>(emptySet())
     private val _notice = MutableStateFlow<Notice?>(null)
     private val _confirmingCancel = MutableStateFlow<ReservationRow?>(null)
     private val _editing = MutableStateFlow<ReservationRow?>(null)
 
     val segment: StateFlow<Segment> = _segment.asStateFlow()
-    val loans: StateFlow<BorrowedLoad<List<LoanRow>>> = _loans.asStateFlow()
-    val reservations: StateFlow<BorrowedLoad<ReservationSections>> = _reservations.asStateFlow()
 
     /** Rows with a cancel or edit in flight. */
     val busyRows: StateFlow<Set<String>> = _busyRows.asStateFlow()
@@ -87,22 +123,11 @@ class BorrowedModel(
      */
     private var deferredError: Throwable? = null
 
-    /**
-     * Bumped when a cancel or edit starts and ends: a reservations fetch that began before is out
-     * of date and is dropped (it could bring a cancelled reservation back).
-     */
-    private var reservationsVersion = 0
+    fun mutationKey() = MutationKey(appState.backend.value, appState.session.value)
 
-    /** The key of the last load started, and when the last load finished. */
-    private var lastKey: ReloadKey? = null
-    private var lastLoadAt: Long? = null
-
-    fun reloadKey() = ReloadKey(
-        appState.backend.value,
-        appState.session.value,
-        appState.accountGeneration.value,
-        appState.verificationGeneration.value,
-    )
+    /** The reservations on screen (from the account snapshot), or null before one has arrived. */
+    fun reservations(): ReservationSections? =
+        appState.account.snapshot.value?.let { ReservationSections.from(it.reservations) }
 
     fun select(segment: Segment) {
         _segment.value = segment
@@ -112,68 +137,6 @@ class BorrowedModel(
         if (id == null || _notice.value?.id == id) _notice.value = null
     }
 
-    // region Loading
-
-    /**
-     * What the screen should load as it appears: null (nothing), false (a full load: first time,
-     * or after a sign-in/out, library switch or verification), or true (a quiet refresh: back on
-     * the tab more than 30 s after the last load, e.g. after placing a reservation elsewhere).
-     */
-    fun pendingLoad(): Boolean? {
-        val key = reloadKey()
-        if (key != lastKey) return false
-        val last = lastLoadAt ?: return null
-        return if (key.session != null && now() - last > QUIET_REFRESH_MILLIS) true else null
-    }
-
-    /**
-     * Loads loans and reservations together. [keepContent] (pull to refresh, quiet refresh) leaves
-     * the current lists on screen until the new ones arrive.
-     */
-    suspend fun load(keepContent: Boolean = false) {
-        val key = reloadKey()
-        lastKey = key
-        val session = key.session
-        val backend = key.backend
-        if (session == null || backend == null) {
-            _loans.value = BorrowedLoad.Idle
-            _reservations.value = BorrowedLoad.Idle
-            _busyRows.value = emptySet()
-            lastLoadAt = now()
-            return
-        }
-        val version = reservationsVersion
-        if (!keepContent || _loans.value !is BorrowedLoad.Loaded) _loans.value = BorrowedLoad.Loading
-        if (!keepContent || _reservations.value !is BorrowedLoad.Loaded) _reservations.value = BorrowedLoad.Loading
-
-        val (loanResult, reservationResult) = coroutineScope {
-            val loans = async { capture { backend.loans(session) } }
-            val reservations = async { capture { backend.reservations(session) } }
-            loans.await() to reservations.await()
-        }
-        // A sign-out, library switch or verification while loading: the next load takes over.
-        if (reloadKey() != key) return
-        lastLoadAt = now()
-
-        val day = today()
-        apply(loanResult.map { LoanRow.rows(it.items, day) }, _loans)
-        // A lost session was just reported (sign-in sheet); don't report it twice.
-        if (appState.session.value != session || reservationsVersion != version) return
-        apply(reservationResult.map(ReservationSections::from), _reservations)
-    }
-
-    /** Reloads only the reservations, keeping the list on screen (after a cancel or edit). */
-    suspend fun reloadReservations() {
-        val key = reloadKey()
-        val session = key.session ?: return
-        val backend = key.backend ?: return
-        val version = reservationsVersion
-        val result = capture { backend.reservations(session) }
-        if (reloadKey() != key || reservationsVersion != version) return
-        apply(result.map(ReservationSections::from), _reservations)
-    }
-
-    // endregion
     // region Cancel
 
     fun isBusy(row: ReservationRow): Boolean = row.id in _busyRows.value
@@ -186,30 +149,27 @@ class BorrowedModel(
     suspend fun cancel(row: ReservationRow) {
         _confirmingCancel.value = null
         val href = row.cancelHref ?: return
-        val key = reloadKey()
+        val key = mutationKey()
         val session = key.session ?: return
         val backend = key.backend ?: return
-        if (isBusy(row) || _reservations.value.valueOrNull?.row(row.id) == null) return
+        if (isBusy(row) || reservations()?.row(row.id) == null) return
         _busyRows.value += row.id
-        reservationsVersion++
         try {
             val result = backend.cancelReservation(href, session)
-            reservationsVersion++
-            if (reloadKey() != key) return
+            if (mutationKey() != key) return
             _notice.value = Notice(
                 result.message?.trim()?.takeIf { it.isNotEmpty() }
                     ?: if (result.ok) "Reservation cancelled." else "The library didn't cancel this reservation.",
                 isError = !result.ok,
             )
             if (result.ok) {
-                _reservations.value.valueOrNull?.let { _reservations.value = BorrowedLoad.Loaded(it.removing(row.id)) }
-                reloadReservations()
+                appState.account.removeReservation(href)
+                appState.accountDidChange()
             }
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            reservationsVersion++
-            if (reloadKey() != key) return
+            if (mutationKey() != key) return
             _notice.value = Notice(report(e).message, isError = true)
         } finally {
             _busyRows.value -= row.id
@@ -222,12 +182,11 @@ class BorrowedModel(
     /** Opens the edit sheet for [row] (not while it's busy). */
     fun edit(row: ReservationRow) {
         if (row.editHref == null || isBusy(row)) return
-        reservationsVersion++
         _editing.value = row
     }
 
     /** [row]'s edit sheet finished: show the result and refresh on success. */
-    suspend fun finishEdit(outcome: EditOutcome, row: ReservationRow) {
+    fun finishEdit(outcome: EditOutcome, row: ReservationRow) {
         // A sheet that's already gone (closed while loading) can still finish late: keep only its
         // error, reported now or when the sheet on screen closes.
         if (_editing.value?.id != row.id) {
@@ -235,7 +194,6 @@ class BorrowedModel(
             return
         }
         _editing.value = null
-        reservationsVersion++
         when (outcome) {
             EditOutcome.Closed -> Unit
             is EditOutcome.Saved -> {
@@ -244,7 +202,7 @@ class BorrowedModel(
                     result.message?.trim()?.takeIf { it.isNotEmpty() } ?: "Reservation updated.",
                     isError = !result.ok,
                 )
-                if (result.ok) reloadReservations()
+                if (result.ok) appState.accountDidChange()
             }
             is EditOutcome.Failed -> deferredError = outcome.error
         }
@@ -259,13 +217,6 @@ class BorrowedModel(
 
     // endregion
 
-    private fun <T> apply(result: Result<T>, target: MutableStateFlow<BorrowedLoad<T>>) {
-        result.fold(
-            onSuccess = { target.value = BorrowedLoad.Loaded(it) },
-            onFailure = { target.value = BorrowedLoad.Failed(report(it)) },
-        )
-    }
-
     /**
      * `AppState.report`, except while the edit sheet is up: sign-in and verification are root
      * sheets, so those wait until it closes ([reportDeferredError]).
@@ -276,16 +227,7 @@ class BorrowedModel(
         return UserFacingError.from(error, appState.library.value?.name)
     }
 
-    private suspend fun <T> capture(work: suspend () -> T): Result<T> = try {
-        Result.success(work())
-    } catch (e: CancellationException) {
-        throw e
-    } catch (e: Exception) {
-        Result.failure(e)
-    }
-
     companion object {
-        const val QUIET_REFRESH_MILLIS = 30_000L
         private val ids = AtomicLong()
 
         /** Errors `AppState.report` answers with a root sheet (login, verification). */
@@ -296,39 +238,35 @@ class BorrowedModel(
 
 /**
  * Keeps [BorrowedModel] across tab switches (the tab's composition is disposed when another tab
- * is shown) and runs its work in [viewModelScope], so a load or cancel isn't cut short by leaving
- * the tab. Activity-scoped (see `BorrowedScreen`).
+ * is shown) and runs its work in [viewModelScope], so a cancel isn't cut short by leaving the
+ * tab. Activity-scoped (see `BorrowedScreen`).
  */
-class BorrowedViewModel(appState: AppState) : ViewModel() {
+class BorrowedViewModel(private val appState: AppState) : ViewModel() {
     val model = BorrowedModel(appState)
-    private val _refreshing = MutableStateFlow(false)
-    private var loadJob: Job? = null
+    private val _pulling = MutableStateFlow(false)
 
-    /** Pull to refresh is running. */
-    val refreshing: StateFlow<Boolean> = _refreshing.asStateFlow()
+    /** Pull to refresh is running (the pull indicator; background refreshes only show the status line). */
+    val refreshing: StateFlow<Boolean> = _pulling.asStateFlow()
 
-    /** The screen appeared or its inputs changed: load if needed. */
+    /** The screen appeared: refresh the account if it is stale. */
     fun appear() {
-        val keepContent = model.pendingLoad() ?: return
-        loadJob?.cancel()
-        loadJob = viewModelScope.launch { model.load(keepContent) }
+        appState.account.refresh()
     }
 
-    /** Full reload (Retry). */
-    fun reload() {
-        loadJob?.cancel()
-        loadJob = viewModelScope.launch { model.load(keepContent = false) }
+    /** Retry after a failed refresh. */
+    fun retry() {
+        appState.account.refresh(force = true)
     }
 
     fun pullToRefresh() {
-        if (_refreshing.value) return
-        _refreshing.value = true
-        loadJob?.cancel()
-        loadJob = viewModelScope.launch {
+        if (_pulling.value) return
+        val refresh = appState.account.refresh(force = true) ?: return
+        _pulling.value = true
+        viewModelScope.launch {
             try {
-                model.load(keepContent = true)
+                refresh.join()
             } finally {
-                _refreshing.value = false
+                _pulling.value = false
             }
         }
     }

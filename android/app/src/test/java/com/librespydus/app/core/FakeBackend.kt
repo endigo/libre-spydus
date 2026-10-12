@@ -1,6 +1,7 @@
 package com.librespydus.app.core
 
 import uniffi.librespydus_core.AccountLinks
+import uniffi.librespydus_core.AccountSnapshot
 import uniffi.librespydus_core.Availability
 import uniffi.librespydus_core.EditOptions
 import uniffi.librespydus_core.EditOverrides
@@ -19,6 +20,9 @@ import uniffi.librespydus_core.SearchResults
 class FakeBackend(override val origin: String = "https://canning.spydus.com") : LibraryBackend {
     var appliedCookie: String? = null
     var accountName: String = "Real Person"
+
+    /** The `fetchedAtMs` of [accountSnapshot]s. */
+    var now: () -> Long = System::currentTimeMillis
     val searches = mutableListOf<String>()
 
     override fun setVerificationCookie(cookie: String?) {
@@ -41,6 +45,8 @@ class FakeBackend(override val origin: String = "https://canning.spydus.com") : 
     override suspend fun account(session: String) = AccountLinks(accountName, null, null, null)
     override suspend fun loans(session: String) = PatronList(0, emptyList())
     override suspend fun reservations(session: String) = Reservations(PatronList(0, emptyList()), PatronList(0, emptyList()))
+    override suspend fun accountSnapshot(session: String) =
+        AccountSnapshot(DemoBackend.SNAPSHOT_VERSION, accountName, loans(session), reservations(session), now())
     override suspend fun reserveOptions(url: String, session: String): ReserveOptions = error("not public")
     override suspend fun placeReservation(url: String, session: String, xdays: String?, pickup: String?): ReserveResult = error("never POST in tests")
     override suspend fun cancelReservation(url: String, session: String): ReserveResult = error("never POST in tests")

@@ -5,6 +5,10 @@ import android.content.Intent
 /**
  * Debug launch hooks (§5.6), read from intent extras in DEBUG builds only:
  * `--es ls_origin <origin>`, `--es ls_route <route>`, `--ez ls_demo true`, `--ez ls_reset true`.
+ * For screenshots of the saved account (§5.2a), with `ls_demo` only:
+ * `--ez ls_demo_persist true` saves the demo account on the device (normally demo data stays in
+ * memory), so a cold relaunch shows it at once; `--ez ls_demo_refresh_fails true` makes every
+ * demo account refresh fail like an unreachable library.
  *
  * ```
  * adb -s emulator-5554 shell am start -n com.librespydus.app/.MainActivity \
@@ -16,6 +20,8 @@ data class LaunchOptions(
     val route: LaunchRoute? = null,
     val demo: Boolean = false,
     val reset: Boolean = false,
+    val demoPersist: Boolean = false,
+    val demoRefreshFails: Boolean = false,
 ) {
     val isEmpty: Boolean get() = origin == null && route == null && !demo && !reset
 
@@ -24,6 +30,8 @@ data class LaunchOptions(
         const val EXTRA_ROUTE = "ls_route"
         const val EXTRA_DEMO = "ls_demo"
         const val EXTRA_RESET = "ls_reset"
+        const val EXTRA_DEMO_PERSIST = "ls_demo_persist"
+        const val EXTRA_DEMO_REFRESH_FAILS = "ls_demo_refresh_fails"
 
         /** From an activity intent; always empty unless [debug]. */
         fun fromIntent(intent: Intent?, debug: Boolean): LaunchOptions {
@@ -41,6 +49,8 @@ data class LaunchOptions(
             route = (extras[EXTRA_ROUTE] as? String)?.let(LaunchRoute::parse),
             demo = flag(extras[EXTRA_DEMO]),
             reset = flag(extras[EXTRA_RESET]),
+            demoPersist = flag(extras[EXTRA_DEMO_PERSIST]),
+            demoRefreshFails = flag(extras[EXTRA_DEMO_REFRESH_FAILS]),
         )
 
         private fun flag(value: Any?): Boolean = when (value) {

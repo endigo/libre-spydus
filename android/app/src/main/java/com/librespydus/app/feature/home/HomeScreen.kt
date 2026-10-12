@@ -44,8 +44,10 @@ import kotlinx.coroutines.launch
 
 /**
  * Home (§6): library logo (→ Profile), greeting, search field (→ Search tab), "New arrivals",
- * "Popular genres" and "Your borrowed books". Shelves load concurrently, each with its own
- * skeleton and error; pull to refresh; reloads on library, verification and sign-in changes.
+ * "Popular genres" and "Your borrowed books". New arrivals loads on its own (reloads on library
+ * and verification changes); the loans shelf and greeting come from the account store's snapshot
+ * (§5.2a), shown at once and refreshed in the background when it is over two minutes old. Each
+ * shelf has its own skeleton and error; pull to refresh reloads both.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -56,9 +58,11 @@ fun HomeScreen(appState: AppState, navigator: AppNavigator, modifier: Modifier =
     val session by appState.session.collectAsStateWithLifecycle()
     val accountName by appState.accountName.collectAsStateWithLifecycle()
     val verification by appState.verificationGeneration.collectAsStateWithLifecycle()
-    val account by appState.accountGeneration.collectAsStateWithLifecycle()
+    val snapshot by appState.account.snapshot.collectAsStateWithLifecycle()
+    val accountRefreshing by appState.account.isRefreshing.collectAsStateWithLifecycle()
+    val accountError by appState.account.lastRefreshError.collectAsStateWithLifecycle()
     val arrivals by model.arrivals.collectAsStateWithLifecycle()
-    val loans by model.loans.collectAsStateWithLifecycle()
+    val loans = remember(snapshot, accountRefreshing, accountError) { HomeLoans.state(snapshot, accountRefreshing, accountError) }
     val report = remember(appState) { appState.browseReporter() }
     var refreshing by remember { mutableStateOf(false) }
 
@@ -69,11 +73,12 @@ fun HomeScreen(appState: AppState, navigator: AppNavigator, modifier: Modifier =
     }
     val libraryName = library?.name ?: "your library"
     val signedIn = session != null
-    val key = HomeReloadKey(currentBackend.origin, verification, account)
-    val context = HomeLoadContext(currentBackend, session, key, report)
+    val key = HomeReloadKey(currentBackend.origin, verification)
+    val context = HomeLoadContext(currentBackend, key, report)
 
     // Loads run in the model's scope: pushing a detail screen mid-load doesn't cancel them.
     LaunchedEffect(key) { model.viewModelScope.launch { model.loadIfNeeded(context) } }
+    LaunchedEffect(currentBackend, session) { appState.account.refresh() }
 
     PullToRefreshBox(
         isRefreshing = refreshing,
@@ -81,7 +86,9 @@ fun HomeScreen(appState: AppState, navigator: AppNavigator, modifier: Modifier =
             refreshing = true
             model.viewModelScope.launch {
                 try {
+                    val account = appState.account.refresh(force = true)
                     model.refresh(context)
+                    account?.join()
                 } finally {
                     refreshing = false
                 }
@@ -177,9 +184,7 @@ fun HomeScreen(appState: AppState, navigator: AppNavigator, modifier: Modifier =
                 } else {
                     when (val state = loans) {
                         BrowseLoadable.Idle, BrowseLoadable.Loading -> HomeShelfSkeleton()
-                        is BrowseLoadable.Failed -> HomeSectionErrorCard(state.error) {
-                            model.viewModelScope.launch { model.retryLoans(context) }
-                        }
+                        is BrowseLoadable.Failed -> HomeSectionErrorCard(state.error) { appState.account.refresh(force = true) }
                         is BrowseLoadable.Loaded -> if (state.value.isEmpty()) {
                             HomeSectionMessageCard(BrowseIcons.MenuBook, "No loans right now", "Books you borrow will show up here with their due dates.")
                         } else {

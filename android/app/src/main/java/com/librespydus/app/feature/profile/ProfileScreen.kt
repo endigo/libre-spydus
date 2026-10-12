@@ -45,6 +45,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.librespydus.app.BuildConfig
 import com.librespydus.app.core.AppState
+import com.librespydus.app.core.UserFacingError
 import com.librespydus.app.feature.onboarding.AccountCard
 import com.librespydus.app.feature.onboarding.AccountDivider
 import com.librespydus.app.feature.onboarding.AccountIcons
@@ -97,26 +98,34 @@ fun ProfileScreen(appState: AppState, navigator: AppNavigator, modifier: Modifie
     val signedIn by appState.isSignedIn.collectAsStateWithLifecycle()
     val demo by appState.isDemo.collectAsStateWithLifecycle()
     val verified by appState.hasVerificationCookie.collectAsStateWithLifecycle()
-    val accountGeneration by appState.accountGeneration.collectAsStateWithLifecycle()
+    val snapshot by appState.account.snapshot.collectAsStateWithLifecycle()
+    val accountRefreshing by appState.account.isRefreshing.collectAsStateWithLifecycle()
+    val refreshError by appState.account.lastRefreshError.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
-    var accountLoad by remember { mutableStateOf(AccountLoad.IDLE) }
+    var loadingName by remember { mutableStateOf(false) }
     var confirmingSignOut by rememberSaveable { mutableStateOf(false) }
     var confirmingClear by rememberSaveable { mutableStateOf(false) }
     val libraryName = library?.name ?: "your library"
 
-    suspend fun loadAccountName(force: Boolean = false) {
-        if (!appState.isSignedIn.value) {
-            accountLoad = AccountLoad.IDLE
-            return
+    // The name comes with the account snapshot (§5.2a). Only when a refresh failed on something
+    // unexpected before any snapshot arrived (e.g. an unreadable loans page) is the name asked for
+    // on its own with account(), which may still work.
+    val noSnapshot = snapshot == null
+    LaunchedEffect(signedIn, noSnapshot, refreshError) {
+        if (!signedIn || !noSnapshot || refreshError?.kind != UserFacingError.Kind.UNEXPECTED || appState.accountName.value != null) return@LaunchedEffect
+        loadingName = true
+        try {
+            appState.refreshAccount()
+        } finally {
+            loadingName = false
         }
-        if (!force && appState.accountName.value != null) return
-        accountLoad = AccountLoad.LOADING
-        val loaded = appState.refreshAccount()
-        // A library page without a name isn't an error: Profile then just says "Signed in".
-        accountLoad = if (!loaded && appState.isSignedIn.value && appState.accountName.value == null) AccountLoad.FAILED else AccountLoad.IDLE
     }
-
-    LaunchedEffect(accountGeneration, signedIn) { loadAccountName() }
+    // A library page without a name isn't an error: with a snapshot, Profile just says "Signed in".
+    val accountLoad = when {
+        !signedIn || accountName != null || !noSnapshot -> AccountLoad.IDLE
+        accountRefreshing || loadingName || refreshError == null -> AccountLoad.LOADING
+        else -> AccountLoad.FAILED
+    }
 
     Column(
         modifier
@@ -145,7 +154,7 @@ fun ProfileScreen(appState: AppState, navigator: AppNavigator, modifier: Modifie
                 accountName = accountName,
                 load = accountLoad,
                 libraryName = libraryName,
-                onRetry = { scope.launch { loadAccountName(force = true) } },
+                onRetry = { appState.account.refresh(force = true) },
                 onSignIn = appState::requestLogin,
                 onSignOut = { confirmingSignOut = true },
             )

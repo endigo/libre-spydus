@@ -33,9 +33,10 @@ interface SecretStore {
 class KeystoreSecretStore(
     context: Context,
     prefsName: String = PREFS_NAME,
-    private val keyAlias: String = KEY_ALIAS,
+    keyAlias: String = KEY_ALIAS,
 ) : SecretStore {
     private val prefs: SharedPreferences = context.getSharedPreferences(prefsName, Context.MODE_PRIVATE)
+    private val sealer = AesGcmSealer { KeystoreKeys.aesKey(keyAlias) }
 
     @Synchronized
     override fun get(key: String): String? {
@@ -57,45 +58,66 @@ class KeystoreSecretStore(
         prefs.edit().clear().apply()
     }
 
-    private fun encrypt(name: String, plain: String): String {
+    private fun encrypt(name: String, plain: String): String =
+        Base64.encodeToString(sealer.seal(name, plain.toByteArray()), Base64.NO_WRAP)
+
+    private fun decrypt(name: String, stored: String): String =
+        String(sealer.open(name, Base64.decode(stored, Base64.NO_WRAP)))
+
+    companion object {
+        /** Excluded from backup in res/xml (the key never leaves this device). */
+        const val PREFS_NAME = "librespydus_secure"
+        const val KEY_ALIAS = "librespydus_secrets"
+    }
+}
+
+/**
+ * AES-GCM over small values: [seal] gives iv ‖ ciphertext+tag with [associated] bound in, and
+ * [open] throws (`GeneralSecurityException`, `IllegalArgumentException`) when the bytes were
+ * changed, sealed under another key, or sealed for other associated data. The key is asked for on
+ * each call (an Android Keystore key, or a plain one in JVM tests); the cipher picks a fresh IV.
+ */
+class AesGcmSealer(private val key: () -> SecretKey) {
+    fun seal(associated: String, plain: ByteArray): ByteArray {
         val cipher = Cipher.getInstance(TRANSFORMATION)
         cipher.init(Cipher.ENCRYPT_MODE, key())
-        cipher.updateAAD(name.toByteArray())
-        val sealed = cipher.doFinal(plain.toByteArray())
-        return Base64.encodeToString(cipher.iv + sealed, Base64.NO_WRAP)
+        cipher.updateAAD(associated.toByteArray())
+        return cipher.iv + cipher.doFinal(plain)
     }
 
-    private fun decrypt(name: String, stored: String): String {
-        val bytes = Base64.decode(stored, Base64.NO_WRAP)
-        require(bytes.size > IV_BYTES) { "truncated value" }
+    fun open(associated: String, sealed: ByteArray): ByteArray {
+        require(sealed.size > IV_BYTES) { "truncated value" }
         val cipher = Cipher.getInstance(TRANSFORMATION)
-        cipher.init(Cipher.DECRYPT_MODE, key(), GCMParameterSpec(TAG_BITS, bytes, 0, IV_BYTES))
-        cipher.updateAAD(name.toByteArray())
-        return String(cipher.doFinal(bytes, IV_BYTES, bytes.size - IV_BYTES))
+        cipher.init(Cipher.DECRYPT_MODE, key(), GCMParameterSpec(TAG_BITS, sealed, 0, IV_BYTES))
+        cipher.updateAAD(associated.toByteArray())
+        return cipher.doFinal(sealed, IV_BYTES, sealed.size - IV_BYTES)
     }
 
-    private fun key(): SecretKey {
+    private companion object {
+        const val TRANSFORMATION = "AES/GCM/NoPadding"
+        const val IV_BYTES = 12
+        const val TAG_BITS = 128
+    }
+}
+
+/** Non-exportable AES-256 keys in the Android Keystore, created on first use. */
+object KeystoreKeys {
+    private const val ANDROID_KEYSTORE = "AndroidKeyStore"
+
+    /** Synchronized: two stores asking at once must not each create a key (the second would replace the first). */
+    @Synchronized
+    fun aesKey(alias: String): SecretKey {
         val keyStore = KeyStore.getInstance(ANDROID_KEYSTORE).apply { load(null) }
-        (keyStore.getKey(keyAlias, null) as? SecretKey)?.let { return it }
+        (keyStore.getKey(alias, null) as? SecretKey)?.let { return it }
         val generator = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, ANDROID_KEYSTORE)
         generator.init(
-            KeyGenParameterSpec.Builder(keyAlias, KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT)
+            KeyGenParameterSpec.Builder(alias, KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT)
                 .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
                 .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
                 .setKeySize(256)
                 .build(),
         )
         return generator.generateKey()
-    }
-
-    companion object {
-        /** Excluded from backup in res/xml (the key never leaves this device). */
-        const val PREFS_NAME = "librespydus_secure"
-        const val KEY_ALIAS = "librespydus_secrets"
-        private const val ANDROID_KEYSTORE = "AndroidKeyStore"
-        private const val TRANSFORMATION = "AES/GCM/NoPadding"
-        private const val IV_BYTES = 12
-        private const val TAG_BITS = 128
     }
 }
 

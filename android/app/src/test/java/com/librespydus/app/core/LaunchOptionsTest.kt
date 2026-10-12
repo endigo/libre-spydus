@@ -33,6 +33,16 @@ class LaunchOptionsTest {
     }
 
     @Test
+    fun parsesTheSavedAccountDemoFlags() {
+        val options = LaunchOptions.parse(mapOf("ls_demo" to true, "ls_demo_persist" to true, "ls_demo_refresh_fails" to "1"))
+        assertTrue(options.demoPersist)
+        assertTrue(options.demoRefreshFails)
+        val plain = LaunchOptions.parse(mapOf("ls_demo" to true))
+        assertFalse(plain.demoPersist)
+        assertFalse(plain.demoRefreshFails)
+    }
+
+    @Test
     fun parsesEveryRoute() {
         val cases = mapOf(
             "home" to LaunchRoute.Home,

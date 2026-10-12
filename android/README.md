@@ -100,7 +100,9 @@ Intent extras read by `MainActivity` (`core/LaunchOptions.kt`, docs §5.6):
 | `--es ls_origin <origin>` | select that library (directory entry if found, else a stand-in), skip the picker |
 | `--es ls_route <route>` | `home`, `search:<query>`, `results:<query>`, `detail:<url>`, `borrowed`, `favourites`, `profile`, `libraries`, `login`, `verify`, `gallery` |
 | `--ez ls_demo true` | demo mode, already signed in as "Test Borrower" |
-| `--ez ls_reset true` | clear persisted library, sessions, verification cookies and favourites first |
+| `--ez ls_reset true` | clear persisted library, sessions, verification cookies, favourites and saved accounts first |
+| `--ez ls_demo_persist true` | with `ls_demo`: save the demo account on the device like a real one (under its own key), so a cold relaunch shows it at once |
+| `--ez ls_demo_refresh_fails true` | with `ls_demo`: every demo account refresh fails like an unreachable library ("Couldn't refresh — showing saved data" over a saved demo account) |
 
 ```sh
 adb -s emulator-5554 shell am start -n com.librespydus.app/.MainActivity \
@@ -127,7 +129,26 @@ checks. Add `-S` to `am start` to force-stop first (launch options apply on a fr
 - `login("demo", "demo")` succeeds. Anything else gives `CredentialsRejected`.
 - Reserve, cancel and edit succeed after about 0.6 s and change the in-memory lists. Nothing is
   ever posted.
-- The demo session is kept in memory only, never in the secure store.
+- `accountSnapshot` takes about 1.5 s (so the refreshing state shows) and reflects those changes.
+- The demo session is kept in memory only, never in the secure store, and the demo account is never
+  saved on the device (unless `ls_demo_persist`, for screenshots).
+
+## Saved account (docs §5.2a)
+
+`AppState.account` (`core/AccountStore.kt`) holds the signed-in borrower's `AccountSnapshot` (name,
+loans, both reservation lists). Your Books, Home's "Your borrowed books" shelf, the Home greeting
+and Profile's name all read it; no screen calls `loans()` / `reservations()` any more.
+
+- Saved per library in `noBackupFilesDir/account-cache/<sha256(origin)>.json`
+  (`core/AccountCache.kt`): the core's `encodeAccountSnapshot` JSON sealed with AES-GCM under the
+  same Keystore key as the session store, the origin bound in. A file that doesn't decrypt or
+  decode (another `ACCOUNT_SNAPSHOT_VERSION`) is deleted. Restored before the library is shown, so
+  the first frame already has it.
+- Refreshed in the background (one at a time; a result for an older library/session is dropped):
+  at launch with a session, on sign-in, on `onStart` and when Your Books or Home opens if it is over
+  two minutes old, on pull to refresh, and after a reserve / cancel / edit.
+- A failed refresh keeps the data ("Couldn't refresh — showing saved data" + Retry on Your Books).
+  Sign-out and an expired session delete that library's file; other libraries keep theirs.
 
 Never sign in with real credentials while developing (docs §2). Account screens are built and
 screenshotted in demo mode.
@@ -141,7 +162,8 @@ screenshotted in demo mode.
 | `core/LibraryBackend.kt` | A1 | `LibraryBackend` interface (every `SpydusClient` method + `origin`) and `CoreBackend` |
 | `core/DemoBackend.kt` | A1 | `DemoBackend` + `DemoData` (assets/demo) |
 | `core/FavouritesStore.kt` | A1 | per-origin favourites, `files/favourites.json` |
-| `core/SecureStore.kt` | A1 | AES-256-GCM over SharedPreferences with an Android Keystore key (sessions, verification cookies) |
+| `core/SecureStore.kt` | A1 | AES-256-GCM over SharedPreferences with an Android Keystore key (sessions, verification cookies); `AesGcmSealer`, `KeystoreKeys` |
+| `core/AccountStore.kt`, `core/AccountCache.kt` | A5 | the saved account: background refresh, per-origin sealed snapshot files |
 | `core/LibraryStore.kt` | A1 | selected library in Preferences DataStore |
 | `core/BookRef.kt`, `core/Route.kt` | A1 | `BookRef` (+ constructors from `SearchRecord` / `PatronItem` / `RelatedItem` / `RecordDetail`), `Tab`, `Route`, `ResultsSort` |
 | `core/UserFacingError.kt`, `core/Formatting.kt` | A1 | §5.7 messages; author, due date and greeting helpers |

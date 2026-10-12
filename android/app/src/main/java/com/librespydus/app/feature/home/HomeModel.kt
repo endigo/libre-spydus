@@ -9,44 +9,37 @@ import com.librespydus.app.core.LibraryBackend
 import com.librespydus.app.core.ResultsSort
 import com.librespydus.app.core.Route
 import com.librespydus.app.core.Shelf
+import com.librespydus.app.core.UserFacingError
 import com.librespydus.app.feature.search.BrowseLoadable
 import com.librespydus.app.feature.search.BrowseReporter
 import com.librespydus.app.feature.search.SearchResultsModel
 import com.librespydus.app.feature.search.trimmedOrNull
 import com.librespydus.app.feature.search.valueOrNull
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
+import uniffi.librespydus_core.AccountSnapshot
 import uniffi.librespydus_core.PatronItem
 import java.time.LocalDate
 import java.time.chrono.IsoChronology
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-/**
- * What Home's shelves were loaded for. New arrivals are public, so only a new library or a
- * verification reloads them; the loans shelf also follows sign-in, sign-out and account changes.
- */
-data class HomeReloadKey(val origin: String, val verification: Int, val account: Int) {
-    /** The part New arrivals depends on. */
-    val publicPart: HomeReloadKey get() = copy(account = 0)
-}
+/** What "New arrivals" was loaded for: it is public, so only a new library or a verification reloads it. */
+data class HomeReloadKey(val origin: String, val verification: Int)
 
 /** Everything a Home load needs from AppState, captured when it starts. */
 class HomeLoadContext(
     val backend: LibraryBackend,
-    val session: String?,
     val key: HomeReloadKey,
     val report: BrowseReporter,
 )
 
 /**
- * Home's shelves: "New arrivals" (the first `homeShelves()` entry) and, signed in, the current
- * loans. Each loads concurrently with its own state, so one slow or failing shelf never blocks
- * the other.
+ * Home's "New arrivals" shelf (the first `homeShelves()` entry). The "Your borrowed books" shelf
+ * comes from the account store instead ([HomeLoans]), so a slow or failing account never blocks
+ * the covers, nor they it.
  */
 class HomeModel(
     shelves: List<Shelf> = CoreHelpers.homeShelves(),
@@ -57,46 +50,28 @@ class HomeModel(
     private val _arrivals = MutableStateFlow<BrowseLoadable<List<BookRef>>>(BrowseLoadable.Idle)
     val arrivals: StateFlow<BrowseLoadable<List<BookRef>>> = _arrivals.asStateFlow()
 
-    /** Idle while signed out. */
-    private val _loans = MutableStateFlow<BrowseLoadable<List<LoanShelfItem>>>(BrowseLoadable.Idle)
-    val loans: StateFlow<BrowseLoadable<List<LoanShelfItem>>> = _loans.asStateFlow()
-
-    /** Per shelf: the key it last settled for, and the key of the load in flight. */
+    /** The key the shelf last settled for, and the key of the load in flight. */
     private var arrivalsLoadedKey: HomeReloadKey? = null
     private var arrivalsLoadingKey: HomeReloadKey? = null
-    private var loansLoadedKey: HomeReloadKey? = null
-    private var loansLoadingKey: HomeReloadKey? = null
 
-    /** Per shelf, bumped by each load of it: a late answer for an older load is dropped. */
+    /** Bumped by each load: a late answer for an older load is dropped. */
     private var arrivalsGeneration = 0
-    private var loansGeneration = 0
 
     /**
-     * Loads each shelf once per key: coming back from a pushed screen or another tab doesn't
+     * Loads the shelf once per key: coming back from a pushed screen or another tab doesn't
      * reload, and a load already in flight for the key isn't started again.
      */
     suspend fun loadIfNeeded(context: HomeLoadContext) {
-        val publicKey = context.key.publicPart
-        coroutineScope {
-            if (publicKey != arrivalsLoadedKey && publicKey != arrivalsLoadingKey) launch { loadArrivals(context, keepContent = false) }
-            if (context.key != loansLoadedKey && context.key != loansLoadingKey) launch { loadLoans(context, keepContent = false) }
-        }
+        if (context.key != arrivalsLoadedKey && context.key != arrivalsLoadingKey) loadArrivals(context, keepContent = false)
     }
 
-    /** Pull to refresh: both shelves at once, keeping the current covers on screen while reloading. */
-    suspend fun refresh(context: HomeLoadContext) {
-        coroutineScope {
-            launch { loadArrivals(context, keepContent = true) }
-            launch { loadLoans(context, keepContent = true) }
-        }
-    }
+    /** Pull to refresh, keeping the current covers on screen while reloading. */
+    suspend fun refresh(context: HomeLoadContext) = loadArrivals(context, keepContent = true)
 
     suspend fun retryArrivals(context: HomeLoadContext) = loadArrivals(context, keepContent = false)
 
-    suspend fun retryLoans(context: HomeLoadContext) = loadLoans(context, keepContent = false)
-
     private suspend fun loadArrivals(context: HomeLoadContext, keepContent: Boolean) {
-        val key = context.key.publicPart
+        val key = context.key
         val shelf = arrivalsShelf ?: run {
             _arrivals.value = BrowseLoadable.Loaded(emptyList())
             arrivalsLoadedKey = key
@@ -130,35 +105,6 @@ class HomeModel(
         }
     }
 
-    private suspend fun loadLoans(context: HomeLoadContext, keepContent: Boolean) {
-        val key = context.key
-        val generation = ++loansGeneration
-        val session = context.session ?: run {
-            _loans.value = BrowseLoadable.Idle
-            loansLoadedKey = key
-            loansLoadingKey = null
-            return
-        }
-        loansLoadingKey = key
-        if (!(keepContent && _loans.value.valueOrNull != null)) _loans.value = BrowseLoadable.Loading
-        try {
-            val list = context.backend.loans(session)
-            if (generation != loansGeneration) return
-            loansLoadedKey = key
-            _loans.value = BrowseLoadable.Loaded(LoanShelfItem.make(list.items))
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            if (generation != loansGeneration) return
-            val shown = context.report(e) ?: return
-            loansLoadedKey = key
-            if (keepContent && _loans.value.valueOrNull != null) return
-            _loans.value = BrowseLoadable.Failed(shown)
-        } finally {
-            if (generation == loansGeneration) loansLoadingKey = null
-        }
-    }
-
     /** "View All" on New arrivals. */
     val arrivalsRoute: Route.Results?
         get() = arrivalsShelf?.let { Route.Results(it.query, it.sort, it.title) }
@@ -169,6 +115,19 @@ class HomeModel(
 
         fun route(genre: Genre): Route.Results = Route.Results(genre.query, ResultsSort.RELEVANCE, genre.label)
     }
+}
+
+/**
+ * "Your borrowed books" from the account store (§5.2a): the snapshot's loans (saved or fresh) as
+ * soon as there is one; a skeleton until then, or the error when the refresh failed without one.
+ */
+object HomeLoans {
+    fun state(snapshot: AccountSnapshot?, refreshing: Boolean, error: UserFacingError?, today: LocalDate = LocalDate.now()): BrowseLoadable<List<LoanShelfItem>> =
+        when {
+            snapshot != null -> BrowseLoadable.Loaded(LoanShelfItem.make(snapshot.loans.items, today))
+            error != null && !refreshing -> BrowseLoadable.Failed(error)
+            else -> BrowseLoadable.Loading
+        }
 }
 
 /** "Hello {first name}!" from `AppState.accountName`. */

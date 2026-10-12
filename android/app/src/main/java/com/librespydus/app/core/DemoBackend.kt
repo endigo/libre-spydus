@@ -12,6 +12,7 @@ import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import uniffi.librespydus_core.AccountLinks
+import uniffi.librespydus_core.AccountSnapshot
 import uniffi.librespydus_core.EditOptions
 import uniffi.librespydus_core.EditOverrides
 import uniffi.librespydus_core.ExpiryChoice
@@ -37,13 +38,18 @@ import kotlin.time.Duration.Companion.milliseconds
  * are allowed); every account call is served from [DemoData] and never touches the network.
  * `login("demo", "demo")` succeeds, anything else is `CredentialsRejected`. Mutations succeed
  * after [mutationDelay] and change the in-memory lists: cancel removes the row, reserve adds a
- * pending row, edit updates the pickup location.
+ * pending row, edit updates the pickup location. [accountSnapshot] takes [snapshotDelay], so the
+ * refreshing state is visible, and with [refreshFails] (DEBUG `ls_demo_refresh_fails`) it fails
+ * like an unreachable library.
  */
 class DemoBackend(
     private val public: LibraryBackend,
     data: DemoData,
     private val today: LocalDate = LocalDate.now(),
     private val mutationDelay: Duration = 600.milliseconds,
+    private val snapshotDelay: Duration = 1_500.milliseconds,
+    private val refreshFails: Boolean = false,
+    private val now: () -> Long = System::currentTimeMillis,
 ) : LibraryBackend {
     override val origin: String get() = public.origin
     override val isDemo: Boolean get() = true
@@ -94,6 +100,14 @@ class DemoBackend(
                 pending = PatronList(pendingItems.size.toLong(), pendingItems.toList()),
             )
         }
+    }
+
+    /** The demo account as it is now, including the in-memory reserve / cancel / edit changes. */
+    override suspend fun accountSnapshot(session: String): AccountSnapshot {
+        requireSession(session)
+        delay(snapshotDelay)
+        if (refreshFails) throw SpydusException.Network("network error: demo refresh set to fail (ls_demo_refresh_fails)")
+        return AccountSnapshot(SNAPSHOT_VERSION, accountLinks.name, loans(session), reservations(session), now())
     }
 
     override suspend fun reserveOptions(url: String, session: String): ReserveOptions {
@@ -187,6 +201,9 @@ class DemoBackend(
         const val SESSION = "demo-session"
         const val DEMO_USERNAME = "demo"
         const val DEMO_PASSWORD = "demo"
+
+        /** The core's `ACCOUNT_SNAPSHOT_VERSION` (core/src/app.rs); DemoBackendTest checks it still decodes. */
+        const val SNAPSHOT_VERSION: UInt = 1u
     }
 }
 

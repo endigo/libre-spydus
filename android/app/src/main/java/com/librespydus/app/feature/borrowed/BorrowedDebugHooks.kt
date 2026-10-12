@@ -66,7 +66,7 @@ internal object BorrowedDebugHooks {
         if (string(activity, SEGMENT)?.lowercase() == "reservations") model.select(BorrowedModel.Segment.RESERVATIONS)
         val script = script(activity) ?: return
         model.select(BorrowedModel.Segment.RESERVATIONS)
-        val sections = model.reservations.value.valueOrNull ?: return
+        val sections = model.reservations() ?: return
         val ready = sections.ready.firstOrNull { it.cancelHref != null }
         val editable = sections.pending.firstOrNull { it.editHref != null }
         when (script) {

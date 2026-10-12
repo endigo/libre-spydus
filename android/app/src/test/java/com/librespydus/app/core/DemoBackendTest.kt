@@ -9,6 +9,8 @@ import org.junit.Assert.fail
 import org.junit.Test
 import uniffi.librespydus_core.EditOverrides
 import uniffi.librespydus_core.SpydusException
+import uniffi.librespydus_core.decodeAccountSnapshot
+import uniffi.librespydus_core.encodeAccountSnapshot
 import java.io.File
 import java.time.LocalDate
 
@@ -127,6 +129,46 @@ class DemoBackendTest {
         assertTrue(result.ok)
         val updated = b.reservations(session).pending.items.first { it.irn == item.irn }
         assertEquals("WILLETTON & DISTRICT", updated.fields["Pickup location"])
+    }
+
+    @Test
+    fun theSnapshotIsTheDemoAccountAsItIsNow() = runTest {
+        val b = DemoBackend(FakeBackend(origin), demoData(), today, now = { 1_234L })
+        val session = signedIn(b)
+        val start = currentTime
+        val snapshot = b.accountSnapshot(session)
+        assertTrue(currentTime - start >= 1_500) // slow enough to see the refreshing state
+        assertEquals("Test Borrower", snapshot.accountName)
+        assertEquals(1_234L, snapshot.fetchedAtMs)
+        assertEquals(b.loans(session), snapshot.loans)
+        assertEquals(b.reservations(session), snapshot.reservations)
+
+        val ready = snapshot.reservations.ready.items.first()
+        b.cancelReservation(ready.actions.first { it.label.contains("cancel", ignoreCase = true) }.href, session)
+        assertFalse(b.accountSnapshot(session).reservations.ready.items.any { it.irn == ready.irn })
+    }
+
+    @Test
+    fun theSnapshotVersionMatchesTheCore() = runTest {
+        val b = backend()
+        val snapshot = b.accountSnapshot(signedIn(b))
+        // decodeAccountSnapshot rejects any other ACCOUNT_SNAPSHOT_VERSION.
+        assertEquals(snapshot, decodeAccountSnapshot(encodeAccountSnapshot(snapshot)))
+    }
+
+    @Test
+    fun theDebugFailureFlagFailsLikeAnUnreachableLibrary() = runTest {
+        val b = DemoBackend(FakeBackend(origin), demoData(), today, refreshFails = true)
+        try {
+            b.accountSnapshot(signedIn(b))
+            fail("expected Network")
+        } catch (_: SpydusException.Network) {
+        }
+        try {
+            b.accountSnapshot("some-real-session")
+            fail("expected NotLoggedIn")
+        } catch (_: SpydusException.NotLoggedIn) {
+        }
     }
 
     @Test

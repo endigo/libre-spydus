@@ -1,7 +1,12 @@
 package com.librespydus.app.core
 
+import java.time.Instant
 import java.time.LocalDate
+import java.time.ZoneId
+import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
+import java.time.format.TextStyle
 import java.time.temporal.ChronoUnit
 import java.util.Locale
 import uniffi.librespydus_core.parseDueDate as coreParseDueDate
@@ -73,6 +78,33 @@ object Formatting {
         parseDueDate(dueText)?.let { daysUntil(it, today) <= 3 } ?: false
 
     private val SHORT_DATE: DateTimeFormatter = DateTimeFormatter.ofPattern("d MMM", Locale.ENGLISH)
+
+    /**
+     * Your Books' "Updated …" line for an account fetched at [fetchedAtMs] (§5.2a): "Updated just
+     * now", "Updated 12 min ago", then "Updated today at 4:20 pm", "Updated yesterday at 4:20 pm",
+     * "Updated Monday at 4:20 pm" (within a week) and "Updated 3 Oct 2026 at 4:20 pm", in
+     * [locale]'s date style and the [time] style (the screen passes the device's 12/24-hour one).
+     */
+    fun updatedText(
+        fetchedAtMs: Long,
+        nowMs: Long,
+        zone: ZoneId = ZoneId.systemDefault(),
+        locale: Locale = Locale.getDefault(),
+        time: (ZonedDateTime) -> String = { DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).withLocale(locale).format(it) },
+    ): String {
+        val age = nowMs - fetchedAtMs
+        if (age < 60_000) return "Updated just now" // also a fetch "in the future" (clock moved back)
+        if (age < 3_600_000) return "Updated ${age / 60_000} min ago"
+        val fetched = Instant.ofEpochMilli(fetchedAtMs).atZone(zone)
+        val days = ChronoUnit.DAYS.between(fetched.toLocalDate(), Instant.ofEpochMilli(nowMs).atZone(zone).toLocalDate())
+        val day = when {
+            days == 0L -> "today"
+            days == 1L -> "yesterday"
+            days < 7 -> fetched.dayOfWeek.getDisplayName(TextStyle.FULL, locale)
+            else -> DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale).format(fetched)
+        }
+        return "Updated $day at ${time(fetched)}"
+    }
 
     /** Library picker sections (§6), in display order. */
     val REGION_ORDER = listOf("AU", "NZ", "US", "UK", "SG", "OTHER")
