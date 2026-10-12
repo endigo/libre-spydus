@@ -31,7 +31,9 @@ use crate::parse::reserve::{
     ManageKind, parse_edit_form, parse_manage_result, parse_reserve_form, parse_reserve_result,
     to_edit_options, to_reserve_options,
 };
-use crate::types::{AccountLinks, EditOptions, EditOverrides, ReserveOptions, ReserveResult};
+use crate::types::{
+    AccountLinks, EditOptions, EditOverrides, ReserveOptions, ReserveResult, SearchSort,
+};
 
 /// `Accept` on public reads (spydus.ts:10).
 const ACCEPT_PUBLIC: &str = "text/html,application/json";
@@ -128,8 +130,25 @@ impl Http {
 
     /// Keyword search → results HTML: one GET of [`config::SEARCH_PATH`] with the query
     /// form-urlencoded into `ENTRY` and `GQ` (the URL spydus.ts:27-49 got from discover/search).
+    /// Relevance order; [`Http::fetch_search_html_sorted`] with `Relevance` sends the same URL.
     pub async fn fetch_search_html(&self, query: &str) -> Result<String, SpydusError> {
-        let path = config::SEARCH_PATH.replace("{q}", &form_urlencode(query));
+        self.fetch_search_html_sorted(query, SearchSort::Relevance).await
+    }
+
+    /// [`Http::fetch_search_html`] in `sort` order: `SORTS` is [`config::SORTS_RELEVANCE`] or
+    /// [`config::SORTS_NEWEST`], form-urlencoded.
+    pub async fn fetch_search_html_sorted(
+        &self,
+        query: &str,
+        sort: SearchSort,
+    ) -> Result<String, SpydusError> {
+        let sorts = match sort {
+            SearchSort::Relevance => config::SORTS_RELEVANCE,
+            SearchSort::Newest => config::SORTS_NEWEST,
+        };
+        let path = config::SEARCH_PATH
+            .replace("{sorts}", &form_urlencode(sorts))
+            .replace("{q}", &form_urlencode(query));
         self.get_public(&format!("{}{path}", self.origin), "results").await
     }
 

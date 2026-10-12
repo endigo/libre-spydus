@@ -5,10 +5,13 @@
 //! [`SpydusClient`] is the FFI facade. It replicates `middleware/src/server.ts`: the origin guard
 //! on every URL argument, the `/record` fragment → bib-page resolution, concurrent reservation
 //! lists, and the same in-memory TTL caches. One client talks to one library (its origin);
-//! [`list_libraries`] is the directory the app picks that library from.
+//! [`list_libraries`] is the directory the app picks that library from. [`app`] holds the pure
+//! helpers both apps share (format, availability and due-date display, the home screen's
+//! genres and shelves), and [`user_agent`] is the User-Agent every request sends.
 
 uniffi::setup_scaffolding!();
 
+pub mod app;
 pub mod cache;
 pub mod config;
 pub mod crypto;
@@ -53,6 +56,13 @@ static IRN: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"IRN[=(]([0-9]+)").un
 #[uniffi::export(async_runtime = "tokio")]
 pub async fn list_libraries(include_test: bool) -> Result<Vec<LibraryInfo>, SpydusError> {
     directory::list_libraries(include_test).await
+}
+
+/// The User-Agent every core request sends (`config::USER_AGENT`). The app's human-verification
+/// web view must send the same one: the AWS WAF token it obtains may be tied to the UA.
+#[uniffi::export]
+pub fn user_agent() -> String {
+    config::USER_AGENT.to_owned()
 }
 
 /// The library client the native apps hold (one per selected library). Cheap to share: every
@@ -128,17 +138,29 @@ impl SpydusClient {
         *self.caches.write().unwrap_or_else(PoisonError::into_inner) = Arc::default();
     }
 
-    /// Keyword search → the first results page (server.ts:55-67). Cached 10 min per
-    /// case-insensitive query. Availability counts are not included; fetch them per format
-    /// with `availability`.
+    /// Keyword search → the first results page (server.ts:55-67), in relevance order: exactly
+    /// `search_sorted(query, Relevance)`. Cached 10 min per case-insensitive query. Availability
+    /// counts are not included; fetch them per format with `availability`. `noResults` is true
+    /// when the library found nothing.
     pub async fn search(&self, query: String) -> Result<SearchResults, SpydusError> {
+        self.search_sorted(query, SearchSort::Relevance).await
+    }
+
+    /// `search` in `sort` order: `Relevance` sends the same request as `search`; `Newest` puts
+    /// the titles most recently added to the catalogue first ("new arrivals"). Later pages
+    /// (`nextPageUrl` → `page`) keep the order. Cached 10 min per sort and case-insensitive query.
+    pub async fn search_sorted(
+        &self,
+        query: String,
+        sort: SearchSort,
+    ) -> Result<SearchResults, SpydusError> {
         let http = self.http()?;
         let q = js_trim(&query);
         if q.is_empty() {
             return Err(SpydusError::Parse { message: "missing search query".into() });
         }
-        cached(&self.caches().pages, format!("s:{}", q.to_lowercase()), LIST_TTL, async {
-            let html = http.fetch_search_html(q).await?;
+        cached(&self.caches().pages, search_key(sort, q), LIST_TTL, async {
+            let html = http.fetch_search_html_sorted(q, sort).await?;
             Ok(parse_search_results(&html, http.origin(), Some(q)))
         })
         .await
@@ -371,6 +393,15 @@ fn account_key(session: &str) -> String {
     format!("acct:{session}")
 }
 
+/// `s:{sort}:{query}` — the middleware's `s:{query}` (server.ts:59) plus the sort.
+fn search_key(sort: SearchSort, query: &str) -> String {
+    let sort = match sort {
+        SearchSort::Relevance => "relevance",
+        SearchSort::Newest => "newest",
+    };
+    format!("s:{sort}:{}", query.to_lowercase())
+}
+
 /// `{ total: 0, items: [] }` for an absent account link (server.ts:295, 314-320).
 fn empty_list() -> PatronList {
     PatronList { total: Some(0), items: Vec::new() }
@@ -480,6 +511,27 @@ mod tests {
         c.set_verification_cookie(None);
         assert_eq!(search().await.as_deref(), Some("none"));
         assert_eq!(hits(), 3);
+    }
+
+    #[tokio::test]
+    async fn search_results_are_cached_per_sort() {
+        let (origin, hits) = cookie_echo_server();
+        let c = SpydusClient::new(Some(origin));
+        let hits = || hits.load(Ordering::SeqCst);
+
+        c.search("Atomic Habits".into()).await.unwrap();
+        c.search_sorted("atomic habits".into(), SearchSort::Relevance).await.unwrap();
+        assert_eq!(hits(), 1, "search is search_sorted(Relevance), same cache entry");
+
+        c.search_sorted("atomic habits".into(), SearchSort::Newest).await.unwrap();
+        assert_eq!(hits(), 2, "another sort is another entry");
+        c.search_sorted(" ATOMIC habits ".into(), SearchSort::Newest).await.unwrap();
+        assert_eq!(hits(), 2);
+        assert!(matches!(
+            c.search_sorted(" ".into(), SearchSort::Newest).await,
+            Err(SpydusError::Parse { .. })
+        ));
+        assert_eq!(search_key(SearchSort::Newest, "Q"), "s:newest:q");
     }
 
     /// An HTTP/1.1 server on 127.0.0.1 answering every request with a one-card results page

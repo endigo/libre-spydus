@@ -23,7 +23,7 @@ use librespydus_core::parse::reserve::{
     ManageKind, parse_edit_form, parse_manage_result, parse_reserve_form, parse_reserve_result,
     to_reserve_options,
 };
-use librespydus_core::{EditOverrides, ReserveResult, SpydusError};
+use librespydus_core::{EditOverrides, ReserveResult, SearchSort, SpydusError};
 use mock::{Reply, Server, Stall};
 use rsa::pkcs8::{EncodePublicKey, LineEnding};
 use rsa::{Pkcs1v15Encrypt, RsaPrivateKey};
@@ -271,6 +271,26 @@ async fn search_gets_the_allwrkenq_url_directly() {
         assert_eq!(req.header("spydus-lang"), None);
         assert_eq!(req.header("cookie"), None, "public reads carry no cookie");
     }
+}
+
+#[tokio::test]
+async fn sorted_search_sets_sorts_and_relevance_is_unchanged() {
+    let server = Server::start(|_| Reply::ok("<html></html>"));
+    let http = Http::new(&server.origin).unwrap();
+    http.fetch_search_html_sorted("harry potter", SearchSort::Newest).await.unwrap();
+    http.fetch_search_html_sorted("harry potter", SearchSort::Relevance).await.unwrap();
+    http.fetch_search_html("harry potter").await.unwrap();
+
+    let reqs = server.requests();
+    let targets: Vec<&str> = reqs.iter().map(|r| r.target.as_str()).collect();
+    assert_eq!(
+        targets[0],
+        "/cgi-bin/spydus.exe/ENQ/OPAC/ALLWRKENQ?ENTRY=harry+potter&ENTRY_NAME=BS&ENTRY_TYPE=K&SORTS=MAIN.CREATED_DATE.DESC%5DMAIN.CREATED_TIME.DESC&GQ=harry+potter"
+    );
+    assert_eq!(targets[1], search_target("harry+potter"), "relevance = the discover/search URL");
+    assert_eq!(targets[2], targets[1], "fetch_search_html is the relevance search");
+    assert_eq!(reqs[0].query_pairs()[3], ("SORTS".to_owned(), config::SORTS_NEWEST.to_owned()));
+    assert_eq!(reqs[1].query_pairs()[3], ("SORTS".to_owned(), config::SORTS_RELEVANCE.to_owned()));
 }
 
 #[tokio::test]

@@ -60,6 +60,17 @@ const MULTI_ORIGINS = [
   "https://hutt.spydus.co.nz",
   "https://niagara.spydus.com",
 ];
+// Phase 2 (P1): each library's genuine empty result for a nonsense keyword.
+const NO_RESULTS_QUERY = "zzqxjv";
+const NO_RESULTS_ORIGINS = [
+  "https://canning.spydus.com",
+  "https://cumberlandlibraries.spydus.com",
+  "https://hutt.spydus.co.nz",
+  "https://niagara.spydus.com",
+  "https://mybcls.spydus.com",
+];
+// Canning's answer to the keyword "*": a different alert on the same "Error result" page.
+const EMPTY_SEARCH_QUERY = "*";
 
 const ROWS: Row[] = [
   // ---- public: search + availability (task B) ----
@@ -97,6 +108,24 @@ const ROWS: Row[] = [
       run: (h) => parseSearchResults(h, { origin, query: MULTI_QUERY }),
     };
   }),
+  // ---- public: the OPAC's "did not find any records" page (Phase 2, P1) ----
+  ...NO_RESULTS_ORIGINS.map((origin): Row => {
+    const stem = `multi/${new URL(origin).hostname.split(".")[0]}-no-results`;
+    return {
+      fixture: `${stem}.html`, golden: `${stem}.json`,
+      ts: "parseSearchResults", args: `html, { origin: ${q(origin)}, query: ${q(NO_RESULTS_QUERY)} }`,
+      rust: `parse::search::parse_search_results(&html, ${q(origin)}, Some(${q(NO_RESULTS_QUERY)}))`,
+      note: "genuine empty result → noResults: true, no records",
+      run: (h) => parseSearchResults(h, { origin, query: NO_RESULTS_QUERY }),
+    };
+  }),
+  {
+    fixture: "multi/canning-empty-search.html", golden: "multi/canning-empty-search.json",
+    ts: "parseSearchResults", args: `html, { query: ${q(EMPTY_SEARCH_QUERY)} }`,
+    rust: `parse::search::parse_search_results(&html, ORIGIN, Some(${q(EMPTY_SEARCH_QUERY)}))`,
+    note: "other error page (\"Please enter something in the search form.\") → noResults stays false, no records",
+    run: (h) => parseSearchResults(h, { query: EMPTY_SEARCH_QUERY }),
+  },
   // ---- synthetic: search edge cases (Wave 2, G1) ----
   {
     fixture: "synthetic/search-author-lines.html", golden: "synthetic/search-author-lines.json",
@@ -312,7 +341,10 @@ middleware/fixtures/record-recfmt.html; \`record.html\` = a guest (logged-out) B
 \`bun middleware/scripts/capture-fixtures.ts\` (cookieless public GETs). \`multi/*\` came from
 \`bun middleware/scripts/capture-fixtures.ts --multi\`: one cookieless GET per library of
 \`{origin}/cgi-bin/spydus.exe/ENQ/OPAC/ALLWRKENQ?ENTRY=harry+potter&ENTRY_NAME=BS&ENTRY_TYPE=K&SORTS=SQL_REL_GENWRK&GQ=harry+potter\`;
-each is parsed with that library's origin. \`synthetic/*\` is hand-written.
+each is parsed with that library's origin. \`multi/*-no-results.html\` (2026-10-12) are the same
+cookieless GET with the core's User-Agent for the nonsense keyword \`zzqxjv\` (\`ENTRY=zzqxjv…GQ=zzqxjv\`),
+and \`multi/canning-empty-search.html\` is that GET on Canning for the keyword \`*\` (\`ENTRY=*…GQ=*\`).
+\`synthetic/*\` is hand-written.
 
 | fixture | TS function | TS args | golden | Rust call | exercises |
 |---|---|---|---|---|---|
@@ -374,6 +406,16 @@ keeps the first.
   in transit cannot be cancelled" on its list page would report a successful cancel as refused.
 - **setId** accepts edition-level \`/OPAC/ALLENQ/<n>\` as well as \`/OPAC/ALLWRKENQ/<n>\` (first
   matching \`a[href*="/OPAC/ALL"]\` wins).
+
+## Phase 2 additions (made in the TS oracle and the Rust core alike)
+
+- **noResults** (\`search-results.ts\`). The text of every \`.alert\` element is buffered, and
+  \`noResults = records.length === 0 && /did not find any records/i.test(collapse(alertBuf))\`. The
+  wording is the OPAC's own empty result, identical on the 9 AU/NZ/US libraries surveyed
+  ("Sorry, your search for Anywhere: zzqxjv (Keywords) [in the local catalogue] did not find any
+  records."). Any other page without records (another alert, a WAF page, a changed template) keeps
+  \`noResults: false\`, so callers can tell "nothing found" from "page not understood". Every other
+  search golden gains \`"noResults": false\` and is otherwise unchanged.
 `;
 await Bun.write(new URL("MANIFEST.md", GOLDEN), manifest);
 

@@ -18,9 +18,12 @@ core/
   Cargo.toml            lib name `librespydus_core`; crate-type lib + staticlib + cdylib
   src/
     lib.rs              SpydusClient — the UniFFI facade (replicates middleware/src/server.ts)
-                        + list_libraries
+                        + list_libraries, user_agent
+    app.rs              pure helpers both apps share: digital formats, availability label,
+                        due dates, home-screen genres and shelves
     config.rs           ORIGIN, USER_AGENT, UI_COOKIES, search/login/encrypt.js paths, timeouts
     types.rs            UniFFI records (SearchResults, Availability, RecordDetail, LibraryInfo, …)
+                        + the SearchSort enum
     error.rs            SpydusError
     directory.rs        Civica's library directory → LibraryInfo (region, test-instance flag)
     fetch.rs            HTTP: search, fragments, authed GET, login, reservation wizards;
@@ -43,6 +46,9 @@ core/
 `listLibraries(includeTest)` → `[LibraryInfo]` (async): the library picker's list (see
 [Multi-library use](#multi-library-use)).
 
+`userAgent()` → `String`: the User-Agent every core request sends (`config::USER_AGENT`). Give
+the human-verification web view the same one (see [Human verification](#multi-library-use)).
+
 `SpydusClient(origin)` → one client per library; `origin` is a `LibraryInfo.origin`, and `nil`
 means Canning. The async methods each return a record or throw `SpydusError`.
 
@@ -51,6 +57,7 @@ means Canning. The async methods each return a record or throw `SpydusError`.
 | `origin()` → `String` (sync) | | |
 | `setVerificationCookie(cookie)` (sync) | | drops every cache |
 | `search(query)` | `GET /search?q=` | 10 min, case-insensitive query |
+| `searchSorted(query, sort)` | (`search` with `SORTS`) | 10 min, per sort + case-insensitive query |
 | `page(url)` | `GET /page?url=` (next/prev page) | 10 min |
 | `availability(url)` | `GET /availability?url=` (a format's `availabilityUrl`) | 60 s |
 | `record(url)` | `GET /record?url=` (`availabilityUrl` → bib page, or a direct bib URL) | 10 min |
@@ -64,6 +71,13 @@ means Canning. The async methods each return a record or throw `SpydusError`.
 
 - Every URL argument must start with `origin + "/"`, else `OriginForbidden`. Pass back the URLs
   that earlier calls returned.
+- `SearchResults.noResults` is `true` only for the OPAC's own empty result ("Sorry, your search
+  for … did not find any records."), and `records` is then empty. A page with no records and
+  `noResults: false` wasn't understood: show an error, not "no results".
+- `searchSorted(query, .relevance)` is exactly `search(query)` (same request, same cache entry).
+  `.newest` lists the titles most recently added to the catalogue first ("new arrivals"), using
+  the same order as the OPAC's own RSS feed. Later pages (`nextPageUrl` → `page`) keep the
+  order.
 - A blank session gives `NotLoggedIn`. A login the library doesn't accept gives `CredentialsRejected`.
 - Place, cancel and edit are **mutating**, so call them only after the user confirms. If one
   can't be done, the result is `ok: false` data, not an error (the middleware's HTTP 409). A
@@ -74,6 +88,24 @@ means Canning. The async methods each return a record or throw `SpydusError`.
   Swift and Kotlin see each variant with its display message (`flat_error`): Swift as
   `SpydusError.HumanVerificationRequired(message:)`, Kotlin as
   `SpydusException.HumanVerificationRequired`.
+
+### App helpers (`app.rs`)
+
+Pure functions with no I/O, so both apps label things the same way. The calibration behind each
+rule is in [`docs/rust-core-port.md` §11](../docs/rust-core-port.md).
+
+| function | returns |
+|---|---|
+| `isDigitalFormat(format)` → `Bool` | `true` for e-resources. The codes EBK, EAUD, EVID, EMAG, EMUS, EJNL and ECMC are digital, and BK, LP, TB, AB, PM, DVD, CD, MU, SE, MAG, OB, GR and KIT never are. An unknown code falls back to its label ("eBook", "Online …", "Streaming …", "Downloadable …"), unless the label names a CD, DVD, Playaway, kit and so on. Some libraries (Brazoria County) allow holds on e-copies, so check `reserveUrl` rather than assume. |
+| `availabilitySummary(availability)` → `AvailabilitySummary{available?, copies?, reserved?, label}` | The counts plus a one-line label: "2 of 3 available", "0 of 3 available", "3 copies · 1 reserved", "1 copy", "No copies", or "No copies listed" when the OPAC shows no counts (most digital formats). |
+| `parseDueDate(text)` → `SimpleDate{year, month, day}?` | A loan's `fields["Due"]` as a date. Accepts "27 Oct 2026", "27 October 2026", "27/10/2026" (day first; also `-` or `.`), "2026-10-27" and "Oct 27, 2026". Anything else, or an impossible date, is `nil`. |
+| `homeGenres()` → `[Genre{key, label, query}]` | The 8 "Popular genres" tiles: `biography`, `fiction`, `science`, `history`, `fantasy`, `crime`, `cooking`, `children`. The keys are stable ids to map to icons. Run `search(query)` on a tap. |
+| `homeShelves()` → `[Shelf{key, title, query, sort}]` | The home cover shelves, run with `searchSorted(query, sort)`: `new_arrivals` "New arrivals" (always first), `new_for_kids` "New for kids" and `new_biographies` "New biographies", all `.newest`. |
+
+`Availability.counts` keys seen on live libraries are only `copies` (item records, any status),
+`available` (on the shelf now; some libraries only, present even at 0) and `reserved`
+(reservations on the title; the other libraries, only when there are any). An `available` of 0
+reads "0 of N available", not "on loan", because the OPAC doesn't say why.
 
 ## Multi-library use
 
@@ -97,6 +129,11 @@ A session token from one library is meaningless at another, so sign in again aft
 Search builds the OPAC's work-level `ALLWRKENQ` results URL directly. It doesn't use the mobile
 discover API, which returns 404 on many NZ and US libraries.
 
+**Slow libraries.** Some catalogues take a long time on large result sets, whatever the sort.
+Brazoria County (US) took 40–60 s for any keyword with more than about 20,000 hits (for example
+`fiction`, `biography`, `crime`), against 3 s for `cooking` (11,653 hits). That is close to the
+60 s request timeout, so a home screen there can fail with `Network` (timeout) until it is retried.
+
 **Timeouts.** Every request has a 10 s connect timeout and a 60 s total timeout
 (`config::CONNECT_TIMEOUT` and `config::REQUEST_TIMEOUT`; the directory GET uses the same
 values). A timeout is `Network`, with a message naming the limit, for example
@@ -111,9 +148,9 @@ page is never parsed as data, and the core never fetches, solves or bypasses the
 The native apps follow this contract:
 
 1. When a call throws `HumanVerificationRequired`, show `client.origin() + "/"` in an in-app
-   web view (`WKWebView` / Android `WebView`). Set the web view's User-Agent to the core's
-   `config::USER_AGENT`, because the WAF token may be tied to it. That string isn't exported
-   over FFI, so copy it into the app. The **user** completes the verification there.
+   web view (`WKWebView` / Android `WebView`). Set the web view's User-Agent to `userAgent()`
+   (the core's `config::USER_AGENT`), because the WAF token may be tied to it. The **user**
+   completes the verification there.
 2. Read the `aws-waf-token` cookie for that host from the web view's cookie store
    (`WKHTTPCookieStore` / `CookieManager.getCookie(origin)`), then call
    `client.setVerificationCookie("aws-waf-token=<value>")`. The cookie is appended to the
@@ -189,6 +226,7 @@ middleware's response:
 
 ```sh
 cargo run --bin spydus-cli -- search "the midnight library"
+cargo run --bin spydus-cli -- search --sort newest "fiction"     # or --sort relevance
 cargo run --bin spydus-cli -- availability "<a format's availabilityUrl>"
 cargo run --bin spydus-cli -- record "<availabilityUrl or bib URL>"
 cargo run --bin spydus-cli -- related "<RecordDetail.related.* URL>"
@@ -212,12 +250,16 @@ core/scripts/oracle-diff.sh
 
 The script needs `cargo`, `curl` and `jq`. It uses the middleware on `http://localhost:8787`
 (override with `MW_URL`). If the middleware isn't running, the script starts it with
-`bun run src/server.ts` and stops it at the end.
+`bun run src/server.ts` on `MW_URL`'s port (`PORT=…`) and stops it at the end. The TS middleware
+has no sort parameter, so the diff covers relevance search only (`searchSorted(q, .relevance)`
+sends the same request).
 
-For three fixed queries, it diffs `/search`. It then takes the first record that has a format
+For four fixed queries, it diffs `/search`. It then takes the first record that has a format
 availability URL (BK preferred) and diffs `/availability` and `/record` on that URL, followed by
-`/related` on the record's first related panel. Both sides are normalised with `jq -S`, and the
-script prints a per-endpoint PASS/DIFF summary. It exits non-zero on any DIFF.
+`/related` on the record's first related panel. The fourth query, `zzqxjv`, is nonsense, so it
+diffs the OPAC's "did not find any records" page (`noResults: true`) and SKIPs the rest. Both
+sides are normalised with `jq -S`, and the script prints a per-endpoint PASS/DIFF summary. It
+exits non-zero on any DIFF.
 
 Two kinds of live nondeterminism are handled, and each one is shown in the PASS line:
 

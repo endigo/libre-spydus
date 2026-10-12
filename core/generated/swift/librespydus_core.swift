@@ -465,6 +465,38 @@ fileprivate final class UniffiHandleMap<T>: @unchecked Sendable {
 #if swift(>=5.8)
 @_documentation(visibility: private)
 #endif
+fileprivate struct FfiConverterUInt8: FfiConverterPrimitive {
+    typealias FfiType = UInt8
+    typealias SwiftType = UInt8
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> UInt8 {
+        return try lift(readInt(&buf))
+    }
+
+    public static func write(_ value: UInt8, into buf: inout [UInt8]) {
+        writeInt(&buf, lower(value))
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterInt32: FfiConverterPrimitive {
+    typealias FfiType = Int32
+    typealias SwiftType = Int32
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> Int32 {
+        return try lift(readInt(&buf))
+    }
+
+    public static func write(_ value: Int32, into buf: inout [UInt8]) {
+        writeInt(&buf, lower(value))
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 fileprivate struct FfiConverterInt64: FfiConverterPrimitive {
     typealias FfiType = Int64
     typealias SwiftType = Int64
@@ -646,11 +678,19 @@ public protocol SpydusClientProtocol: AnyObject, Sendable {
     func reserveOptions(url: String, session: String) async throws  -> ReserveOptions
     
     /**
-     * Keyword search → the first results page (server.ts:55-67). Cached 10 min per
-     * case-insensitive query. Availability counts are not included; fetch them per format
-     * with `availability`.
+     * Keyword search → the first results page (server.ts:55-67), in relevance order: exactly
+     * `search_sorted(query, Relevance)`. Cached 10 min per case-insensitive query. Availability
+     * counts are not included; fetch them per format with `availability`. `noResults` is true
+     * when the library found nothing.
      */
     func search(query: String) async throws  -> SearchResults
+    
+    /**
+     * `search` in `sort` order: `Relevance` sends the same request as `search`; `Newest` puts
+     * the titles most recently added to the catalogue first ("new arrivals"). Later pages
+     * (`nextPageUrl` → `page`) keep the order. Cached 10 min per sort and case-insensitive query.
+     */
+    func searchSorted(query: String, sort: SearchSort) async throws  -> SearchResults
     
     /**
      * Sets, or with `None` / a blank string clears, the cookie sent with every later request:
@@ -1013,9 +1053,10 @@ open func reserveOptions(url: String, session: String)async throws  -> ReserveOp
 }
     
     /**
-     * Keyword search → the first results page (server.ts:55-67). Cached 10 min per
-     * case-insensitive query. Availability counts are not included; fetch them per format
-     * with `availability`.
+     * Keyword search → the first results page (server.ts:55-67), in relevance order: exactly
+     * `search_sorted(query, Relevance)`. Cached 10 min per case-insensitive query. Availability
+     * counts are not included; fetch them per format with `availability`. `noResults` is true
+     * when the library found nothing.
      */
 open func search(query: String)async throws  -> SearchResults  {
     return
@@ -1023,6 +1064,27 @@ open func search(query: String)async throws  -> SearchResults  {
             rustFutureFunc: {
                 uniffi_librespydus_core_fn_method_spydusclient_search(
                         self.uniffiCloneHandle(),FfiConverterString.lower(query)
+                )
+            },
+            pollFunc: ffi_librespydus_core_rust_future_poll_rust_buffer,
+            completeFunc: ffi_librespydus_core_rust_future_complete_rust_buffer,
+            freeFunc: ffi_librespydus_core_rust_future_free_rust_buffer,
+            liftFunc: FfiConverterTypeSearchResults_lift,
+            errorHandler: FfiConverterTypeSpydusError_lift
+        )
+}
+    
+    /**
+     * `search` in `sort` order: `Relevance` sends the same request as `search`; `Newest` puts
+     * the titles most recently added to the catalogue first ("new arrivals"). Later pages
+     * (`nextPageUrl` → `page`) keep the order. Cached 10 min per sort and case-insensitive query.
+     */
+open func searchSorted(query: String, sort: SearchSort)async throws  -> SearchResults  {
+    return
+        try  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_librespydus_core_fn_method_spydusclient_search_sorted(
+                        self.uniffiCloneHandle(),FfiConverterString.lower(query),FfiConverterTypeSearchSort_lower(sort)
                 )
             },
             pollFunc: ffi_librespydus_core_rust_future_poll_rust_buffer,
@@ -1264,6 +1326,99 @@ public func FfiConverterTypeAvailability_lift(_ buf: RustBuffer) throws -> Avail
 #endif
 public func FfiConverterTypeAvailability_lower(_ value: Availability) -> RustBuffer {
     return FfiConverterTypeAvailability.lower(value)
+}
+
+
+/**
+ * A format's availability, reduced to the numbers the OPAC shows plus a short label for the UI.
+ */
+public struct AvailabilitySummary: Equatable, Hashable {
+    /**
+     * Copies on the shelf now (`counts["available"]`). Only some libraries show it.
+     */
+    public var available: Int64?
+    /**
+     * Item records for this format, whatever their status (`counts["copies"]`).
+     */
+    public var copies: Int64?
+    /**
+     * Outstanding reservations on the title (`counts["reserved"]`). Only some libraries show
+     * it, and only when there are any.
+     */
+    public var reserved: Int64?
+    /**
+     * "2 of 3 available", "0 of 3 available", "3 copies · 1 reserved", "1 copy", "No copies",
+     * or "No copies listed" when the OPAC shows no counts (as for most digital formats).
+     */
+    public var label: String
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(
+        /**
+         * Copies on the shelf now (`counts["available"]`). Only some libraries show it.
+         */available: Int64?, 
+        /**
+         * Item records for this format, whatever their status (`counts["copies"]`).
+         */copies: Int64?, 
+        /**
+         * Outstanding reservations on the title (`counts["reserved"]`). Only some libraries show
+         * it, and only when there are any.
+         */reserved: Int64?, 
+        /**
+         * "2 of 3 available", "0 of 3 available", "3 copies · 1 reserved", "1 copy", "No copies",
+         * or "No copies listed" when the OPAC shows no counts (as for most digital formats).
+         */label: String) {
+        self.available = available
+        self.copies = copies
+        self.reserved = reserved
+        self.label = label
+    }
+
+    
+
+    
+}
+
+#if compiler(>=6)
+extension AvailabilitySummary: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeAvailabilitySummary: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> AvailabilitySummary {
+        return
+            try AvailabilitySummary(
+                available: FfiConverterOptionInt64.read(from: &buf), 
+                copies: FfiConverterOptionInt64.read(from: &buf), 
+                reserved: FfiConverterOptionInt64.read(from: &buf), 
+                label: FfiConverterString.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: AvailabilitySummary, into buf: inout [UInt8]) {
+        FfiConverterOptionInt64.write(value.available, into: &buf)
+        FfiConverterOptionInt64.write(value.copies, into: &buf)
+        FfiConverterOptionInt64.write(value.reserved, into: &buf)
+        FfiConverterString.write(value.label, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeAvailabilitySummary_lift(_ buf: RustBuffer) throws -> AvailabilitySummary {
+    return try FfiConverterTypeAvailabilitySummary.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeAvailabilitySummary_lower(_ value: AvailabilitySummary) -> RustBuffer {
+    return FfiConverterTypeAvailabilitySummary.lower(value)
 }
 
 
@@ -1577,6 +1732,87 @@ public func FfiConverterTypeExpiryChoice_lift(_ buf: RustBuffer) throws -> Expir
 #endif
 public func FfiConverterTypeExpiryChoice_lower(_ value: ExpiryChoice) -> RustBuffer {
     return FfiConverterTypeExpiryChoice.lower(value)
+}
+
+
+/**
+ * A "Popular genres" tile on the home screen. Tapping it runs a relevance `search(query)`.
+ */
+public struct Genre: Equatable, Hashable {
+    /**
+     * Stable id the apps map to an icon and colour: "biography", "fiction", "science",
+     * "history", "fantasy", "crime", "cooking", "children".
+     */
+    public var key: String
+    /**
+     * Display name, e.g. "Fiction".
+     */
+    public var label: String
+    /**
+     * Keyword query for `search`.
+     */
+    public var query: String
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(
+        /**
+         * Stable id the apps map to an icon and colour: "biography", "fiction", "science",
+         * "history", "fantasy", "crime", "cooking", "children".
+         */key: String, 
+        /**
+         * Display name, e.g. "Fiction".
+         */label: String, 
+        /**
+         * Keyword query for `search`.
+         */query: String) {
+        self.key = key
+        self.label = label
+        self.query = query
+    }
+
+    
+
+    
+}
+
+#if compiler(>=6)
+extension Genre: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeGenre: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> Genre {
+        return
+            try Genre(
+                key: FfiConverterString.read(from: &buf), 
+                label: FfiConverterString.read(from: &buf), 
+                query: FfiConverterString.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: Genre, into buf: inout [UInt8]) {
+        FfiConverterString.write(value.key, into: &buf)
+        FfiConverterString.write(value.label, into: &buf)
+        FfiConverterString.write(value.query, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeGenre_lift(_ buf: RustBuffer) throws -> Genre {
+    return try FfiConverterTypeGenre.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeGenre_lower(_ value: Genre) -> RustBuffer {
+    return FfiConverterTypeGenre.lower(value)
 }
 
 
@@ -2625,6 +2861,12 @@ public struct SearchResults: Equatable, Hashable {
      * Absolute URL of the previous page, or null on the first page.
      */
     public var prevPageUrl: String?
+    /**
+     * True only for the OPAC's genuine "no records found" page ("Sorry, your search for … did
+     * not find any records."); `records` is then empty. Any other page without records (an
+     * unrecognised page) stays false.
+     */
+    public var noResults: Bool
     public var records: [SearchRecord]
 
     // Default memberwise initializers are never public by default, so we
@@ -2635,13 +2877,19 @@ public struct SearchResults: Equatable, Hashable {
          */nextPageUrl: String?, 
         /**
          * Absolute URL of the previous page, or null on the first page.
-         */prevPageUrl: String?, records: [SearchRecord]) {
+         */prevPageUrl: String?, 
+        /**
+         * True only for the OPAC's genuine "no records found" page ("Sorry, your search for … did
+         * not find any records."); `records` is then empty. Any other page without records (an
+         * unrecognised page) stays false.
+         */noResults: Bool, records: [SearchRecord]) {
         self.query = query
         self.setId = setId
         self.totalResults = totalResults
         self.showing = showing
         self.nextPageUrl = nextPageUrl
         self.prevPageUrl = prevPageUrl
+        self.noResults = noResults
         self.records = records
     }
 
@@ -2667,6 +2915,7 @@ public struct FfiConverterTypeSearchResults: FfiConverterRustBuffer {
                 showing: FfiConverterOptionTypeShowing.read(from: &buf), 
                 nextPageUrl: FfiConverterOptionString.read(from: &buf), 
                 prevPageUrl: FfiConverterOptionString.read(from: &buf), 
+                noResults: FfiConverterBool.read(from: &buf), 
                 records: FfiConverterSequenceTypeSearchRecord.read(from: &buf)
         )
     }
@@ -2678,6 +2927,7 @@ public struct FfiConverterTypeSearchResults: FfiConverterRustBuffer {
         FfiConverterOptionTypeShowing.write(value.showing, into: &buf)
         FfiConverterOptionString.write(value.nextPageUrl, into: &buf)
         FfiConverterOptionString.write(value.prevPageUrl, into: &buf)
+        FfiConverterBool.write(value.noResults, into: &buf)
         FfiConverterSequenceTypeSearchRecord.write(value.records, into: &buf)
     }
 }
@@ -2695,6 +2945,89 @@ public func FfiConverterTypeSearchResults_lift(_ buf: RustBuffer) throws -> Sear
 #endif
 public func FfiConverterTypeSearchResults_lower(_ value: SearchResults) -> RustBuffer {
     return FfiConverterTypeSearchResults.lower(value)
+}
+
+
+/**
+ * A horizontal cover shelf on the home screen: `search_sorted(query, sort)`'s first page.
+ */
+public struct Shelf: Equatable, Hashable {
+    /**
+     * Stable id: "new_arrivals", "new_for_kids", "new_biographies".
+     */
+    public var key: String
+    /**
+     * Section title, e.g. "New arrivals".
+     */
+    public var title: String
+    /**
+     * Keyword query for `search_sorted`.
+     */
+    public var query: String
+    public var sort: SearchSort
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(
+        /**
+         * Stable id: "new_arrivals", "new_for_kids", "new_biographies".
+         */key: String, 
+        /**
+         * Section title, e.g. "New arrivals".
+         */title: String, 
+        /**
+         * Keyword query for `search_sorted`.
+         */query: String, sort: SearchSort) {
+        self.key = key
+        self.title = title
+        self.query = query
+        self.sort = sort
+    }
+
+    
+
+    
+}
+
+#if compiler(>=6)
+extension Shelf: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeShelf: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> Shelf {
+        return
+            try Shelf(
+                key: FfiConverterString.read(from: &buf), 
+                title: FfiConverterString.read(from: &buf), 
+                query: FfiConverterString.read(from: &buf), 
+                sort: FfiConverterTypeSearchSort.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: Shelf, into buf: inout [UInt8]) {
+        FfiConverterString.write(value.key, into: &buf)
+        FfiConverterString.write(value.title, into: &buf)
+        FfiConverterString.write(value.query, into: &buf)
+        FfiConverterTypeSearchSort.write(value.sort, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeShelf_lift(_ buf: RustBuffer) throws -> Shelf {
+    return try FfiConverterTypeShelf.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeShelf_lower(_ value: Shelf) -> RustBuffer {
+    return FfiConverterTypeShelf.lower(value)
 }
 
 
@@ -2753,6 +3086,155 @@ public func FfiConverterTypeShowing_lift(_ buf: RustBuffer) throws -> Showing {
 public func FfiConverterTypeShowing_lower(_ value: Showing) -> RustBuffer {
     return FfiConverterTypeShowing.lower(value)
 }
+
+
+/**
+ * A calendar date without a time zone.
+ */
+public struct SimpleDate: Equatable, Hashable {
+    public var year: Int32
+    /**
+     * 1–12.
+     */
+    public var month: UInt8
+    /**
+     * 1–31, valid for the month and year.
+     */
+    public var day: UInt8
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(year: Int32, 
+        /**
+         * 1–12.
+         */month: UInt8, 
+        /**
+         * 1–31, valid for the month and year.
+         */day: UInt8) {
+        self.year = year
+        self.month = month
+        self.day = day
+    }
+
+    
+
+    
+}
+
+#if compiler(>=6)
+extension SimpleDate: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeSimpleDate: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SimpleDate {
+        return
+            try SimpleDate(
+                year: FfiConverterInt32.read(from: &buf), 
+                month: FfiConverterUInt8.read(from: &buf), 
+                day: FfiConverterUInt8.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: SimpleDate, into buf: inout [UInt8]) {
+        FfiConverterInt32.write(value.year, into: &buf)
+        FfiConverterUInt8.write(value.month, into: &buf)
+        FfiConverterUInt8.write(value.day, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeSimpleDate_lift(_ buf: RustBuffer) throws -> SimpleDate {
+    return try FfiConverterTypeSimpleDate.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeSimpleDate_lower(_ value: SimpleDate) -> RustBuffer {
+    return FfiConverterTypeSimpleDate.lower(value)
+}
+
+
+/**
+ * Result order for `SpydusClient::search_sorted`.
+ */
+
+public enum SearchSort: Equatable, Hashable {
+    
+    /**
+     * The OPAC's relevance ranking (`SORTS=SQL_REL_GENWRK`), what `search` uses.
+     */
+    case relevance
+    /**
+     * Most recently added to the catalogue first ("new arrivals"):
+     * `SORTS=MAIN.CREATED_DATE.DESC]MAIN.CREATED_TIME.DESC`, the order of the OPAC's own RSS feed.
+     */
+    case newest
+
+
+
+
+
+}
+
+#if compiler(>=6)
+extension SearchSort: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeSearchSort: FfiConverterRustBuffer {
+    typealias SwiftType = SearchSort
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SearchSort {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+        
+        case 1: return .relevance
+        
+        case 2: return .newest
+        
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: SearchSort, into buf: inout [UInt8]) {
+        switch value {
+        
+        
+        case .relevance:
+            writeInt(&buf, Int32(1))
+        
+        
+        case .newest:
+            writeInt(&buf, Int32(2))
+        
+        }
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeSearchSort_lift(_ buf: RustBuffer) throws -> SearchSort {
+    return try FfiConverterTypeSearchSort.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeSearchSort_lower(_ value: SearchSort) -> RustBuffer {
+    return FfiConverterTypeSearchSort.lower(value)
+}
+
 
 
 public 
@@ -2972,6 +3454,30 @@ fileprivate struct FfiConverterOptionTypeShowing: FfiConverterRustBuffer {
 #if swift(>=5.8)
 @_documentation(visibility: private)
 #endif
+fileprivate struct FfiConverterOptionTypeSimpleDate: FfiConverterRustBuffer {
+    typealias SwiftType = SimpleDate?
+
+    public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
+        guard let value = value else {
+            writeInt(&buf, Int8(0))
+            return
+        }
+        writeInt(&buf, Int8(1))
+        FfiConverterTypeSimpleDate.write(value, into: &buf)
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SwiftType {
+        switch try readInt(&buf) as Int8 {
+        case 0: return nil
+        case 1: return try FfiConverterTypeSimpleDate.read(from: &buf)
+        default: throw UniffiInternalError.unexpectedOptionalTag
+        }
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 fileprivate struct FfiConverterSequenceString: FfiConverterRustBuffer {
     typealias SwiftType = [String]
 
@@ -3064,6 +3570,31 @@ fileprivate struct FfiConverterSequenceTypeExpiryChoice: FfiConverterRustBuffer 
         seq.reserveCapacity(Int(len))
         for _ in 0 ..< len {
             seq.append(try FfiConverterTypeExpiryChoice.read(from: &buf))
+        }
+        return seq
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterSequenceTypeGenre: FfiConverterRustBuffer {
+    typealias SwiftType = [Genre]
+
+    public static func write(_ value: [Genre], into buf: inout [UInt8]) {
+        let len = Int32(value.count)
+        writeInt(&buf, len)
+        for item in value {
+            FfiConverterTypeGenre.write(item, into: &buf)
+        }
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> [Genre] {
+        let len: Int32 = try readInt(&buf)
+        var seq = [Genre]()
+        seq.reserveCapacity(Int(len))
+        for _ in 0 ..< len {
+            seq.append(try FfiConverterTypeGenre.read(from: &buf))
         }
         return seq
     }
@@ -3247,6 +3778,31 @@ fileprivate struct FfiConverterSequenceTypeSearchRecord: FfiConverterRustBuffer 
 #if swift(>=5.8)
 @_documentation(visibility: private)
 #endif
+fileprivate struct FfiConverterSequenceTypeShelf: FfiConverterRustBuffer {
+    typealias SwiftType = [Shelf]
+
+    public static func write(_ value: [Shelf], into buf: inout [UInt8]) {
+        let len = Int32(value.count)
+        writeInt(&buf, len)
+        for item in value {
+            FfiConverterTypeShelf.write(item, into: &buf)
+        }
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> [Shelf] {
+        let len: Int32 = try readInt(&buf)
+        var seq = [Shelf]()
+        seq.reserveCapacity(Int(len))
+        for _ in 0 ..< len {
+            seq.append(try FfiConverterTypeShelf.read(from: &buf))
+        }
+        return seq
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 fileprivate struct FfiConverterDictionaryStringInt64: FfiConverterRustBuffer {
     public static func write(_ value: [String: Int64], into buf: inout [UInt8]) {
         let len = Int32(value.count)
@@ -3364,6 +3920,96 @@ public func listLibraries(includeTest: Bool)async throws  -> [LibraryInfo]  {
             errorHandler: FfiConverterTypeSpydusError_lift
         )
 }
+/**
+ * The User-Agent every core request sends (`config::USER_AGENT`). The app's human-verification
+ * web view must send the same one: the AWS WAF token it obtains may be tied to the UA.
+ */
+public func userAgent() -> String  {
+    return try!  FfiConverterString.lift(try! rustCall() {
+        uniffiCallStatus in
+    uniffi_librespydus_core_fn_func_user_agent(uniffiCallStatus
+    )
+})
+}
+/**
+ * `availability` → its counts and a one-line label. The OPAC's availability fragment has
+ * `Label: value` pairs, and the keys seen on live libraries are only these (lower-cased):
+ *
+ * - `copies`: item records for the format, whatever their status.
+ * - `available`: copies on the shelf now. Shown by libraries such as Cumberland, Wellington,
+ * Niagara and Brazoria County, and present even when it's 0.
+ * - `reserved`: reservations queued on the title. Shown instead of `available` by libraries
+ * such as Canning and Hutt City, and only when there's at least one.
+ *
+ * An `available` of 0 is labelled "0 of N available", not "on loan": the OPAC doesn't say
+ * whether the copies are on loan, in transit, on the hold shelf or missing. Without
+ * `available`, the label only states what is known ("3 copies · 1 reserved").
+ */
+public func availabilitySummary(availability: Availability) -> AvailabilitySummary  {
+    return try!  FfiConverterTypeAvailabilitySummary_lift(try! rustCall() {
+        uniffiCallStatus in
+    uniffi_librespydus_core_fn_func_availability_summary(
+        FfiConverterTypeAvailability_lower(availability),uniffiCallStatus
+    )
+})
+}
+/**
+ * The home screen's genre tiles, in display order. Keys are stable; labels and queries may
+ * change between core versions.
+ */
+public func homeGenres() -> [Genre]  {
+    return try!  FfiConverterSequenceTypeGenre.lift(try! rustCall() {
+        uniffiCallStatus in
+    uniffi_librespydus_core_fn_func_home_genres(uniffiCallStatus
+    )
+})
+}
+/**
+ * The home screen's cover shelves, in display order. The first is always "New arrivals"
+ * (key `new_arrivals`, newest first).
+ */
+public func homeShelves() -> [Shelf]  {
+    return try!  FfiConverterSequenceTypeShelf.lift(try! rustCall() {
+        uniffiCallStatus in
+    uniffi_librespydus_core_fn_func_home_shelves(uniffiCallStatus
+    )
+})
+}
+/**
+ * Whether `format` is an e-resource the patron uses online (eBook, eAudiobook, eMagazine, …),
+ * rather than a physical item collected from a branch. Known codes decide first (the codes in
+ * `DIGITAL_CODES` are digital, those in `PHYSICAL_CODES` never are); an unknown code falls back
+ * to its label ("eBook", "Online …", "Streaming …", "Downloadable …"), unless the label names a
+ * physical carrier (CD, DVD, Playaway, kit, …).
+ *
+ * Digital formats usually have no `reserveUrl` and no branch counts, so the apps show
+ * "Available online". Some libraries do offer holds on licensed e-copies (Brazoria County
+ * gives its EBK and EAUD formats a `reserveUrl` and `available`/`copies` counts), so check
+ * `reserveUrl` rather than assume.
+ */
+public func isDigitalFormat(format: RecordFormat) -> Bool  {
+    return try!  FfiConverterBool.lift(try! rustCall() {
+        uniffiCallStatus in
+    uniffi_librespydus_core_fn_func_is_digital_format(
+        FfiConverterTypeRecordFormat_lower(format),uniffiCallStatus
+    )
+})
+}
+/**
+ * A loan's due date (`PatronItem.fields["Due"]`, e.g. "27 Oct 2026") → its date. Accepts
+ * "27 Oct 2026", "27 October 2026", day-first "27/10/2026" (also with `-` or `.`), ISO
+ * "2026-10-27" and "Oct 27, 2026"; month names in any case, as full names, three-letter
+ * abbreviations or "Sept". Whitespace is collapsed and entities decoded first. Anything else,
+ * or a date that doesn't exist (31 Feb), is `None`.
+ */
+public func parseDueDate(text: String) -> SimpleDate?  {
+    return try!  FfiConverterOptionTypeSimpleDate.lift(try! rustCall() {
+        uniffiCallStatus in
+    uniffi_librespydus_core_fn_func_parse_due_date(
+        FfiConverterString.lower(text),uniffiCallStatus
+    )
+})
+}
 
 private enum InitializationResult {
     case ok
@@ -3381,6 +4027,24 @@ private let initializationResult: InitializationResult = {
         return InitializationResult.contractVersionMismatch
     }
     if (uniffi_librespydus_core_checksum_func_list_libraries() != 28115) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_librespydus_core_checksum_func_user_agent() != 13571) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_librespydus_core_checksum_func_availability_summary() != 54331) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_librespydus_core_checksum_func_home_genres() != 26297) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_librespydus_core_checksum_func_home_shelves() != 24469) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_librespydus_core_checksum_func_is_digital_format() != 32466) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_librespydus_core_checksum_func_parse_due_date() != 38620) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_librespydus_core_checksum_method_spydusclient_account() != 60698) {
@@ -3425,7 +4089,10 @@ private let initializationResult: InitializationResult = {
     if (uniffi_librespydus_core_checksum_method_spydusclient_reserve_options() != 26217) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_librespydus_core_checksum_method_spydusclient_search() != 31269) {
+    if (uniffi_librespydus_core_checksum_method_spydusclient_search() != 20559) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_librespydus_core_checksum_method_spydusclient_search_sorted() != 26635) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_librespydus_core_checksum_method_spydusclient_set_verification_cookie() != 7) {

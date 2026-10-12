@@ -684,6 +684,18 @@ internal object IntegrityCheckingUniffiLib {
     internal fun ensureInitialized() = Unit
     external fun uniffi_librespydus_core_checksum_func_list_libraries(
     ): Int
+    external fun uniffi_librespydus_core_checksum_func_user_agent(
+    ): Int
+    external fun uniffi_librespydus_core_checksum_func_availability_summary(
+    ): Int
+    external fun uniffi_librespydus_core_checksum_func_home_genres(
+    ): Int
+    external fun uniffi_librespydus_core_checksum_func_home_shelves(
+    ): Int
+    external fun uniffi_librespydus_core_checksum_func_is_digital_format(
+    ): Int
+    external fun uniffi_librespydus_core_checksum_func_parse_due_date(
+    ): Int
     external fun uniffi_librespydus_core_checksum_method_spydusclient_account(
     ): Int
     external fun uniffi_librespydus_core_checksum_method_spydusclient_availability(
@@ -713,6 +725,8 @@ internal object IntegrityCheckingUniffiLib {
     external fun uniffi_librespydus_core_checksum_method_spydusclient_reserve_options(
     ): Int
     external fun uniffi_librespydus_core_checksum_method_spydusclient_search(
+    ): Int
+    external fun uniffi_librespydus_core_checksum_method_spydusclient_search_sorted(
     ): Int
     external fun uniffi_librespydus_core_checksum_method_spydusclient_set_verification_cookie(
     ): Int
@@ -774,10 +788,24 @@ internal object UniffiLib {
     ): Long
     external fun uniffi_librespydus_core_fn_method_spydusclient_search(`ptr`: Long,`query`: RustBuffer.ByValue,
     ): Long
+    external fun uniffi_librespydus_core_fn_method_spydusclient_search_sorted(`ptr`: Long,`query`: RustBuffer.ByValue,`sort`: RustBuffer.ByValue,
+    ): Long
     external fun uniffi_librespydus_core_fn_method_spydusclient_set_verification_cookie(`ptr`: Long,`cookie`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
     external fun uniffi_librespydus_core_fn_func_list_libraries(`includeTest`: Byte,
     ): Long
+    external fun uniffi_librespydus_core_fn_func_user_agent(uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    external fun uniffi_librespydus_core_fn_func_availability_summary(`availability`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    external fun uniffi_librespydus_core_fn_func_home_genres(uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    external fun uniffi_librespydus_core_fn_func_home_shelves(uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    external fun uniffi_librespydus_core_fn_func_is_digital_format(`format`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): Byte
+    external fun uniffi_librespydus_core_fn_func_parse_due_date(`text`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
     external fun ffi_librespydus_core_rustbuffer_alloc(`size`: Long,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     external fun ffi_librespydus_core_rustbuffer_from_bytes(`bytes`: ForeignBytes.ByValue,uniffi_out_err: UniffiRustCallStatus, 
@@ -900,6 +928,24 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
     if ((lib.uniffi_librespydus_core_checksum_func_list_libraries() and 0xFFFF) != 28115) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
+    if ((lib.uniffi_librespydus_core_checksum_func_user_agent() and 0xFFFF) != 13571) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_librespydus_core_checksum_func_availability_summary() and 0xFFFF) != 54331) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_librespydus_core_checksum_func_home_genres() and 0xFFFF) != 26297) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_librespydus_core_checksum_func_home_shelves() and 0xFFFF) != 24469) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_librespydus_core_checksum_func_is_digital_format() and 0xFFFF) != 32466) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_librespydus_core_checksum_func_parse_due_date() and 0xFFFF) != 38620) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
     if ((lib.uniffi_librespydus_core_checksum_method_spydusclient_account() and 0xFFFF) != 60698) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
@@ -942,7 +988,10 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
     if ((lib.uniffi_librespydus_core_checksum_method_spydusclient_reserve_options() and 0xFFFF) != 26217) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if ((lib.uniffi_librespydus_core_checksum_method_spydusclient_search() and 0xFFFF) != 31269) {
+    if ((lib.uniffi_librespydus_core_checksum_method_spydusclient_search() and 0xFFFF) != 20559) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_librespydus_core_checksum_method_spydusclient_search_sorted() and 0xFFFF) != 26635) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if ((lib.uniffi_librespydus_core_checksum_method_spydusclient_set_verification_cookie() and 0xFFFF) != 7) {
@@ -1146,6 +1195,56 @@ private class JavaLangRefCleanable(
     val cleanable: java.lang.ref.Cleaner.Cleanable
 ) : UniffiCleaner.Cleanable {
     override fun clean() = cleanable.clean()
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterUByte: FfiConverter<UByte, Byte> {
+    override fun lift(value: Byte): UByte {
+        return value.toUByte()
+    }
+
+    fun lift(value: Int): UByte {
+        return value.toUByte()
+    }
+
+    override fun read(buf: ByteBuffer): UByte {
+        return lift(buf.get())
+    }
+
+    override fun lower(value: UByte): Byte {
+        return value.toByte()
+    }
+
+    override fun allocationSize(value: UByte) = 1UL
+
+    override fun write(value: UByte, buf: ByteBuffer) {
+        buf.put(value.toByte())
+    }
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterInt: FfiConverter<Int, Int> {
+    override fun lift(value: Int): Int {
+        return value
+    }
+
+    override fun read(buf: ByteBuffer): Int {
+        return buf.getInt()
+    }
+
+    override fun lower(value: Int): Int {
+        return value
+    }
+
+    override fun allocationSize(value: Int) = 4UL
+
+    override fun write(value: Int, buf: ByteBuffer) {
+        buf.putInt(value)
+    }
 }
 
 /**
@@ -1442,11 +1541,19 @@ public interface SpydusClientInterface {
     suspend fun `reserveOptions`(`url`: kotlin.String, `session`: kotlin.String): ReserveOptions
     
     /**
-     * Keyword search → the first results page (server.ts:55-67). Cached 10 min per
-     * case-insensitive query. Availability counts are not included; fetch them per format
-     * with `availability`.
+     * Keyword search → the first results page (server.ts:55-67), in relevance order: exactly
+     * `search_sorted(query, Relevance)`. Cached 10 min per case-insensitive query. Availability
+     * counts are not included; fetch them per format with `availability`. `noResults` is true
+     * when the library found nothing.
      */
     suspend fun `search`(`query`: kotlin.String): SearchResults
+    
+    /**
+     * `search` in `sort` order: `Relevance` sends the same request as `search`; `Newest` puts
+     * the titles most recently added to the catalogue first ("new arrivals"). Later pages
+     * (`nextPageUrl` → `page`) keep the order. Cached 10 min per sort and case-insensitive query.
+     */
+    suspend fun `searchSorted`(`query`: kotlin.String, `sort`: SearchSort): SearchResults
     
     /**
      * Sets, or with `None` / a blank string clears, the cookie sent with every later request:
@@ -1951,9 +2058,10 @@ open class SpydusClient: Disposable, AutoCloseable, SpydusClientInterface
 
     
     /**
-     * Keyword search → the first results page (server.ts:55-67). Cached 10 min per
-     * case-insensitive query. Availability counts are not included; fetch them per format
-     * with `availability`.
+     * Keyword search → the first results page (server.ts:55-67), in relevance order: exactly
+     * `search_sorted(query, Relevance)`. Cached 10 min per case-insensitive query. Availability
+     * counts are not included; fetch them per format with `availability`. `noResults` is true
+     * when the library found nothing.
      */
     @Throws(SpydusException::class)
     @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
@@ -1964,6 +2072,34 @@ open class SpydusClient: Disposable, AutoCloseable, SpydusClientInterface
                 uniffiHandle,
                 
         FfiConverterString.lower(`query`),
+            )
+        },
+        { future, callback, continuation -> UniffiLib.ffi_librespydus_core_rust_future_poll_rust_buffer(future, callback, continuation) },
+        { future, continuation -> UniffiLib.ffi_librespydus_core_rust_future_complete_rust_buffer(future, continuation) },
+        { future -> UniffiLib.ffi_librespydus_core_rust_future_free_rust_buffer(future) },
+        // lift function
+        { FfiConverterTypeSearchResults.lift(it) },
+        // Error FFI converter
+        SpydusException.ErrorHandler,
+    )
+    }
+
+    
+    /**
+     * `search` in `sort` order: `Relevance` sends the same request as `search`; `Newest` puts
+     * the titles most recently added to the catalogue first ("new arrivals"). Later pages
+     * (`nextPageUrl` → `page`) keep the order. Cached 10 min per sort and case-insensitive query.
+     */
+    @Throws(SpydusException::class)
+    @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
+    override suspend fun `searchSorted`(`query`: kotlin.String, `sort`: SearchSort) : SearchResults {
+        return uniffiRustCallAsync(
+        callWithHandle { uniffiHandle ->
+            UniffiLib.uniffi_librespydus_core_fn_method_spydusclient_search_sorted(
+                uniffiHandle,
+                
+        FfiConverterString.lower(`query`),
+        FfiConverterTypeSearchSort.lower(`sort`),
             )
         },
         { future, callback, continuation -> UniffiLib.ffi_librespydus_core_rust_future_poll_rust_buffer(future, callback, continuation) },
@@ -2165,6 +2301,71 @@ public object FfiConverterTypeAvailability: FfiConverterRustBuffer<Availability>
             FfiConverterOptionalLong.write(value.`copies`, buf)
             FfiConverterOptionalString.write(value.`holdingsUrl`, buf)
             FfiConverterOptionalString.write(value.`recordUrl`, buf)
+    }
+}
+
+
+
+/**
+ * A format's availability, reduced to the numbers the OPAC shows plus a short label for the UI.
+ */
+data class AvailabilitySummary (
+    /**
+     * Copies on the shelf now (`counts["available"]`). Only some libraries show it.
+     */
+    var `available`: kotlin.Long?
+    , 
+    /**
+     * Item records for this format, whatever their status (`counts["copies"]`).
+     */
+    var `copies`: kotlin.Long?
+    , 
+    /**
+     * Outstanding reservations on the title (`counts["reserved"]`). Only some libraries show
+     * it, and only when there are any.
+     */
+    var `reserved`: kotlin.Long?
+    , 
+    /**
+     * "2 of 3 available", "0 of 3 available", "3 copies · 1 reserved", "1 copy", "No copies",
+     * or "No copies listed" when the OPAC shows no counts (as for most digital formats).
+     */
+    var `label`: kotlin.String
+    
+){
+    
+
+    
+
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeAvailabilitySummary: FfiConverterRustBuffer<AvailabilitySummary> {
+    override fun read(buf: ByteBuffer): AvailabilitySummary {
+        return AvailabilitySummary(
+            FfiConverterOptionalLong.read(buf),
+            FfiConverterOptionalLong.read(buf),
+            FfiConverterOptionalLong.read(buf),
+            FfiConverterString.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: AvailabilitySummary) = (
+            FfiConverterOptionalLong.allocationSize(value.`available`) +
+            FfiConverterOptionalLong.allocationSize(value.`copies`) +
+            FfiConverterOptionalLong.allocationSize(value.`reserved`) +
+            FfiConverterString.allocationSize(value.`label`)
+    )
+
+    override fun write(value: AvailabilitySummary, buf: ByteBuffer) {
+            FfiConverterOptionalLong.write(value.`available`, buf)
+            FfiConverterOptionalLong.write(value.`copies`, buf)
+            FfiConverterOptionalLong.write(value.`reserved`, buf)
+            FfiConverterString.write(value.`label`, buf)
     }
 }
 
@@ -2405,6 +2606,62 @@ public object FfiConverterTypeExpiryChoice: FfiConverterRustBuffer<ExpiryChoice>
     override fun write(value: ExpiryChoice, buf: ByteBuffer) {
             FfiConverterString.write(value.`days`, buf)
             FfiConverterString.write(value.`label`, buf)
+    }
+}
+
+
+
+/**
+ * A "Popular genres" tile on the home screen. Tapping it runs a relevance `search(query)`.
+ */
+data class Genre (
+    /**
+     * Stable id the apps map to an icon and colour: "biography", "fiction", "science",
+     * "history", "fantasy", "crime", "cooking", "children".
+     */
+    var `key`: kotlin.String
+    , 
+    /**
+     * Display name, e.g. "Fiction".
+     */
+    var `label`: kotlin.String
+    , 
+    /**
+     * Keyword query for `search`.
+     */
+    var `query`: kotlin.String
+    
+){
+    
+
+    
+
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeGenre: FfiConverterRustBuffer<Genre> {
+    override fun read(buf: ByteBuffer): Genre {
+        return Genre(
+            FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: Genre) = (
+            FfiConverterString.allocationSize(value.`key`) +
+            FfiConverterString.allocationSize(value.`label`) +
+            FfiConverterString.allocationSize(value.`query`)
+    )
+
+    override fun write(value: Genre, buf: ByteBuffer) {
+            FfiConverterString.write(value.`key`, buf)
+            FfiConverterString.write(value.`label`, buf)
+            FfiConverterString.write(value.`query`, buf)
     }
 }
 
@@ -3245,6 +3502,13 @@ data class SearchResults (
      */
     var `prevPageUrl`: kotlin.String?
     , 
+    /**
+     * True only for the OPAC's genuine "no records found" page ("Sorry, your search for … did
+     * not find any records."); `records` is then empty. Any other page without records (an
+     * unrecognised page) stays false.
+     */
+    var `noResults`: kotlin.Boolean
+    , 
     var `records`: List<SearchRecord>
     
 ){
@@ -3268,6 +3532,7 @@ public object FfiConverterTypeSearchResults: FfiConverterRustBuffer<SearchResult
             FfiConverterOptionalTypeShowing.read(buf),
             FfiConverterOptionalString.read(buf),
             FfiConverterOptionalString.read(buf),
+            FfiConverterBoolean.read(buf),
             FfiConverterSequenceTypeSearchRecord.read(buf),
         )
     }
@@ -3279,6 +3544,7 @@ public object FfiConverterTypeSearchResults: FfiConverterRustBuffer<SearchResult
             FfiConverterOptionalTypeShowing.allocationSize(value.`showing`) +
             FfiConverterOptionalString.allocationSize(value.`nextPageUrl`) +
             FfiConverterOptionalString.allocationSize(value.`prevPageUrl`) +
+            FfiConverterBoolean.allocationSize(value.`noResults`) +
             FfiConverterSequenceTypeSearchRecord.allocationSize(value.`records`)
     )
 
@@ -3289,7 +3555,68 @@ public object FfiConverterTypeSearchResults: FfiConverterRustBuffer<SearchResult
             FfiConverterOptionalTypeShowing.write(value.`showing`, buf)
             FfiConverterOptionalString.write(value.`nextPageUrl`, buf)
             FfiConverterOptionalString.write(value.`prevPageUrl`, buf)
+            FfiConverterBoolean.write(value.`noResults`, buf)
             FfiConverterSequenceTypeSearchRecord.write(value.`records`, buf)
+    }
+}
+
+
+
+/**
+ * A horizontal cover shelf on the home screen: `search_sorted(query, sort)`'s first page.
+ */
+data class Shelf (
+    /**
+     * Stable id: "new_arrivals", "new_for_kids", "new_biographies".
+     */
+    var `key`: kotlin.String
+    , 
+    /**
+     * Section title, e.g. "New arrivals".
+     */
+    var `title`: kotlin.String
+    , 
+    /**
+     * Keyword query for `search_sorted`.
+     */
+    var `query`: kotlin.String
+    , 
+    var `sort`: SearchSort
+    
+){
+    
+
+    
+
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeShelf: FfiConverterRustBuffer<Shelf> {
+    override fun read(buf: ByteBuffer): Shelf {
+        return Shelf(
+            FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterTypeSearchSort.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: Shelf) = (
+            FfiConverterString.allocationSize(value.`key`) +
+            FfiConverterString.allocationSize(value.`title`) +
+            FfiConverterString.allocationSize(value.`query`) +
+            FfiConverterTypeSearchSort.allocationSize(value.`sort`)
+    )
+
+    override fun write(value: Shelf, buf: ByteBuffer) {
+            FfiConverterString.write(value.`key`, buf)
+            FfiConverterString.write(value.`title`, buf)
+            FfiConverterString.write(value.`query`, buf)
+            FfiConverterTypeSearchSort.write(value.`sort`, buf)
     }
 }
 
@@ -3333,6 +3660,102 @@ public object FfiConverterTypeShowing: FfiConverterRustBuffer<Showing> {
             FfiConverterLong.write(value.`to`, buf)
     }
 }
+
+
+
+/**
+ * A calendar date without a time zone.
+ */
+data class SimpleDate (
+    var `year`: kotlin.Int
+    , 
+    /**
+     * 1–12.
+     */
+    var `month`: kotlin.UByte
+    , 
+    /**
+     * 1–31, valid for the month and year.
+     */
+    var `day`: kotlin.UByte
+    
+){
+    
+
+    
+
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeSimpleDate: FfiConverterRustBuffer<SimpleDate> {
+    override fun read(buf: ByteBuffer): SimpleDate {
+        return SimpleDate(
+            FfiConverterInt.read(buf),
+            FfiConverterUByte.read(buf),
+            FfiConverterUByte.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: SimpleDate) = (
+            FfiConverterInt.allocationSize(value.`year`) +
+            FfiConverterUByte.allocationSize(value.`month`) +
+            FfiConverterUByte.allocationSize(value.`day`)
+    )
+
+    override fun write(value: SimpleDate, buf: ByteBuffer) {
+            FfiConverterInt.write(value.`year`, buf)
+            FfiConverterUByte.write(value.`month`, buf)
+            FfiConverterUByte.write(value.`day`, buf)
+    }
+}
+
+
+
+/**
+ * Result order for `SpydusClient::search_sorted`.
+ */
+
+enum class SearchSort {
+    
+    /**
+     * The OPAC's relevance ranking (`SORTS=SQL_REL_GENWRK`), what `search` uses.
+     */
+    RELEVANCE,
+    /**
+     * Most recently added to the catalogue first ("new arrivals"):
+     * `SORTS=MAIN.CREATED_DATE.DESC]MAIN.CREATED_TIME.DESC`, the order of the OPAC's own RSS feed.
+     */
+    NEWEST;
+
+    
+
+
+    companion object
+}
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeSearchSort: FfiConverterRustBuffer<SearchSort> {
+    override fun read(buf: ByteBuffer) = try {
+        SearchSort.values()[buf.getInt() - 1]
+    } catch (e: IndexOutOfBoundsException) {
+        throw RuntimeException("invalid enum value, something is very wrong!!", e)
+    }
+
+    override fun allocationSize(value: SearchSort) = 4UL
+
+    override fun write(value: SearchSort, buf: ByteBuffer) {
+        buf.putInt(value.ordinal + 1)
+    }
+}
+
+
 
 
 
@@ -3540,6 +3963,38 @@ public object FfiConverterOptionalTypeShowing: FfiConverterRustBuffer<Showing?> 
 /**
  * @suppress
  */
+public object FfiConverterOptionalTypeSimpleDate: FfiConverterRustBuffer<SimpleDate?> {
+    override fun read(buf: ByteBuffer): SimpleDate? {
+        if (buf.get().toInt() == 0) {
+            return null
+        }
+        return FfiConverterTypeSimpleDate.read(buf)
+    }
+
+    override fun allocationSize(value: SimpleDate?): ULong {
+        if (value == null) {
+            return 1UL
+        } else {
+            return 1UL + FfiConverterTypeSimpleDate.allocationSize(value)
+        }
+    }
+
+    override fun write(value: SimpleDate?, buf: ByteBuffer) {
+        if (value == null) {
+            buf.put(0)
+        } else {
+            buf.put(1)
+            FfiConverterTypeSimpleDate.write(value, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
 public object FfiConverterSequenceString: FfiConverterRustBuffer<List<kotlin.String>> {
     override fun read(buf: ByteBuffer): List<kotlin.String> {
         val len = buf.getInt()
@@ -3642,6 +4097,34 @@ public object FfiConverterSequenceTypeExpiryChoice: FfiConverterRustBuffer<List<
         buf.putInt(value.size)
         value.iterator().forEach {
             FfiConverterTypeExpiryChoice.write(it, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterSequenceTypeGenre: FfiConverterRustBuffer<List<Genre>> {
+    override fun read(buf: ByteBuffer): List<Genre> {
+        val len = buf.getInt()
+        return List<Genre>(len) {
+            FfiConverterTypeGenre.read(buf)
+        }
+    }
+
+    override fun allocationSize(value: List<Genre>): ULong {
+        val sizeForLength = 4UL
+        val sizeForItems = value.map { FfiConverterTypeGenre.allocationSize(it) }.sum()
+        return sizeForLength + sizeForItems
+    }
+
+    override fun write(value: List<Genre>, buf: ByteBuffer) {
+        buf.putInt(value.size)
+        value.iterator().forEach {
+            FfiConverterTypeGenre.write(it, buf)
         }
     }
 }
@@ -3848,6 +4331,34 @@ public object FfiConverterSequenceTypeSearchRecord: FfiConverterRustBuffer<List<
 /**
  * @suppress
  */
+public object FfiConverterSequenceTypeShelf: FfiConverterRustBuffer<List<Shelf>> {
+    override fun read(buf: ByteBuffer): List<Shelf> {
+        val len = buf.getInt()
+        return List<Shelf>(len) {
+            FfiConverterTypeShelf.read(buf)
+        }
+    }
+
+    override fun allocationSize(value: List<Shelf>): ULong {
+        val sizeForLength = 4UL
+        val sizeForItems = value.map { FfiConverterTypeShelf.allocationSize(it) }.sum()
+        return sizeForLength + sizeForItems
+    }
+
+    override fun write(value: List<Shelf>, buf: ByteBuffer) {
+        buf.putInt(value.size)
+        value.iterator().forEach {
+            FfiConverterTypeShelf.write(it, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
 public object FfiConverterMapStringLong: FfiConverterRustBuffer<Map<kotlin.String, kotlin.Long>> {
     override fun read(buf: ByteBuffer): Map<kotlin.String, kotlin.Long> {
         val len = buf.getInt()
@@ -3949,5 +4460,113 @@ public object FfiConverterMapStringString: FfiConverterRustBuffer<Map<kotlin.Str
         SpydusException.ErrorHandler,
     )
     }
+
+        /**
+         * The User-Agent every core request sends (`config::USER_AGENT`). The app's human-verification
+         * web view must send the same one: the AWS WAF token it obtains may be tied to the UA.
+         */ fun `userAgent`(): kotlin.String {
+            return FfiConverterString.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_librespydus_core_fn_func_user_agent(
+    
+        _status)
+}
+    )
+    }
+    
+
+        /**
+         * `availability` → its counts and a one-line label. The OPAC's availability fragment has
+         * `Label: value` pairs, and the keys seen on live libraries are only these (lower-cased):
+         *
+         * - `copies`: item records for the format, whatever their status.
+         * - `available`: copies on the shelf now. Shown by libraries such as Cumberland, Wellington,
+         * Niagara and Brazoria County, and present even when it's 0.
+         * - `reserved`: reservations queued on the title. Shown instead of `available` by libraries
+         * such as Canning and Hutt City, and only when there's at least one.
+         *
+         * An `available` of 0 is labelled "0 of N available", not "on loan": the OPAC doesn't say
+         * whether the copies are on loan, in transit, on the hold shelf or missing. Without
+         * `available`, the label only states what is known ("3 copies · 1 reserved").
+         */ fun `availabilitySummary`(`availability`: Availability): AvailabilitySummary {
+            return FfiConverterTypeAvailabilitySummary.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_librespydus_core_fn_func_availability_summary(
+    
+        
+        FfiConverterTypeAvailability.lower(`availability`),_status)
+}
+    )
+    }
+    
+
+        /**
+         * The home screen's genre tiles, in display order. Keys are stable; labels and queries may
+         * change between core versions.
+         */ fun `homeGenres`(): List<Genre> {
+            return FfiConverterSequenceTypeGenre.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_librespydus_core_fn_func_home_genres(
+    
+        _status)
+}
+    )
+    }
+    
+
+        /**
+         * The home screen's cover shelves, in display order. The first is always "New arrivals"
+         * (key `new_arrivals`, newest first).
+         */ fun `homeShelves`(): List<Shelf> {
+            return FfiConverterSequenceTypeShelf.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_librespydus_core_fn_func_home_shelves(
+    
+        _status)
+}
+    )
+    }
+    
+
+        /**
+         * Whether `format` is an e-resource the patron uses online (eBook, eAudiobook, eMagazine, …),
+         * rather than a physical item collected from a branch. Known codes decide first (the codes in
+         * `DIGITAL_CODES` are digital, those in `PHYSICAL_CODES` never are); an unknown code falls back
+         * to its label ("eBook", "Online …", "Streaming …", "Downloadable …"), unless the label names a
+         * physical carrier (CD, DVD, Playaway, kit, …).
+         *
+         * Digital formats usually have no `reserveUrl` and no branch counts, so the apps show
+         * "Available online". Some libraries do offer holds on licensed e-copies (Brazoria County
+         * gives its EBK and EAUD formats a `reserveUrl` and `available`/`copies` counts), so check
+         * `reserveUrl` rather than assume.
+         */ fun `isDigitalFormat`(`format`: RecordFormat): kotlin.Boolean {
+            return FfiConverterBoolean.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_librespydus_core_fn_func_is_digital_format(
+    
+        
+        FfiConverterTypeRecordFormat.lower(`format`),_status)
+}
+    )
+    }
+    
+
+        /**
+         * A loan's due date (`PatronItem.fields["Due"]`, e.g. "27 Oct 2026") → its date. Accepts
+         * "27 Oct 2026", "27 October 2026", day-first "27/10/2026" (also with `-` or `.`), ISO
+         * "2026-10-27" and "Oct 27, 2026"; month names in any case, as full names, three-letter
+         * abbreviations or "Sept". Whitespace is collapsed and entities decoded first. Anything else,
+         * or a date that doesn't exist (31 Feb), is `None`.
+         */ fun `parseDueDate`(`text`: kotlin.String): SimpleDate? {
+            return FfiConverterOptionalTypeSimpleDate.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_librespydus_core_fn_func_parse_due_date(
+    
+        
+        FfiConverterString.lower(`text`),_status)
+}
+    )
+    }
+    
 
 

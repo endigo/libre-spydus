@@ -24,7 +24,34 @@ pub struct SearchResults {
     pub next_page_url: Option<String>,
     /// Absolute URL of the previous page, or null on the first page.
     pub prev_page_url: Option<String>,
+    /// True only for the OPAC's genuine "no records found" page ("Sorry, your search for … did
+    /// not find any records."); `records` is then empty. Any other page without records (an
+    /// unrecognised page) stays false.
+    pub no_results: bool,
     pub records: Vec<SearchRecord>,
+}
+
+/// Result order for `SpydusClient::search_sorted`.
+#[derive(
+    uniffi::Enum,
+    serde::Serialize,
+    serde::Deserialize,
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    Hash,
+    Default,
+)]
+#[serde(rename_all = "camelCase")]
+pub enum SearchSort {
+    /// The OPAC's relevance ranking (`SORTS=SQL_REL_GENWRK`), what `search` uses.
+    #[default]
+    Relevance,
+    /// Most recently added to the catalogue first ("new arrivals"):
+    /// `SORTS=MAIN.CREATED_DATE.DESC]MAIN.CREATED_TIME.DESC`, the order of the OPAC's own RSS feed.
+    Newest,
 }
 
 #[derive(uniffi::Record, serde::Serialize, serde::Deserialize, Debug, Clone, PartialEq, Default)]

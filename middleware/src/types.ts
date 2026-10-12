@@ -10,6 +10,11 @@ export interface SearchResults {
   nextPageUrl: string | null;
   /** Absolute URL of the previous page, or null on the first page. */
   prevPageUrl: string | null;
+  /**
+   * True only for the OPAC's genuine "no records found" page ("Sorry, your search for … did not
+   * find any records."); records is then empty. Any other page without records stays false.
+   */
+  noResults: boolean;
   records: SearchRecord[];
 }
 
