@@ -2,13 +2,13 @@ import LibreSpydusCore
 import SwiftUI
 
 /// Book detail for `Route.detail` (docs/native-apps.md §6): navy header with cover, title,
-/// availability, format chips, "Borrow Now" and the favourite bookmark; a white sheet with the
+/// availability, format chips, "Reserve" and the favourite bookmark; a white sheet with the
 /// synopsis, subject chips, details and related carousels.
 struct BookDetailView: View {
     @Environment(AppModel.self) private var app
     @State private var model: BookDetailModel
     @State private var reserveRequest: ReserveRequest?
-    /// "Borrow Now" tapped while signed out: reserve this format once signed in.
+    /// "Reserve" tapped while signed out: reserve this format once signed in.
     @State private var pendingBorrow: FormatRef?
     /// A reserve-sheet failure that needs a root sheet (sign in again, verification). It's reported
     /// after the reserve sheet is gone: two sheets can't be up at once.
@@ -16,7 +16,7 @@ struct BookDetailView: View {
 
     private static let bottomID = "detail-bottom"
 
-    /// How far the Borrow Now row reaches into the white sheet (half the button height).
+    /// How far the Reserve row reaches into the white sheet (half the button height).
     private let actionsOverlap: CGFloat = 25
 
     init(ref: BookRef) {
@@ -90,13 +90,13 @@ struct BookDetailView: View {
         }
     }
 
-    // MARK: Borrow Now + bookmark
+    // MARK: Reserve + bookmark
 
     private var actions: some View {
         let isFavourite = app.favourites.contains(id: model.ref.id)
         return HStack(spacing: Theme.Spacing.m) {
             if let format = model.reservableFormat {
-                PrimaryPillButton(title: "Borrow Now", fillsWidth: true) { borrow(format) }
+                PrimaryPillButton(title: "Reserve", fillsWidth: true) { borrow(format) }
                     .accessibilityHint(app.isSignedIn
                         ? "Reserve the \(format.displayLabel.lowercased())"
                         : "Sign in to reserve the \(format.displayLabel.lowercased())")

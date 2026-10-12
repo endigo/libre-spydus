@@ -18,7 +18,7 @@ final class BookDetailModel {
         case pending
         case searching
         case found
-        /// No confident match: availability and Borrow Now are hidden.
+        /// No confident match: availability and Reserve are hidden.
         case notFound
         case failed(UserFacingError)
     }
@@ -62,7 +62,7 @@ final class BookDetailModel {
         selectedFormatIndex.flatMap { formats.indices.contains($0) ? formats[$0] : nil }
     }
 
-    /// The format "Borrow Now" reserves: the selected one, when it has a reserve URL (physical, or
+    /// The format "Reserve" reserves: the selected one, when it has a reserve URL (physical, or
     /// digital at libraries that take ebook holds).
     var reservableFormat: FormatRef? {
         guard formatLookup == .provided || formatLookup == .found,

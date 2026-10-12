@@ -170,7 +170,7 @@ screenshotted in demo mode.
   confirms. `ReserveResult.ok == false` is data to show, not an error.
 - Use `CoreHelpers.*` (`userAgent`, `isDigitalFormat`, `availabilitySummary`, `homeGenres`,
   `homeShelves`) and `Formatting.parseDueDate`: they call the core and map to app types.
-  `LibraryBackend.searchSorted` calls the core's `searchSorted`. "Borrow Now" depends on a
+  `LibraryBackend.searchSorted` calls the core's `searchSorted`. "Reserve" depends on a
   format's `reserveUrl` only; some libraries (Brazoria County) accept holds on ebooks.
 - Tests: JVM tests in `app/src/test/` (see `FakeBackend`), device tests in `app/src/androidTest/`.
   JVM tests call the real core on the host: Gradle's `buildHostCore` task runs

@@ -120,7 +120,7 @@ Data notes (verified on real pages):
 - `RecordFormat{code,label,reserveUrl,availabilityUrl}` lives on search records only; a detail
   opened from a loan/favourite without formats may re-find them with a `search` by ISBN or title.
 - Digital formats (`isDigitalFormat`) usually have `reserveUrl == null` and no branch counts →
-  show "Available online", no pickup UI. **"Borrow Now" is keyed on `reserveUrl` alone**: some
+  show "Available online", no pickup UI. **"Reserve" is keyed on `reserveUrl` alone**: some
   libraries (Brazoria County, US) take holds on ebooks and give them `{available, copies}` counts.
 - `Availability.counts` keys are only `copies`, `available`, `reserved` (two template families:
   Reserved+Copies, e.g. Canning/Hutt; Available+Copies, e.g. Cumberland/Wellington/Niagara/Brazoria).
@@ -220,7 +220,7 @@ page → error state. Tap → detail.
 
 **Book detail (I4/A3).** Top half navy: back button, cover (detailWidth), title, "By {author}",
 availability line for the selected format (helper label, e.g. "2 of 3 available"; digital →
-"Available online"), format chips when several. Primary coral pill **"Borrow Now"** (reserve;
+"Available online"), format chips when several. Primary coral pill **"Reserve"** (the inspiration's "Borrow Now", renamed because the library places a hold rather than lending immediately;
 physical formats with `reserveUrl` only; signed out → login first) and a blue circular bookmark
 button (favourite toggle, filled when saved). Bottom: white sheet with **Synopsis** (`summary`),
 subject chips (from `details` rows like Subjects/Genre/Audience, max ~6), a compact details list

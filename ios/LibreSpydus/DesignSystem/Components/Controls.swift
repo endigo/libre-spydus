@@ -85,7 +85,7 @@ struct SearchFieldButton: View {
     }
 }
 
-/// The coral gradient pill ("Borrow Now", "Sign in").
+/// The coral gradient pill ("Reserve", "Sign in").
 struct PrimaryPillButton: View {
     let title: String
     var systemImage: String?

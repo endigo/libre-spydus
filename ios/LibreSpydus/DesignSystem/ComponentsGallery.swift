@@ -65,7 +65,7 @@ struct ComponentsGallery: View {
                         }
                         group("PrimaryPillButton · CircleIconButton", id: "buttons") {
                             HStack(spacing: Theme.Spacing.l) {
-                                PrimaryPillButton(title: "Borrow Now") {}
+                                PrimaryPillButton(title: "Reserve") {}
                                 CircleIconButton(systemImage: bookmarked ? "bookmark.fill" : "bookmark",
                                                  accessibilityLabel: "Favourite") { bookmarked.toggle() }
                             }

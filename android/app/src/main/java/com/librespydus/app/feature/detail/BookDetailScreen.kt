@@ -67,12 +67,12 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import uniffi.librespydus_core.SpydusException
 
-/** Height of the Borrow Now row; half of it reaches into the white sheet. */
+/** Height of the Reserve row; half of it reaches into the white sheet. */
 private val ActionsHeight = 52.dp
 
 /**
  * Book detail for the `detail(BookRef)` route (§6): navy header with cover, title, availability,
- * format chips, "Borrow Now" and the favourite bookmark; a white sheet with the synopsis, subject
+ * format chips, "Reserve" and the favourite bookmark; a white sheet with the synopsis, subject
  * chips, details and related carousels; the reserve sheet (demo mode only for workers).
  */
 @Composable
@@ -89,7 +89,7 @@ fun BookDetailScreen(book: BookRef, appState: AppState, navigator: AppNavigator,
     val scope = rememberCoroutineScope()
 
     var reserveRequest by remember { mutableStateOf<ReserveRequest?>(null) }
-    /** "Borrow Now" tapped while signed out: reserve this format once signed in. */
+    /** "Reserve" tapped while signed out: reserve this format once signed in. */
     var pendingBorrow by remember { mutableStateOf<FormatRef?>(null) }
     /** A reserve failure that needs a root sheet (sign in again, verification), reported once the reserve sheet is gone. */
     var deferredError by remember { mutableStateOf<Throwable?>(null) }
@@ -351,7 +351,7 @@ private fun RetryLine(text: String, onRetry: () -> Unit) {
     }
 }
 
-/** "Borrow Now" (physical/reservable formats) and the blue favourite bookmark. */
+/** "Reserve" (physical/reservable formats) and the blue favourite bookmark. */
 @Composable
 private fun DetailActions(
     reservable: FormatRef?,
@@ -371,11 +371,11 @@ private fun DetailActions(
         if (reservable != null) {
             val what = reservable.displayLabel.lowercase()
             PrimaryPillButton(
-                text = "Borrow Now",
+                text = "Reserve",
                 onClick = { onBorrow(reservable) },
                 modifier = Modifier
                     .weight(1f)
-                    .semantics { contentDescription = if (signedIn) "Borrow Now, reserve the $what" else "Borrow Now, sign in to reserve the $what" },
+                    .semantics { contentDescription = if (signedIn) "Reserve the $what" else "Sign in to reserve the $what" },
             )
         } else {
             Spacer(Modifier.weight(1f))

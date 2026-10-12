@@ -87,7 +87,7 @@ fun ComponentGallery(onClose: () -> Unit, modifier: Modifier = Modifier) {
             }
             Group("PrimaryPillButton · CircleIconButton · SecondaryPillButton") {
                 Row(horizontalArrangement = Arrangement.spacedBy(LsSpacing.l)) {
-                    PrimaryPillButton("Borrow Now", onClick = {}, modifier = Modifier.weight(1f))
+                    PrimaryPillButton("Reserve", onClick = {}, modifier = Modifier.weight(1f))
                     CircleIconButton(if (saved) LsIcons.BookmarkFilled else LsIcons.Bookmark, "Favourite", { saved = !saved })
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(LsSpacing.l)) {

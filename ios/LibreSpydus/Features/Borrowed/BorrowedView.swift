@@ -151,7 +151,7 @@ struct BorrowedView: View {
                 .frame(minHeight: Self.stateHeight)
         case .loaded(let sections) where sections.isEmpty:
             EmptyStateView(systemImage: "bookmark.circle", title: "No reservations",
-                           message: "Reserve a book with Borrow Now and follow it here until it's ready to collect.")
+                           message: "Tap Reserve on any book and follow it here until it's ready to collect.")
                 .frame(minHeight: Self.stateHeight)
         case .loaded(let sections):
             if !sections.ready.isEmpty {

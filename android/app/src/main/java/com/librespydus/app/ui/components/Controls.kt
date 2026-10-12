@@ -139,7 +139,7 @@ fun SearchField(
     }
 }
 
-/** Coral gradient pill — the primary action ("Borrow Now", "Sign in"). */
+/** Coral gradient pill — the primary action ("Reserve", "Sign in"). */
 @Composable
 fun PrimaryPillButton(
     text: String,

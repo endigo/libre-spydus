@@ -214,5 +214,5 @@ Only a person may do this. It needs the Search screen (I3) merged.
 the core's `SearchSort`); `SearchResults.isNoResults` → the core's `noResults`;
 `AppModel.webViewUserAgent` → `userAgent()`; `FormatRef.isDigital` → `isDigitalFormat(format:)`;
 `DueDate.parse` → `parseDueDate(text:)`. Use `availabilitySummary(availability:)` for availability
-labels and `homeShelves()` / `homeGenres()` for Home. "Borrow Now" depends on a format's
+labels and `homeShelves()` / `homeGenres()` for Home. "Reserve" depends on a format's
 `reserveUrl` only — some libraries (Brazoria County) accept holds on ebooks.

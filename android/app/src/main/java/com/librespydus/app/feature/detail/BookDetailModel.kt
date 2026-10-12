@@ -38,7 +38,7 @@ sealed interface FormatLookup {
     data object Searching : FormatLookup
     data object Found : FormatLookup
 
-    /** No confident match: availability and Borrow Now are hidden. */
+    /** No confident match: availability and Reserve are hidden. */
     data object NotFound : FormatLookup
     data class Failed(val error: UserFacingError) : FormatLookup
 }
@@ -70,7 +70,7 @@ data class DetailState(
     val selectedFormat: FormatRef? get() = selectedFormatIndex?.let { formats.getOrNull(it) }
 
     /**
-     * The format "Borrow Now" reserves: the selected one, when it has a reserve URL (physical, or
+     * The format "Reserve" reserves: the selected one, when it has a reserve URL (physical, or
      * digital at libraries that take ebook holds).
      */
     val reservableFormat: FormatRef?
