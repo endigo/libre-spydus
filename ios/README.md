@@ -160,17 +160,11 @@ Use demo mode to build and screenshot every account screen. Never sign in to a r
   `init(url:)`. `updated(with: RecordDetail)` switches to the stable `bookmarkUrl` and keeps the
   favourite key.
 
-### Pending core additions (`TODO(P)`)
+### Core helpers in use
 
-The P task adds `noResults`, `SearchSort` + `searchSorted`, `userAgent()` and the §4.1 helpers.
-Until they're merged, the app uses local fallbacks, each marked `TODO(P)`
-(`grep -rn "TODO(P)" ios/LibreSpydus`):
-
-| fallback | after P merges |
-|---|---|
-| `CoreBackend.searchSorted` calls `search` | call `client.searchSorted(query:sort:)` |
-| `SearchSortOption` (app enum) | map it to the core's `SearchSort` |
-| `SearchResults.isNoResults` | return `noResults` |
-| `AppModel.webViewUserAgent` (a copy of `config::USER_AGENT`) | return `userAgent()` |
-| `FormatRef.isDigital` heuristic | call `isDigitalFormat(format:)` |
-| `DueDate.parse` | call `parseDueDate(text:)` |
+`CoreBackend.searchSorted` → `client.searchSorted(query:sort:)` (`SearchSortOption.core` maps to
+the core's `SearchSort`); `SearchResults.isNoResults` → the core's `noResults`;
+`AppModel.webViewUserAgent` → `userAgent()`; `FormatRef.isDigital` → `isDigitalFormat(format:)`;
+`DueDate.parse` → `parseDueDate(text:)`. Use `availabilitySummary(availability:)` for availability
+labels and `homeShelves()` / `homeGenres()` for Home. "Borrow Now" depends on a format's
+`reserveUrl` only — some libraries (Brazoria County) accept holds on ebooks.

@@ -1,4 +1,5 @@
 import Foundation
+import LibreSpydusCore
 
 /// Small display helpers shared by every screen.
 enum Formatting {
@@ -58,18 +59,10 @@ enum Formatting {
 
 /// Due dates as the library writes them ("27 Oct 2026").
 enum DueDate {
-    /// TODO(P): use the core's `parseDueDate(text:)` once it lands (docs/native-apps.md §4.1).
+    /// The core's `parseDueDate` ("27 Oct 2026", "27/10/2026", "2026-10-27", …) as a local date.
     static func parse(_ text: String, calendar: Calendar = .current) -> Date? {
-        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        for format in ["d MMM yyyy", "dd MMM yyyy", "d MMMM yyyy", "d/M/yyyy", "yyyy-MM-dd"] {
-            let formatter = DateFormatter()
-            formatter.locale = Locale(identifier: "en_AU_POSIX")
-            formatter.calendar = calendar
-            formatter.timeZone = calendar.timeZone
-            formatter.dateFormat = format
-            if let date = formatter.date(from: trimmed) { return date }
-        }
-        return nil
+        guard let day = parseDueDate(text: text) else { return nil }
+        return calendar.date(from: DateComponents(year: Int(day.year), month: Int(day.month), day: Int(day.day)))
     }
 
     /// The library's own format, "27 Oct 2026" (used by demo data).

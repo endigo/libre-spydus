@@ -19,7 +19,7 @@ protocol LibraryBackend: Sendable {
     // MARK: Public reads (GET only)
 
     func search(query: String) async throws -> SearchResults
-    /// TODO(P): `CoreBackend` falls back to `search(query:)` until the core's `searchSorted` lands.
+    /// `search` with an explicit order (`.relevance` is the same request as `search`).
     func searchSorted(query: String, sort: SearchSortOption) async throws -> SearchResults
     /// Next/previous page: pass `SearchResults.nextPageUrl` / `prevPageUrl`.
     func page(url: String) async throws -> SearchResults
@@ -44,10 +44,7 @@ protocol LibraryBackend: Sendable {
     func editReservation(url: String, session: String, overrides: EditOverrides) async throws -> ReserveResult
 }
 
-/// Result ordering for search / `Route.results`.
-///
-/// TODO(P): when the core's `enum SearchSort { relevance, newest }` lands (§4.1), add
-/// `var core: SearchSort` here and call `client.searchSorted(query:sort:)` from `CoreBackend`.
+/// Result ordering for search / `Route.results`; `newest` = most recently added to the catalogue.
 enum SearchSortOption: String, CaseIterable, Codable, Hashable, Identifiable, Sendable {
     case relevance
     case newest
@@ -59,16 +56,24 @@ enum SearchSortOption: String, CaseIterable, Codable, Hashable, Identifiable, Se
         case .newest: "Newest"
         }
     }
+
+    /// The core's `SearchSort`.
+    var core: SearchSort {
+        switch self {
+        case .relevance: .relevance
+        case .newest: .newest
+        }
+    }
+
+    init(_ sort: SearchSort) {
+        switch sort {
+        case .relevance: self = .relevance
+        case .newest: self = .newest
+        }
+    }
 }
 
 extension SearchResults {
     /// True only for a genuine "no records found" page; an unrecognised page should be an error.
-    ///
-    /// TODO(P): return the core's `noResults` once it lands (§4.1). Until then: no records and
-    /// a total of zero, or no total and no paging.
-    var isNoResults: Bool {
-        guard records.isEmpty else { return false }
-        if let totalResults { return totalResults == 0 }
-        return nextPageUrl == nil && prevPageUrl == nil
-    }
+    var isNoResults: Bool { noResults }
 }

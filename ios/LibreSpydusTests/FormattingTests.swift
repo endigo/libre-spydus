@@ -49,12 +49,13 @@ struct FormattingTests {
         #expect(!UserFacingError(SpydusError.NotLoggedIn(message: ""), libraryName: "C").canRetry)
     }
 
-    @Test func noResultsFallback() {
-        let empty = SearchResults(query: "zzz", setId: nil, totalResults: 0, showing: nil, nextPageUrl: nil,
-                                  prevPageUrl: nil, records: [])
+    @Test func noResultsComesFromTheCore() {
+        let empty = SearchResults(query: "zzz", setId: nil, totalResults: nil, showing: nil, nextPageUrl: nil,
+                                  prevPageUrl: nil, noResults: true, records: [])
         #expect(empty.isNoResults)
-        let some = SearchResults(query: "q", setId: nil, totalResults: 1, showing: nil, nextPageUrl: nil,
-                                 prevPageUrl: nil, records: [TestData.searchRecord])
-        #expect(!some.isNoResults)
+        // An unrecognised page (no records, no "did not find" message) is not "no results".
+        let unrecognised = SearchResults(query: "q", setId: nil, totalResults: nil, showing: nil,
+                                         nextPageUrl: nil, prevPageUrl: nil, noResults: false, records: [])
+        #expect(!unrecognised.isNoResults)
     }
 }

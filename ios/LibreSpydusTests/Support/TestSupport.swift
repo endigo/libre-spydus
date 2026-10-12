@@ -17,7 +17,8 @@ final class FakeBackend: LibraryBackend, @unchecked Sendable {
     init(origin: String = "https://canning.spydus.com", records: [SearchRecord] = [TestData.searchRecord]) {
         self.origin = origin
         searchResult = SearchResults(query: "q", setId: "1", totalResults: Int64(records.count), showing: nil,
-                                     nextPageUrl: nil, prevPageUrl: nil, records: records)
+                                     nextPageUrl: nil, prevPageUrl: nil, noResults: records.isEmpty,
+                                     records: records)
     }
 
     var verificationCookies: [String?] { lock.withLock { _verificationCookies } }

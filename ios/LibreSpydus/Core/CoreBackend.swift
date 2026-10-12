@@ -23,8 +23,7 @@ final class CoreBackend: LibraryBackend {
     }
 
     func searchSorted(query: String, sort: SearchSortOption) async throws -> SearchResults {
-        // TODO(P): try await client.searchSorted(query: query, sort: sort.core)
-        try await client.search(query: query)
+        try await client.searchSorted(query: query, sort: sort.core)
     }
 
     func page(url: String) async throws -> SearchResults {

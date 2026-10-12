@@ -125,16 +125,9 @@ struct FormatRef: Codable, Hashable, Sendable {
 
     var displayLabel: String { label.nonEmpty ?? code }
 
-    /// Ebook/eaudio/streaming: "Available online", no pickup UI.
-    ///
-    /// TODO(P): return the core's `isDigitalFormat(format: record)` once it lands (§4.1).
-    var isDigital: Bool {
-        let digitalCodes: Set<String> = ["EBK", "EAUD", "EAU", "EMAG", "EVID", "EMUS", "STRM", "EJNL", "ONLINE"]
-        if digitalCodes.contains(code.uppercased()) { return true }
-        let text = (label ?? "").lowercased()
-        return ["ebook", "eaudio", "e-book", "e-audio", "emagazine", "online", "digital", "streaming"]
-            .contains { text.contains($0) }
-    }
+    /// Ebook/eaudio/streaming (the core's `isDigitalFormat`). Whether it can be reserved is
+    /// decided by `reserveUrl` alone: some libraries (e.g. Brazoria County) take holds on ebooks.
+    var isDigital: Bool { isDigitalFormat(format: record) }
 }
 
 extension Optional where Wrapped == String {

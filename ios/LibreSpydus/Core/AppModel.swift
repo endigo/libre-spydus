@@ -225,12 +225,9 @@ final class AppModel {
         verificationGeneration += 1
     }
 
-    /// User-Agent for the verification web view: the WAF token may be tied to it.
-    ///
-    /// TODO(P): return the core's `userAgent()` once it lands (docs/native-apps.md §4.1); this is
-    /// a copy of `core/src/config.rs` `USER_AGENT`.
-    static let webViewUserAgent =
-        "Mozilla/5.0 (Linux; Android 14; Pixel 10 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Mobile Safari/537.36"
+    /// User-Agent for the verification web view: the WAF token may be tied to it, so it is the
+    /// core's own (`userAgent()`).
+    static let webViewUserAgent = LibreSpydusCore.userAgent()
 
     // MARK: Navigation
 
