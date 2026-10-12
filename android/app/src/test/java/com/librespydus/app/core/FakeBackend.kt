@@ -49,7 +49,7 @@ class FakeBackend(override val origin: String = "https://canning.spydus.com") : 
 
     companion object {
         fun results(vararg records: SearchRecord) =
-            SearchResults("q", "1", records.size.toLong(), null, null, null, records.toList())
+            SearchResults("q", "1", records.size.toLong(), null, null, null, records.isEmpty(), records.toList())
 
         fun sampleRecord(origin: String = "https://canning.spydus.com") = SearchRecord(
             rank = 1,

@@ -168,7 +168,11 @@ screenshotted in demo mode.
   (`statusBarsPadding()`), because the detail screen's navy header extends under the status bar.
 - Mutations (`placeReservation`, `cancelReservation`, `editReservation`) run only after the user
   confirms. `ReserveResult.ok == false` is data to show, not an error.
-- Use `CoreHelpers.*` rather than the core functions P is adding. They are marked `TODO(P)` and
-  get rewired to the core after P merges. The same goes for `LibraryBackend.searchSorted`, which
-  falls back to `search`.
+- Use `CoreHelpers.*` (`userAgent`, `isDigitalFormat`, `availabilitySummary`, `homeGenres`,
+  `homeShelves`) and `Formatting.parseDueDate`: they call the core and map to app types.
+  `LibraryBackend.searchSorted` calls the core's `searchSorted`. "Borrow Now" depends on a
+  format's `reserveUrl` only; some libraries (Brazoria County) accept holds on ebooks.
 - Tests: JVM tests in `app/src/test/` (see `FakeBackend`), device tests in `app/src/androidTest/`.
+  JVM tests call the real core on the host: Gradle's `buildHostCore` task runs
+  `cargo build --lib` in `core/` (first run ~1–2 min) and points JNA at `core/target/debug`
+  (or `$CARGO_TARGET_DIR/debug`).

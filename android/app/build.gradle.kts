@@ -101,9 +101,30 @@ dependencies {
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
+    // JVM unit tests call the real core on the host: the plain JNA jar carries the desktop
+    // libjnidispatch, and the core's host dylib comes from `buildHostCore` below.
+    testImplementation(libs.jna)
 
     androidTestImplementation(libs.androidx.test.core)
     androidTestImplementation(libs.androidx.test.runner)
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.kotlinx.coroutines.test)
+}
+
+// JVM unit tests load the core's host library (liblibrespydus_core.dylib / .so) through JNA, so
+// helpers such as parseDueDate or availabilitySummary run the real Rust code there too.
+val coreDir: File = rootProject.file("../core")
+val hostCoreLibDir: String = (providers.environmentVariable("CARGO_TARGET_DIR").orNull
+    ?.let { File(it) } ?: File(coreDir, "target")).resolve("debug").path
+val cargo: String = listOf(System.getenv("HOME") + "/.cargo/bin/cargo").firstOrNull { File(it).canExecute() } ?: "cargo"
+
+val buildHostCore by tasks.registering(Exec::class) {
+    description = "Builds the core's host library for JVM unit tests (cargo build --lib)."
+    workingDir = coreDir
+    commandLine(cargo, "build", "--lib", "--quiet")
+}
+
+tasks.withType<Test>().configureEach {
+    dependsOn(buildHostCore)
+    systemProperty("jna.library.path", hostCoreLibDir)
 }

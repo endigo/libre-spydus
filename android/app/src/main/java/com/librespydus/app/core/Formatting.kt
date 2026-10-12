@@ -4,6 +4,7 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 import java.util.Locale
+import uniffi.librespydus_core.parseDueDate as coreParseDueDate
 
 /** Display helpers shared by the screens. Pure functions; unit-testable on the JVM. */
 object Formatting {
@@ -40,19 +41,11 @@ object Formatting {
         else first.lowercase().replaceFirstChar { it.titlecase(Locale.getDefault()) }
     }
 
-    private val OPAC_DATES = listOf("d MMM yyyy", "dd MMM yyyy", "d MMMM yyyy", "dd/MM/yyyy", "d/M/yyyy", "yyyy-MM-dd")
-        .map { DateTimeFormatter.ofPattern(it, Locale.ENGLISH) }
-
-    /**
-     * A loan's `Due` field ("27 Oct 2026") as a date.
-     * TODO(P): delegate to the core's `parseDueDate(text)` once it lands (§4.1).
-     */
+    /** A loan's `Due` field ("27 Oct 2026", "27/10/2026", …) as a date, via the core's `parseDueDate`. */
     fun parseDueDate(text: String?): LocalDate? {
         val trimmed = text?.trim()?.takeIf { it.isNotEmpty() } ?: return null
-        for (format in OPAC_DATES) {
-            runCatching { return LocalDate.parse(trimmed, format) }
-        }
-        return null
+        val day = coreParseDueDate(trimmed) ?: return null
+        return LocalDate.of(day.year, day.month.toInt(), day.day.toInt())
     }
 
     /** Whole days from [today] to [due]; negative when overdue. */

@@ -33,10 +33,7 @@ interface LibraryBackend {
 
     suspend fun search(query: String): SearchResults
 
-    /**
-     * TODO(P): becomes the core's `searchSorted(query, sort)` once P lands; until then every
-     * implementation falls back to relevance-ordered [search].
-     */
+    /** [search] with an explicit order ([ResultsSort.RELEVANCE] is the same request as [search]). */
     suspend fun searchSorted(query: String, sort: ResultsSort): SearchResults
 
     suspend fun page(url: String): SearchResults
@@ -67,8 +64,7 @@ class CoreBackend(private val client: SpydusClient) : LibraryBackend {
 
     override suspend fun search(query: String) = io { client.search(query) }
 
-    // TODO(P): `client.searchSorted(query, sort.toCore())` once SearchSort/searchSorted exist.
-    override suspend fun searchSorted(query: String, sort: ResultsSort) = search(query)
+    override suspend fun searchSorted(query: String, sort: ResultsSort) = io { client.searchSorted(query, sort.toCore()) }
 
     override suspend fun page(url: String) = io { client.page(url) }
     override suspend fun availability(url: String) = io { client.availability(url) }

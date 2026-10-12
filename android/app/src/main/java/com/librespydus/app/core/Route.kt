@@ -1,6 +1,7 @@
 package com.librespydus.app.core
 
 import kotlinx.serialization.Serializable
+import uniffi.librespydus_core.SearchSort
 
 /** The five tabs (§5.5); [SEARCH] is the raised centre button. Each tab keeps its own stack. */
 enum class Tab(val label: String) {
@@ -12,14 +13,26 @@ enum class Tab(val label: String) {
 }
 
 /**
- * Search result ordering. App-side mirror of the core's `SearchSort` (P, §4.1), so routes stay
- * serializable and independent of the generated bindings.
- * TODO(P): map to `uniffi.librespydus_core.SearchSort` in [CoreBackend.searchSorted].
+ * Search result ordering: an app-side mirror of the core's `SearchSort` so routes stay
+ * serializable; `NEWEST` = most recently added to the catalogue.
  */
 @Serializable
 enum class ResultsSort(val label: String) {
     RELEVANCE("Relevance"),
     NEWEST("Newest"),
+    ;
+
+    fun toCore(): SearchSort = when (this) {
+        RELEVANCE -> SearchSort.RELEVANCE
+        NEWEST -> SearchSort.NEWEST
+    }
+
+    companion object {
+        fun from(sort: SearchSort): ResultsSort = when (sort) {
+            SearchSort.RELEVANCE -> RELEVANCE
+            SearchSort.NEWEST -> NEWEST
+        }
+    }
 }
 
 /**
