@@ -9,7 +9,8 @@ use std::sync::LazyLock;
 use regex::Regex;
 
 use crate::parse::decode::collapse;
-use crate::types::{Availability, RecordFormat, SearchSort};
+use crate::SpydusError;
+use crate::types::{AccountSnapshot, Availability, RecordFormat, SearchSort};
 
 // ---- is_digital_format ----------------------------------------------------------------------
 
@@ -300,4 +301,30 @@ pub fn home_shelves() -> Vec<Shelf> {
             sort,
         })
         .collect()
+}
+
+// ---- account snapshot JSON ------------------------------------------------------------------
+
+/// The `AccountSnapshot` JSON format. Bump it when the record (or anything inside it) changes
+/// shape, so a snapshot saved by an older build is refetched instead of misread.
+pub const ACCOUNT_SNAPSHOT_VERSION: u32 = 1;
+
+/// The JSON the apps save on the device (camelCase, like every other record).
+#[uniffi::export]
+pub fn encode_account_snapshot(snapshot: AccountSnapshot) -> String {
+    serde_json::to_string(&snapshot).expect("AccountSnapshot always serializes")
+}
+
+/// A saved snapshot back. `Parse` when it is malformed or was written with another
+/// `ACCOUNT_SNAPSHOT_VERSION` — the app then drops it and waits for a fresh one.
+#[uniffi::export]
+pub fn decode_account_snapshot(json: String) -> Result<AccountSnapshot, SpydusError> {
+    let snapshot: AccountSnapshot = serde_json::from_str(&json)
+        .map_err(|e| SpydusError::Parse { message: format!("account snapshot: {e}") })?;
+    if snapshot.version != ACCOUNT_SNAPSHOT_VERSION {
+        let message =
+            format!("account snapshot version {} (expected {ACCOUNT_SNAPSHOT_VERSION})", snapshot.version);
+        return Err(SpydusError::Parse { message });
+    }
+    Ok(snapshot)
 }

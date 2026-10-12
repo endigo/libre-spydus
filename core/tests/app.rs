@@ -9,11 +9,14 @@ use std::fs;
 use std::path::Path;
 
 use librespydus_core::app::{
-    AvailabilitySummary, SimpleDate, availability_summary, home_genres, home_shelves,
+    ACCOUNT_SNAPSHOT_VERSION, AvailabilitySummary, SimpleDate, availability_summary,
+    decode_account_snapshot, encode_account_snapshot, home_genres, home_shelves,
     is_digital_format, parse_due_date,
 };
-use librespydus_core::types::{Availability, RecordFormat, SearchSort};
-use librespydus_core::{config, user_agent};
+use librespydus_core::types::{
+    AccountSnapshot, Availability, PatronItem, PatronList, RecordFormat, Reservations, SearchSort,
+};
+use librespydus_core::{SpydusError, config, user_agent};
 use serde_json::Value;
 
 fn format(code: &str, label: Option<&str>) -> RecordFormat {
@@ -340,3 +343,34 @@ fn search_sort_defaults_to_relevance_and_serializes_camel_case() {
     let shelf = serde_json::to_value(&home_shelves()[0]).unwrap();
     assert_eq!(shelf["sort"], "newest");
 }
+
+// ---- account snapshot JSON ----
+
+fn snapshot() -> AccountSnapshot {
+    let book = PatronItem { title: Some("A book".into()), ..PatronItem::default() };
+    AccountSnapshot {
+        version: ACCOUNT_SNAPSHOT_VERSION,
+        account_name: Some("Test Borrower".into()),
+        loans: PatronList { total: Some(1), items: vec![book] },
+        reservations: Reservations::default(),
+        fetched_at_ms: 1_791_792_000_000,
+    }
+}
+
+#[test]
+fn account_snapshot_round_trips() {
+    let json = encode_account_snapshot(snapshot());
+    assert!(json.contains(r#""accountName":"Test Borrower""#), "camelCase JSON: {json}");
+    assert_eq!(decode_account_snapshot(json).unwrap(), snapshot());
+}
+
+#[test]
+fn account_snapshot_rejects_other_versions_and_garbage() {
+    let newer = AccountSnapshot { version: ACCOUNT_SNAPSHOT_VERSION + 1, ..snapshot() };
+    assert!(matches!(
+        decode_account_snapshot(encode_account_snapshot(newer)),
+        Err(SpydusError::Parse { .. })
+    ));
+    assert!(matches!(decode_account_snapshot("{not json".into()), Err(SpydusError::Parse { .. })));
+}
+

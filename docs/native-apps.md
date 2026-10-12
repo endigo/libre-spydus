@@ -160,6 +160,14 @@ A hand-written protocol/interface mirroring the `SpydusClient` methods the app u
 - Verification cookie per origin persisted and re-applied with `setVerificationCookie` whenever a
   client is created; `completeVerification(cookie)` stores + applies it and bumps the generation.
 
+### 5.2a Saved account (stale-while-revalidate)
+`accountSnapshot(session)` fetches name + loans + reservations in one call; the app saves it per
+origin (`encodeAccountSnapshot` JSON, app-private storage) and on launch / foreground / pull to
+refresh shows the saved one at once ("Updated 10 min ago") while a fresh one loads in the
+background. A failed refresh keeps the saved data with a "Couldn't refresh" note; sign-out,
+session expiry (NotLoggedIn) and library change clear it; demo mode never saves it; a successful
+reserve / cancel / edit triggers a refresh.
+
 ### 5.3 Favourites (local only)
 Per-origin list of `BookRef` (Codable/serializable): `id` (stable key: bib IRN / BRN / work IRN,
 else URL), `title`, `author`, `coverUrl`, `url` (bookmarkUrl preferred), `isbn`, `year`,

@@ -688,6 +688,10 @@ internal object IntegrityCheckingUniffiLib {
     ): Int
     external fun uniffi_librespydus_core_checksum_func_availability_summary(
     ): Int
+    external fun uniffi_librespydus_core_checksum_func_decode_account_snapshot(
+    ): Int
+    external fun uniffi_librespydus_core_checksum_func_encode_account_snapshot(
+    ): Int
     external fun uniffi_librespydus_core_checksum_func_home_genres(
     ): Int
     external fun uniffi_librespydus_core_checksum_func_home_shelves(
@@ -697,6 +701,8 @@ internal object IntegrityCheckingUniffiLib {
     external fun uniffi_librespydus_core_checksum_func_parse_due_date(
     ): Int
     external fun uniffi_librespydus_core_checksum_method_spydusclient_account(
+    ): Int
+    external fun uniffi_librespydus_core_checksum_method_spydusclient_account_snapshot(
     ): Int
     external fun uniffi_librespydus_core_checksum_method_spydusclient_availability(
     ): Int
@@ -760,6 +766,8 @@ internal object UniffiLib {
     ): Long
     external fun uniffi_librespydus_core_fn_method_spydusclient_account(`ptr`: Long,`session`: RustBuffer.ByValue,
     ): Long
+    external fun uniffi_librespydus_core_fn_method_spydusclient_account_snapshot(`ptr`: Long,`session`: RustBuffer.ByValue,
+    ): Long
     external fun uniffi_librespydus_core_fn_method_spydusclient_availability(`ptr`: Long,`url`: RustBuffer.ByValue,
     ): Long
     external fun uniffi_librespydus_core_fn_method_spydusclient_cancel_reservation(`ptr`: Long,`url`: RustBuffer.ByValue,`session`: RustBuffer.ByValue,
@@ -797,6 +805,10 @@ internal object UniffiLib {
     external fun uniffi_librespydus_core_fn_func_user_agent(uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     external fun uniffi_librespydus_core_fn_func_availability_summary(`availability`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    external fun uniffi_librespydus_core_fn_func_decode_account_snapshot(`json`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    external fun uniffi_librespydus_core_fn_func_encode_account_snapshot(`snapshot`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     external fun uniffi_librespydus_core_fn_func_home_genres(uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
@@ -934,6 +946,12 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
     if ((lib.uniffi_librespydus_core_checksum_func_availability_summary() and 0xFFFF) != 54331) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
+    if ((lib.uniffi_librespydus_core_checksum_func_decode_account_snapshot() and 0xFFFF) != 24188) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_librespydus_core_checksum_func_encode_account_snapshot() and 0xFFFF) != 34026) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
     if ((lib.uniffi_librespydus_core_checksum_func_home_genres() and 0xFFFF) != 26297) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
@@ -947,6 +965,9 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if ((lib.uniffi_librespydus_core_checksum_method_spydusclient_account() and 0xFFFF) != 60698) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_librespydus_core_checksum_method_spydusclient_account_snapshot() and 0xFFFF) != 50114) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if ((lib.uniffi_librespydus_core_checksum_method_spydusclient_availability() and 0xFFFF) != 17964) {
@@ -1227,6 +1248,29 @@ public object FfiConverterUByte: FfiConverter<UByte, Byte> {
 /**
  * @suppress
  */
+public object FfiConverterUInt: FfiConverter<UInt, Int> {
+    override fun lift(value: Int): UInt {
+        return value.toUInt()
+    }
+
+    override fun read(buf: ByteBuffer): UInt {
+        return lift(buf.getInt())
+    }
+
+    override fun lower(value: UInt): Int {
+        return value.toInt()
+    }
+
+    override fun allocationSize(value: UInt) = 4UL
+
+    override fun write(value: UInt, buf: ByteBuffer) {
+        buf.putInt(value.toInt())
+    }
+}
+
+/**
+ * @suppress
+ */
 public object FfiConverterInt: FfiConverter<Int, Int> {
     override fun lift(value: Int): Int {
         return value
@@ -1460,6 +1504,13 @@ public interface SpydusClientInterface {
      * Cached 60 s per session (server.ts:145-147).
      */
     suspend fun `account`(`session`: kotlin.String): AccountLinks
+    
+    /**
+     * Name, loans and both reservation lists in one call — what the apps save on the device and
+     * refresh in the background. Loans and reservations load concurrently; the account links
+     * they share are fetched once (cached per session).
+     */
+    suspend fun `accountSnapshot`(`session`: kotlin.String): AccountSnapshot
     
     /**
      * Live counts for one format: a format's `availabilityUrl` (server.ts:81-95). Cached 60 s.
@@ -1712,6 +1763,33 @@ open class SpydusClient: Disposable, AutoCloseable, SpydusClientInterface
         { future -> UniffiLib.ffi_librespydus_core_rust_future_free_rust_buffer(future) },
         // lift function
         { FfiConverterTypeAccountLinks.lift(it) },
+        // Error FFI converter
+        SpydusException.ErrorHandler,
+    )
+    }
+
+    
+    /**
+     * Name, loans and both reservation lists in one call — what the apps save on the device and
+     * refresh in the background. Loans and reservations load concurrently; the account links
+     * they share are fetched once (cached per session).
+     */
+    @Throws(SpydusException::class)
+    @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
+    override suspend fun `accountSnapshot`(`session`: kotlin.String) : AccountSnapshot {
+        return uniffiRustCallAsync(
+        callWithHandle { uniffiHandle ->
+            UniffiLib.uniffi_librespydus_core_fn_method_spydusclient_account_snapshot(
+                uniffiHandle,
+                
+        FfiConverterString.lower(`session`),
+            )
+        },
+        { future, callback, continuation -> UniffiLib.ffi_librespydus_core_rust_future_poll_rust_buffer(future, callback, continuation) },
+        { future, continuation -> UniffiLib.ffi_librespydus_core_rust_future_complete_rust_buffer(future, continuation) },
+        { future -> UniffiLib.ffi_librespydus_core_rust_future_free_rust_buffer(future) },
+        // lift function
+        { FfiConverterTypeAccountSnapshot.lift(it) },
         // Error FFI converter
         SpydusException.ErrorHandler,
     )
@@ -2221,6 +2299,70 @@ public object FfiConverterTypeAccountLinks: FfiConverterRustBuffer<AccountLinks>
             FfiConverterOptionalString.write(value.`loansUrl`, buf)
             FfiConverterOptionalString.write(value.`reservationsReadyUrl`, buf)
             FfiConverterOptionalString.write(value.`reservationsPendingUrl`, buf)
+    }
+}
+
+
+
+/**
+ * Everything the account screens show — name, loans, both reservation lists — as one value the
+ * apps save on the device and show instantly on the next launch while a fresh one loads
+ * (`SpydusClient::account_snapshot`; JSON via `encode_account_snapshot` / `decode_account_snapshot`).
+ */
+data class AccountSnapshot (
+    /**
+     * `app::ACCOUNT_SNAPSHOT_VERSION` when it was made; other versions don't decode.
+     */
+    var `version`: kotlin.UInt
+    , 
+    var `accountName`: kotlin.String?
+    , 
+    var `loans`: PatronList
+    , 
+    var `reservations`: Reservations
+    , 
+    /**
+     * When it was fetched, Unix epoch milliseconds.
+     */
+    var `fetchedAtMs`: kotlin.Long
+    
+){
+    
+
+    
+
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeAccountSnapshot: FfiConverterRustBuffer<AccountSnapshot> {
+    override fun read(buf: ByteBuffer): AccountSnapshot {
+        return AccountSnapshot(
+            FfiConverterUInt.read(buf),
+            FfiConverterOptionalString.read(buf),
+            FfiConverterTypePatronList.read(buf),
+            FfiConverterTypeReservations.read(buf),
+            FfiConverterLong.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: AccountSnapshot) = (
+            FfiConverterUInt.allocationSize(value.`version`) +
+            FfiConverterOptionalString.allocationSize(value.`accountName`) +
+            FfiConverterTypePatronList.allocationSize(value.`loans`) +
+            FfiConverterTypeReservations.allocationSize(value.`reservations`) +
+            FfiConverterLong.allocationSize(value.`fetchedAtMs`)
+    )
+
+    override fun write(value: AccountSnapshot, buf: ByteBuffer) {
+            FfiConverterUInt.write(value.`version`, buf)
+            FfiConverterOptionalString.write(value.`accountName`, buf)
+            FfiConverterTypePatronList.write(value.`loans`, buf)
+            FfiConverterTypeReservations.write(value.`reservations`, buf)
+            FfiConverterLong.write(value.`fetchedAtMs`, buf)
     }
 }
 
@@ -4495,6 +4637,36 @@ public object FfiConverterMapStringString: FfiConverterRustBuffer<Map<kotlin.Str
     
         
         FfiConverterTypeAvailability.lower(`availability`),_status)
+}
+    )
+    }
+    
+
+        /**
+         * A saved snapshot back. `Parse` when it is malformed or was written with another
+         * `ACCOUNT_SNAPSHOT_VERSION` — the app then drops it and waits for a fresh one.
+         */
+    @Throws(SpydusException::class) fun `decodeAccountSnapshot`(`json`: kotlin.String): AccountSnapshot {
+            return FfiConverterTypeAccountSnapshot.lift(
+    uniffiRustCallWithError(SpydusException) { _status ->
+    UniffiLib.uniffi_librespydus_core_fn_func_decode_account_snapshot(
+    
+        
+        FfiConverterString.lower(`json`),_status)
+}
+    )
+    }
+    
+
+        /**
+         * The JSON the apps save on the device (camelCase, like every other record).
+         */ fun `encodeAccountSnapshot`(`snapshot`: AccountSnapshot): kotlin.String {
+            return FfiConverterString.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_librespydus_core_fn_func_encode_account_snapshot(
+    
+        
+        FfiConverterTypeAccountSnapshot.lower(`snapshot`),_status)
 }
     )
     }

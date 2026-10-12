@@ -65,6 +65,7 @@ means Canning. The async methods each return a record or throw `SpydusError`.
 | `login(username, password)` → session | `POST /login` | |
 | `account(session)` → `AccountLinks` | (account entry) | 60 s per session |
 | `loans(session)` / `reservations(session)` | `GET /account/{loans,reservations}` | via `account` |
+| `accountSnapshot(session)` → `AccountSnapshot{version, accountName?, loans, reservations, fetchedAtMs}` | — (app-only) | name + loans + both reservation lists in one call, loans/reservations concurrently; what the apps save on the device |
 | `reserveOptions(url, session)` / `editOptions(url, session)` | `GET /reserve/{options,edit}` | |
 | `placeReservation(url, session, xdays?, pickup?)` | `POST /reserve` | clears `account` |
 | `cancelReservation(url, session)` / `editReservation(url, session, overrides)` | `POST /reserve/{cancel,edit}` | clears `account` |
@@ -101,6 +102,10 @@ rule is in [`docs/rust-core-port.md` §11](../docs/rust-core-port.md).
 | `parseDueDate(text)` → `SimpleDate{year, month, day}?` | A loan's `fields["Due"]` as a date. Accepts "27 Oct 2026", "27 October 2026", "27/10/2026" (day first; also `-` or `.`), "2026-10-27" and "Oct 27, 2026". Anything else, or an impossible date, is `nil`. |
 | `homeGenres()` → `[Genre{key, label, query}]` | The 8 "Popular genres" tiles: `biography`, `fiction`, `science`, `history`, `fantasy`, `crime`, `cooking`, `children`. The keys are stable ids to map to icons. Run `search(query)` on a tap. |
 | `homeShelves()` → `[Shelf{key, title, query, sort}]` | The home cover shelves, run with `searchSorted(query, sort)`: `new_arrivals` "New arrivals" (always first), `new_for_kids` "New for kids" and `new_biographies` "New biographies", all `.newest`. |
+
+Saving the account on the device: `encodeAccountSnapshot(snapshot)` → JSON `String` and
+`decodeAccountSnapshot(json)` → `AccountSnapshot` (throws `Parse` for malformed JSON or a snapshot
+written with another `ACCOUNT_SNAPSHOT_VERSION`, currently 1 — drop it and fetch a new one).
 
 `Availability.counts` keys seen on live libraries are only `copies` (item records, any status),
 `available` (on the shelf now; some libraries only, present even at 0) and `reserved`

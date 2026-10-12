@@ -206,6 +206,21 @@ pub struct Reservations {
     pub pending: PatronList,
 }
 
+/// Everything the account screens show — name, loans, both reservation lists — as one value the
+/// apps save on the device and show instantly on the next launch while a fresh one loads
+/// (`SpydusClient::account_snapshot`; JSON via `encode_account_snapshot` / `decode_account_snapshot`).
+#[derive(uniffi::Record, serde::Serialize, serde::Deserialize, Debug, Clone, PartialEq, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct AccountSnapshot {
+    /// `app::ACCOUNT_SNAPSHOT_VERSION` when it was made; other versions don't decode.
+    pub version: u32,
+    pub account_name: Option<String>,
+    pub loans: PatronList,
+    pub reservations: Reservations,
+    /// When it was fetched, Unix epoch milliseconds.
+    pub fetched_at_ms: i64,
+}
+
 /// Links extracted from the authenticated account (BRWENQ) page.
 #[derive(uniffi::Record, serde::Serialize, serde::Deserialize, Debug, Clone, PartialEq, Default)]
 #[serde(rename_all = "camelCase")]

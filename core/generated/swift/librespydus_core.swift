@@ -481,6 +481,22 @@ fileprivate struct FfiConverterUInt8: FfiConverterPrimitive {
 #if swift(>=5.8)
 @_documentation(visibility: private)
 #endif
+fileprivate struct FfiConverterUInt32: FfiConverterPrimitive {
+    typealias FfiType = UInt32
+    typealias SwiftType = UInt32
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> UInt32 {
+        return try lift(readInt(&buf))
+    }
+
+    public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
+        writeInt(&buf, lower(value))
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 fileprivate struct FfiConverterInt32: FfiConverterPrimitive {
     typealias FfiType = Int32
     typealias SwiftType = Int32
@@ -597,6 +613,13 @@ public protocol SpydusClientProtocol: AnyObject, Sendable {
      * Cached 60 s per session (server.ts:145-147).
      */
     func account(session: String) async throws  -> AccountLinks
+    
+    /**
+     * Name, loans and both reservation lists in one call — what the apps save on the device and
+     * refresh in the background. Loans and reservations load concurrently; the account links
+     * they share are fetched once (cached per session).
+     */
+    func accountSnapshot(session: String) async throws  -> AccountSnapshot
     
     /**
      * Live counts for one format: a format's `availabilityUrl` (server.ts:81-95). Cached 60 s.
@@ -794,6 +817,27 @@ open func account(session: String)async throws  -> AccountLinks  {
             completeFunc: ffi_librespydus_core_rust_future_complete_rust_buffer,
             freeFunc: ffi_librespydus_core_rust_future_free_rust_buffer,
             liftFunc: FfiConverterTypeAccountLinks_lift,
+            errorHandler: FfiConverterTypeSpydusError_lift
+        )
+}
+    
+    /**
+     * Name, loans and both reservation lists in one call — what the apps save on the device and
+     * refresh in the background. Loans and reservations load concurrently; the account links
+     * they share are fetched once (cached per session).
+     */
+open func accountSnapshot(session: String)async throws  -> AccountSnapshot  {
+    return
+        try  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_librespydus_core_fn_method_spydusclient_account_snapshot(
+                        self.uniffiCloneHandle(),FfiConverterString.lower(session)
+                )
+            },
+            pollFunc: ffi_librespydus_core_rust_future_poll_rust_buffer,
+            completeFunc: ffi_librespydus_core_rust_future_complete_rust_buffer,
+            freeFunc: ffi_librespydus_core_rust_future_free_rust_buffer,
+            liftFunc: FfiConverterTypeAccountSnapshot_lift,
             errorHandler: FfiConverterTypeSpydusError_lift
         )
 }
@@ -1224,6 +1268,89 @@ public func FfiConverterTypeAccountLinks_lift(_ buf: RustBuffer) throws -> Accou
 #endif
 public func FfiConverterTypeAccountLinks_lower(_ value: AccountLinks) -> RustBuffer {
     return FfiConverterTypeAccountLinks.lower(value)
+}
+
+
+/**
+ * Everything the account screens show — name, loans, both reservation lists — as one value the
+ * apps save on the device and show instantly on the next launch while a fresh one loads
+ * (`SpydusClient::account_snapshot`; JSON via `encode_account_snapshot` / `decode_account_snapshot`).
+ */
+public struct AccountSnapshot: Equatable, Hashable {
+    /**
+     * `app::ACCOUNT_SNAPSHOT_VERSION` when it was made; other versions don't decode.
+     */
+    public var version: UInt32
+    public var accountName: String?
+    public var loans: PatronList
+    public var reservations: Reservations
+    /**
+     * When it was fetched, Unix epoch milliseconds.
+     */
+    public var fetchedAtMs: Int64
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(
+        /**
+         * `app::ACCOUNT_SNAPSHOT_VERSION` when it was made; other versions don't decode.
+         */version: UInt32, accountName: String?, loans: PatronList, reservations: Reservations, 
+        /**
+         * When it was fetched, Unix epoch milliseconds.
+         */fetchedAtMs: Int64) {
+        self.version = version
+        self.accountName = accountName
+        self.loans = loans
+        self.reservations = reservations
+        self.fetchedAtMs = fetchedAtMs
+    }
+
+    
+
+    
+}
+
+#if compiler(>=6)
+extension AccountSnapshot: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeAccountSnapshot: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> AccountSnapshot {
+        return
+            try AccountSnapshot(
+                version: FfiConverterUInt32.read(from: &buf), 
+                accountName: FfiConverterOptionString.read(from: &buf), 
+                loans: FfiConverterTypePatronList.read(from: &buf), 
+                reservations: FfiConverterTypeReservations.read(from: &buf), 
+                fetchedAtMs: FfiConverterInt64.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: AccountSnapshot, into buf: inout [UInt8]) {
+        FfiConverterUInt32.write(value.version, into: &buf)
+        FfiConverterOptionString.write(value.accountName, into: &buf)
+        FfiConverterTypePatronList.write(value.loans, into: &buf)
+        FfiConverterTypeReservations.write(value.reservations, into: &buf)
+        FfiConverterInt64.write(value.fetchedAtMs, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeAccountSnapshot_lift(_ buf: RustBuffer) throws -> AccountSnapshot {
+    return try FfiConverterTypeAccountSnapshot.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeAccountSnapshot_lower(_ value: AccountSnapshot) -> RustBuffer {
+    return FfiConverterTypeAccountSnapshot.lower(value)
 }
 
 
@@ -3954,6 +4081,29 @@ public func availabilitySummary(availability: Availability) -> AvailabilitySumma
 })
 }
 /**
+ * A saved snapshot back. `Parse` when it is malformed or was written with another
+ * `ACCOUNT_SNAPSHOT_VERSION` — the app then drops it and waits for a fresh one.
+ */
+public func decodeAccountSnapshot(json: String)throws  -> AccountSnapshot  {
+    return try  FfiConverterTypeAccountSnapshot_lift(try rustCallWithError(FfiConverterTypeSpydusError_lift) {
+        uniffiCallStatus in
+    uniffi_librespydus_core_fn_func_decode_account_snapshot(
+        FfiConverterString.lower(json),uniffiCallStatus
+    )
+})
+}
+/**
+ * The JSON the apps save on the device (camelCase, like every other record).
+ */
+public func encodeAccountSnapshot(snapshot: AccountSnapshot) -> String  {
+    return try!  FfiConverterString.lift(try! rustCall() {
+        uniffiCallStatus in
+    uniffi_librespydus_core_fn_func_encode_account_snapshot(
+        FfiConverterTypeAccountSnapshot_lower(snapshot),uniffiCallStatus
+    )
+})
+}
+/**
  * The home screen's genre tiles, in display order. Keys are stable; labels and queries may
  * change between core versions.
  */
@@ -4035,6 +4185,12 @@ private let initializationResult: InitializationResult = {
     if (uniffi_librespydus_core_checksum_func_availability_summary() != 54331) {
         return InitializationResult.apiChecksumMismatch
     }
+    if (uniffi_librespydus_core_checksum_func_decode_account_snapshot() != 24188) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_librespydus_core_checksum_func_encode_account_snapshot() != 34026) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_librespydus_core_checksum_func_home_genres() != 26297) {
         return InitializationResult.apiChecksumMismatch
     }
@@ -4048,6 +4204,9 @@ private let initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_librespydus_core_checksum_method_spydusclient_account() != 60698) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_librespydus_core_checksum_method_spydusclient_account_snapshot() != 50114) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_librespydus_core_checksum_method_spydusclient_availability() != 17964) {

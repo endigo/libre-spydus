@@ -270,6 +270,25 @@ impl SpydusClient {
         Ok(Reservations { ready: ready?, pending: pending? })
     }
 
+    /// Name, loans and both reservation lists in one call — what the apps save on the device and
+    /// refresh in the background. Loans and reservations load concurrently; the account links
+    /// they share are fetched once (cached per session).
+    pub async fn account_snapshot(&self, session: String) -> Result<AccountSnapshot, SpydusError> {
+        let links = self.account_links(signed_in(&session)?).await?;
+        let (loans, reservations) =
+            tokio::join!(self.loans(session.clone()), self.reservations(session.clone()));
+        let fetched_at_ms = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map_or(0, |d| i64::try_from(d.as_millis()).unwrap_or(i64::MAX));
+        Ok(AccountSnapshot {
+            version: app::ACCOUNT_SNAPSHOT_VERSION,
+            account_name: links.name,
+            loans: loans?,
+            reservations: reservations?,
+            fetched_at_ms,
+        })
+    }
+
     /// The reservation request form for a format's `reserveUrl` (server.ts:186-198). Read-only:
     /// no hold is placed. A logged-out session yields `message: "Please sign in again."`.
     pub async fn reserve_options(
