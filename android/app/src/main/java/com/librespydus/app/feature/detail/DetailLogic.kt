@@ -6,6 +6,7 @@ import com.librespydus.app.core.CoreHelpers
 import com.librespydus.app.core.FormatRef
 import com.librespydus.app.feature.search.BrowseLoadable
 import com.librespydus.app.feature.search.trimmedOrNull
+import uniffi.librespydus_core.Availability
 import uniffi.librespydus_core.DetailRow
 import uniffi.librespydus_core.RecordDetail
 import uniffi.librespydus_core.RecordRelated
@@ -34,8 +35,46 @@ object DetailRecordSource {
         return ordered.filterNotNull().distinct()
     }
 
+    /**
+     * [candidateUrls] for [ref], led by its session-free record URL when it has one
+     * ([sessionFreeUrl]): a saved loan's `…/BIBENQ/{set}…` link loads an empty record without the
+     * patron's OPAC session.
+     */
+    fun candidateUrls(ref: BookRef, format: FormatRef?): List<String> =
+        (listOfNotNull(sessionFreeUrl(ref)) + candidateUrls(ref.url, format)).distinct()
+
+    /**
+     * `…/BIBENQ?SETLVL=&IRN={bib IRN}` for a ref keyed `bib:<IRN>` whose URL is a `…/BIBENQ/{set}…`
+     * link (a loan or reservation saved before the app used the session-free URL); else null.
+     */
+    fun sessionFreeUrl(ref: BookRef): String? {
+        val url = ref.url.trimmedOrNull() ?: return null
+        if (!url.contains("/BIBENQ/", ignoreCase = true)) return null
+        val irn = ref.bibIrn.trimmedOrNull() ?: ref.id.removePrefix("bib:").takeIf { ref.id.startsWith("bib:") }.trimmedOrNull()
+            ?: return null
+        return CoreHelpers.bibRecordUrl(irn, url)?.takeIf { it != url }
+    }
+
+    /**
+     * A record without a title, summary or detail rows: what the OPAC sends for a session set the
+     * app isn't part of ("Session must be logged in"). The screen tries the next URL.
+     */
+    fun isEmpty(record: RecordDetail): Boolean =
+        record.title.trimmedOrNull() == null && record.summary.trimmedOrNull() == null && record.details.isEmpty()
+
     /** `…/ALLWRKENQ/…`, `…/WRKENQ?…`: a work (grouped editions), not one bib record. */
     fun isWorkLevel(url: String?): Boolean = url?.contains("WRKENQ", ignoreCase = true) == true
+}
+
+/**
+ * A format's availability as the header shows it, and the bib record it resolves to
+ * (`Availability.bibRecordIrn`, the edition's own IRN: what loans and reservations name).
+ */
+data class FormatAvailability(val summary: AvailabilitySummary, val bibRecordIrn: String?) {
+    companion object {
+        fun of(availability: Availability) =
+            FormatAvailability(CoreHelpers.availabilitySummary(availability), availability.bibRecordIrn.trimmedOrNull())
+    }
 }
 
 object DetailText {

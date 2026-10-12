@@ -2,9 +2,7 @@ package com.librespydus.app.feature.detail
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.librespydus.app.core.AvailabilitySummary
 import com.librespydus.app.core.BookRef
-import com.librespydus.app.core.CoreHelpers
 import com.librespydus.app.core.FormatRef
 import com.librespydus.app.core.LibraryBackend
 import com.librespydus.app.core.ResultsSort
@@ -22,6 +20,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import uniffi.librespydus_core.RecordDetail
 import uniffi.librespydus_core.RecordRelated
 import uniffi.librespydus_core.SpydusException
@@ -64,7 +64,7 @@ data class DetailState(
     val selectedFormatIndex: Int? = FormatSelection.defaultIndex(ref.formats),
     val formatLookup: FormatLookup = if (ref.formats.isEmpty()) FormatLookup.Pending else FormatLookup.Provided,
     /** Keyed by `availabilityUrl`, so switching back to a format doesn't fetch it again. */
-    val availability: Map<String, BrowseLoadable<AvailabilitySummary>> = emptyMap(),
+    val availability: Map<String, BrowseLoadable<FormatAvailability>> = emptyMap(),
     val related: Map<RelatedPanel, BrowseLoadable<List<BookRef>>> = emptyMap(),
 ) {
     val selectedFormat: FormatRef? get() = selectedFormatIndex?.let { formats.getOrNull(it) }
@@ -93,9 +93,22 @@ data class DetailState(
                 ?: return HeaderAvailability.Line(AvailabilityLine.of(null, format))
             return when (val state = availability[url] ?: BrowseLoadable.Idle) {
                 BrowseLoadable.Idle, BrowseLoadable.Loading -> HeaderAvailability.Loading(CHECKING)
-                is BrowseLoadable.Loaded -> HeaderAvailability.Line(AvailabilityLine.of(state.value, format))
+                is BrowseLoadable.Loaded -> HeaderAvailability.Line(AvailabilityLine.of(state.value.summary, format))
                 is BrowseLoadable.Failed -> HeaderAvailability.AvailabilityFailed
             }
+        }
+
+    /**
+     * The bib IRNs of the format on screen, to look up in the saved account (§6 "Already yours"):
+     * the selected format's own bib (its availability's `bibRecordIrn`) once known, else the
+     * record's and the opened loan's or reservation's. Editions are separate bibs, so a loan of the
+     * book doesn't hide Reserve on the large print.
+     */
+    val heldIrns: List<String>
+        get() {
+            val url = selectedFormat?.availabilityUrl.trimmedOrNull()
+            url?.let { availability[it]?.valueOrNull?.bibRecordIrn }?.let { return listOf(it) }
+            return listOfNotNull(record.valueOrNull?.bibIrn.trimmedOrNull(), ref.bibIrn.trimmedOrNull()).distinct()
         }
 
     /** What a favourite stores: the stable bookmark URL once the record is known, and the formats. */
@@ -133,7 +146,11 @@ class BookDetailModel(
     /** The related links whose panels were requested (a record upgrade brings new ones). */
     private var relatedRequestedFor: RecordRelated? = null
 
+    /** The user picked a format: [selectHeldFormat] no longer changes the selection. */
+    private var userSelected = false
+
     fun select(formatIndex: Int) {
+        userSelected = true
         _state.update { if (formatIndex in it.formats.indices) it.copy(selectedFormatIndex = formatIndex) else it }
     }
 
@@ -148,10 +165,16 @@ class BookDetailModel(
             FormatLookup.Pending, is FormatLookup.Failed -> refindFormats(backend, report)
             else -> Unit
         }
+        selectHeldFormat(backend, report)
     }
 
+    /**
+     * Loads the record from the first candidate URL that gives one ([DetailRecordSource]). An empty
+     * record (a loan's session-set link opened without the patron's OPAC session) counts as a
+     * failure, so the next URL is tried.
+     */
     suspend fun loadRecord(backend: LibraryBackend, report: BrowseReporter) {
-        val urls = DetailRecordSource.candidateUrls(opened.url, _state.value.selectedFormat)
+        val urls = DetailRecordSource.candidateUrls(opened, _state.value.selectedFormat)
         if (urls.isEmpty()) {
             val error = UserFacingError(UserFacingError.Kind.UNEXPECTED, "This book has no link to the library's record.")
             _state.update { it.copy(record = BrowseLoadable.Failed(error)) }
@@ -161,7 +184,12 @@ class BookDetailModel(
         var failure: Exception? = null
         for (url in urls) {
             try {
-                apply(backend.record(url))
+                val detail = backend.record(url)
+                if (DetailRecordSource.isEmpty(detail)) {
+                    failure = EmptyRecordException(url)
+                    continue
+                }
+                apply(detail)
                 return
             } catch (e: CancellationException) {
                 _state.update { it.copy(record = BrowseLoadable.Idle) }
@@ -216,14 +244,17 @@ class BookDetailModel(
     /** The selected format's availability (once per URL; again after a failure). */
     suspend fun loadAvailability(backend: LibraryBackend, report: BrowseReporter) {
         val url = _state.value.selectedFormat?.availabilityUrl.trimmedOrNull() ?: return
+        loadAvailability(url, backend, report)
+    }
+
+    private suspend fun loadAvailability(url: String, backend: LibraryBackend, report: BrowseReporter) {
         when (_state.value.availability[url]) {
             is BrowseLoadable.Loaded, BrowseLoadable.Loading -> return
             else -> Unit
         }
         setAvailability(url, BrowseLoadable.Loading)
         try {
-            val summary = CoreHelpers.availabilitySummary(backend.availability(url))
-            setAvailability(url, BrowseLoadable.Loaded(summary))
+            setAvailability(url, BrowseLoadable.Loaded(FormatAvailability.of(backend.availability(url))))
         } catch (e: CancellationException) {
             setAvailability(url, BrowseLoadable.Idle)
             throw e
@@ -232,8 +263,40 @@ class BookDetailModel(
         }
     }
 
-    private fun setAvailability(url: String, value: BrowseLoadable<AvailabilitySummary>) {
+    private fun setAvailability(url: String, value: BrowseLoadable<FormatAvailability>) {
         _state.update { it.copy(availability = it.availability + (url to value)) }
+    }
+
+    /**
+     * A page opened from a loan or reservation (the ref knows the row's bib IRN) shows the format
+     * the patron has: once the formats are known, every format's availability is loaded (at most
+     * [MAX_CONCURRENT] at once, each URL once) and the format whose `bibRecordIrn` is that IRN is
+     * selected as soon as it arrives. Without a match the default selection stays; a format the
+     * user picked meanwhile is never changed.
+     */
+    suspend fun selectHeldFormat(backend: LibraryBackend, report: BrowseReporter) {
+        val irn = opened.bibIrn.trimmedOrNull() ?: return
+        val state = _state.value
+        if (state.formats.size < 2 || (state.formatLookup != FormatLookup.Provided && state.formatLookup != FormatLookup.Found)) return
+        fun selectIfHeld() {
+            if (userSelected) return
+            _state.update { current ->
+                val index = current.formats.indexOfFirst { format ->
+                    format.availabilityUrl.trimmedOrNull()?.let { current.availability[it]?.valueOrNull?.bibRecordIrn } == irn
+                }
+                if (index >= 0 && index != current.selectedFormatIndex) current.copy(selectedFormatIndex = index) else current
+            }
+        }
+        selectIfHeld()
+        val permits = Semaphore(MAX_CONCURRENT)
+        coroutineScope {
+            for (url in state.formats.mapNotNull { it.availabilityUrl.trimmedOrNull() }.distinct()) {
+                launch {
+                    permits.withPermit { loadAvailability(url, backend, report) }
+                    selectIfHeld()
+                }
+            }
+        }
     }
 
     /** Starts loading the related panels once per record, when the carousels come into view. */
@@ -301,7 +364,7 @@ class BookDetailModel(
         } catch (e: Exception) {
             return
         }
-        apply(detail)
+        if (!DetailRecordSource.isEmpty(detail)) apply(detail)
     }
 
     private fun apply(detail: RecordDetail) {
@@ -314,4 +377,12 @@ class BookDetailModel(
             )
         }
     }
+
+    companion object {
+        /** Availability requests in flight at once while looking for the held format (docs §2: ≤ 6). */
+        const val MAX_CONCURRENT = 6
+    }
 }
+
+/** Every candidate URL gave an empty record (shown as "The library site returned something unexpected."). */
+class EmptyRecordException(url: String) : Exception("The library returned an empty record for $url")

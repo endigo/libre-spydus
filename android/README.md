@@ -121,14 +121,21 @@ checks. Add `-S` to `am start` to force-stop first (launch options apply on a fr
 `ls_demo` swaps the backend for `DemoBackend` (docs §5.4):
 
 - Public reads (search, page, availability, record, related) go to the real library through
-  `CoreBackend`. Those are public GETs.
+  `CoreBackend`. Those are public GETs. The exception is the demo account's own books
+  (`core/DemoCatalogue.kt`, `assets/demo/catalogue.json`): their records, a search that names
+  their title and their formats' availability are answered offline, so a loan's or reservation's
+  page works without a network. Like the real OPAC, a demo row's own `bibUrl` (a set in the
+  patron's session) loads an empty record; the session-free `…/BIBENQ?SETLVL=&IRN=…` loads the
+  full one. The Midnight Library has Book, Large Print and eBook editions (the Book is on loan,
+  overdue) and The Thursday Murder Club a Book and a Large Print (the Large Print is reserved).
 - Account calls are served from `app/src/main/assets/demo/*.json`, which is built from the core's
-  synthetic goldens ("Test Borrower") plus four generated loans on real public Canning records.
+  synthetic goldens ("Test Borrower") plus four generated loans on Canning records.
   `dueInDays` becomes a `Due` date relative to today. Fixture URLs are rewritten to the selected
   library's origin.
 - `login("demo", "demo")` succeeds. Anything else gives `CredentialsRejected`.
 - Reserve, cancel and edit succeed after about 0.6 s and change the in-memory lists. Nothing is
-  ever posted.
+  ever posted. A reserved row carries the reserved edition's bib IRN, so the book page then shows
+  "Reserved · …" in place of Reserve.
 - `accountSnapshot` takes about 1.5 s (so the refreshing state shows) and reflects those changes.
 - The demo session is kept in memory only, never in the secure store, and the demo account is never
   saved on the device (unless `ls_demo_persist`, for screenshots).
@@ -160,7 +167,7 @@ screenshotted in demo mode.
 | `MainActivity.kt`, `LibreSpydusApplication.kt` | A1 | edge-to-edge activity; Application holds `AppState` and the Coil loader |
 | `core/AppState.kt` | A1 | single source of truth (StateFlows): library, backend, session, account name, demo, tabs, pending search/navigation, verification/login flags, generation counters, favourites |
 | `core/LibraryBackend.kt` | A1 | `LibraryBackend` interface (every `SpydusClient` method + `origin`) and `CoreBackend` |
-| `core/DemoBackend.kt` | A1 | `DemoBackend` + `DemoData` (assets/demo) |
+| `core/DemoBackend.kt`, `core/DemoCatalogue.kt` | A1, A6 | `DemoBackend` + `DemoData` (assets/demo); the demo account's books offline |
 | `core/FavouritesStore.kt` | A1 | per-origin favourites, `files/favourites.json` |
 | `core/SecureStore.kt` | A1 | AES-256-GCM over SharedPreferences with an Android Keystore key (sessions, verification cookies); `AesGcmSealer`, `KeystoreKeys` |
 | `core/AccountStore.kt`, `core/AccountCache.kt` | A5 | the saved account: background refresh, per-origin sealed snapshot files |

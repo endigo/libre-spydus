@@ -1,13 +1,18 @@
 package com.librespydus.app.core
 
+import uniffi.librespydus_core.AccountHolding
+import uniffi.librespydus_core.AccountSnapshot
 import uniffi.librespydus_core.Availability
 import uniffi.librespydus_core.LibraryInfo
+import uniffi.librespydus_core.PatronItem
 import uniffi.librespydus_core.RecordFormat
+import uniffi.librespydus_core.accountHolding as coreAccountHolding
 import uniffi.librespydus_core.availabilitySummary as coreAvailabilitySummary
 import uniffi.librespydus_core.homeGenres as coreHomeGenres
 import uniffi.librespydus_core.homeShelves as coreHomeShelves
 import uniffi.librespydus_core.isDigitalFormat as coreIsDigitalFormat
 import uniffi.librespydus_core.listLibraries as coreListLibraries
+import uniffi.librespydus_core.patronItemRecordUrl as corePatronItemRecordUrl
 import uniffi.librespydus_core.userAgent as coreUserAgent
 
 /** A Home genre tile (§6): [key] picks the icon, [query] feeds the results route. */
@@ -46,6 +51,24 @@ object CoreHelpers {
     /** Home shelves; the first is "New arrivals". */
     fun homeShelves(): List<Shelf> =
         coreHomeShelves().map { Shelf(it.key, it.title, it.query, ResultsSort.from(it.sort)) }
+
+    /**
+     * The URL that loads a loan's or reservation's bib record without a session
+     * (`…/BIBENQ?SETLVL=&IRN={bibIrn}`). The row's own `bibUrl` names a set in the patron's OPAC
+     * session and loads an empty record without it. Falls back to `bibUrl`.
+     */
+    fun patronItemRecordUrl(item: PatronItem): String? = corePatronItemRecordUrl(item)
+
+    /** [patronItemRecordUrl] for a bib IRN and a link to it (a saved ref that has no row any more). */
+    fun bibRecordUrl(bibIrn: String, bibUrl: String): String? =
+        patronItemRecordUrl(PatronItem(null, bibIrn, null, bibUrl, null, null, emptyList(), null, emptyMap(), emptyList()))
+
+    /**
+     * The loan or reservation in [snapshot] of any of [bibIrns] (a loan wins over a ready
+     * reservation, which wins over a pending one), for a book page to show instead of Reserve.
+     */
+    fun accountHolding(snapshot: AccountSnapshot, bibIrns: List<String>): AccountHolding? =
+        coreAccountHolding(snapshot, bibIrns)
 }
 
 /** Civica's library directory (one public GET per call, not cached by the core). */

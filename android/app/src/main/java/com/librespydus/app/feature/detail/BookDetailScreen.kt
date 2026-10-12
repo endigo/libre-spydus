@@ -1,6 +1,7 @@
 package com.librespydus.app.feature.detail
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -8,8 +9,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -34,8 +37,11 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
@@ -45,10 +51,12 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.librespydus.app.core.AppState
 import com.librespydus.app.core.BookRef
+import com.librespydus.app.core.BorrowedSegment
 import com.librespydus.app.core.CoreHelpers
 import com.librespydus.app.core.FormatRef
 import com.librespydus.app.core.Formatting
 import com.librespydus.app.core.ResultsSort
+import com.librespydus.app.feature.onboarding.AccountIcons
 import com.librespydus.app.feature.search.BrowseIcons
 import com.librespydus.app.feature.search.browseReporter
 import com.librespydus.app.feature.search.displayLabel
@@ -85,6 +93,7 @@ fun BookDetailScreen(book: BookRef, appState: AppState, navigator: AppNavigator,
     val loginNeeded by appState.loginNeeded.collectAsStateWithLifecycle()
     val verification by appState.verificationGeneration.collectAsStateWithLifecycle()
     val favourites by appState.currentFavourites.collectAsStateWithLifecycle()
+    val account by appState.account.snapshot.collectAsStateWithLifecycle()
     val report = remember(appState) { appState.browseReporter() }
     val scope = rememberCoroutineScope()
 
@@ -138,6 +147,11 @@ fun BookDetailScreen(book: BookRef, appState: AppState, navigator: AppNavigator,
     }
 
     val isFavourite = favourites.any { it.id == state.ref.id }
+    // The format on screen is already on loan or reserved: a status pill instead of Reserve.
+    val heldIrns = state.heldIrns
+    val held = remember(account, session, heldIrns) {
+        HeldStatus.holding(account.takeIf { session != null }, heldIrns)?.let { HeldStatus.of(it) }
+    }
 
     Column(
         modifier
@@ -184,6 +198,8 @@ fun BookDetailScreen(book: BookRef, appState: AppState, navigator: AppNavigator,
                 )
                 DetailActions(
                     reservable = state.reservableFormat,
+                    held = held,
+                    onOpenHeld = appState::openBorrowed,
                     signedIn = session != null,
                     isFavourite = isFavourite,
                     onBorrow = ::borrow,
@@ -351,10 +367,15 @@ private fun RetryLine(text: String, onRetry: () -> Unit) {
     }
 }
 
-/** "Reserve" (physical/reservable formats) and the blue favourite bookmark. */
+/**
+ * "Reserve" (physical/reservable formats), or the [HeldStatusPill] in its place when the patron
+ * already has the format, and the blue favourite bookmark.
+ */
 @Composable
 private fun DetailActions(
     reservable: FormatRef?,
+    held: HeldStatus?,
+    onOpenHeld: (BorrowedSegment) -> Unit,
     signedIn: Boolean,
     isFavourite: Boolean,
     onBorrow: (FormatRef) -> Unit,
@@ -368,7 +389,9 @@ private fun DetailActions(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(LsSpacing.m),
     ) {
-        if (reservable != null) {
+        if (held != null) {
+            HeldStatusPill(held, onClick = { onOpenHeld(held.segment) }, modifier = Modifier.weight(1f))
+        } else if (reservable != null) {
             val what = reservable.displayLabel.lowercase()
             PrimaryPillButton(
                 text = "Reserve",
@@ -389,3 +412,41 @@ private fun DetailActions(
         )
     }
 }
+
+/**
+ * "On loan · Due 14 Oct", "Ready to collect · Riverton Library", "Reserved · …": the size of the
+ * Reserve pill it replaces, but a quiet surface with a tinted icon and text, so it reads as a
+ * status rather than an action. Tapping it opens Your Books on that list.
+ */
+@Composable
+private fun HeldStatusPill(status: HeldStatus, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val (icon, tint) = when (status.tone) {
+        HeldStatus.Tone.LOAN -> LsIcons.BookFilled to LsColors.textPrimary
+        HeldStatus.Tone.OVERDUE -> LsIcons.Error to LsColors.danger
+        HeldStatus.Tone.READY -> BrowseIcons.CheckCircle to LsColors.success
+        HeldStatus.Tone.RESERVED -> AccountIcons.Schedule to LsColors.warning
+    }
+    val shape = RoundedCornerShape(LsRadius.pill)
+    Row(
+        modifier
+            .defaultMinSize(minWidth = 120.dp)
+            .height(ActionsHeight)
+            .clip(shape)
+            .background(LsColors.surfaceElevated)
+            .border(1.dp, tint.copy(alpha = 0.35f), shape)
+            .clickable(onClick = onClick)
+            // One element: "On loan, due 14 October", a button that opens Your Books.
+            .clearAndSetSemantics {
+                contentDescription = status.accessibilityLabel
+                role = Role.Button
+                onClick(label = HeldStatus.ACTION) { onClick(); true }
+            }
+            .padding(horizontal = LsSpacing.l),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(LsSpacing.s, Alignment.CenterHorizontally),
+    ) {
+        Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(20.dp))
+        Text(status.text, style = LsType.bodyStrong, color = tint, maxLines = 1, overflow = TextOverflow.Ellipsis)
+    }
+}
+
