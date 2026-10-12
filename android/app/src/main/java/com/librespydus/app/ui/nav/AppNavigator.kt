@@ -48,7 +48,8 @@ internal class TabNavigator(
         navController.navigate(Route.Results(query, sort, title))
 
     override fun back() {
-        navController.popBackStack()
+        // A second Back tap during the pop animation must not pop the tab's root.
+        if (navController.previousBackStackEntry != null) navController.popBackStack()
     }
 
     override fun switchTab(tab: Tab) = appState.selectTab(tab)
@@ -62,7 +63,9 @@ internal class JsonNavType<T : Any>(private val serializer: KSerializer<T>) : Na
 
     override fun put(bundle: Bundle, key: String, value: T) = bundle.putString(key, json.encodeToString(serializer, value))
 
-    override fun parseValue(value: String): T = json.decodeFromString(serializer, Uri.decode(value))
+    // Navigation has already decoded the route argument; decoding again would turn `%5C` inside
+    // a JSON string (Spydus availability URLs) into a bare `\` and break the JSON.
+    override fun parseValue(value: String): T = json.decodeFromString(serializer, value)
 
     override fun serializeAsValue(value: T): String = Uri.encode(json.encodeToString(serializer, value))
 
