@@ -1,0 +1,1947 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-10-11T03:59:19.948942+00:00",
+  "base_url": "https://canning.spydus.com",
+  "institution": {
+    "name": "Canning Libraries",
+    "inst_code": "WQUP",
+    "subsite": ""
+  },
+  "scope": "Public OPAC sources plus authorised authenticated read-only browser requests using an app-derived session cookie. Native mobile API contracts remain separate.",
+  "sources": [
+    {
+      "url": "https://canning.spydus.com/docs/OPAC/js/spydus.js",
+      "status": 200,
+      "content_type": "application/javascript",
+      "sha256": "345349581a6713f8fabd7b8bf51840651f7618ddd83976f0757aa6c8a32a9b03",
+      "bytes": 43629
+    },
+    {
+      "url": "https://canning.spydus.com/docs/OPAC/js/gq.js",
+      "status": 200,
+      "content_type": "application/javascript",
+      "sha256": "e8262007d3d37d09155a95788868b4973a16f1bfe7a6a1c1380725698a4255dc",
+      "bytes": 696
+    },
+    {
+      "url": "https://canning.spydus.com/docs/OPAC/js/modal.js",
+      "status": 200,
+      "content_type": "application/javascript",
+      "sha256": "d936f3bbef96d3256a2849fd46bcd942f5382bb475fedc05d6212bb69693939d",
+      "bytes": 13728
+    },
+    {
+      "url": "https://canning.spydus.com/docs/OPAC/js/searchAutoComplete.js",
+      "status": 200,
+      "content_type": "application/javascript",
+      "sha256": "856350bb6b98212073a8b319127000ecc7b24f0a55b1ad3be7262b5e9436d43c",
+      "bytes": 3894
+    },
+    {
+      "url": "https://canning.spydus.com/docs/OPAC/js/encrypt.js",
+      "status": 200,
+      "content_type": "application/javascript",
+      "sha256": "606f499d5e29742b63984f8d8f08090dc9458dc1b06299ecf25cb603db6ebff5",
+      "bytes": 547
+    },
+    {
+      "url": "https://canning.spydus.com/docs/OPAC/js/login.js",
+      "status": 200,
+      "content_type": "application/javascript",
+      "sha256": "6e7e715093ce7b70c114205c836e67516f0878216b7207bad373164d3d18820d",
+      "bytes": 747
+    },
+    {
+      "url": "https://canning.spydus.com/docs/OPAC/js/timeout.js",
+      "status": 200,
+      "content_type": "application/javascript",
+      "sha256": "b55e8efcf32d6ec636313bdbaed356f5a8a88351c6d889cac09fe3227a258b16",
+      "bytes": 2610
+    },
+    {
+      "url": "https://canning.spydus.com/docs/OPAC/js/tabContainer.js",
+      "status": 200,
+      "content_type": "application/javascript",
+      "sha256": "3861c8699a748abc3c8d317da06ec70c649bbb8218cdce2354dbcda27a65fc8e",
+      "bytes": 18414
+    },
+    {
+      "url": "https://canning.spydus.com/cgi-bin/spydus.exe/MSGTRN/OPAC/LOGINB",
+      "final_url": "https://canning.spydus.com/cgi-bin/spydus.exe/MSGTRN/OPAC/LOGINB",
+      "status": 200,
+      "content_type": "text/html; charset=UTF-8",
+      "sha256": "cbd89e864d59af03cdb69dfbf4d9206130192b8562e9a111fe7afde64c662837",
+      "bytes": 63058
+    },
+    {
+      "url": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ?ENTRY=harry%20potter&ENTRY_NAME=BS&ENTRY_TYPE=K&SORTS=SQL_REL_BIB&GQ=harry%20potter",
+      "final_url": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ?ENTRY=harry%20potter&ENTRY_NAME=BS&ENTRY_TYPE=K&SORTS=SQL_REL_BIB&GQ=harry%20potter",
+      "status": 200,
+      "content_type": "text/html; charset=UTF-8",
+      "sha256": "c126e514a5503ad9b0cf49d47c76f1343225347a7f0d0d7c3783993c192b48b8",
+      "bytes": 164529
+    },
+    {
+      "url": "https://canning.spydus.com/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/LB/1?ISGLB=0",
+      "final_url": "https://canning.spydus.com/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/LB/1?ISGLB=0",
+      "status": 200,
+      "content_type": "text/html; charset=UTF-8",
+      "sha256": "0174dfe8abb37af0c797c5966d7c1527055f7a12d1a04311dfaa9dfe9e7c900d",
+      "bytes": 60571
+    },
+    {
+      "url": "https://canning.spydus.com/spyscripts/cookie.js",
+      "final_url": "https://canning.spydus.com/spyscripts/cookie.js",
+      "status": 200,
+      "content_type": "application/javascript",
+      "sha256": "8d59c76ed74e554cdf70e60c3068e312ef1d7eb871bdf70e94645ecfdceaafcb",
+      "bytes": 2814
+    },
+    {
+      "url": "https://canning.spydus.com/docs/OPAC/js/form.js",
+      "final_url": "https://canning.spydus.com/docs/OPAC/js/form.js",
+      "status": 200,
+      "content_type": "application/javascript",
+      "sha256": "91532188079fb29872916ac6cd33239f85b8338b851ea620f9c7ad629ba41173",
+      "bytes": 2373
+    },
+    {
+      "url": "https://canning.spydus.com/docs/OPAC/js/briefdisplay.js",
+      "final_url": "https://canning.spydus.com/docs/OPAC/js/briefdisplay.js",
+      "status": 200,
+      "content_type": "application/javascript",
+      "sha256": "65b2264b8c4865a37e6ee89f92d73f0e2cf181f63b642c151e276eda109c8fe9",
+      "bytes": 6377
+    },
+    {
+      "url": "https://canning.spydus.com/cgi-bin/spydus.exe/FULL/OPAC/BIBENQ/78524538/13360535,2",
+      "final_url": "https://canning.spydus.com/cgi-bin/spydus.exe/FULL/OPAC/BIBENQ/78524538/13360535,2",
+      "status": 200,
+      "content_type": "text/html; charset=UTF-8",
+      "sha256": "e1b028215617ae722674c1a6c229a429d8832f5acbe6db4e9b38039be2b97283",
+      "bytes": 89452
+    },
+    {
+      "url": "https://canning.spydus.com/cgi-bin/spydus.exe/XHLD/OPAC/BIBENQ/78524538/13360535?RECDISP=REC",
+      "final_url": "https://canning.spydus.com/cgi-bin/spydus.exe/XHLD/OPAC/BIBENQ/78524538/13360535?RECDISP=REC",
+      "status": 200,
+      "content_type": "text/html; charset=UTF-8",
+      "sha256": "e652b98d76ef965d55bc80882db42041b5d30b25c5b28352be3c811d6207f294",
+      "bytes": 4723
+    }
+  ],
+  "rea": {
+    "cli": "rea-agents 6.3.0",
+    "command": "npx rea-agents@latest analyze-javascript-application .private/web/public --artifact-format directory --format json",
+    "evidence_id": "ev_f97fd26a718f07d2f8f56c251b2d1857434ee5afe5b0878e7e072008930a24cc",
+    "path": ".private/web/rea-public-js.json",
+    "confidence": "derived",
+    "authority": "shipped-artifact"
+  },
+  "endpoints": [
+    {
+      "id": "web.login-page",
+      "feature": "Login page",
+      "method": "GET",
+      "path_template": "/cgi-bin/spydus.exe/MSGTRN/OPAC/LOGINB",
+      "query": {
+        "RDT": "Optional URL return target"
+      },
+      "body": null,
+      "response": "HTML login form",
+      "authentication": "Guest",
+      "mutates_state": false,
+      "evidence": {
+        "kind": "public_http_read",
+        "confidence": "confirmed_public_web_route",
+        "sources": [
+          {
+            "path": ".private/web/public/login.html",
+            "line": 645,
+            "column": 14974,
+            "tag": "form",
+            "attribute": "action",
+            "snippet": "/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/LB/2"
+          }
+        ]
+      },
+      "app_request_observed": false,
+      "notes": []
+    },
+    {
+      "id": "web.login-submit",
+      "feature": "Browser login",
+      "method": "POST",
+      "path_template": "/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/LB/2",
+      "query": {},
+      "body": {
+        "encoding": "application/x-www-form-urlencoded (inferred from default HTML form enctype)",
+        "fields": {
+          "BRWLID": "Borrower ID or username",
+          "BRWLPWD": "JSEncrypt RSA-encrypted password, Base64 ciphertext",
+          "RDT": "Return URL",
+          "csrf": "Added when body[data-csrf] exists; not present in guest snapshot"
+        }
+      },
+      "response": "Not submitted; cookies/redirect/errors not measured",
+      "authentication": "Not established by public assets",
+      "mutates_state": true,
+      "evidence": {
+        "kind": "public_source_static",
+        "confidence": "confirmed_client_reference_server_contract_unverified",
+        "sources": [
+          {
+            "path": ".private/web/public/login.html",
+            "line": 645,
+            "column": 14974,
+            "tag": "form",
+            "attribute": "action",
+            "snippet": "/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/LB/2"
+          },
+          {
+            "path": ".private/web/public/login.js",
+            "line": 9,
+            "column": 9,
+            "snippet": "$(this).find(\"input[name='BRWLPWD']\").val(rsaEncrypt"
+          },
+          {
+            "path": ".private/web/public/form.js",
+            "line": 20,
+            "column": 11,
+            "snippet": "$(this).find(\"input[name='BRWLPWD']\").val(rsaEncrypt"
+          },
+          {
+            "path": ".private/web/public/encrypt.js",
+            "line": 4,
+            "column": 5,
+            "snippet": "crypt.setPublicKey('-----BEGIN PUBLIC KEY-----"
+          },
+          {
+            "path": ".private/web/public/spydus.js",
+            "line": 106,
+            "column": 3,
+            "snippet": "var csrf = $('body').data('csrf');"
+          }
+        ]
+      },
+      "app_request_observed": false,
+      "notes": []
+    },
+    {
+      "id": "web.dashboard",
+      "feature": "Account dashboard",
+      "method": "GET",
+      "path_template": "/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/LB/1",
+      "query": {
+        "ISGLB": "0 in public menu",
+        "RFB": "1 in native app account entry"
+      },
+      "body": null,
+      "response": "Guest HTML without session; with app session, 200 meta redirect to ENQ/OPAC/BRWENQ/{setId}?QRY=%23{setId}&QRYTEXT=My%20details&NRECS=999",
+      "authentication": "Not established by public assets",
+      "mutates_state": false,
+      "evidence": {
+        "kind": "public_http_read",
+        "confidence": "confirmed_public_web_route",
+        "sources": [
+          {
+            "path": ".private/web/public/dashboard-guest.html",
+            "line": 645,
+            "column": 31181,
+            "tag": "a",
+            "attribute": "href",
+            "snippet": "/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/LB/1?ISGLB=0"
+          },
+          {
+            "path": ".private/web/public/tabContainer.js",
+            "line": 51,
+            "column": 3,
+            "snippet": "$(\".js-tab-container-brw-dashboard-item\").each"
+          }
+        ]
+      },
+      "app_request_observed": false,
+      "notes": [
+        "Dashboard cards resolve runtime #url{id} href into GET HTML fragment; exact authenticated hrefs unavailable.",
+        "Authenticated account entry and OPAC redirect verified separately; this deployment initially opens My details, with loan/reservation sidebar links."
+      ]
+    },
+    {
+      "id": "web.logout",
+      "feature": "Logout",
+      "method": "GET",
+      "path_template": "/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/LB/3",
+      "query": {
+        "RDT": "Return URL"
+      },
+      "body": null,
+      "response": "Not called",
+      "authentication": "Browser borrower session implied",
+      "mutates_state": true,
+      "evidence": {
+        "kind": "public_source_static",
+        "confidence": "confirmed_client_reference_server_contract_unverified",
+        "sources": [
+          {
+            "path": ".private/web/public/login.html",
+            "line": 645,
+            "column": 34873,
+            "tag": "a",
+            "attribute": "href",
+            "snippet": "/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/LB/3?RDT=https://canning.spydus.com/"
+          }
+        ]
+      },
+      "app_request_observed": false,
+      "notes": []
+    },
+    {
+      "id": "web.autocomplete",
+      "feature": "Search suggestions",
+      "method": "POST",
+      "path_template": "/autocompleter/GetFilteredTerms",
+      "query": {},
+      "body": {
+        "encoding": "application/json",
+        "fields": {
+          "mode": "QF",
+          "value": "Search text",
+          "inst": "WQUP (Canning body[data-instcode])"
+        }
+      },
+      "response": "HTML inserted into .autocompleter-choices; not fetched",
+      "authentication": "Not established by public assets",
+      "mutates_state": false,
+      "evidence": {
+        "kind": "public_source_static",
+        "confidence": "confirmed_client_reference_server_contract_unverified",
+        "sources": [
+          {
+            "path": ".private/web/public/searchAutoComplete.js",
+            "line": 58,
+            "column": 3,
+            "snippet": "var data = { mode: 'QF',"
+          },
+          {
+            "path": ".private/web/public/searchAutoComplete.js",
+            "line": 73,
+            "column": 95,
+            "snippet": "'/autocompleter/GetFilteredTerms'"
+          }
+        ]
+      },
+      "app_request_observed": false,
+      "notes": []
+    },
+    {
+      "id": "web.catalogue-search",
+      "feature": "Catalogue keyword search",
+      "method": "GET",
+      "path_template": "/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ",
+      "query": {
+        "ENTRY": "Search text; max length 200 in HTML",
+        "ENTRY_NAME": "BS",
+        "ENTRY_TYPE": "K",
+        "SORTS": "SQL_REL_BIB",
+        "GQ": "Same search text",
+        "NRECS": "10 in header form",
+        "QRY": "Selected category query string (optional)",
+        "QRYTEXT": "Selected category display label",
+        "_SPQ": "2 in header form",
+        "CF": "disabled by default for BIBENQ"
+      },
+      "body": null,
+      "response": "HTML result list/grid with set ID, record IRNs, links, query facets",
+      "authentication": "Guest accepted",
+      "mutates_state": false,
+      "evidence": {
+        "kind": "public_http_read",
+        "confidence": "confirmed_public_web_route",
+        "sources": [
+          {
+            "path": ".private/web/public/search.html",
+            "line": 648,
+            "column": 17513,
+            "tag": "form",
+            "attribute": "action",
+            "snippet": "/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ"
+          },
+          {
+            "path": ".private/web/public/spydus.js",
+            "line": 69,
+            "column": 101,
+            "snippet": "'/cgi-bin/spydus.exe/ENQ/' + tpc"
+          }
+        ]
+      },
+      "app_request_observed": false,
+      "notes": []
+    },
+    {
+      "id": "web.work-search",
+      "feature": "Work grouped keyword search",
+      "method": "GET",
+      "path_template": "/cgi-bin/spydus.exe/ENQ/OPAC/BIBWRKENQ",
+      "query": {
+        "ENTRY": "Search text",
+        "ENTRY_NAME": "BS",
+        "ENTRY_TYPE": "K",
+        "SORTS": "SQL_REL_WRK",
+        "CF": "BIB",
+        "GQ": "Same search text",
+        "QRY": "Optional category filter",
+        "QRYTEXT": "Category label",
+        "NRECS": "10",
+        "_SPQ": "2"
+      },
+      "body": null,
+      "response": "Referenced only; response not fetched",
+      "authentication": "Not established by public assets",
+      "mutates_state": false,
+      "evidence": {
+        "kind": "public_source_static",
+        "confidence": "confirmed_client_reference_server_contract_unverified",
+        "sources": [
+          {
+            "path": ".private/web/public/search.html",
+            "line": 648,
+            "column": 18229,
+            "tag": "option",
+            "attribute": "data-tpc",
+            "snippet": "OPAC/BIBWRKENQ"
+          },
+          {
+            "path": ".private/web/public/spydus.js",
+            "line": 69,
+            "column": 101,
+            "snippet": "'/cgi-bin/spydus.exe/ENQ/' + tpc"
+          }
+        ]
+      },
+      "app_request_observed": false,
+      "notes": []
+    },
+    {
+      "id": "web.cloud-search",
+      "feature": "Configured cloud catalogue search",
+      "method": "GET",
+      "path_template": "/cgi-bin/spydus.exe/CLDENQ/{tpc}",
+      "query": {},
+      "body": null,
+      "response": "Conditional code only; Canning cloud option not established",
+      "authentication": "Not established by public assets",
+      "mutates_state": false,
+      "evidence": {
+        "kind": "public_source_static",
+        "confidence": "confirmed_client_reference_server_contract_unverified",
+        "sources": [
+          {
+            "path": ".private/web/public/spydus.js",
+            "line": 67,
+            "column": 101,
+            "snippet": "'/cgi-bin/spydus.exe/CLDENQ/' + tpc"
+          }
+        ]
+      },
+      "app_request_observed": false,
+      "notes": []
+    },
+    {
+      "id": "web.result-page",
+      "feature": "Result pagination",
+      "method": "GET",
+      "path_template": "/cgi-bin/spydus.exe/SET/OPAC/BIBENQ/{setId}/{cursor}",
+      "query": {
+        "NREC": "Result offset; observed 0 and 10"
+      },
+      "body": null,
+      "response": "HTML; link only, not separately fetched",
+      "authentication": "Not established by public assets",
+      "mutates_state": false,
+      "evidence": {
+        "kind": "public_source_static",
+        "confidence": "confirmed_client_reference_server_contract_unverified",
+        "sources": [
+          {
+            "path": ".private/web/public/search.html",
+            "line": 648,
+            "column": 29384,
+            "tag": "a",
+            "attribute": "href",
+            "snippet": "/cgi-bin/spydus.exe/SET/OPAC/BIBENQ/78524538/19240729?NREC=10"
+          }
+        ]
+      },
+      "app_request_observed": false,
+      "notes": [
+        "Use returned links rather than inventing cursor semantics; observed cursor can be 0 or record IRN."
+      ]
+    },
+    {
+      "id": "web.record-detail",
+      "feature": "Bibliographic record detail",
+      "method": "GET",
+      "path_template": "/cgi-bin/spydus.exe/FULL/OPAC/BIBENQ/{setId}/{bibIrn},{ordinal}",
+      "query": {},
+      "body": null,
+      "response": "HTML full bibliographic record, reservation action and lazy tabs",
+      "authentication": "Guest accepted",
+      "mutates_state": false,
+      "evidence": {
+        "kind": "public_http_read",
+        "confidence": "confirmed_public_web_route",
+        "sources": [
+          {
+            "path": ".private/web/public/search.html",
+            "line": 648,
+            "column": 35350,
+            "tag": "a",
+            "attribute": "href",
+            "snippet": "/cgi-bin/spydus.exe/FULL/OPAC/BIBENQ/78524538/17649941,1"
+          }
+        ]
+      },
+      "app_request_observed": false,
+      "notes": []
+    },
+    {
+      "id": "web.holdings",
+      "feature": "Record availability",
+      "method": "GET",
+      "path_template": "/cgi-bin/spydus.exe/XHLD/OPAC/BIBENQ/{setId}/{bibIrn}",
+      "query": {
+        "RECDISP": "REC optional; includes nested record display"
+      },
+      "body": null,
+      "response": "HTML fragment: location, collection, call number, holdings status and optional reservation link",
+      "authentication": "Guest accepted",
+      "mutates_state": false,
+      "evidence": {
+        "kind": "public_http_read",
+        "confidence": "confirmed_public_web_route",
+        "sources": [
+          {
+            "path": ".private/web/public/search.html",
+            "line": 648,
+            "column": 37132,
+            "tag": "a",
+            "attribute": "href",
+            "snippet": "/cgi-bin/spydus.exe/XHLD/OPAC/BIBENQ/78524538/17649941?RECDISP=REC"
+          },
+          {
+            "path": ".private/web/public/modal.js",
+            "line": 66,
+            "column": 5,
+            "snippet": "$('#tabHoldingsLoaded').load(url"
+          }
+        ]
+      },
+      "app_request_observed": false,
+      "notes": []
+    },
+    {
+      "id": "web.record-fragment",
+      "feature": "Record display fragment",
+      "method": "GET",
+      "path_template": "/cgi-bin/spydus.exe/XFULL/OPAC/BIBENQ/{setId}/{bibIrn}",
+      "query": {
+        "FMT": "REC"
+      },
+      "body": null,
+      "response": "HTML fragment inferred from loader; route not called",
+      "authentication": "Not established by public assets",
+      "mutates_state": false,
+      "evidence": {
+        "kind": "public_source_static",
+        "confidence": "confirmed_client_reference_server_contract_unverified",
+        "sources": [
+          {
+            "path": ".private/web/public/holdings.html",
+            "line": 1,
+            "column": 267,
+            "tag": "a",
+            "attribute": "href",
+            "snippet": "/cgi-bin/spydus.exe/XFULL/OPAC/BIBENQ/78524538/13360535?FMT=REC"
+          }
+        ]
+      },
+      "app_request_observed": false,
+      "notes": []
+    },
+    {
+      "id": "web.facets",
+      "feature": "Search facet fragment",
+      "method": "GET",
+      "path_template": "/cgi-bin/spydus.exe/XFACETS/OPAC/BIBENQ/{setId}",
+      "query": {},
+      "body": null,
+      "response": "HTML facet fragment inferred; not fetched",
+      "authentication": "Not established by public assets",
+      "mutates_state": false,
+      "evidence": {
+        "kind": "public_source_static",
+        "confidence": "confirmed_client_reference_server_contract_unverified",
+        "sources": [
+          {
+            "path": ".private/web/public/search.html",
+            "line": 648,
+            "column": 28339,
+            "tag": "a",
+            "attribute": "href",
+            "snippet": "/cgi-bin/spydus.exe/XFACETS/OPAC/BIBENQ/78524538"
+          },
+          {
+            "path": ".private/web/public/tabContainer.js",
+            "line": 46,
+            "column": 7,
+            "snippet": "$(divid).load(myFilter(url), gallery_container);"
+          }
+        ]
+      },
+      "app_request_observed": false,
+      "notes": []
+    },
+    {
+      "id": "web.saved-query",
+      "feature": "Home catalogue carousel",
+      "method": "GET",
+      "path_template": "/cgi-bin/spydus.exe/RUNSQRY/OPAC/BIBENQ",
+      "query": {
+        "SQRYIRN": "Configured saved query IRN",
+        "SORTS": "SQL_RANDOM in home",
+        "NRECS": "12 new titles / 6 history gallery",
+        "SETLVL": "SET",
+        "GCN": "BESTSELLERS",
+        "ISGLB": "0",
+        "XSLT": "XGridView.xsl",
+        "FMT": "GD",
+        "QRYTEXT": "Configured section title"
+      },
+      "body": null,
+      "response": "HTML fragment inferred from loader; not fetched",
+      "authentication": "Not established by public assets",
+      "mutates_state": false,
+      "evidence": {
+        "kind": "public_source_static",
+        "confidence": "confirmed_client_reference_server_contract_unverified",
+        "sources": [
+          {
+            "path": ".private/web/public/tabContainer.js",
+            "line": 46,
+            "column": 7,
+            "snippet": "$(divid).load(myFilter(url), gallery_container);"
+          }
+        ]
+      },
+      "app_request_observed": false,
+      "notes": [
+        "Home source .private/captures/canning-opac-home.html #urltabNEWTAB / #urltabGALLERY contains exact Canning configuration."
+      ]
+    },
+    {
+      "id": "web.reservation-start",
+      "feature": "Start single reservation workflow",
+      "method": "GET",
+      "path_template": "/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/{setId}/{bibIrn}/V",
+      "query": {
+        "FRMTYP": "R",
+        "RDT": "Nested return route to /CCOPT/{setId}/{bibIrn}/V then /CCOPT/{setId}/{bibIrn}/R; supplied by page link"
+      },
+      "body": null,
+      "response": "Not called",
+      "authentication": "Borrower login/session needed to verify",
+      "mutates_state": true,
+      "evidence": {
+        "kind": "public_source_static",
+        "confidence": "confirmed_client_reference_server_contract_unverified",
+        "sources": [
+          {
+            "path": ".private/web/public/detail.html",
+            "line": 714,
+            "column": 29755,
+            "tag": "a",
+            "attribute": "data-plcrsv",
+            "snippet": "/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/78524538/13360535/V?RDT=/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/78524538/13360535/V?RDT=/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/78524538/13360535/R|FRMTYP=R&FRMTYP=R"
+          },
+          {
+            "path": ".private/web/public/modal.js",
+            "line": 75,
+            "column": 72,
+            "snippet": "window.location.href = plcrsv;"
+          }
+        ]
+      },
+      "app_request_observed": false,
+      "notes": [
+        "V and R meaning/final body/schema unverified. Following this link could start a patron action; not replayed."
+      ]
+    },
+    {
+      "id": "web.reservation-selection",
+      "feature": "Reservation workflow from selected search records",
+      "method": "GET",
+      "path_template": "/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/{setId}/0/V/0/R/9/BIBENQ",
+      "query": {
+        "SVL": "Selected bib IRN; repeated values possible but not established",
+        "RECFMT": "Empty in observed link"
+      },
+      "body": null,
+      "response": "Not called",
+      "authentication": "Borrower login/session needed to verify",
+      "mutates_state": true,
+      "evidence": {
+        "kind": "public_source_static",
+        "confidence": "confirmed_client_reference_server_contract_unverified",
+        "sources": [
+          {
+            "path": ".private/web/public/search.html",
+            "line": 648,
+            "column": 42556,
+            "tag": "a",
+            "attribute": "href",
+            "snippet": "/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/78524538/0/V/0/R/9/BIBENQ?SVL=13360535&RECFMT="
+          }
+        ]
+      },
+      "app_request_observed": false,
+      "notes": []
+    },
+    {
+      "id": "web.pick-add",
+      "feature": "Add record to active pick list",
+      "method": "GET",
+      "path_template": "/cgi-bin/spydus.exe/XSVL/OPAC/BIBENQ/{setId}",
+      "query": {
+        "SVL": "bibIrn"
+      },
+      "body": null,
+      "response": "XML expected by onClickSVL; optional REDIRECT and COOKIE NAME/VALUE",
+      "authentication": "Not established by public assets",
+      "mutates_state": true,
+      "evidence": {
+        "kind": "public_source_static",
+        "confidence": "confirmed_client_reference_server_contract_unverified",
+        "sources": [
+          {
+            "path": ".private/web/public/search.html",
+            "line": 648,
+            "column": 34244,
+            "tag": "a",
+            "attribute": "href",
+            "snippet": "/cgi-bin/spydus.exe/XSVL/OPAC/BIBENQ/78524538?SVL=17649941"
+          },
+          {
+            "path": ".private/web/public/spydus.js",
+            "line": 867,
+            "column": 1,
+            "snippet": "function onClickSVL() {"
+          }
+        ]
+      },
+      "app_request_observed": false,
+      "notes": []
+    },
+    {
+      "id": "web.pick-remove",
+      "feature": "Remove record from active pick list",
+      "method": "GET",
+      "path_template": "/cgi-bin/spydus.exe/XSVL/OPAC/BIBENQ/{setId}",
+      "query": {
+        "RSVL": "bibIrn"
+      },
+      "body": null,
+      "response": "XML expected by onClickSVL; optional REDIRECT and COOKIE NAME/VALUE",
+      "authentication": "Not established by public assets",
+      "mutates_state": true,
+      "evidence": {
+        "kind": "public_source_static",
+        "confidence": "confirmed_client_reference_server_contract_unverified",
+        "sources": [
+          {
+            "path": ".private/web/public/search.html",
+            "line": 648,
+            "column": 33843,
+            "tag": "a",
+            "attribute": "href",
+            "snippet": "/cgi-bin/spydus.exe/XSVL/OPAC/BIBENQ/78524538?RSVL=17649941"
+          },
+          {
+            "path": ".private/web/public/spydus.js",
+            "line": 867,
+            "column": 1,
+            "snippet": "function onClickSVL() {"
+          }
+        ]
+      },
+      "app_request_observed": false,
+      "notes": []
+    },
+    {
+      "id": "web.quickreview-read",
+      "feature": "Read patron quick review",
+      "method": "GET",
+      "path_template": "/api/wpac/1.0/patrons/{brwIrn}/quickreview/{bibIrn}",
+      "query": {},
+      "body": null,
+      "response": "Client expects boolean true=like, false=dislike; other value means no selection",
+      "authentication": "Borrower identity from main[data-brwdirn]; no headers explicit in JS; browser same-origin cookies implied",
+      "mutates_state": false,
+      "evidence": {
+        "kind": "public_source_static",
+        "confidence": "confirmed_client_reference_server_contract_unverified",
+        "sources": [
+          {
+            "path": ".private/web/public/spydus.js",
+            "line": 908,
+            "column": 102,
+            "snippet": "'/api/wpac/1.0/patrons/' + brwdirn + '/quickreview/' + irn"
+          }
+        ]
+      },
+      "app_request_observed": false,
+      "notes": []
+    },
+    {
+      "id": "web.quickreview-summary",
+      "feature": "Public quick review totals",
+      "method": "GET",
+      "path_template": "/api/open/1.0/general/quickreview/{bibIrn}",
+      "query": {},
+      "body": null,
+      "response": "Client consumes object fields like and dislike (counts)",
+      "authentication": "Open route label only; no authenticated HTTP verification",
+      "mutates_state": false,
+      "evidence": {
+        "kind": "public_source_static",
+        "confidence": "confirmed_client_reference_server_contract_unverified",
+        "sources": [
+          {
+            "path": ".private/web/public/spydus.js",
+            "line": 931,
+            "column": 100,
+            "snippet": "'/api/open/1.0/general/quickreview/' + irn"
+          }
+        ]
+      },
+      "app_request_observed": false,
+      "notes": []
+    },
+    {
+      "id": "web.quickreview-like",
+      "feature": "Set/remove patron quick review",
+      "method": "GET",
+      "path_template": "/api/wpac/1.0/patrons/{brwIrn}/quickreview/{bibIrn}/like",
+      "query": {},
+      "body": null,
+      "response": "Client expects boolean true on success",
+      "authentication": "Borrower session implied; no explicit headers",
+      "mutates_state": true,
+      "evidence": {
+        "kind": "public_source_static",
+        "confidence": "confirmed_client_reference_server_contract_unverified",
+        "sources": [
+          {
+            "path": ".private/web/public/spydus.js",
+            "line": 982,
+            "column": 9,
+            "snippet": "url += '/like';"
+          }
+        ]
+      },
+      "app_request_observed": false,
+      "notes": []
+    },
+    {
+      "id": "web.quickreview-dislike",
+      "feature": "Set/remove patron quick review",
+      "method": "GET",
+      "path_template": "/api/wpac/1.0/patrons/{brwIrn}/quickreview/{bibIrn}/dislike",
+      "query": {},
+      "body": null,
+      "response": "Client expects boolean true on success",
+      "authentication": "Borrower session implied; no explicit headers",
+      "mutates_state": true,
+      "evidence": {
+        "kind": "public_source_static",
+        "confidence": "confirmed_client_reference_server_contract_unverified",
+        "sources": [
+          {
+            "path": ".private/web/public/spydus.js",
+            "line": 1017,
+            "column": 9,
+            "snippet": "url += '/dislike';"
+          }
+        ]
+      },
+      "app_request_observed": false,
+      "notes": []
+    },
+    {
+      "id": "web.quickreview-clear",
+      "feature": "Set/remove patron quick review",
+      "method": "GET",
+      "path_template": "/api/wpac/1.0/patrons/{brwIrn}/quickreview/{bibIrn}/clear",
+      "query": {},
+      "body": null,
+      "response": "Client expects boolean true on success",
+      "authentication": "Borrower session implied; no explicit headers",
+      "mutates_state": true,
+      "evidence": {
+        "kind": "public_source_static",
+        "confidence": "confirmed_client_reference_server_contract_unverified",
+        "sources": [
+          {
+            "path": ".private/web/public/spydus.js",
+            "line": 980,
+            "column": 9,
+            "snippet": "url += '/clear';"
+          }
+        ]
+      },
+      "app_request_observed": false,
+      "notes": []
+    },
+    {
+      "id": "web.authapp-get",
+      "feature": "Read/enable/reset/disable browser authenticator",
+      "method": "GET",
+      "path_template": "/api/wpac/1.0/patrons/{brwIrn}/authapp",
+      "query": {},
+      "body": null,
+      "response": "GET/PUT read response.text() secret key; GET 404 treated as disabled; DELETE success hides key",
+      "authentication": "Browser borrower session implied; no explicit headers/body/CSRF shown",
+      "mutates_state": false,
+      "evidence": {
+        "kind": "public_source_static",
+        "confidence": "confirmed_client_reference_server_contract_unverified",
+        "sources": [
+          {
+            "path": ".private/web/public/modal.js",
+            "line": 252,
+            "column": 100,
+            "snippet": "\"/api/wpac/1.0/patrons/\" + brwIrn + \"/authapp\""
+          },
+          {
+            "path": ".private/web/public/modal.js",
+            "line": 337,
+            "column": 7,
+            "snippet": "const response = await fetch(url);"
+          }
+        ]
+      },
+      "app_request_observed": false,
+      "notes": [
+        "Static only. This optional OPAC feature is not confirmed as part of the mobile app."
+      ]
+    },
+    {
+      "id": "web.authapp-put",
+      "feature": "Read/enable/reset/disable browser authenticator",
+      "method": "PUT",
+      "path_template": "/api/wpac/1.0/patrons/{brwIrn}/authapp",
+      "query": {},
+      "body": null,
+      "response": "GET/PUT read response.text() secret key; GET 404 treated as disabled; DELETE success hides key",
+      "authentication": "Browser borrower session implied; no explicit headers/body/CSRF shown",
+      "mutates_state": true,
+      "evidence": {
+        "kind": "public_source_static",
+        "confidence": "confirmed_client_reference_server_contract_unverified",
+        "sources": [
+          {
+            "path": ".private/web/public/modal.js",
+            "line": 252,
+            "column": 100,
+            "snippet": "\"/api/wpac/1.0/patrons/\" + brwIrn + \"/authapp\""
+          },
+          {
+            "path": ".private/web/public/modal.js",
+            "line": 282,
+            "column": 11,
+            "snippet": "method: \"PUT\""
+          }
+        ]
+      },
+      "app_request_observed": false,
+      "notes": [
+        "Static only. This optional OPAC feature is not confirmed as part of the mobile app."
+      ]
+    },
+    {
+      "id": "web.authapp-delete",
+      "feature": "Read/enable/reset/disable browser authenticator",
+      "method": "DELETE",
+      "path_template": "/api/wpac/1.0/patrons/{brwIrn}/authapp",
+      "query": {},
+      "body": null,
+      "response": "GET/PUT read response.text() secret key; GET 404 treated as disabled; DELETE success hides key",
+      "authentication": "Browser borrower session implied; no explicit headers/body/CSRF shown",
+      "mutates_state": true,
+      "evidence": {
+        "kind": "public_source_static",
+        "confidence": "confirmed_client_reference_server_contract_unverified",
+        "sources": [
+          {
+            "path": ".private/web/public/modal.js",
+            "line": 252,
+            "column": 100,
+            "snippet": "\"/api/wpac/1.0/patrons/\" + brwIrn + \"/authapp\""
+          },
+          {
+            "path": ".private/web/public/modal.js",
+            "line": 324,
+            "column": 11,
+            "snippet": "method: \"DELETE\""
+          }
+        ]
+      },
+      "app_request_observed": false,
+      "notes": [
+        "Static only. This optional OPAC feature is not confirmed as part of the mobile app."
+      ]
+    },
+    {
+      "id": "web.qrcode",
+      "feature": "QR image generation",
+      "method": "GET",
+      "path_template": "/api/open/1.0/qrcodes",
+      "query": {
+        "id": "URI-encoded QR content; authenticator UI passes otpauth://totp/{siteName}?secret={secretKey}"
+      },
+      "body": null,
+      "response": "Image; not fetched",
+      "authentication": "Not established by public assets",
+      "mutates_state": false,
+      "evidence": {
+        "kind": "public_source_static",
+        "confidence": "confirmed_client_reference_server_contract_unverified",
+        "sources": [
+          {
+            "path": ".private/web/public/modal.js",
+            "line": 261,
+            "column": 110,
+            "snippet": "\"/api/open/1.0/qrcodes?id=\" + encodeURIComponent(qrcodecontent)"
+          }
+        ]
+      },
+      "app_request_observed": false,
+      "notes": []
+    },
+    {
+      "id": "web.account-details",
+      "feature": "Authenticated account details query",
+      "method": "GET",
+      "path_template": "/cgi-bin/spydus.exe/ENQ/OPAC/BRWENQ/{setId}",
+      "query": {
+        "QRY": "#{setId}",
+        "QRYTEXT": "My details",
+        "NRECS": "999"
+      },
+      "body": null,
+      "response": "Authenticated HTML account page with links to current loans, pickup and pending reservations",
+      "authentication": "Verified authorised SPYDUS_BRWSESSIONID_443 browser cookie session; value omitted",
+      "mutates_state": false,
+      "evidence": {
+        "kind": "authenticated_http_read",
+        "confidence": "confirmed_authenticated_read",
+        "sources": [
+          {
+            "path": ".private/web/auth/account-details-opac.html",
+            "line": 648,
+            "column": 28992,
+            "tag": "a",
+            "attribute": "href",
+            "snippet_sanitized": "/cgi-bin/spydus.exe/ENQ/OPAC/LOANRENQ/{setId}?QRY=FULL(OND01%5C{patronIrn}%20%2B%20ONC01%5C0)%20-%20(ONS01%5CCR%20%2F%20ONS01%5CCRNB%20%2F%20ONS01%5CLR%20%2F%20ONS01%5CL)%20-%20OND26%5C1&QRYTEXT=Current%20loans&FMT=CL&SETLVL=SET&NRECS=30&SIE=1",
+            "redactions": [
+              "patron IRN",
+              "result set ID",
+              "record/loan/reservation IRN"
+            ]
+          }
+        ]
+      },
+      "app_request_observed": false,
+      "notes": [
+        "Opaque IDs replaced with placeholders; exact private requests/responses retained in .private/web/auth/reads.har."
+      ]
+    },
+    {
+      "id": "web.current-loans",
+      "feature": "Current loans",
+      "method": "GET",
+      "path_template": "/cgi-bin/spydus.exe/ENQ/OPAC/LOANRENQ/{setId}",
+      "query": {
+        "QRY": "FULL(OND01\\{patronIrn} + ONC01\\0) - (ONS01\\CR / ONS01\\CRNB / ONS01\\LR / ONS01\\L) - OND26\\1",
+        "QRYTEXT": "Current loans",
+        "FMT": "CL",
+        "SETLVL": "SET",
+        "NRECS": "30",
+        "SIE": "1"
+      },
+      "body": null,
+      "response": "Authenticated HTML current loans list/grid, record links and action controls",
+      "authentication": "Verified authorised SPYDUS_BRWSESSIONID_443 browser cookie session; value omitted",
+      "mutates_state": false,
+      "evidence": {
+        "kind": "authenticated_http_read",
+        "confidence": "confirmed_authenticated_read",
+        "sources": [
+          {
+            "path": ".private/web/auth/account-details-opac.html",
+            "line": 648,
+            "column": 28992,
+            "tag": "a",
+            "attribute": "href",
+            "snippet_sanitized": "/cgi-bin/spydus.exe/ENQ/OPAC/LOANRENQ/{setId}?QRY=FULL(OND01%5C{patronIrn}%20%2B%20ONC01%5C0)%20-%20(ONS01%5CCR%20%2F%20ONS01%5CCRNB%20%2F%20ONS01%5CLR%20%2F%20ONS01%5CL)%20-%20OND26%5C1&QRYTEXT=Current%20loans&FMT=CL&SETLVL=SET&NRECS=30&SIE=1",
+            "redactions": [
+              "patron IRN",
+              "result set ID",
+              "record/loan/reservation IRN"
+            ]
+          }
+        ]
+      },
+      "app_request_observed": false,
+      "notes": [
+        "Opaque IDs replaced with placeholders; exact private requests/responses retained in .private/web/auth/reads.har.",
+        "QRY contains patron IRN and current-loan status predicates. Retain exact returned QRY rather than constructing a borrower scope from a public ID."
+      ]
+    },
+    {
+      "id": "web.pickup-reservations",
+      "feature": "Available reservations for pickup",
+      "method": "GET",
+      "path_template": "/cgi-bin/spydus.exe/ENQ/OPAC/RSVCENQ/{setId}",
+      "query": {
+        "QRY": "08301\\> ((08301\\> (RVP01\\{patronIrn} + MINOR:08301)) - MINOR:ITR05)",
+        "QRYTEXT": "Available for pickup",
+        "SORTS": "RVP.DTE",
+        "FMT": "AR",
+        "SETLVL": "SET",
+        "NRECS": "30",
+        "SIE": "1"
+      },
+      "body": null,
+      "response": "Authenticated HTML available reservations for pickup list/grid, record links and action controls",
+      "authentication": "Verified authorised SPYDUS_BRWSESSIONID_443 browser cookie session; value omitted",
+      "mutates_state": false,
+      "evidence": {
+        "kind": "authenticated_http_read",
+        "confidence": "confirmed_authenticated_read",
+        "sources": [
+          {
+            "path": ".private/web/auth/account-details-opac.html",
+            "line": 648,
+            "column": 29448,
+            "tag": "a",
+            "attribute": "href",
+            "snippet_sanitized": "/cgi-bin/spydus.exe/ENQ/OPAC/RSVCENQ/{setId}?QRY=08301%5C%3E%20((08301%5C%3E%20(RVP01%5C{patronIrn}%20%2B%20MINOR%3A08301))%20-%20MINOR%3AITR05)&QRYTEXT=Available%20for%20pickup&SORTS=RVP.DTE&FMT=AR&SETLVL=SET&NRECS=30&SIE=1",
+            "redactions": [
+              "patron IRN",
+              "result set ID",
+              "record/loan/reservation IRN"
+            ]
+          }
+        ]
+      },
+      "app_request_observed": false,
+      "notes": [
+        "Opaque IDs replaced with placeholders; exact private requests/responses retained in .private/web/auth/reads.har."
+      ]
+    },
+    {
+      "id": "web.pending-reservations",
+      "feature": "Pending reservations",
+      "method": "GET",
+      "path_template": "/cgi-bin/spydus.exe/ENQ/OPAC/RSVCENQ/{setId}",
+      "query": {
+        "QRY": "((RVP01\\{patronIrn} - MAJOR:RVP18 - RVP18\\< MINOR:RVP45) / (RVP01\\{patronIrn} + MINOR:RVP45)) - RVP42\\1 + ((RVC01\\0 - MINOR:08301) / (08301\\> ((08301\\> (RVP01\\{patronIrn} + MINOR:08301)) + MINOR:ITR05))) - (MINOR:RVP45 + RVP18\\> (08301\\> ((08301\\> (RVP01\\{patronIrn} + MINOR:08301)) - MINOR:ITR05)))",
+        "QRYTEXT": "Reservations not yet available",
+        "SORTS": "RVP.DTE",
+        "FMT": "WR",
+        "SETLVL": "SET",
+        "NRECS": "30",
+        "SEARCH_FORM": "/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/LB/1?ISGLB=0",
+        "FORM_DESC": "Checking for eResources"
+      },
+      "body": null,
+      "response": "Authenticated HTML pending reservations list/grid, record links and action controls",
+      "authentication": "Verified authorised SPYDUS_BRWSESSIONID_443 browser cookie session; value omitted",
+      "mutates_state": false,
+      "evidence": {
+        "kind": "authenticated_http_read",
+        "confidence": "confirmed_authenticated_read",
+        "sources": [
+          {
+            "path": ".private/web/auth/account-details-opac.html",
+            "line": 648,
+            "column": 34138,
+            "tag": "a",
+            "attribute": "href",
+            "snippet_sanitized": "/cgi-bin/spydus.exe/ENQ/OPAC/RSVCENQ/{setId}?QRY=((RVP01%5C{patronIrn}%20-%20MAJOR:RVP18%20-%20RVP18%5C<%20MINOR:RVP45)%20/%20(RVP01%5C{patronIrn}%20%2B%20MINOR:RVP45))%20-%20RVP42%5C1%20%2B%20((RVC01%5C0%20-%20MINOR:08301)%20/%20(08301%5C>%20((08301%5C>%20(RVP01%5C{patronIrn}%20%2B%20MINOR:08301))%20%2B%20MINOR:ITR05)))%20-%20(MINOR:RVP45%20%2B%20RVP18%5C>%20(08301%5C>%20((08301%5C>%20(RVP01%5C{patronIrn}%20%2B%20MINOR:08301))%20-%20MINOR:ITR05)))&QRYTEXT=Reservations%20not%20yet%20available&SORTS=RVP.DTE&FMT=WR&SETLVL=SET&NRECS=30&SEARCH_FORM=%2Fcgi-bin%2Fspydus.exe%2FPGM%2FOPAC%2FCCOPT%2FLB%2F1%3FISGLB%3D0&FORM_DESC=Checking%20for%20eResources",
+            "redactions": [
+              "patron IRN",
+              "result set ID",
+              "record/loan/reservation IRN"
+            ]
+          }
+        ]
+      },
+      "app_request_observed": false,
+      "notes": [
+        "Opaque IDs replaced with placeholders; exact private requests/responses retained in .private/web/auth/reads.har."
+      ]
+    },
+    {
+      "id": "web.renew-selected",
+      "feature": "Renew one/selected loans",
+      "method": "GET",
+      "path_template": "/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/{setId}/0/N/3/LOANRENQ",
+      "query": {
+        "SVL": "One or repeated checked loan/reservation IRNs for selected actions; absent for all actions",
+        "SETDESC": "Current loans, Available for pickup, or Pending reservations",
+        "NREC": "0 in list form"
+      },
+      "body": null,
+      "response": "Not called. Final confirmation, validation, eligibility, success/error and changes unmeasured.",
+      "authentication": "Verified authorised SPYDUS_BRWSESSIONID_443 browser cookie session; value omitted",
+      "mutates_state": true,
+      "evidence": {
+        "kind": "authenticated_html_static",
+        "confidence": "confirmed_authenticated_action_reference_server_outcome_unverified",
+        "sources": [
+          {
+            "path": ".private/web/auth/loans-1.html",
+            "line": 648,
+            "column": 32627,
+            "tag": "a",
+            "attribute": "onclick",
+            "snippet_sanitized": "return SubmitSetoptsAction(this, '/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/{recordIrn}/0/N/3/LOANRENQ');",
+            "redactions": [
+              "patron IRN",
+              "result set ID",
+              "record/loan/reservation IRN"
+            ]
+          }
+        ]
+      },
+      "app_request_observed": false,
+      "notes": [
+        "Opaque IDs replaced with placeholders; exact private requests/responses retained in .private/web/auth/reads.har."
+      ]
+    },
+    {
+      "id": "web.renew-all",
+      "feature": "Renew all loans",
+      "method": "GET",
+      "path_template": "/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/{setId}/0/N/2/LOANRENQ",
+      "query": {
+        "SVL": "One or repeated checked loan/reservation IRNs for selected actions; absent for all actions",
+        "SETDESC": "Current loans, Available for pickup, or Pending reservations",
+        "NREC": "0 in list form"
+      },
+      "body": null,
+      "response": "Not called. Final confirmation, validation, eligibility, success/error and changes unmeasured.",
+      "authentication": "Verified authorised SPYDUS_BRWSESSIONID_443 browser cookie session; value omitted",
+      "mutates_state": true,
+      "evidence": {
+        "kind": "authenticated_html_static",
+        "confidence": "confirmed_authenticated_action_reference_server_outcome_unverified",
+        "sources": [
+          {
+            "path": ".private/web/auth/loans-1.html",
+            "line": 648,
+            "column": 32874,
+            "tag": "a",
+            "attribute": "onclick",
+            "snippet_sanitized": "return SubmitSetoptsAction(this, '/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/{recordIrn}/0/N/2/LOANRENQ');",
+            "redactions": [
+              "patron IRN",
+              "result set ID",
+              "record/loan/reservation IRN"
+            ]
+          }
+        ]
+      },
+      "app_request_observed": false,
+      "notes": [
+        "Opaque IDs replaced with placeholders; exact private requests/responses retained in .private/web/auth/reads.har."
+      ]
+    },
+    {
+      "id": "web.cancel-reservation-selected",
+      "feature": "Cancel one/selected reservations",
+      "method": "GET",
+      "path_template": "/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/{setId}/0/C/5/RSVCENQ",
+      "query": {
+        "SVL": "One or repeated checked loan/reservation IRNs for selected actions; absent for all actions",
+        "SETDESC": "Current loans, Available for pickup, or Pending reservations",
+        "NREC": "0 in list form"
+      },
+      "body": null,
+      "response": "Not called. Final confirmation, validation, eligibility, success/error and changes unmeasured.",
+      "authentication": "Verified authorised SPYDUS_BRWSESSIONID_443 browser cookie session; value omitted",
+      "mutates_state": true,
+      "evidence": {
+        "kind": "authenticated_html_static",
+        "confidence": "confirmed_authenticated_action_reference_server_outcome_unverified",
+        "sources": [
+          {
+            "path": ".private/web/auth/reservations-2.html",
+            "line": 648,
+            "column": 32373,
+            "tag": "a",
+            "attribute": "onclick",
+            "snippet_sanitized": "return SubmitSetoptsAction(this, '/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/{recordIrn}/0/C/5/RSVCENQ');",
+            "redactions": [
+              "patron IRN",
+              "result set ID",
+              "record/loan/reservation IRN"
+            ]
+          }
+        ]
+      },
+      "app_request_observed": false,
+      "notes": [
+        "Opaque IDs replaced with placeholders; exact private requests/responses retained in .private/web/auth/reads.har."
+      ]
+    },
+    {
+      "id": "web.cancel-reservation-all",
+      "feature": "Cancel all reservations",
+      "method": "GET",
+      "path_template": "/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/{setId}/0/C/4/RSVCENQ",
+      "query": {
+        "SVL": "One or repeated checked loan/reservation IRNs for selected actions; absent for all actions",
+        "SETDESC": "Current loans, Available for pickup, or Pending reservations",
+        "NREC": "0 in list form"
+      },
+      "body": null,
+      "response": "Not called. Final confirmation, validation, eligibility, success/error and changes unmeasured.",
+      "authentication": "Verified authorised SPYDUS_BRWSESSIONID_443 browser cookie session; value omitted",
+      "mutates_state": true,
+      "evidence": {
+        "kind": "authenticated_html_static",
+        "confidence": "confirmed_authenticated_action_reference_server_outcome_unverified",
+        "sources": [
+          {
+            "path": ".private/web/auth/reservations-2.html",
+            "line": 648,
+            "column": 32620,
+            "tag": "a",
+            "attribute": "onclick",
+            "snippet_sanitized": "return SubmitSetoptsAction(this, '/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/{recordIrn}/0/C/4/RSVCENQ');",
+            "redactions": [
+              "patron IRN",
+              "result set ID",
+              "record/loan/reservation IRN"
+            ]
+          }
+        ]
+      },
+      "app_request_observed": false,
+      "notes": [
+        "Opaque IDs replaced with placeholders; exact private requests/responses retained in .private/web/auth/reads.har."
+      ]
+    },
+    {
+      "id": "web.edit-reservation",
+      "feature": "Edit one/selected reservations",
+      "method": "GET",
+      "path_template": "/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/{setId}/0/ER/1/RSVCENQ",
+      "query": {
+        "SVL": "One or repeated checked loan/reservation IRNs for selected actions; absent for all actions",
+        "SETDESC": "Current loans, Available for pickup, or Pending reservations",
+        "NREC": "0 in list form"
+      },
+      "body": null,
+      "response": "Not called. Final confirmation, validation, eligibility, success/error and changes unmeasured.",
+      "authentication": "Verified authorised SPYDUS_BRWSESSIONID_443 browser cookie session; value omitted",
+      "mutates_state": true,
+      "evidence": {
+        "kind": "authenticated_html_static",
+        "confidence": "confirmed_authenticated_action_reference_server_outcome_unverified",
+        "sources": [
+          {
+            "path": ".private/web/auth/reservations-2.html",
+            "line": 648,
+            "column": 32812,
+            "tag": "a",
+            "attribute": "onclick",
+            "snippet_sanitized": "return SubmitSetoptsAction(this, '/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/{recordIrn}/0/ER/1/RSVCENQ');",
+            "redactions": [
+              "patron IRN",
+              "result set ID",
+              "record/loan/reservation IRN"
+            ]
+          }
+        ]
+      },
+      "app_request_observed": false,
+      "notes": [
+        "Opaque IDs replaced with placeholders; exact private requests/responses retained in .private/web/auth/reads.har."
+      ]
+    }
+  ],
+  "exact_public_html_fragment_links": [
+    {
+      "source": ".private/web/public/search.html",
+      "line": 648,
+      "column": 28339,
+      "selector": "#urltabFacets",
+      "url": "/cgi-bin/spydus.exe/XFACETS/OPAC/BIBENQ/78524538",
+      "label": "Refine search facets"
+    },
+    {
+      "source": ".private/web/public/detail.html",
+      "line": 714,
+      "column": 28396,
+      "selector": "#urltabSIMILARFACETS",
+      "url": "/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/78524538?QRY=03101%5C<%20(03101%5C>%20IRN(13360535)%20-%20TAG:%20155)%20/%20TAG01%5C<%20(TAG01%5C>%20IRN(13360535))&XSLT=XBrowseFacets.xsl&EFT=AHP&EFT=AHC&EFT=SER&EFT=SHP&EFT=SHT&EFT=SHG&EFT=SHL&EFT=SHF&EFTCNT=10&EFTSRT=AAT&FCTSA=1&QRYTEXT=_NEWSET_78524538&NRECS=1&SETLVL=SET&FCT=1&FMT=NR",
+      "label": "Similar searches"
+    },
+    {
+      "source": ".private/web/public/detail.html",
+      "line": 714,
+      "column": 39952,
+      "selector": "#urltabTAGS",
+      "url": "/cgi-bin/spydus.exe/ENQ/OPAC/ALLENQ/78524538?QRY=IRN(13360535)&SETLVL=SET&FMT=TAGS&XSLT=XTagDisplay.xsl",
+      "label": "Tags"
+    },
+    {
+      "source": ".private/web/public/detail.html",
+      "line": 714,
+      "column": 40819,
+      "selector": "#urltabREVIEWS",
+      "url": "/cgi-bin/spydus.exe/ENQ/OPAC/CMTENQ/78524538?QRY=(CMD01%5C13360535%20/%20CMD01%5C15938781)%20%2B%20(CMD08%5CA%20/%20CMD08%5CU)&QRYTEXT=Reviews%20for%20'The%20Harry%20Potter%20wizarding%20almanac%20%3A%20the%20official%20magical%20companion%20to%20J.K.%20Rowling%27s%20Harry%20Potter%20books'&SORTS=MAIN.CREATED_DATE.DESC]MAIN.CREATED_TIME.DESC&SETLVL=SET&FMT=TC&MODE=GLB&NRECS=20&XSLT=XCmtDisplay.xsl&FMT=CC&NRECS=3",
+      "label": "Reviews"
+    },
+    {
+      "source": ".private/web/public/detail.html",
+      "line": 714,
+      "column": 42115,
+      "selector": "#urltabSIMILARFACETS_1",
+      "url": "/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/78524538?QRY=03101%5C<%20(03101%5C>%20IRN(13360535)%20-%20TAG:%20155)%20/%20TAG01%5C<%20(TAG01%5C>%20IRN(13360535))&XSLT=XBrowseFacets.xsl&EFT=AHP&EFT=AHC&EFT=SER&EFT=SHP&EFT=SHT&EFT=SHG&EFT=SHL&EFT=SHF&EFTCNT=10&EFTSRT=AAT&FCTSA=1&QRYTEXT=_NEWSET_78524538&NRECS=1&SETLVL=SET&FCT=1&FMT=NR",
+      "label": "Similar searches"
+    },
+    {
+      "source": ".private/web/public/detail.html",
+      "line": 714,
+      "column": 43405,
+      "selector": "#urltabLOANS",
+      "url": "/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/78524538?QRY=(OND02%5C>%20(OND01%5C<%20(%20OND01%5C>%20OND02%5C13360535)))%20%2B%20FORMAT:%20BIB%20-%20IRN(13360535)&SORTS=NONE&QRYTEXT=People%20who%20borrowed%20'The%20Harry%20Potter%20wizarding%20almanac%20%3A%20the%20official%20magical%20companion%20to%20J.K.%20Rowling%27s%20Harry%20Potter%20books'%20also%20borrowed&XSLT=XGalleryDisplay.xsl&FMT=GD&FCT=0&NRECS=20&SETLVL=SET&GCN=LOANS&SETID=78524538",
+      "label": "People who borrowed this also borrowed"
+    },
+    {
+      "source": ".private/web/public/detail.html",
+      "line": 714,
+      "column": 44657,
+      "selector": "#urltabSIMILAR",
+      "url": "/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/78524538?QRY=03101%5C<%20(03101%5C>%20IRN(13360535)%20-%20TAG:%20155)%20/%20TAG01%5C<%20(TAG01%5C>%20IRN(13360535))%20-%20IRN(13360535)&SORTS=NONE&QRYTEXT=Similar%20titles%20to%20'The%20Harry%20Potter%20wizarding%20almanac%20%3A%20the%20official%20magical%20companion%20to%20J.K.%20Rowling%27s%20Harry%20Potter%20books'&XSLT=XGalleryDisplay.xsl&FMT=GD&FCT=0&NRECS=20&SETLVL=SET&GCN=SIMILAR&SETID=78524538",
+      "label": "Similar titles"
+    },
+    {
+      "source": ".private/web/public/detail.html",
+      "line": 714,
+      "column": 45891,
+      "selector": "#urltabAUTHOR",
+      "url": "/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/78524538?QRY=MEA01%5C190268&SORTS=HBT.SOVR&QRYTEXT=Titles%20by%20'Rowling%2C%20J.%20K.'&XSLT=XGalleryDisplay.xsl&FMT=GD&FCT=0&NRECS=20&SETLVL=SET&GCN=AUTHOR&SETID=78524538",
+      "label": "Titles by this author"
+    },
+    {
+      "source": ".private/web/public/holdings.html",
+      "line": 1,
+      "column": 267,
+      "selector": "#urltabXRECDISP",
+      "url": "/cgi-bin/spydus.exe/XFULL/OPAC/BIBENQ/78524538/13360535?FMT=REC",
+      "label": "Record display"
+    }
+  ],
+  "search_category_options": [
+    {
+      "data-tpc": "OPAC/BIBWRKENQ",
+      "data-sorts": "SQL_REL_WRK",
+      "data-cf": "BIB",
+      "data-st": "K",
+      "data-qry": "",
+      "data-qrytext": "Full catalogue"
+    },
+    {
+      "data-tpc": "OPAC/BIBWRKENQ",
+      "data-sorts": "SQL_REL_WRK",
+      "data-cf": "BIB",
+      "data-st": "K",
+      "data-qry": "BIBRECFMT: BK",
+      "data-qrytext": "Physical Books"
+    },
+    {
+      "data-tpc": "OPAC/BIBWRKENQ",
+      "data-sorts": "SQL_REL_WRK",
+      "data-cf": "BIB",
+      "data-st": "K",
+      "data-qry": "FIC: (C / F / J / 1) - AUD: (J / A / B / C / D)",
+      "data-qrytext": "Adult fiction"
+    },
+    {
+      "data-tpc": "OPAC/BIBWRKENQ",
+      "data-sorts": "SQL_REL_WRK",
+      "data-cf": "BIB",
+      "data-st": "K",
+      "data-qry": "DYN: FBK - FIC: (C / F / J / 1) - AUD: (J / A / B / C / D)",
+      "data-qrytext": "Adult non fiction"
+    },
+    {
+      "data-tpc": "OPAC/BIBWRKENQ",
+      "data-sorts": "SQL_REL_WRK",
+      "data-cf": "BIB",
+      "data-st": "K",
+      "data-qry": "BIBRECFMT: TB",
+      "data-qrytext": "Audiobooks"
+    },
+    {
+      "data-tpc": "OPAC/BIBWRKENQ",
+      "data-sorts": "SQL_REL_WRK",
+      "data-cf": "BIB",
+      "data-st": "K",
+      "data-qry": "BIO: (A / B / C / D)",
+      "data-qrytext": "Biographies"
+    },
+    {
+      "data-tpc": "OPAC/BIBWRKENQ",
+      "data-sorts": "SQL_REL_WRK",
+      "data-cf": "BIB",
+      "data-st": "K",
+      "data-qry": "BIBRECFMT: EAUD",
+      "data-qrytext": "eAudiobooks"
+    },
+    {
+      "data-tpc": "OPAC/BIBWRKENQ",
+      "data-sorts": "SQL_REL_WRK",
+      "data-cf": "BIB",
+      "data-st": "K",
+      "data-qry": "BIBRECFMT: EBK",
+      "data-qrytext": "eBooks"
+    },
+    {
+      "data-tpc": "OPAC/BIBWRKENQ",
+      "data-sorts": "SQL_REL_WRK",
+      "data-cf": "BIB",
+      "data-st": "K",
+      "data-qry": "BIBRECFMT: EMAG",
+      "data-qrytext": "eMagazines"
+    },
+    {
+      "data-tpc": "OPAC/BIBWRKENQ",
+      "data-sorts": "SQL_REL_WRK",
+      "data-cf": "BIB",
+      "data-st": "K",
+      "data-qry": "FIC: (C / F / J / 1) + AUD: (C / D)",
+      "data-qrytext": "Young adult fiction"
+    },
+    {
+      "data-tpc": "OPAC/BIBWRKENQ",
+      "data-sorts": "SQL_REL_WRK",
+      "data-cf": "BIB",
+      "data-st": "K",
+      "data-qry": "FIC: (C / F / J / 1) + AUD: (J / A / B)",
+      "data-qrytext": "Junior fiction"
+    },
+    {
+      "data-tpc": "OPAC/BIBWRKENQ",
+      "data-sorts": "SQL_REL_WRK",
+      "data-cf": "BIB",
+      "data-st": "K",
+      "data-qry": "DYN: FBK - FIC: (C / F / J / 1) + AUD: (J / A / B)",
+      "data-qrytext": "Junior non fiction"
+    },
+    {
+      "data-tpc": "OPAC/BIBWRKENQ",
+      "data-sorts": "SQL_REL_WRK",
+      "data-cf": "BIB",
+      "data-st": "K",
+      "data-qry": "BS: 'LARGE PRINT' / EDN: 'LARGE PRINT'",
+      "data-qrytext": "Large print"
+    },
+    {
+      "data-tpc": "OPAC/BIBWRKENQ",
+      "data-sorts": "SQL_REL_WRK",
+      "data-cf": "BIB",
+      "data-st": "K",
+      "data-qry": "BIBRECFMT: SE",
+      "data-qrytext": "Magazines"
+    },
+    {
+      "data-tpc": "OPAC/BIBWRKENQ",
+      "data-sorts": "SQL_REL_WRK",
+      "data-cf": "BIB",
+      "data-st": "K",
+      "data-qry": "BIBRECFMT: PM",
+      "data-qrytext": "DVDs and BluRay"
+    },
+    {
+      "data-tpc": "OPAC/BIBWRKENQ",
+      "data-sorts": "SQL_REL_WRK",
+      "data-cf": "BIB",
+      "data-st": "K",
+      "data-qry": "BIBRECFMT: GR",
+      "data-qrytext": "Photographs"
+    },
+    {
+      "data-tpc": "OPAC/BIBWRKENQ",
+      "data-sorts": "SQL_REL_WRK",
+      "data-cf": "BIB",
+      "data-st": "K",
+      "data-qry": "BIBLOCX: LH",
+      "data-qrytext": "Local History"
+    },
+    {
+      "data-tpc": "OPAC/BIBENQ",
+      "data-sorts": "SQL_REL_BIB",
+      "data-cf": "",
+      "data-st": "K",
+      "data-qry": "",
+      "data-qrytext": "Full catalogue"
+    },
+    {
+      "data-tpc": "OPAC/BIBENQ",
+      "data-sorts": "SQL_REL_BIB",
+      "data-cf": "",
+      "data-st": "K",
+      "data-qry": "FIC: (C / F / J / 1) - AUD: (J / A / B / C / D)",
+      "data-qrytext": "Adult fiction"
+    },
+    {
+      "data-tpc": "OPAC/BIBENQ",
+      "data-sorts": "SQL_REL_BIB",
+      "data-cf": "",
+      "data-st": "K",
+      "data-qry": "DYN: FBK - FIC: (C / F / J / 1) - AUD: (J / A / B / C / D)",
+      "data-qrytext": "Adult non fiction"
+    },
+    {
+      "data-tpc": "OPAC/BIBENQ",
+      "data-sorts": "SQL_REL_BIB",
+      "data-cf": "",
+      "data-st": "K",
+      "data-qry": "BTYP: I",
+      "data-qrytext": "Audiobooks"
+    },
+    {
+      "data-tpc": "OPAC/BIBENQ",
+      "data-sorts": "SQL_REL_BIB",
+      "data-cf": "",
+      "data-st": "K",
+      "data-qry": "BIO: (A / B / C / D)",
+      "data-qrytext": "Biographies"
+    },
+    {
+      "data-tpc": "OPAC/BIBENQ",
+      "data-sorts": "SQL_REL_BIB",
+      "data-cf": "",
+      "data-st": "K",
+      "data-qry": "BIBITM> (DYN: XDA + ITMXDATYP: A + FILTER: 1)",
+      "data-qrytext": "eAudiobooks"
+    },
+    {
+      "data-tpc": "OPAC/BIBENQ",
+      "data-sorts": "SQL_REL_BIB",
+      "data-cf": "",
+      "data-st": "K",
+      "data-qry": "BIBITM> (DYN: XDA + ITMXDATYP: B + FILTER: 1)",
+      "data-qrytext": "eBooks"
+    },
+    {
+      "data-tpc": "OPAC/BIBENQ",
+      "data-sorts": "SQL_REL_BIB",
+      "data-cf": "",
+      "data-st": "K",
+      "data-qry": "BIBITM> (DYN: XDA + ITMXDATYP: S + FILTER: 1)",
+      "data-qrytext": "eMagazines"
+    },
+    {
+      "data-tpc": "OPAC/BIBENQ",
+      "data-sorts": "SQL_REL_BIB",
+      "data-cf": "",
+      "data-st": "K",
+      "data-qry": "FIC: (C / F / J / 1) + AUD: (C / D)",
+      "data-qrytext": "Young adult fiction"
+    },
+    {
+      "data-tpc": "OPAC/BIBENQ",
+      "data-sorts": "SQL_REL_BIB",
+      "data-cf": "",
+      "data-st": "K",
+      "data-qry": "FIC: (C / F / J / 1) + AUD: (J / A / B)",
+      "data-qrytext": "Junior fiction"
+    },
+    {
+      "data-tpc": "OPAC/BIBENQ",
+      "data-sorts": "SQL_REL_BIB",
+      "data-cf": "",
+      "data-st": "K",
+      "data-qry": "DYN: FBK - FIC: (C / F / J / 1) + AUD: (J / A / B)",
+      "data-qrytext": "Junior non fiction"
+    },
+    {
+      "data-tpc": "OPAC/BIBENQ",
+      "data-sorts": "SQL_REL_BIB",
+      "data-cf": "",
+      "data-st": "K",
+      "data-qry": "BS: 'LARGE PRINT' / EDN: 'LARGE PRINT' / FOI: D",
+      "data-qrytext": "Large print"
+    },
+    {
+      "data-tpc": "OPAC/BIBENQ",
+      "data-sorts": "SQL_REL_BIB",
+      "data-cf": "",
+      "data-st": "K",
+      "data-qry": "BFRMT: SE",
+      "data-qrytext": "Magazines"
+    },
+    {
+      "data-tpc": "OPAC/BIBENQ",
+      "data-sorts": "SQL_REL_BIB",
+      "data-cf": "",
+      "data-st": "K",
+      "data-qry": "BTYP: G",
+      "data-qrytext": "DVDs and BluRay"
+    },
+    {
+      "data-tpc": "OPAC/BIBENQ",
+      "data-sorts": "SQL_REL_BIB",
+      "data-cf": "",
+      "data-st": "K",
+      "data-qry": "BIBLOCX: LH",
+      "data-qrytext": "Local History"
+    },
+    {
+      "data-tpc": "OPAC/BIBENQ",
+      "data-sorts": "SQL_REL_BIB",
+      "data-cf": "",
+      "data-st": "K",
+      "data-qry": "BIBRECFMT: GR",
+      "data-qrytext": "Photographs"
+    }
+  ],
+  "session_findings": [
+    {
+      "claim": "Browser JavaScript prefixes paths with body[data-subsite]; Canning empty subsite.",
+      "source": {
+        "path": ".private/web/public/searchAutoComplete.js",
+        "line": 73,
+        "column": 11,
+        "snippet": "document.body.dataset.subsite"
+      }
+    },
+    {
+      "claim": "POST form csrf token copied from body[data-csrf] only if present; absent in captured guest pages.",
+      "source": {
+        "path": ".private/web/public/spydus.js",
+        "line": 106,
+        "column": 3,
+        "snippet": "var csrf = $('body').data('csrf');"
+      }
+    },
+    {
+      "claim": "Active saved-list cookie name uses P + GetCookie(NAME), with BRWSESSION fallback. This does not establish auth cookie name.",
+      "source": {
+        "path": ".private/web/public/spydus.js",
+        "line": 182,
+        "column": 5,
+        "snippet": "cookiename = 'BRWSESSION';"
+      }
+    },
+    {
+      "claim": "Search results carry opaque setId in subsequent links. Lifetime and cookie binding have not been measured.",
+      "source": {
+        "path": ".private/web/public/search.html",
+        "line": 648,
+        "column": 29384,
+        "tag": "a",
+        "attribute": "href",
+        "snippet": "/cgi-bin/spydus.exe/SET/OPAC/BIBENQ/78524538/19240729?NREC=10"
+      }
+    },
+    {
+      "claim": "Same-origin AJAX has no explicitly assigned Authorization header in inspected scripts; browser cookie/session behavior inferred, not verified.",
+      "source": {
+        "path": ".private/web/public/searchAutoComplete.js",
+        "line": 72,
+        "column": 3,
+        "snippet": "$.ajax({"
+      }
+    },
+    {
+      "claim": "Authorised SPYDUS_BRWSESSIONID_443 cookie accepted for authenticated OPAC account/loan/reservation GETs; only cookie name retained publicly.",
+      "source": {
+        "path": ".private/web/auth/reads.har",
+        "entry_selector": "_capture.snapshot ends with account-details-opac.html"
+      }
+    },
+    {
+      "claim": "Authenticated HTML body carries data-csrf and data-displaycontext. Token values omitted.",
+      "source": {
+        "path": ".private/web/auth/mobile-dashboard.html",
+        "selector": "body[data-csrf][data-displaycontext]"
+      }
+    }
+  ],
+  "gaps": [
+    "Final renewal/cancellation/edit request responses, confirmations, eligibility and mutation success/errors remain unmeasured; routes are static references only.",
+    "Reservation creation pickup-location/eligibility/confirmation flow remains unverified.",
+    "Browser account detail/loan/reservation HTML read contracts verified; authenticated charges, history and notification-read semantics not captured.",
+    "Native JSON account/loan/reservation models and login transport belong in mobile contract/capture inventory.",
+    "API permissions, server rate limits, setID expiry and CSRF enforcement not measured."
+  ],
+  "read_only_requests": [
+    "login page",
+    "catalogue keyword search",
+    "guest dashboard",
+    "record detail",
+    "record holdings",
+    "11 first-party JavaScript assets",
+    "authorised OPAC account entry",
+    "authorised account details",
+    "authorised current loans",
+    "authorised pickup reservations",
+    "authorised pending reservations",
+    "authorised mobile display-context account view"
+  ],
+  "mutations_executed": false,
+  "authenticated_capture": {
+    "har": ".private/web/auth/reads.har",
+    "helper": ".private/web/capture_auth.py",
+    "request_cookie_values_recorded_in_har": false,
+    "response_headers_and_html_private": true,
+    "public_inventory_redactions": [
+      "patron IDs",
+      "query set IDs",
+      "loan and reservation IDs",
+      "account personal data",
+      "CSRF token values",
+      "session-cookie values"
+    ],
+    "entries": 14,
+    "successful_read_routes": [
+      "PGM/OPAC/CCOPT/LB/1",
+      "ENQ/OPAC/BRWENQ",
+      "ENQ/OPAC/LOANRENQ FMT=CL",
+      "ENQ/OPAC/RSVCENQ FMT=AR",
+      "ENQ/OPAC/RSVCENQ FMT=WR"
+    ],
+    "route_variant_observation": "WQUP account entry returned meta redirect; supplied ENQ/WQUP/BRWENQ returned 400. Replacing WQUP with OPAC returned authenticated 200. OPAC account entry and its returned OPAC redirect also succeeded.",
+    "ui_cookies": {
+      "SPYDUS_DISPLAYCONTEXT_443": "MOB",
+      "consentSettings_443": "ALL",
+      "SPYDUS_MYACCOUNT_443": ""
+    },
+    "myaccount_cookie_value_static_provenance": {
+      "assembly": ".private/apk/assemblies/Spydus.dll",
+      "method_token": "0x060007d6",
+      "decoded_name_il_offset": 631,
+      "value_instruction_il_offset": 645,
+      "value_memberref_token": "0x0A000195",
+      "value_field": "System.String.Empty"
+    },
+    "sources": [
+      {
+        "snapshot": ".private/web/auth/account-details.html",
+        "method": "GET",
+        "url_sanitized": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/WQUP/BRWENQ/{setId}?QRY=%23{setId}&QRYTEXT=My%20details&NRECS=999",
+        "status": 400,
+        "sha256": "7c41b898c5da0cfa4aa049b65ef50248bce9a72d24bef4c723786431921b75aa"
+      },
+      {
+        "snapshot": ".private/web/auth/account-details-bare.html",
+        "method": "GET",
+        "url_sanitized": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/WQUP/BRWENQ/{setId}",
+        "status": 400,
+        "sha256": "7c41b898c5da0cfa4aa049b65ef50248bce9a72d24bef4c723786431921b75aa"
+      },
+      {
+        "snapshot": ".private/web/auth/account-entry.html",
+        "method": "GET",
+        "url_sanitized": "https://canning.spydus.com/cgi-bin/spydus.exe/PGM/WQUP/CCOPT/LB/1?&RFB=1",
+        "status": 200,
+        "sha256": "07b1437f2230949e07f71bc2ae1eddcab66cbf270d7c2c9ebc3dbccd33eadec5"
+      },
+      {
+        "snapshot": ".private/web/auth/account-details-fresh.html",
+        "method": "GET",
+        "url_sanitized": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/WQUP/BRWENQ/{setId}?QRY=%23{setId}&QRYTEXT=My%20details&NRECS=999",
+        "status": 400,
+        "sha256": "7c41b898c5da0cfa4aa049b65ef50248bce9a72d24bef4c723786431921b75aa"
+      },
+      {
+        "snapshot": ".private/web/auth/account-dashboard-opac.html",
+        "method": "GET",
+        "url_sanitized": "https://canning.spydus.com/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/LB/1?ISGLB=0",
+        "status": 200,
+        "sha256": "37dd84e0484e7ca28a54759e698e95370ad0ed46011ce808e034353a380b3644"
+      },
+      {
+        "snapshot": ".private/web/auth/account-details-http1.html",
+        "method": "GET",
+        "url_sanitized": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/WQUP/BRWENQ/{setId}?QRY=%23{setId}&QRYTEXT=My%20details&NRECS=999",
+        "status": 400,
+        "sha256": "7c41b898c5da0cfa4aa049b65ef50248bce9a72d24bef4c723786431921b75aa"
+      },
+      {
+        "snapshot": ".private/web/auth/account-details-opac.html",
+        "method": "GET",
+        "url_sanitized": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BRWENQ/{setId}?QRY=%23{setId}&QRYTEXT=My%20details&NRECS=999",
+        "status": 200,
+        "sha256": "a2b961e7a4643d173fdead1fb688b191507796d13e018539d4d8757a91951c5d"
+      },
+      {
+        "snapshot": ".private/web/auth/loans-1.html",
+        "method": "GET",
+        "url_sanitized": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/LOANRENQ/{setId}?QRY=FULL(OND01%5C{patronIrn}%20%2B%20ONC01%5C0)%20-%20(ONS01%5CCR%20%2F%20ONS01%5CCRNB%20%2F%20ONS01%5CLR%20%2F%20ONS01%5CL)%20-%20OND26%5C1&QRYTEXT=Current%20loans&FMT=CL&SETLVL=SET&NRECS=30&SIE=1",
+        "status": 200,
+        "sha256": "c608cb33e409b8120c77451b6694ea53f7be498f64a82400ff206e7b9909d6c7"
+      },
+      {
+        "snapshot": ".private/web/auth/reservations-2.html",
+        "method": "GET",
+        "url_sanitized": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/RSVCENQ/{setId}?QRY=08301%5C%3E%20((08301%5C%3E%20(RVP01%5C{patronIrn}%20%2B%20MINOR%3A08301))%20-%20MINOR%3AITR05)&QRYTEXT=Available%20for%20pickup&SORTS=RVP.DTE&FMT=AR&SETLVL=SET&NRECS=30&SIE=1",
+        "status": 200,
+        "sha256": "2c9aa45cbb6c9370db3e541b567166c59a6c6fc9e8d2b469fb2c7f238d33ba4f"
+      },
+      {
+        "snapshot": ".private/web/auth/loans-3.html",
+        "method": "GET",
+        "url_sanitized": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/LOANRENQ/{setId}?QRY=FULL(OND01%5C{patronIrn}%20%2B%20ONC01%5C0)%20-%20(ONS01%5CCR%20/%20ONS01%5CCRNB%20/%20ONS01%5CLR%20/%20ONS01%5CL)%20-%20OND26%5C1&QRYTEXT=Current%20loans&FMT=CL&SETLVL=SET&NRECS=30&SEARCH_FORM=%2Fcgi-bin%2Fspydus.exe%2FPGM%2FOPAC%2FCCOPT%2FLB%2F1%3FISGLB%3D0&FORM_DESC=Checking%20for%20eResources",
+        "status": 200,
+        "sha256": "f9b6854df642bd75c49583a8643d5894c44ca827d8e404e7fb2dfabf3783debd"
+      },
+      {
+        "snapshot": ".private/web/auth/reservations-4.html",
+        "method": "GET",
+        "url_sanitized": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/RSVCENQ/{setId}?QRY=08301%5C>%20((08301%5C>%20(RVP01%5C{patronIrn}%20%2B%20MINOR:08301))%20-%20MINOR:ITR05)&QRYTEXT=Available%20for%20pickup&SORTS=RVC.HDTE&FMT=AR&SETLVL=SET&NRECS=30&SEARCH_FORM=%2Fcgi-bin%2Fspydus.exe%2FPGM%2FOPAC%2FCCOPT%2FLB%2F1%3FISGLB%3D0&FORM_DESC=Checking%20for%20eResources",
+        "status": 200,
+        "sha256": "60cd1f6c5a947e37f0fbe48d977e1297b639cb8073094bdbc3e4b9c3bddb75c0"
+      },
+      {
+        "snapshot": ".private/web/auth/reservations-5.html",
+        "method": "GET",
+        "url_sanitized": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/RSVCENQ/{setId}?QRY=((RVP01%5C{patronIrn}%20-%20MAJOR:RVP18%20-%20RVP18%5C<%20MINOR:RVP45)%20/%20(RVP01%5C{patronIrn}%20%2B%20MINOR:RVP45))%20-%20RVP42%5C1%20%2B%20((RVC01%5C0%20-%20MINOR:08301)%20/%20(08301%5C>%20((08301%5C>%20(RVP01%5C{patronIrn}%20%2B%20MINOR:08301))%20%2B%20MINOR:ITR05)))%20-%20(MINOR:RVP45%20%2B%20RVP18%5C>%20(08301%5C>%20((08301%5C>%20(RVP01%5C{patronIrn}%20%2B%20MINOR:08301))%20-%20MINOR:ITR05)))&QRYTEXT=Reservations%20not%20yet%20available&SORTS=RVP.DTE&FMT=WR&SETLVL=SET&NRECS=30&SEARCH_FORM=%2Fcgi-bin%2Fspydus.exe%2FPGM%2FOPAC%2FCCOPT%2FLB%2F1%3FISGLB%3D0&FORM_DESC=Checking%20for%20eResources",
+        "status": 200,
+        "sha256": "cd42ac49b83ee8850dce4cffcac0b6181d2317a3f49ea67ecfdc022581b9a35b"
+      },
+      {
+        "snapshot": ".private/web/auth/mobile-dashboard-entry.html",
+        "method": "GET",
+        "url_sanitized": "https://canning.spydus.com/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/LB/1?&RFB=1",
+        "status": 200,
+        "sha256": "37dd84e0484e7ca28a54759e698e95370ad0ed46011ce808e034353a380b3644"
+      },
+      {
+        "snapshot": ".private/web/auth/mobile-dashboard.html",
+        "method": "GET",
+        "url_sanitized": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BRWENQ/{setId}?QRY=%23{setId}&QRYTEXT=My%20details&NRECS=999",
+        "status": 200,
+        "sha256": "b9b8f31bc727ec03b48b13e053c3d7fd327859bdee2a648efbbf2bb7da9d5568"
+      }
+    ]
+  }
+}

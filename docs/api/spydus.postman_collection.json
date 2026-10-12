@@ -1,0 +1,729 @@
+{
+  "info": {
+    "name": "Spydus Library \u2014 recovered API contracts",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "23 recovered native Refit operations plus one static browser authorization helper. Live observations are labeled per request; unobserved operations remain static contracts. All patron IDs, tokens and session variables are empty. No global authentication, scripts, automatic token extraction or mutation tests are installed. Declared route/header quirks are preserved. Import this collection and fill the variables needed by your selected request."
+  },
+  "variable": [
+    {
+      "key": "alert_acknowledged",
+      "value": "",
+      "description": "System.Boolean query value. Empty because its default was not observed; supply true or false explicitly."
+    },
+    {
+      "key": "authorization_code",
+      "value": "",
+      "description": "Supply your own value; no captured private value is included."
+    },
+    {
+      "key": "bearer_token",
+      "value": "",
+      "description": "Supply your own value; no captured private value is included."
+    },
+    {
+      "key": "brwd_irn",
+      "value": "",
+      "description": "Supply your own value; no captured private value is included."
+    },
+    {
+      "key": "client_id",
+      "value": "spydusmobile",
+      "description": "Public static application setting or observed safe paging default."
+    },
+    {
+      "key": "count",
+      "value": 500,
+      "description": "System.Int32; observed initial branch paging value 500."
+    },
+    {
+      "key": "device_platform",
+      "value": "",
+      "description": "Supply your own value; no captured private value is included."
+    },
+    {
+      "key": "device_tags_json",
+      "value": "[]",
+      "description": "JSON array of strings. Empty-array example, not an observed registration request."
+    },
+    {
+      "key": "device_token",
+      "value": "",
+      "description": "Supply your own value; no captured private value is included."
+    },
+    {
+      "key": "grant_type",
+      "value": "",
+      "description": "Supply your own value; no captured private value is included."
+    },
+    {
+      "key": "group_code",
+      "value": "",
+      "description": "Supply your own value; no captured private value is included."
+    },
+    {
+      "key": "identity_base_url",
+      "value": "https://idp.spydus.com",
+      "description": "Public static application setting or observed safe paging default."
+    },
+    {
+      "key": "item_id",
+      "value": "",
+      "description": "Supply your own value; no captured private value is included."
+    },
+    {
+      "key": "language_identifier",
+      "value": "",
+      "description": "Supply your own value; no captured private value is included."
+    },
+    {
+      "key": "language_iso_code",
+      "value": "",
+      "description": "Supply your own value; no captured private value is included."
+    },
+    {
+      "key": "last_irn",
+      "value": 0,
+      "description": "System.Int64; observed initial branch paging value 0."
+    },
+    {
+      "key": "library_base_url",
+      "value": "https://canning.spydus.com",
+      "description": "Public static application setting or observed safe paging default."
+    },
+    {
+      "key": "library_id",
+      "value": "",
+      "description": "Selected library GUID for authorization scope expansion. Empty; supply your own."
+    },
+    {
+      "key": "library_list_base_url",
+      "value": "https://librarylist.spydus.com/api/1.0",
+      "description": "Public static application setting or observed safe paging default."
+    },
+    {
+      "key": "new_device_token",
+      "value": "",
+      "description": "Supply your own value; no captured private value is included."
+    },
+    {
+      "key": "notification_id",
+      "value": "",
+      "description": "Supply your own value; no captured private value is included."
+    },
+    {
+      "key": "notification_status",
+      "value": "",
+      "description": "Supply your own value; no captured private value is included."
+    },
+    {
+      "key": "old_device_token",
+      "value": "",
+      "description": "Supply your own value; no captured private value is included."
+    },
+    {
+      "key": "patron_id",
+      "value": "",
+      "description": "Supply your own value; no captured private value is included."
+    },
+    {
+      "key": "patron_irn",
+      "value": "",
+      "description": "Supply your own value; no captured private value is included."
+    },
+    {
+      "key": "prompt",
+      "value": "",
+      "description": "The app conditionally uses login when forcing interactive authorization. Disabled by default in the helper request."
+    },
+    {
+      "key": "redirect_uri",
+      "value": "spyduslibrary://auth",
+      "description": "Public static application setting or observed safe paging default."
+    },
+    {
+      "key": "refresh_token",
+      "value": "",
+      "description": "Supply your own value; no captured private value is included."
+    },
+    {
+      "key": "response_type",
+      "value": "code",
+      "description": "Public static application setting or observed safe paging default."
+    },
+    {
+      "key": "scope",
+      "value": "openid profile mobile",
+      "description": "Static base scope. The app expands this with libid_<library GUID> and lang_<languageIdentifier>; build the actual selected-library scope before authorizing. No suffix is guessed for an empty language."
+    },
+    {
+      "key": "search_data",
+      "value": "",
+      "description": "Supply your own value; no captured private value is included."
+    },
+    {
+      "key": "search_mode",
+      "value": "",
+      "description": "Supply your own value; no captured private value is included."
+    },
+    {
+      "key": "session_id",
+      "value": "",
+      "description": "Supply your own value; no captured private value is included."
+    },
+    {
+      "key": "set_id",
+      "value": 0,
+      "description": "System.Int64; observed initial branch paging value 0."
+    },
+    {
+      "key": "wifi_name",
+      "value": "",
+      "description": "Supply your own value; no captured private value is included."
+    }
+  ],
+  "item": [
+    {
+      "name": "Authorization helper (static)",
+      "item": [
+        {
+          "name": "Authorize in browser",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [],
+            "url": {
+              "raw": "{{identity_base_url}}/openid/authorize?client_id={{client_id}}&response_type={{response_type}}&redirect_uri={{redirect_uri}}&scope={{scope}}",
+              "host": [
+                "{{identity_base_url}}"
+              ],
+              "path": [
+                "openid",
+                "authorize"
+              ],
+              "query": [
+                {
+                  "key": "client_id",
+                  "value": "{{client_id}}"
+                },
+                {
+                  "key": "response_type",
+                  "value": "{{response_type}}"
+                },
+                {
+                  "key": "redirect_uri",
+                  "value": "{{redirect_uri}}"
+                },
+                {
+                  "key": "scope",
+                  "value": "{{scope}}"
+                },
+                {
+                  "key": "prompt",
+                  "value": "{{prompt}}",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Static helper, not captured live. Evidence: app.config; Spydus.Helpers.AuthConstants; OAuthUriBuilderExtensions; app-string-evidence.json method token 0x06000adf. Route /openid/authorize, response_type=code, client_id=spydusmobile, redirect_uri=spyduslibrary://auth. Base scope is openid profile mobile; the app appends libid_<library GUID> and lang_<languageIdentifier>. Fill scope from the selected library before authorizing; do not guess empty-language suffix behavior. The app conditionally sets prompt=login for forced interaction. Browser authorization redirects to the app callback. No PKCE behavior is asserted by this helper."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "IAuthClient",
+      "item": [
+        {
+          "name": "GetAccessToken",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{identity_base_url}}/openid/refreshtoken?refreshToken={{refresh_token}}&clientId={{client_id}}",
+            "description": "static recovered contract.\n\nrefreshToken: System.String; query-default; inferred Refit default; not live observed.\nclientId: System.String; query-default; inferred Refit default; not live observed.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GetRefreshToken",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{identity_base_url}}/openid/token?code={{authorization_code}}&grant_type={{grant_type}}&client_id={{client_id}}",
+            "description": "static recovered contract.\n\nauthorizationCode: System.String; query-default; inferred Refit default; not live observed.\ngrantType: System.String; query-default; inferred Refit default; not live observed.\nclientId: System.String; query-default; inferred Refit default; not live observed.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "IBookClient",
+      "item": [
+        {
+          "name": "GetSearchBook",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "spydus-lang",
+                "value": "{{language_identifier}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{library_base_url}}/api/mobile/1.0/discover/search?{{search_mode}}={{search_data}}",
+            "description": "static recovered contract; live observed original app request.\n\nsearchMode: System.String; query-template; route template + alias/name.\nsearchData: System.String; query-template; route template + alias/name.\nlanguageIdentifier: System.String; header; explicit attribute.\n\nOriginal app capture: HTTP 200; JSON string response. Credentials and patron values are excluded. The native endpoint returns a JSON-encoded HTML navigation URL, not result records.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "ILibrariesClient",
+      "item": [
+        {
+          "name": "GetLibraries",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{library_list_base_url}}/mobile/libraries?groupCode={{group_code}}",
+            "description": "static recovered contract.\n\ngroupCode: System.String; query-template; route template + alias/name.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GetLanguages",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{library_list_base_url}}/mobile/languages?groupCode={{group_code}}",
+            "description": "static recovered contract.\n\ngroupCode: System.String; query-template; route template + alias/name.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "ILogoClient",
+      "item": [
+        {
+          "name": "GetLogo",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{library_base_url}}/api/mobile/1.0/general/logo",
+            "description": "static recovered contract.\n\ncancellationToken: System.Threading.CancellationToken; cancellation; signature type.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "ILogOutClient",
+      "item": [
+        {
+          "name": "LogOut",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{identity_base_url}}/openid/patronlogout?refreshToken={{refresh_token}}&clientId={{client_id}}",
+            "description": "static recovered contract.\n\nrefreshToken: System.String; query-default; inferred Refit default; not live observed.\nclientId: System.String; query-default; inferred Refit default; not live observed.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "INotificationClient",
+      "item": [
+        {
+          "name": "GetPatronNotifications",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearer_token}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{library_base_url}}/api/mobile/1.0/patrons/{{brwd_irn}}/notifications",
+            "description": "static recovered contract; live observed original app request.\n\nbearerToken: System.String; authorization; explicit attribute.\nborrowerConsortiumRecordIdentifier: System.Int64; path-template; route template + alias/name.\n\nOriginal app capture: HTTP 200; array response. Credentials and patron values are excluded.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "UpdateNotificationStatus",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json; charset=UTF-8",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearer_token}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{library_base_url}}/api/mobile/1.0/patrons/{{brwd_irn}}/notifications/{{notification_id}}/{{notification_status}}",
+            "description": "static recovered contract.\n\nbearerToken: System.String; authorization; explicit attribute.\nborrowerConsortiumRecordIdentifier: System.Int64; path-template; route template + alias/name.\nid: System.Guid; path-template; route template + alias/name.\nstatus: System.String; path-template; route template + alias/name.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DeleteDeviceToken",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearer_token}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{library_base_url}}/api/mobile/1.0/{{patron_irn}}/notifications/device/{{device_token}}",
+            "description": "static recovered contract.\n\nbearerToken: System.String; authorization; explicit attribute.\nborrowerLocalAccountIdentifier: System.String; path-template; route template + alias/name.\ndeviceToken: System.String; path-template; route template + alias/name.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PostDeviceToken",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearer_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text",
+                "description": "JSON body example; serializer/interceptor-specific headers were not observed for this operation."
+              }
+            ],
+            "url": "{{library_base_url}}/api/mobile/1.0/patrons/{{patron_irn}}/notifications/device",
+            "description": "static recovered contract.\n\nbearerToken: System.String; authorization; explicit attribute.\nborrowerLocalAccountIdentifier: System.String; path-template; route template + alias/name.\ndeviceDto: Spydus.Domain.DTO.RegisterDeviceTokenRequest; body; explicit attribute.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"deviceToken\": \"{{device_token}}\",\n  \"platform\": \"{{device_platform}}\",\n  \"tags\": {{device_tags_json}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PutDeviceToken",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearer_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text",
+                "description": "JSON body example; serializer/interceptor-specific headers were not observed for this operation."
+              }
+            ],
+            "url": "{{library_base_url}}/api/mobile/1.0/patrons/{{patron_irn}}/notifications/device",
+            "description": "static recovered contract.\n\nbearerToken: System.String; authorization; explicit attribute.\nborrowerLocalAccountIdentifier: System.String; path-template; route template + alias/name.\nrequest: Spydus.Domain.DTO.UpdateDeviceTokenRequest; body; explicit attribute.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"newDeviceToken\": \"{{new_device_token}}\",\n  \"oldDeviceToken\": \"{{old_device_token}}\",\n  \"platform\": \"{{device_platform}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "ISelfIssueClient",
+      "item": [
+        {
+          "name": "BarcodeSelfIssue",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorisation",
+                "value": "Bearer",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json; charset=UTF-8",
+                "type": "text"
+              }
+            ],
+            "url": "{{library_base_url}}/api/mobile/1.0/patrons/{{patron_irn}}/items/{{item_id}}/issue?alert_acknowledged={{alert_acknowledged}}",
+            "description": "static recovered contract.\n\npatronIrn: System.String; path-template; route template + alias/name.\nitemId: System.String; path-template; route template + alias/name.\nalertAcknowledged: System.Boolean; query-template; route template + alias/name.\n\nThe declared Authorisation: Bearer header is preserved exactly. No extra Authorization header is invented; runtime HTTP handler behavior remains unverified.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "RfidSelfIssue",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorisation",
+                "value": "Bearer",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json; charset=UTF-8",
+                "type": "text"
+              }
+            ],
+            "url": "{{library_base_url}}/api/mobile/1.0/patrons/{{patron_irn}}/items/rfid/{{item_id}}/issue?alert_acknowledged={{alert_acknowledged}}",
+            "description": "static recovered contract.\n\npatronIrn: System.String; path-template; route template + alias/name.\nitemId: System.String; path-template; route template + alias/name.\nalertAcknowledged: System.Boolean; query-template; route template + alias/name.\n\nThe declared Authorisation: Bearer header is preserved exactly. No extra Authorization header is invented; runtime HTTP handler behavior remains unverified.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "SelfReturn",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorisation",
+                "value": "Bearer",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json; charset=UTF-8",
+                "type": "text"
+              }
+            ],
+            "url": "{{library_base_url}}/api/mobile/1.0/patrons/{{patron_irn}}/items/{{item_id}}/return?alert_acknowledged={{alert_acknowledged}}",
+            "description": "static recovered contract.\n\npatronIrn: System.String; path-template; route template + alias/name.\nitemId: System.String; path-template; route template + alias/name.\nalertAcknowledged: System.Boolean; query-template; route template + alias/name.\n\nThe declared Authorisation: Bearer header is preserved exactly. No extra Authorization header is invented; runtime HTTP handler behavior remains unverified.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "IStyleClient",
+      "item": [
+        {
+          "name": "GetServerVersion",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{library_base_url}}/api/open/1.0/general/version",
+            "description": "static recovered contract; live observed original app request.\n\n\n\nOriginal app capture: HTTP 200; object response. Credentials and patron values are excluded.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GetStyleConfiguration",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{library_base_url}}/api/mobile/1.0/general/config?wifiName={{wifi_name}}",
+            "description": "static recovered contract; live observed original app request.\n\nwifiName: System.String; query-template; route template + alias/name.\n\nOriginal app capture: HTTP 200; object response. Credentials and patron values are excluded.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GetContainers",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "spydus-lang",
+                "value": "{{language_identifier}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{library_base_url}}/api/mobile/1.0/containers?wifiName={{wifi_name}}",
+            "description": "static recovered contract; live observed original app request.\n\nlanguageIdentifier: System.String; header; explicit attribute.\nwifiName: System.String; query-template; route template + alias/name.\n\nOriginal app capture: HTTP 200; object response. Credentials and patron values are excluded.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GetAnnouncements",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "spydus-lang",
+                "value": "{{language_identifier}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{library_base_url}}/api/mobile/1.0/announcements",
+            "description": "static recovered contract; live observed original app request.\n\nlanguageIdentifier: System.String; header; explicit attribute.\n\nOriginal app capture: HTTP 200; object response. Credentials and patron values are excluded.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GetAppleWalletCard",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearer_token}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{library_base_url}}/api/mobile/1.0/patrons/{{patron_id}}/wallet/ios",
+            "description": "static recovered contract.\n\nbearerToken: System.String; authorization; explicit attribute.\npatronId: System.String; path-template; route template + alias/name.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GetGoogleWalletCard",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearer_token}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{library_base_url}}/api/mobile/1.0/patrons/{{patron_id}}/wallet/google?language={{language_iso_code}}",
+            "description": "static recovered contract.\n\nbearerToken: System.String; authorization; explicit attribute.\npatronId: System.String; path-template; route template + alias/name.\nisoCode: System.String; query-template; route template + alias/name.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GetBranches",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "spydus-lang",
+                "value": "{{language_identifier}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{library_base_url}}/api/mobile/1.0/mobile/branches?setId={{set_id}}&lastIrn={{last_irn}}&count={{count}}",
+            "description": "static recovered contract; live observed original app request.\n\nsetId: System.Int64; query-template; route template + alias/name.\nlastIrn: System.Int64; query-template; route template + alias/name.\ncount: System.Int32; query-template; route template + alias/name.\nlanguageIdentifier: System.String; header; explicit attribute.\n\nOriginal app capture: HTTP 200; object response. Credentials and patron values are excluded.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "IValidateSessionClient",
+      "item": [
+        {
+          "name": "ValidateSessionId",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json; charset=UTF-8",
+                "type": "text"
+              }
+            ],
+            "url": "{{library_base_url}}/api/private/1.0/patrons/validatesessionid",
+            "description": "static recovered contract; live observed original app request.\n\nrequest: Spydus.Domain.DTO.ValidateSessionRequest; body; explicit attribute.\n\nOriginal app capture: HTTP 200; object response. Credentials and patron values are excluded.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sessionId\": \"{{session_id}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

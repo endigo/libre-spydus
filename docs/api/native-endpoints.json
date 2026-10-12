@@ -1,0 +1,3758 @@
+{
+  "format_version": 1,
+  "scope": "Declared native Refit interfaces in Spydus.Domain.dll",
+  "source": {
+    "assembly": "Spydus.Domain.dll",
+    "sha256": "b61f5c0faaace83d1c0097f0b1b027a949550eec6215333f263e87dc86b0411a",
+    "mvid": "f5b2c27d-5e38-4019-b651-70f670a74ed8",
+    "rea_evidence": [
+      {
+        "file": "rea-domain-artifact.json",
+        "evidence_id": "ev_6f08659f790a3e2fcd55bc8dff68378f4fa3faa8f05b506646f51e2bf6574c80",
+        "operation": "inspect_managed_artifact"
+      },
+      {
+        "file": "rea-domain-members.json",
+        "evidence_id": "ev_b0d73dc574706e8706b31d3e453a8a5974c72a4967476a534d8518419befe938",
+        "operation": "inspect_managed_members"
+      }
+    ]
+  },
+  "evidence_status": "static recovered contracts with separately labeled live observations",
+  "limitations": [
+    "This is not a complete inventory of webview, JavaScript, native platform, or dynamically constructed requests.",
+    "Base URLs, interceptors, cookies, bearer values, serializer configuration, and actual server responses are not established by interface metadata.",
+    "Parameters lacking explicit binding attributes use inferred Refit defaults; verify them against traffic before implementing.",
+    "A null json_name means no explicit JsonPropertyNameAttribute; the runtime serializer naming policy still determines the wire name.",
+    "Reference-type nullability and property defaults are not inferred; System.Nullable<T> is decoded from signatures.",
+    "DTO schemas describe declared properties only, not validation, required fields, computed property behavior, or server guarantees."
+  ],
+  "operations": [
+    {
+      "interface": "Spydus.Domain.Interface.IAuthClient",
+      "method": "GetAccessToken",
+      "verb": "GET",
+      "route_template": "/openid/refreshtoken",
+      "return_type": "System.Threading.Tasks.Task<Refit.IApiResponse<Spydus.Domain.DTO.Auth.AccessTokenResponse>>",
+      "parameters": [
+        {
+          "name": "refreshToken",
+          "type": "System.String",
+          "alias": "refreshToken",
+          "binding": {
+            "kind": "query-default",
+            "name": "refreshToken",
+            "basis": "inferred Refit default; not live observed"
+          },
+          "attributes": [
+            {
+              "type": "Refit.AliasAsAttribute",
+              "arguments": [
+                "refreshToken"
+              ]
+            }
+          ],
+          "metadata_token": "0x0800000e"
+        },
+        {
+          "name": "clientId",
+          "type": "System.String",
+          "alias": "clientId",
+          "binding": {
+            "kind": "query-default",
+            "name": "clientId",
+            "basis": "inferred Refit default; not live observed"
+          },
+          "attributes": [
+            {
+              "type": "Refit.AliasAsAttribute",
+              "arguments": [
+                "clientId"
+              ]
+            }
+          ],
+          "metadata_token": "0x0800000f"
+        }
+      ],
+      "declared_headers": [],
+      "attributes": [
+        {
+          "type": "Refit.GetAttribute",
+          "arguments": [
+            "/openid/refreshtoken"
+          ]
+        }
+      ],
+      "evidence_status": "static recovered contract",
+      "live_observed": false,
+      "metadata_token": "0x06000011"
+    },
+    {
+      "interface": "Spydus.Domain.Interface.IAuthClient",
+      "method": "GetRefreshToken",
+      "verb": "GET",
+      "route_template": "/openid/token",
+      "return_type": "System.Threading.Tasks.Task<Refit.IApiResponse<Spydus.Domain.DTO.Auth.RefreshTokenResponse>>",
+      "parameters": [
+        {
+          "name": "authorizationCode",
+          "type": "System.String",
+          "alias": "code",
+          "binding": {
+            "kind": "query-default",
+            "name": "code",
+            "basis": "inferred Refit default; not live observed"
+          },
+          "attributes": [
+            {
+              "type": "Refit.AliasAsAttribute",
+              "arguments": [
+                "code"
+              ]
+            }
+          ],
+          "metadata_token": "0x08000010"
+        },
+        {
+          "name": "grantType",
+          "type": "System.String",
+          "alias": "grant_type",
+          "binding": {
+            "kind": "query-default",
+            "name": "grant_type",
+            "basis": "inferred Refit default; not live observed"
+          },
+          "attributes": [
+            {
+              "type": "Refit.AliasAsAttribute",
+              "arguments": [
+                "grant_type"
+              ]
+            }
+          ],
+          "metadata_token": "0x08000011"
+        },
+        {
+          "name": "clientId",
+          "type": "System.String",
+          "alias": "client_id",
+          "binding": {
+            "kind": "query-default",
+            "name": "client_id",
+            "basis": "inferred Refit default; not live observed"
+          },
+          "attributes": [
+            {
+              "type": "Refit.AliasAsAttribute",
+              "arguments": [
+                "client_id"
+              ]
+            }
+          ],
+          "metadata_token": "0x08000012"
+        }
+      ],
+      "declared_headers": [],
+      "attributes": [
+        {
+          "type": "Refit.GetAttribute",
+          "arguments": [
+            "/openid/token"
+          ]
+        }
+      ],
+      "evidence_status": "static recovered contract",
+      "live_observed": false,
+      "metadata_token": "0x06000012"
+    },
+    {
+      "interface": "Spydus.Domain.Interface.IBookClient",
+      "method": "GetSearchBook",
+      "verb": "GET",
+      "route_template": "/api/mobile/1.0/discover/search?{searchMode}={searchData}",
+      "return_type": "System.Threading.Tasks.Task<System.String>",
+      "parameters": [
+        {
+          "name": "searchMode",
+          "type": "System.String",
+          "alias": null,
+          "binding": {
+            "kind": "query-template",
+            "placeholder": "searchMode",
+            "basis": "route template + alias/name"
+          },
+          "attributes": [],
+          "metadata_token": "0x08000014"
+        },
+        {
+          "name": "searchData",
+          "type": "System.String",
+          "alias": null,
+          "binding": {
+            "kind": "query-template",
+            "placeholder": "searchData",
+            "basis": "route template + alias/name"
+          },
+          "attributes": [],
+          "metadata_token": "0x08000015"
+        },
+        {
+          "name": "languageIdentifier",
+          "type": "System.String",
+          "alias": null,
+          "binding": {
+            "kind": "header",
+            "name": "spydus-lang",
+            "basis": "explicit attribute"
+          },
+          "attributes": [
+            {
+              "type": "Refit.HeaderAttribute",
+              "arguments": [
+                "spydus-lang"
+              ]
+            }
+          ],
+          "metadata_token": "0x08000016"
+        }
+      ],
+      "declared_headers": [],
+      "attributes": [
+        {
+          "type": "Refit.GetAttribute",
+          "arguments": [
+            "/api/mobile/1.0/discover/search?{searchMode}={searchData}"
+          ]
+        }
+      ],
+      "evidence_status": "static recovered contract; live observed original app request",
+      "live_observed": true,
+      "metadata_token": "0x06000013",
+      "observations": [
+        {
+          "source": "original Pixel_10_Pro application HTTP capture",
+          "capture_file": "discover.har",
+          "capture_entry_index": 1,
+          "request_path_template": "/api/mobile/1.0/discover/search",
+          "query": [
+            {
+              "name": "keywords",
+              "value": "Harry Potter"
+            }
+          ],
+          "headers": [
+            {
+              "name": "spydus-lang",
+              "value": ""
+            }
+          ],
+          "body_field_names": [],
+          "response_status": 200,
+          "response_shape": "JSON string",
+          "response_field_names": [],
+          "response_handoff_path": "/cgi-bin/spydus.exe/ENQ/OPAC/ALLWRKENQ",
+          "response_handoff_query_names": [
+            "ENTRY",
+            "ENTRY_NAME",
+            "ENTRY_TYPE",
+            "GQ",
+            "SORTS"
+          ],
+          "response_note": "The native endpoint returns a JSON-encoded HTML navigation URL, not result records."
+        }
+      ]
+    },
+    {
+      "interface": "Spydus.Domain.Interface.ILibrariesClient",
+      "method": "GetLibraries",
+      "verb": "GET",
+      "route_template": "/mobile/libraries?groupCode={groupCode}",
+      "return_type": "System.Threading.Tasks.Task<Refit.IApiResponse<System.Collections.Generic.List<Spydus.Domain.DTO.LibraryDto>>>",
+      "parameters": [
+        {
+          "name": "groupCode",
+          "type": "System.String",
+          "alias": "groupCode",
+          "binding": {
+            "kind": "query-template",
+            "placeholder": "groupCode",
+            "basis": "route template + alias/name"
+          },
+          "attributes": [
+            {
+              "type": "Refit.AliasAsAttribute",
+              "arguments": [
+                "groupCode"
+              ]
+            }
+          ],
+          "metadata_token": "0x08000017"
+        }
+      ],
+      "declared_headers": [],
+      "attributes": [
+        {
+          "type": "Refit.GetAttribute",
+          "arguments": [
+            "/mobile/libraries?groupCode={groupCode}"
+          ]
+        }
+      ],
+      "evidence_status": "static recovered contract",
+      "live_observed": false,
+      "metadata_token": "0x06000014"
+    },
+    {
+      "interface": "Spydus.Domain.Interface.ILibrariesClient",
+      "method": "GetLanguages",
+      "verb": "GET",
+      "route_template": "/mobile/languages?groupCode={groupCode}",
+      "return_type": "System.Threading.Tasks.Task<Refit.IApiResponse<System.Collections.Generic.List<Spydus.Domain.DTO.AppLanguageDto>>>",
+      "parameters": [
+        {
+          "name": "groupCode",
+          "type": "System.String",
+          "alias": "groupCode",
+          "binding": {
+            "kind": "query-template",
+            "placeholder": "groupCode",
+            "basis": "route template + alias/name"
+          },
+          "attributes": [
+            {
+              "type": "Refit.AliasAsAttribute",
+              "arguments": [
+                "groupCode"
+              ]
+            }
+          ],
+          "metadata_token": "0x08000018"
+        }
+      ],
+      "declared_headers": [],
+      "attributes": [
+        {
+          "type": "Refit.GetAttribute",
+          "arguments": [
+            "/mobile/languages?groupCode={groupCode}"
+          ]
+        }
+      ],
+      "evidence_status": "static recovered contract",
+      "live_observed": false,
+      "metadata_token": "0x06000015"
+    },
+    {
+      "interface": "Spydus.Domain.Interface.ILogoClient",
+      "method": "GetLogo",
+      "verb": "GET",
+      "route_template": "/api/mobile/1.0/general/logo",
+      "return_type": "System.Threading.Tasks.Task<Refit.IApiResponse<System.String>>",
+      "parameters": [
+        {
+          "name": "cancellationToken",
+          "type": "System.Threading.CancellationToken",
+          "alias": null,
+          "binding": {
+            "kind": "cancellation",
+            "basis": "signature type"
+          },
+          "attributes": [],
+          "metadata_token": "0x08000019"
+        }
+      ],
+      "declared_headers": [],
+      "attributes": [
+        {
+          "type": "Refit.GetAttribute",
+          "arguments": [
+            "/api/mobile/1.0/general/logo"
+          ]
+        }
+      ],
+      "evidence_status": "static recovered contract",
+      "live_observed": false,
+      "metadata_token": "0x06000016"
+    },
+    {
+      "interface": "Spydus.Domain.Interface.ILogOutClient",
+      "method": "LogOut",
+      "verb": "POST",
+      "route_template": "/openid/patronlogout",
+      "return_type": "System.Threading.Tasks.Task<Refit.IApiResponse>",
+      "parameters": [
+        {
+          "name": "refreshToken",
+          "type": "System.String",
+          "alias": "refreshToken",
+          "binding": {
+            "kind": "query-default",
+            "name": "refreshToken",
+            "basis": "inferred Refit default; not live observed"
+          },
+          "attributes": [
+            {
+              "type": "Refit.AliasAsAttribute",
+              "arguments": [
+                "refreshToken"
+              ]
+            }
+          ],
+          "metadata_token": "0x0800001a"
+        },
+        {
+          "name": "clientId",
+          "type": "System.String",
+          "alias": "clientId",
+          "binding": {
+            "kind": "query-default",
+            "name": "clientId",
+            "basis": "inferred Refit default; not live observed"
+          },
+          "attributes": [
+            {
+              "type": "Refit.AliasAsAttribute",
+              "arguments": [
+                "clientId"
+              ]
+            }
+          ],
+          "metadata_token": "0x0800001b"
+        }
+      ],
+      "declared_headers": [],
+      "attributes": [
+        {
+          "type": "Refit.PostAttribute",
+          "arguments": [
+            "/openid/patronlogout"
+          ]
+        }
+      ],
+      "evidence_status": "static recovered contract",
+      "live_observed": false,
+      "metadata_token": "0x06000017"
+    },
+    {
+      "interface": "Spydus.Domain.Interface.INotificationClient",
+      "method": "GetPatronNotifications",
+      "verb": "GET",
+      "route_template": "/api/mobile/1.0/patrons/{brwdIrn}/notifications",
+      "return_type": "System.Threading.Tasks.Task<Refit.IApiResponse<System.Collections.Generic.List<Spydus.Domain.DTO.NotificationResponseDto>>>",
+      "parameters": [
+        {
+          "name": "bearerToken",
+          "type": "System.String",
+          "alias": null,
+          "binding": {
+            "kind": "authorization",
+            "header": "Authorization",
+            "scheme": "Bearer",
+            "basis": "explicit attribute"
+          },
+          "attributes": [
+            {
+              "type": "Refit.AuthorizeAttribute",
+              "arguments": [
+                "Bearer"
+              ]
+            }
+          ],
+          "metadata_token": "0x0800001c"
+        },
+        {
+          "name": "borrowerConsortiumRecordIdentifier",
+          "type": "System.Int64",
+          "alias": "brwdIrn",
+          "binding": {
+            "kind": "path-template",
+            "placeholder": "brwdIrn",
+            "basis": "route template + alias/name"
+          },
+          "attributes": [
+            {
+              "type": "Refit.AliasAsAttribute",
+              "arguments": [
+                "brwdIrn"
+              ]
+            }
+          ],
+          "metadata_token": "0x0800001d"
+        }
+      ],
+      "declared_headers": [],
+      "attributes": [
+        {
+          "type": "Refit.GetAttribute",
+          "arguments": [
+            "/api/mobile/1.0/patrons/{brwdIrn}/notifications"
+          ]
+        }
+      ],
+      "evidence_status": "static recovered contract; live observed original app request",
+      "live_observed": true,
+      "metadata_token": "0x06000018",
+      "observations": [
+        {
+          "source": "original Pixel_10_Pro application HTTP capture",
+          "capture_file": "emulator.har",
+          "capture_entry_index": 2,
+          "request_path_template": "/api/mobile/1.0/patrons/{brwdIrn}/notifications",
+          "query": [],
+          "headers": [
+            {
+              "name": "Authorization",
+              "value": "Bearer <redacted>"
+            }
+          ],
+          "body_field_names": [],
+          "response_status": 200,
+          "response_shape": "array",
+          "response_field_names": []
+        },
+        {
+          "source": "original Pixel_10_Pro application HTTP capture",
+          "capture_file": "discover.har",
+          "capture_entry_index": 0,
+          "request_path_template": "/api/mobile/1.0/patrons/{brwdIrn}/notifications",
+          "query": [],
+          "headers": [
+            {
+              "name": "Authorization",
+              "value": "Bearer <redacted>"
+            }
+          ],
+          "body_field_names": [],
+          "response_status": 200,
+          "response_shape": "array",
+          "response_field_names": []
+        }
+      ]
+    },
+    {
+      "interface": "Spydus.Domain.Interface.INotificationClient",
+      "method": "UpdateNotificationStatus",
+      "verb": "PATCH",
+      "route_template": "/api/mobile/1.0/patrons/{brwdIrn}/notifications/{id}/{status}",
+      "return_type": "System.Threading.Tasks.Task<Refit.IApiResponse<System.Boolean>>",
+      "parameters": [
+        {
+          "name": "bearerToken",
+          "type": "System.String",
+          "alias": null,
+          "binding": {
+            "kind": "authorization",
+            "header": "Authorization",
+            "scheme": "Bearer",
+            "basis": "explicit attribute"
+          },
+          "attributes": [
+            {
+              "type": "Refit.AuthorizeAttribute",
+              "arguments": [
+                "Bearer"
+              ]
+            }
+          ],
+          "metadata_token": "0x0800001e"
+        },
+        {
+          "name": "borrowerConsortiumRecordIdentifier",
+          "type": "System.Int64",
+          "alias": "brwdIrn",
+          "binding": {
+            "kind": "path-template",
+            "placeholder": "brwdIrn",
+            "basis": "route template + alias/name"
+          },
+          "attributes": [
+            {
+              "type": "Refit.AliasAsAttribute",
+              "arguments": [
+                "brwdIrn"
+              ]
+            }
+          ],
+          "metadata_token": "0x0800001f"
+        },
+        {
+          "name": "id",
+          "type": "System.Guid",
+          "alias": "id",
+          "binding": {
+            "kind": "path-template",
+            "placeholder": "id",
+            "basis": "route template + alias/name"
+          },
+          "attributes": [
+            {
+              "type": "Refit.AliasAsAttribute",
+              "arguments": [
+                "id"
+              ]
+            }
+          ],
+          "metadata_token": "0x08000020"
+        },
+        {
+          "name": "status",
+          "type": "System.String",
+          "alias": "status",
+          "binding": {
+            "kind": "path-template",
+            "placeholder": "status",
+            "basis": "route template + alias/name"
+          },
+          "attributes": [
+            {
+              "type": "Refit.AliasAsAttribute",
+              "arguments": [
+                "status"
+              ]
+            }
+          ],
+          "metadata_token": "0x08000021"
+        }
+      ],
+      "declared_headers": [
+        "Content-Type: application/json; charset=UTF-8"
+      ],
+      "attributes": [
+        {
+          "type": "Refit.PatchAttribute",
+          "arguments": [
+            "/api/mobile/1.0/patrons/{brwdIrn}/notifications/{id}/{status}"
+          ]
+        },
+        {
+          "type": "Refit.HeadersAttribute",
+          "arguments": [
+            [
+              "Content-Type: application/json; charset=UTF-8"
+            ]
+          ]
+        }
+      ],
+      "evidence_status": "static recovered contract",
+      "live_observed": false,
+      "metadata_token": "0x06000019"
+    },
+    {
+      "interface": "Spydus.Domain.Interface.INotificationClient",
+      "method": "DeleteDeviceToken",
+      "verb": "DELETE",
+      "route_template": "/api/mobile/1.0/{patronIrn}/notifications/device/{deviceToken}",
+      "return_type": "System.Threading.Tasks.Task<Refit.IApiResponse>",
+      "parameters": [
+        {
+          "name": "bearerToken",
+          "type": "System.String",
+          "alias": null,
+          "binding": {
+            "kind": "authorization",
+            "header": "Authorization",
+            "scheme": "Bearer",
+            "basis": "explicit attribute"
+          },
+          "attributes": [
+            {
+              "type": "Refit.AuthorizeAttribute",
+              "arguments": [
+                "Bearer"
+              ]
+            }
+          ],
+          "metadata_token": "0x08000022"
+        },
+        {
+          "name": "borrowerLocalAccountIdentifier",
+          "type": "System.String",
+          "alias": "patronIrn",
+          "binding": {
+            "kind": "path-template",
+            "placeholder": "patronIrn",
+            "basis": "route template + alias/name"
+          },
+          "attributes": [
+            {
+              "type": "Refit.AliasAsAttribute",
+              "arguments": [
+                "patronIrn"
+              ]
+            }
+          ],
+          "metadata_token": "0x08000023"
+        },
+        {
+          "name": "deviceToken",
+          "type": "System.String",
+          "alias": "deviceToken",
+          "binding": {
+            "kind": "path-template",
+            "placeholder": "deviceToken",
+            "basis": "route template + alias/name"
+          },
+          "attributes": [
+            {
+              "type": "Refit.AliasAsAttribute",
+              "arguments": [
+                "deviceToken"
+              ]
+            }
+          ],
+          "metadata_token": "0x08000024"
+        }
+      ],
+      "declared_headers": [],
+      "attributes": [
+        {
+          "type": "Refit.DeleteAttribute",
+          "arguments": [
+            "/api/mobile/1.0/{patronIrn}/notifications/device/{deviceToken}"
+          ]
+        }
+      ],
+      "evidence_status": "static recovered contract",
+      "live_observed": false,
+      "metadata_token": "0x0600001a"
+    },
+    {
+      "interface": "Spydus.Domain.Interface.INotificationClient",
+      "method": "PostDeviceToken",
+      "verb": "POST",
+      "route_template": "/api/mobile/1.0/patrons/{patronIrn}/notifications/device",
+      "return_type": "System.Threading.Tasks.Task<Refit.IApiResponse>",
+      "parameters": [
+        {
+          "name": "bearerToken",
+          "type": "System.String",
+          "alias": null,
+          "binding": {
+            "kind": "authorization",
+            "header": "Authorization",
+            "scheme": "Bearer",
+            "basis": "explicit attribute"
+          },
+          "attributes": [
+            {
+              "type": "Refit.AuthorizeAttribute",
+              "arguments": [
+                "Bearer"
+              ]
+            }
+          ],
+          "metadata_token": "0x08000025"
+        },
+        {
+          "name": "borrowerLocalAccountIdentifier",
+          "type": "System.String",
+          "alias": "patronIrn",
+          "binding": {
+            "kind": "path-template",
+            "placeholder": "patronIrn",
+            "basis": "route template + alias/name"
+          },
+          "attributes": [
+            {
+              "type": "Refit.AliasAsAttribute",
+              "arguments": [
+                "patronIrn"
+              ]
+            }
+          ],
+          "metadata_token": "0x08000026"
+        },
+        {
+          "name": "deviceDto",
+          "type": "Spydus.Domain.DTO.RegisterDeviceTokenRequest",
+          "alias": null,
+          "binding": {
+            "kind": "body",
+            "basis": "explicit attribute",
+            "serialization": "Refit default; runtime serializer configuration not established here"
+          },
+          "attributes": [
+            {
+              "type": "Refit.BodyAttribute",
+              "arguments": []
+            }
+          ],
+          "metadata_token": "0x08000027"
+        }
+      ],
+      "declared_headers": [],
+      "attributes": [
+        {
+          "type": "Refit.PostAttribute",
+          "arguments": [
+            "/api/mobile/1.0/patrons/{patronIrn}/notifications/device"
+          ]
+        }
+      ],
+      "evidence_status": "static recovered contract",
+      "live_observed": false,
+      "metadata_token": "0x0600001b"
+    },
+    {
+      "interface": "Spydus.Domain.Interface.INotificationClient",
+      "method": "PutDeviceToken",
+      "verb": "PUT",
+      "route_template": "/api/mobile/1.0/patrons/{patronIrn}/notifications/device",
+      "return_type": "System.Threading.Tasks.Task<Refit.IApiResponse>",
+      "parameters": [
+        {
+          "name": "bearerToken",
+          "type": "System.String",
+          "alias": null,
+          "binding": {
+            "kind": "authorization",
+            "header": "Authorization",
+            "scheme": "Bearer",
+            "basis": "explicit attribute"
+          },
+          "attributes": [
+            {
+              "type": "Refit.AuthorizeAttribute",
+              "arguments": [
+                "Bearer"
+              ]
+            }
+          ],
+          "metadata_token": "0x08000028"
+        },
+        {
+          "name": "borrowerLocalAccountIdentifier",
+          "type": "System.String",
+          "alias": "patronIrn",
+          "binding": {
+            "kind": "path-template",
+            "placeholder": "patronIrn",
+            "basis": "route template + alias/name"
+          },
+          "attributes": [
+            {
+              "type": "Refit.AliasAsAttribute",
+              "arguments": [
+                "patronIrn"
+              ]
+            }
+          ],
+          "metadata_token": "0x08000029"
+        },
+        {
+          "name": "request",
+          "type": "Spydus.Domain.DTO.UpdateDeviceTokenRequest",
+          "alias": null,
+          "binding": {
+            "kind": "body",
+            "basis": "explicit attribute",
+            "serialization": "Refit default; runtime serializer configuration not established here"
+          },
+          "attributes": [
+            {
+              "type": "Refit.BodyAttribute",
+              "arguments": []
+            }
+          ],
+          "metadata_token": "0x0800002a"
+        }
+      ],
+      "declared_headers": [],
+      "attributes": [
+        {
+          "type": "Refit.PutAttribute",
+          "arguments": [
+            "/api/mobile/1.0/patrons/{patronIrn}/notifications/device"
+          ]
+        }
+      ],
+      "evidence_status": "static recovered contract",
+      "live_observed": false,
+      "metadata_token": "0x0600001c"
+    },
+    {
+      "interface": "Spydus.Domain.Interface.ISelfIssueClient",
+      "method": "BarcodeSelfIssue",
+      "verb": "POST",
+      "route_template": "/api/mobile/1.0/patrons/{patronIrn}/items/{itemId}/issue?alert_acknowledged={alertAcknowledged}",
+      "return_type": "System.Threading.Tasks.Task<Refit.IApiResponse<Spydus.Domain.DTO.SelfIssueResponseDto>>",
+      "parameters": [
+        {
+          "name": "patronIrn",
+          "type": "System.String",
+          "alias": "patronIrn",
+          "binding": {
+            "kind": "path-template",
+            "placeholder": "patronIrn",
+            "basis": "route template + alias/name"
+          },
+          "attributes": [
+            {
+              "type": "Refit.AliasAsAttribute",
+              "arguments": [
+                "patronIrn"
+              ]
+            }
+          ],
+          "metadata_token": "0x0800002c"
+        },
+        {
+          "name": "itemId",
+          "type": "System.String",
+          "alias": "itemId",
+          "binding": {
+            "kind": "path-template",
+            "placeholder": "itemId",
+            "basis": "route template + alias/name"
+          },
+          "attributes": [
+            {
+              "type": "Refit.AliasAsAttribute",
+              "arguments": [
+                "itemId"
+              ]
+            }
+          ],
+          "metadata_token": "0x0800002d"
+        },
+        {
+          "name": "alertAcknowledged",
+          "type": "System.Boolean",
+          "alias": "alertAcknowledged",
+          "binding": {
+            "kind": "query-template",
+            "placeholder": "alertAcknowledged",
+            "basis": "route template + alias/name"
+          },
+          "attributes": [
+            {
+              "type": "Refit.AliasAsAttribute",
+              "arguments": [
+                "alertAcknowledged"
+              ]
+            }
+          ],
+          "metadata_token": "0x0800002e"
+        }
+      ],
+      "declared_headers": [
+        "Authorisation: Bearer",
+        "Content-Type: application/json; charset=UTF-8"
+      ],
+      "attributes": [
+        {
+          "type": "Refit.PostAttribute",
+          "arguments": [
+            "/api/mobile/1.0/patrons/{patronIrn}/items/{itemId}/issue?alert_acknowledged={alertAcknowledged}"
+          ]
+        },
+        {
+          "type": "Refit.HeadersAttribute",
+          "arguments": [
+            [
+              "Content-Type: application/json; charset=UTF-8"
+            ]
+          ]
+        }
+      ],
+      "evidence_status": "static recovered contract",
+      "live_observed": false,
+      "metadata_token": "0x0600001d"
+    },
+    {
+      "interface": "Spydus.Domain.Interface.ISelfIssueClient",
+      "method": "RfidSelfIssue",
+      "verb": "POST",
+      "route_template": "/api/mobile/1.0/patrons/{patronIrn}/items/rfid/{itemRfid}/issue?alert_acknowledged={alertAcknowledged}",
+      "return_type": "System.Threading.Tasks.Task<Refit.IApiResponse<Spydus.Domain.DTO.SelfIssueResponseDto>>",
+      "parameters": [
+        {
+          "name": "patronIrn",
+          "type": "System.String",
+          "alias": "patronIrn",
+          "binding": {
+            "kind": "path-template",
+            "placeholder": "patronIrn",
+            "basis": "route template + alias/name"
+          },
+          "attributes": [
+            {
+              "type": "Refit.AliasAsAttribute",
+              "arguments": [
+                "patronIrn"
+              ]
+            }
+          ],
+          "metadata_token": "0x08000030"
+        },
+        {
+          "name": "itemId",
+          "type": "System.String",
+          "alias": "itemRfid",
+          "binding": {
+            "kind": "path-template",
+            "placeholder": "itemRfid",
+            "basis": "route template + alias/name"
+          },
+          "attributes": [
+            {
+              "type": "Refit.AliasAsAttribute",
+              "arguments": [
+                "itemRfid"
+              ]
+            }
+          ],
+          "metadata_token": "0x08000031"
+        },
+        {
+          "name": "alertAcknowledged",
+          "type": "System.Boolean",
+          "alias": "alertAcknowledged",
+          "binding": {
+            "kind": "query-template",
+            "placeholder": "alertAcknowledged",
+            "basis": "route template + alias/name"
+          },
+          "attributes": [
+            {
+              "type": "Refit.AliasAsAttribute",
+              "arguments": [
+                "alertAcknowledged"
+              ]
+            }
+          ],
+          "metadata_token": "0x08000032"
+        }
+      ],
+      "declared_headers": [
+        "Authorisation: Bearer",
+        "Content-Type: application/json; charset=UTF-8"
+      ],
+      "attributes": [
+        {
+          "type": "Refit.PostAttribute",
+          "arguments": [
+            "/api/mobile/1.0/patrons/{patronIrn}/items/rfid/{itemRfid}/issue?alert_acknowledged={alertAcknowledged}"
+          ]
+        },
+        {
+          "type": "Refit.HeadersAttribute",
+          "arguments": [
+            [
+              "Content-Type: application/json; charset=UTF-8"
+            ]
+          ]
+        }
+      ],
+      "evidence_status": "static recovered contract",
+      "live_observed": false,
+      "metadata_token": "0x0600001e"
+    },
+    {
+      "interface": "Spydus.Domain.Interface.ISelfIssueClient",
+      "method": "SelfReturn",
+      "verb": "POST",
+      "route_template": "/api/mobile/1.0/patrons/{patronIrn}/items/{itemId}/return?alert_acknowledged={alertAcknowledged}",
+      "return_type": "System.Threading.Tasks.Task<Refit.IApiResponse<Spydus.Domain.DTO.SelfIssueResponseDto>>",
+      "parameters": [
+        {
+          "name": "patronIrn",
+          "type": "System.String",
+          "alias": "patronIrn",
+          "binding": {
+            "kind": "path-template",
+            "placeholder": "patronIrn",
+            "basis": "route template + alias/name"
+          },
+          "attributes": [
+            {
+              "type": "Refit.AliasAsAttribute",
+              "arguments": [
+                "patronIrn"
+              ]
+            }
+          ],
+          "metadata_token": "0x08000034"
+        },
+        {
+          "name": "itemId",
+          "type": "System.String",
+          "alias": "itemId",
+          "binding": {
+            "kind": "path-template",
+            "placeholder": "itemId",
+            "basis": "route template + alias/name"
+          },
+          "attributes": [
+            {
+              "type": "Refit.AliasAsAttribute",
+              "arguments": [
+                "itemId"
+              ]
+            }
+          ],
+          "metadata_token": "0x08000035"
+        },
+        {
+          "name": "alertAcknowledged",
+          "type": "System.Boolean",
+          "alias": "alertAcknowledged",
+          "binding": {
+            "kind": "query-template",
+            "placeholder": "alertAcknowledged",
+            "basis": "route template + alias/name"
+          },
+          "attributes": [
+            {
+              "type": "Refit.AliasAsAttribute",
+              "arguments": [
+                "alertAcknowledged"
+              ]
+            }
+          ],
+          "metadata_token": "0x08000036"
+        }
+      ],
+      "declared_headers": [
+        "Authorisation: Bearer",
+        "Content-Type: application/json; charset=UTF-8"
+      ],
+      "attributes": [
+        {
+          "type": "Refit.PostAttribute",
+          "arguments": [
+            "/api/mobile/1.0/patrons/{patronIrn}/items/{itemId}/return?alert_acknowledged={alertAcknowledged}"
+          ]
+        },
+        {
+          "type": "Refit.HeadersAttribute",
+          "arguments": [
+            [
+              "Content-Type: application/json; charset=UTF-8"
+            ]
+          ]
+        }
+      ],
+      "evidence_status": "static recovered contract",
+      "live_observed": false,
+      "metadata_token": "0x0600001f"
+    },
+    {
+      "interface": "Spydus.Domain.Interface.IStyleClient",
+      "method": "GetServerVersion",
+      "verb": "GET",
+      "route_template": "/api/open/1.0/general/version",
+      "return_type": "System.Threading.Tasks.Task<Refit.IApiResponse<Spydus.Domain.DTO.ServerInfo>>",
+      "parameters": [],
+      "declared_headers": [],
+      "attributes": [
+        {
+          "type": "Refit.GetAttribute",
+          "arguments": [
+            "/api/open/1.0/general/version"
+          ]
+        }
+      ],
+      "evidence_status": "static recovered contract; live observed original app request",
+      "live_observed": true,
+      "metadata_token": "0x06000020",
+      "observations": [
+        {
+          "source": "original Pixel_10_Pro application HTTP capture",
+          "capture_file": "emulator.har",
+          "capture_entry_index": 1,
+          "request_path_template": "/api/open/1.0/general/version",
+          "query": [],
+          "headers": [],
+          "body_field_names": [],
+          "response_status": 200,
+          "response_shape": "object",
+          "response_field_names": [
+            "client",
+            "isCloudHosted",
+            "license",
+            "patch",
+            "release",
+            "server"
+          ]
+        }
+      ]
+    },
+    {
+      "interface": "Spydus.Domain.Interface.IStyleClient",
+      "method": "GetStyleConfiguration",
+      "verb": "GET",
+      "route_template": "/api/mobile/1.0/general/config?wifiName={wifiName}",
+      "return_type": "System.Threading.Tasks.Task<Refit.IApiResponse<System.String>>",
+      "parameters": [
+        {
+          "name": "wifiName",
+          "type": "System.String",
+          "alias": "wifiName",
+          "binding": {
+            "kind": "query-template",
+            "placeholder": "wifiName",
+            "basis": "route template + alias/name"
+          },
+          "attributes": [
+            {
+              "type": "Refit.AliasAsAttribute",
+              "arguments": [
+                "wifiName"
+              ]
+            }
+          ],
+          "metadata_token": "0x08000037"
+        }
+      ],
+      "declared_headers": [],
+      "attributes": [
+        {
+          "type": "Refit.GetAttribute",
+          "arguments": [
+            "/api/mobile/1.0/general/config?wifiName={wifiName}"
+          ]
+        }
+      ],
+      "evidence_status": "static recovered contract; live observed original app request",
+      "live_observed": true,
+      "metadata_token": "0x06000021",
+      "observations": [
+        {
+          "source": "original Pixel_10_Pro application HTTP capture",
+          "capture_file": "emulator.har",
+          "capture_entry_index": 4,
+          "request_path_template": "/api/mobile/1.0/general/config",
+          "query": [
+            {
+              "name": "wifiName",
+              "value": ""
+            }
+          ],
+          "headers": [],
+          "body_field_names": [],
+          "response_status": 200,
+          "response_shape": "object",
+          "response_field_names": [
+            "barcodeType",
+            "branchUrl",
+            "discovery",
+            "distanceUnit",
+            "enableJoinOnline",
+            "joinOnlineIcon",
+            "langs",
+            "libraryAppTimeZone",
+            "logoUrl",
+            "selfIssueEnabled",
+            "selfIssueWiFiOnly",
+            "selfReturnEnabled",
+            "selfReturnWiFiOnly",
+            "showNearbyBranches",
+            "style",
+            "wifi"
+          ]
+        }
+      ]
+    },
+    {
+      "interface": "Spydus.Domain.Interface.IStyleClient",
+      "method": "GetContainers",
+      "verb": "GET",
+      "route_template": "/api/mobile/1.0/containers?wifiName={wifiName}",
+      "return_type": "System.Threading.Tasks.Task<Refit.IApiResponse<Spydus.Domain.DTO.ContainerResponse>>",
+      "parameters": [
+        {
+          "name": "languageIdentifier",
+          "type": "System.String",
+          "alias": null,
+          "binding": {
+            "kind": "header",
+            "name": "spydus-lang",
+            "basis": "explicit attribute"
+          },
+          "attributes": [
+            {
+              "type": "Refit.HeaderAttribute",
+              "arguments": [
+                "spydus-lang"
+              ]
+            }
+          ],
+          "metadata_token": "0x08000039"
+        },
+        {
+          "name": "wifiName",
+          "type": "System.String",
+          "alias": "wifiName",
+          "binding": {
+            "kind": "query-template",
+            "placeholder": "wifiName",
+            "basis": "route template + alias/name"
+          },
+          "attributes": [
+            {
+              "type": "Refit.AliasAsAttribute",
+              "arguments": [
+                "wifiName"
+              ]
+            }
+          ],
+          "metadata_token": "0x0800003a"
+        }
+      ],
+      "declared_headers": [],
+      "attributes": [
+        {
+          "type": "Refit.GetAttribute",
+          "arguments": [
+            "/api/mobile/1.0/containers?wifiName={wifiName}"
+          ]
+        }
+      ],
+      "evidence_status": "static recovered contract; live observed original app request",
+      "live_observed": true,
+      "metadata_token": "0x06000022",
+      "observations": [
+        {
+          "source": "original Pixel_10_Pro application HTTP capture",
+          "capture_file": "emulator.har",
+          "capture_entry_index": 5,
+          "request_path_template": "/api/mobile/1.0/containers",
+          "query": [
+            {
+              "name": "wifiName",
+              "value": ""
+            }
+          ],
+          "headers": [
+            {
+              "name": "spydus-lang",
+              "value": ""
+            }
+          ],
+          "body_field_names": [],
+          "response_status": 200,
+          "response_shape": "object",
+          "response_field_names": [
+            "containers"
+          ]
+        }
+      ]
+    },
+    {
+      "interface": "Spydus.Domain.Interface.IStyleClient",
+      "method": "GetAnnouncements",
+      "verb": "GET",
+      "route_template": "/api/mobile/1.0/announcements",
+      "return_type": "System.Threading.Tasks.Task<Refit.IApiResponse<Spydus.Domain.DTO.AnnouncementResponseDto>>",
+      "parameters": [
+        {
+          "name": "languageIdentifier",
+          "type": "System.String",
+          "alias": null,
+          "binding": {
+            "kind": "header",
+            "name": "spydus-lang",
+            "basis": "explicit attribute"
+          },
+          "attributes": [
+            {
+              "type": "Refit.HeaderAttribute",
+              "arguments": [
+                "spydus-lang"
+              ]
+            }
+          ],
+          "metadata_token": "0x0800003b"
+        }
+      ],
+      "declared_headers": [],
+      "attributes": [
+        {
+          "type": "Refit.GetAttribute",
+          "arguments": [
+            "/api/mobile/1.0/announcements"
+          ]
+        }
+      ],
+      "evidence_status": "static recovered contract; live observed original app request",
+      "live_observed": true,
+      "metadata_token": "0x06000023",
+      "observations": [
+        {
+          "source": "original Pixel_10_Pro application HTTP capture",
+          "capture_file": "emulator.har",
+          "capture_entry_index": 6,
+          "request_path_template": "/api/mobile/1.0/announcements",
+          "query": [],
+          "headers": [
+            {
+              "name": "spydus-lang",
+              "value": ""
+            }
+          ],
+          "body_field_names": [],
+          "response_status": 200,
+          "response_shape": "object",
+          "response_field_names": [
+            "announcements"
+          ]
+        }
+      ]
+    },
+    {
+      "interface": "Spydus.Domain.Interface.IStyleClient",
+      "method": "GetAppleWalletCard",
+      "verb": "GET",
+      "route_template": "/api/mobile/1.0/patrons/{patronId}/wallet/ios",
+      "return_type": "System.Threading.Tasks.Task<System.Net.Http.HttpContent>",
+      "parameters": [
+        {
+          "name": "bearerToken",
+          "type": "System.String",
+          "alias": null,
+          "binding": {
+            "kind": "authorization",
+            "header": "Authorization",
+            "scheme": "Bearer",
+            "basis": "explicit attribute"
+          },
+          "attributes": [
+            {
+              "type": "Refit.AuthorizeAttribute",
+              "arguments": [
+                "Bearer"
+              ]
+            }
+          ],
+          "metadata_token": "0x0800003d"
+        },
+        {
+          "name": "patronId",
+          "type": "System.String",
+          "alias": "patronId",
+          "binding": {
+            "kind": "path-template",
+            "placeholder": "patronId",
+            "basis": "route template + alias/name"
+          },
+          "attributes": [
+            {
+              "type": "Refit.AliasAsAttribute",
+              "arguments": [
+                "patronId"
+              ]
+            }
+          ],
+          "metadata_token": "0x0800003e"
+        }
+      ],
+      "declared_headers": [],
+      "attributes": [
+        {
+          "type": "Refit.GetAttribute",
+          "arguments": [
+            "/api/mobile/1.0/patrons/{patronId}/wallet/ios"
+          ]
+        }
+      ],
+      "evidence_status": "static recovered contract",
+      "live_observed": false,
+      "metadata_token": "0x06000024"
+    },
+    {
+      "interface": "Spydus.Domain.Interface.IStyleClient",
+      "method": "GetGoogleWalletCard",
+      "verb": "GET",
+      "route_template": "/api/mobile/1.0/patrons/{patronId}/wallet/google?language={isoCode}",
+      "return_type": "System.Threading.Tasks.Task<Refit.IApiResponse<System.String>>",
+      "parameters": [
+        {
+          "name": "bearerToken",
+          "type": "System.String",
+          "alias": null,
+          "binding": {
+            "kind": "authorization",
+            "header": "Authorization",
+            "scheme": "Bearer",
+            "basis": "explicit attribute"
+          },
+          "attributes": [
+            {
+              "type": "Refit.AuthorizeAttribute",
+              "arguments": [
+                "Bearer"
+              ]
+            }
+          ],
+          "metadata_token": "0x0800003f"
+        },
+        {
+          "name": "patronId",
+          "type": "System.String",
+          "alias": "patronId",
+          "binding": {
+            "kind": "path-template",
+            "placeholder": "patronId",
+            "basis": "route template + alias/name"
+          },
+          "attributes": [
+            {
+              "type": "Refit.AliasAsAttribute",
+              "arguments": [
+                "patronId"
+              ]
+            }
+          ],
+          "metadata_token": "0x08000040"
+        },
+        {
+          "name": "isoCode",
+          "type": "System.String",
+          "alias": "isoCode",
+          "binding": {
+            "kind": "query-template",
+            "placeholder": "isoCode",
+            "basis": "route template + alias/name"
+          },
+          "attributes": [
+            {
+              "type": "Refit.AliasAsAttribute",
+              "arguments": [
+                "isoCode"
+              ]
+            }
+          ],
+          "metadata_token": "0x08000041"
+        }
+      ],
+      "declared_headers": [],
+      "attributes": [
+        {
+          "type": "Refit.GetAttribute",
+          "arguments": [
+            "/api/mobile/1.0/patrons/{patronId}/wallet/google?language={isoCode}"
+          ]
+        }
+      ],
+      "evidence_status": "static recovered contract",
+      "live_observed": false,
+      "metadata_token": "0x06000025"
+    },
+    {
+      "interface": "Spydus.Domain.Interface.IStyleClient",
+      "method": "GetBranches",
+      "verb": "GET",
+      "route_template": "/api/mobile/1.0/mobile/branches?setId={setId}&lastIrn={lastIrn}&count={count}",
+      "return_type": "System.Threading.Tasks.Task<Refit.IApiResponse<Spydus.Domain.DTO.BranchResponseDto>>",
+      "parameters": [
+        {
+          "name": "setId",
+          "type": "System.Int64",
+          "alias": "setId",
+          "binding": {
+            "kind": "query-template",
+            "placeholder": "setId",
+            "basis": "route template + alias/name"
+          },
+          "attributes": [
+            {
+              "type": "Refit.AliasAsAttribute",
+              "arguments": [
+                "setId"
+              ]
+            }
+          ],
+          "metadata_token": "0x08000042"
+        },
+        {
+          "name": "lastIrn",
+          "type": "System.Int64",
+          "alias": "lastIrn",
+          "binding": {
+            "kind": "query-template",
+            "placeholder": "lastIrn",
+            "basis": "route template + alias/name"
+          },
+          "attributes": [
+            {
+              "type": "Refit.AliasAsAttribute",
+              "arguments": [
+                "lastIrn"
+              ]
+            }
+          ],
+          "metadata_token": "0x08000043"
+        },
+        {
+          "name": "count",
+          "type": "System.Int32",
+          "alias": "count",
+          "binding": {
+            "kind": "query-template",
+            "placeholder": "count",
+            "basis": "route template + alias/name"
+          },
+          "attributes": [
+            {
+              "type": "Refit.AliasAsAttribute",
+              "arguments": [
+                "count"
+              ]
+            }
+          ],
+          "metadata_token": "0x08000044"
+        },
+        {
+          "name": "languageIdentifier",
+          "type": "System.String",
+          "alias": null,
+          "binding": {
+            "kind": "header",
+            "name": "spydus-lang",
+            "basis": "explicit attribute"
+          },
+          "attributes": [
+            {
+              "type": "Refit.HeaderAttribute",
+              "arguments": [
+                "spydus-lang"
+              ]
+            }
+          ],
+          "metadata_token": "0x08000045"
+        }
+      ],
+      "declared_headers": [],
+      "attributes": [
+        {
+          "type": "Refit.GetAttribute",
+          "arguments": [
+            "/api/mobile/1.0/mobile/branches?setId={setId}&lastIrn={lastIrn}&count={count}"
+          ]
+        }
+      ],
+      "evidence_status": "static recovered contract; live observed original app request",
+      "live_observed": true,
+      "metadata_token": "0x06000026",
+      "observations": [
+        {
+          "source": "original Pixel_10_Pro application HTTP capture",
+          "capture_file": "emulator.har",
+          "capture_entry_index": 3,
+          "request_path_template": "/api/mobile/1.0/mobile/branches",
+          "query": [
+            {
+              "name": "setId",
+              "value": 0
+            },
+            {
+              "name": "lastIrn",
+              "value": 0
+            },
+            {
+              "name": "count",
+              "value": 500
+            }
+          ],
+          "headers": [
+            {
+              "name": "spydus-lang",
+              "value": ""
+            }
+          ],
+          "body_field_names": [],
+          "response_status": 200,
+          "response_shape": "object",
+          "response_field_names": [
+            "branches",
+            "setInfo"
+          ]
+        }
+      ]
+    },
+    {
+      "interface": "Spydus.Domain.Interface.IValidateSessionClient",
+      "method": "ValidateSessionId",
+      "verb": "POST",
+      "route_template": "/api/private/1.0/patrons/validatesessionid",
+      "return_type": "System.Threading.Tasks.Task<Refit.IApiResponse<Spydus.Domain.DTO.ValidateSessionResponse>>",
+      "parameters": [
+        {
+          "name": "request",
+          "type": "Spydus.Domain.DTO.ValidateSessionRequest",
+          "alias": null,
+          "binding": {
+            "kind": "body",
+            "basis": "explicit attribute",
+            "serialization": "Refit default; runtime serializer configuration not established here"
+          },
+          "attributes": [
+            {
+              "type": "Refit.BodyAttribute",
+              "arguments": []
+            }
+          ],
+          "metadata_token": "0x08000046"
+        }
+      ],
+      "declared_headers": [
+        "Content-Type: application/json; charset=UTF-8"
+      ],
+      "attributes": [
+        {
+          "type": "Refit.PostAttribute",
+          "arguments": [
+            "/api/private/1.0/patrons/validatesessionid"
+          ]
+        },
+        {
+          "type": "Refit.HeadersAttribute",
+          "arguments": [
+            [
+              "Content-Type: application/json; charset=UTF-8"
+            ]
+          ]
+        }
+      ],
+      "evidence_status": "static recovered contract; live observed original app request",
+      "live_observed": true,
+      "metadata_token": "0x06000027",
+      "observations": [
+        {
+          "source": "original Pixel_10_Pro application HTTP capture",
+          "capture_file": "emulator.har",
+          "capture_entry_index": 0,
+          "request_path_template": "/api/private/1.0/patrons/validatesessionid",
+          "query": [],
+          "headers": [
+            {
+              "name": "Content-Type",
+              "value": "application/json; charset=UTF-8"
+            }
+          ],
+          "body_field_names": [
+            "sessionId"
+          ],
+          "response_status": 200,
+          "response_shape": "object",
+          "response_field_names": [
+            "barcode",
+            "brwIrn",
+            "brwSessionId",
+            "brwdIrn",
+            "institutionId",
+            "name"
+          ]
+        },
+        {
+          "source": "original Pixel_10_Pro application HTTP capture",
+          "capture_file": "emulator.har",
+          "capture_entry_index": 7,
+          "request_path_template": "/api/private/1.0/patrons/validatesessionid",
+          "query": [],
+          "headers": [
+            {
+              "name": "Content-Type",
+              "value": "application/json; charset=UTF-8"
+            }
+          ],
+          "body_field_names": [
+            "sessionId"
+          ],
+          "response_status": 200,
+          "response_shape": "object",
+          "response_field_names": [
+            "barcode",
+            "brwIrn",
+            "brwSessionId",
+            "brwdIrn",
+            "institutionId",
+            "name"
+          ]
+        },
+        {
+          "source": "original Pixel_10_Pro application HTTP capture",
+          "capture_file": "discover.har",
+          "capture_entry_index": 2,
+          "request_path_template": "/api/private/1.0/patrons/validatesessionid",
+          "query": [],
+          "headers": [
+            {
+              "name": "Content-Type",
+              "value": "application/json; charset=UTF-8"
+            }
+          ],
+          "body_field_names": [
+            "sessionId"
+          ],
+          "response_status": 200,
+          "response_shape": "object",
+          "response_field_names": [
+            "barcode",
+            "brwIrn",
+            "brwSessionId",
+            "brwdIrn",
+            "institutionId",
+            "name"
+          ]
+        }
+      ]
+    }
+  ],
+  "dto_types": [
+    {
+      "type": "Spydus.Domain.DTO.AnnouncementResponseDto",
+      "properties": [
+        {
+          "name": "Announcements",
+          "type": "System.Collections.Generic.List<Spydus.Domain.DTO.AnnouncementDto>",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x17000006"
+        }
+      ],
+      "metadata_token": "0x02000014"
+    },
+    {
+      "type": "Spydus.Domain.DTO.AnnouncementDto",
+      "properties": [
+        {
+          "name": "Title",
+          "type": "System.String",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x17000007"
+        },
+        {
+          "name": "StartDate",
+          "type": "System.Nullable<System.DateTime>",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x17000008"
+        },
+        {
+          "name": "EndDate",
+          "type": "System.Nullable<System.DateTime>",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x17000009"
+        },
+        {
+          "name": "Content",
+          "type": "System.String",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x1700000a"
+        },
+        {
+          "name": "HtmlSource",
+          "type": "Microsoft.Maui.Controls.HtmlWebViewSource",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": true,
+          "attributes": [
+            {
+              "type": "System.Text.Json.Serialization.JsonIgnoreAttribute",
+              "arguments": []
+            }
+          ],
+          "metadata_token": "0x1700000b"
+        }
+      ],
+      "metadata_token": "0x02000015"
+    },
+    {
+      "type": "Spydus.Domain.DTO.AppLanguageDto",
+      "properties": [
+        {
+          "name": "IsoCode",
+          "type": "System.String",
+          "json_name": "iso-code",
+          "json_name_basis": "explicit JsonPropertyNameAttribute",
+          "json_ignore": false,
+          "attributes": [
+            {
+              "type": "System.Text.Json.Serialization.JsonPropertyNameAttribute",
+              "arguments": [
+                "iso-code"
+              ]
+            }
+          ],
+          "metadata_token": "0x1700000c"
+        },
+        {
+          "name": "LanguagePac",
+          "type": "System.String",
+          "json_name": "language-pac",
+          "json_name_basis": "explicit JsonPropertyNameAttribute",
+          "json_ignore": false,
+          "attributes": [
+            {
+              "type": "System.Text.Json.Serialization.JsonPropertyNameAttribute",
+              "arguments": [
+                "language-pac"
+              ]
+            }
+          ],
+          "metadata_token": "0x1700000d"
+        },
+        {
+          "name": "Name",
+          "type": "System.String",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x1700000e"
+        },
+        {
+          "name": "LanguageName",
+          "type": "System.String",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x1700000f"
+        }
+      ],
+      "metadata_token": "0x02000016"
+    },
+    {
+      "type": "Spydus.Domain.DTO.BranchAddressDto",
+      "properties": [
+        {
+          "name": "NumberAndStreet",
+          "type": "System.String",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x17000010"
+        },
+        {
+          "name": "StreetLine2",
+          "type": "System.String",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x17000011"
+        },
+        {
+          "name": "StreetLine3",
+          "type": "System.String",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x17000012"
+        },
+        {
+          "name": "Suburb",
+          "type": "System.String",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x17000013"
+        },
+        {
+          "name": "Postcode",
+          "type": "System.String",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x17000014"
+        },
+        {
+          "name": "State",
+          "type": "System.String",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x17000015"
+        },
+        {
+          "name": "Country",
+          "type": "System.String",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x17000016"
+        },
+        {
+          "name": "FullAddress",
+          "type": "System.String",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x17000017"
+        }
+      ],
+      "metadata_token": "0x02000018"
+    },
+    {
+      "type": "Spydus.Domain.DTO.BranchDto",
+      "properties": [
+        {
+          "name": "Irn",
+          "type": "System.Int32",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x17000018"
+        },
+        {
+          "name": "Id",
+          "type": "System.String",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x17000019"
+        },
+        {
+          "name": "Name",
+          "type": "System.String",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x1700001a"
+        },
+        {
+          "name": "Latitude",
+          "type": "System.Nullable<System.Double>",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x1700001b"
+        },
+        {
+          "name": "Longitude",
+          "type": "System.Nullable<System.Double>",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x1700001c"
+        },
+        {
+          "name": "Url",
+          "type": "System.String",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x1700001d"
+        },
+        {
+          "name": "OpacUrl",
+          "type": "System.String",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x1700001e"
+        },
+        {
+          "name": "ImageUrl",
+          "type": "System.String",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x1700001f"
+        },
+        {
+          "name": "Phone",
+          "type": "System.String",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x17000020"
+        },
+        {
+          "name": "Email",
+          "type": "System.String",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x17000021"
+        },
+        {
+          "name": "Address",
+          "type": "Spydus.Domain.DTO.BranchAddressDto",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x17000022"
+        },
+        {
+          "name": "OpeningHours",
+          "type": "System.Collections.Generic.List<Spydus.Domain.DTO.OpeningHourDto>",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x17000023"
+        },
+        {
+          "name": "Holidays",
+          "type": "System.Collections.Generic.List<Spydus.Domain.DTO.HolidayDto>",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x17000024"
+        }
+      ],
+      "metadata_token": "0x02000019"
+    },
+    {
+      "type": "Spydus.Domain.DTO.BranchResponseDto",
+      "properties": [
+        {
+          "name": "SetInfo",
+          "type": "Spydus.Domain.DTO.SetInfo",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x17000025"
+        },
+        {
+          "name": "Branches",
+          "type": "System.Collections.Generic.List<Spydus.Domain.DTO.BranchDto>",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x17000026"
+        }
+      ],
+      "metadata_token": "0x0200001a"
+    },
+    {
+      "type": "Spydus.Domain.DTO.HolidayDto",
+      "properties": [
+        {
+          "name": "StartDate",
+          "type": "System.String",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x17000027"
+        },
+        {
+          "name": "EndDate",
+          "type": "System.String",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x17000028"
+        },
+        {
+          "name": "Name",
+          "type": "System.String",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x17000029"
+        },
+        {
+          "name": "StartDateTime",
+          "type": "System.String",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": true,
+          "attributes": [
+            {
+              "type": "System.Text.Json.Serialization.JsonIgnoreAttribute",
+              "arguments": []
+            }
+          ],
+          "metadata_token": "0x1700002a"
+        },
+        {
+          "name": "EndDateTime",
+          "type": "System.String",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": true,
+          "attributes": [
+            {
+              "type": "System.Text.Json.Serialization.JsonIgnoreAttribute",
+              "arguments": []
+            }
+          ],
+          "metadata_token": "0x1700002b"
+        },
+        {
+          "name": "DisplayDateRange",
+          "type": "System.String",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": true,
+          "attributes": [
+            {
+              "type": "System.Text.Json.Serialization.JsonIgnoreAttribute",
+              "arguments": []
+            }
+          ],
+          "metadata_token": "0x1700002c"
+        }
+      ],
+      "metadata_token": "0x0200001b"
+    },
+    {
+      "type": "Spydus.Domain.DTO.OpeningHourDto",
+      "properties": [
+        {
+          "name": "Date",
+          "type": "System.Object",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x1700002d"
+        },
+        {
+          "name": "Dow",
+          "type": "System.Int32",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x1700002e"
+        },
+        {
+          "name": "DayName",
+          "type": "System.String",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x1700002f"
+        },
+        {
+          "name": "OpenTime",
+          "type": "System.String",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x17000030"
+        },
+        {
+          "name": "CloseTime",
+          "type": "System.String",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x17000031"
+        },
+        {
+          "name": "IsOpen",
+          "type": "System.Boolean",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x17000032"
+        },
+        {
+          "name": "DisplayTime",
+          "type": "System.String",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": true,
+          "attributes": [
+            {
+              "type": "System.Text.Json.Serialization.JsonIgnoreAttribute",
+              "arguments": []
+            }
+          ],
+          "metadata_token": "0x17000033"
+        },
+        {
+          "name": "ShouldHighlightToday",
+          "type": "System.Boolean",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": true,
+          "attributes": [
+            {
+              "type": "System.Text.Json.Serialization.JsonIgnoreAttribute",
+              "arguments": []
+            }
+          ],
+          "metadata_token": "0x17000034"
+        }
+      ],
+      "metadata_token": "0x0200001c"
+    },
+    {
+      "type": "Spydus.Domain.DTO.SetInfo",
+      "properties": [
+        {
+          "name": "SetId",
+          "type": "System.Int64",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x17000035"
+        },
+        {
+          "name": "LastIrn",
+          "type": "System.Int64",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x17000036"
+        },
+        {
+          "name": "SetTotal",
+          "type": "System.Int32",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x17000037"
+        },
+        {
+          "name": "SetCount",
+          "type": "System.Int32",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x17000038"
+        },
+        {
+          "name": "HasMoreRecords",
+          "type": "System.Boolean",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x17000039"
+        }
+      ],
+      "metadata_token": "0x0200001d"
+    },
+    {
+      "type": "Spydus.Domain.DTO.ContainerResponse",
+      "properties": [
+        {
+          "name": "Containers",
+          "type": "System.Collections.Generic.List<Spydus.Domain.DTO.ContainerDto>",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x1700003a"
+        }
+      ],
+      "metadata_token": "0x0200001e"
+    },
+    {
+      "type": "Spydus.Domain.DTO.ContainerDto",
+      "properties": [
+        {
+          "name": "Title",
+          "type": "System.String",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x1700003b"
+        },
+        {
+          "name": "LoginRequired",
+          "type": "System.Nullable<System.Int64>",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x1700003c"
+        },
+        {
+          "name": "Icon",
+          "type": "System.String",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x1700003d"
+        },
+        {
+          "name": "Url",
+          "type": "System.String",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x1700003e"
+        },
+        {
+          "name": "Type",
+          "type": "System.String",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x1700003f"
+        },
+        {
+          "name": "IsExternalLink",
+          "type": "System.Boolean",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": true,
+          "attributes": [
+            {
+              "type": "System.Text.Json.Serialization.JsonIgnoreAttribute",
+              "arguments": []
+            }
+          ],
+          "metadata_token": "0x17000040"
+        },
+        {
+          "name": "OnlyDisplayWhenLoggedIn",
+          "type": "System.Boolean",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": true,
+          "attributes": [
+            {
+              "type": "System.Text.Json.Serialization.JsonIgnoreAttribute",
+              "arguments": []
+            }
+          ],
+          "metadata_token": "0x17000041"
+        },
+        {
+          "name": "OnlyDisplayWhenNotLoggedIn",
+          "type": "System.Boolean",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": true,
+          "attributes": [
+            {
+              "type": "System.Text.Json.Serialization.JsonIgnoreAttribute",
+              "arguments": []
+            }
+          ],
+          "metadata_token": "0x17000042"
+        }
+      ],
+      "metadata_token": "0x0200001f"
+    },
+    {
+      "type": "Spydus.Domain.DTO.DiscoveryDto",
+      "properties": [
+        {
+          "name": "SearchType",
+          "type": "System.String",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x17000043"
+        },
+        {
+          "name": "DefaultSort",
+          "type": "System.String",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x17000044"
+        },
+        {
+          "name": "AdvancedSearchUrl",
+          "type": "System.String",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x17000045"
+        }
+      ],
+      "metadata_token": "0x02000020"
+    },
+    {
+      "type": "Spydus.Domain.DTO.LanguageDto",
+      "properties": [
+        {
+          "name": "Desc",
+          "type": "System.String",
+          "json_name": "desc",
+          "json_name_basis": "explicit JsonPropertyNameAttribute",
+          "json_ignore": false,
+          "attributes": [
+            {
+              "type": "System.Text.Json.Serialization.JsonPropertyNameAttribute",
+              "arguments": [
+                "desc"
+              ]
+            }
+          ],
+          "metadata_token": "0x17000046"
+        },
+        {
+          "name": "Id",
+          "type": "System.String",
+          "json_name": "id",
+          "json_name_basis": "explicit JsonPropertyNameAttribute",
+          "json_ignore": false,
+          "attributes": [
+            {
+              "type": "System.Text.Json.Serialization.JsonPropertyNameAttribute",
+              "arguments": [
+                "id"
+              ]
+            }
+          ],
+          "metadata_token": "0x17000047"
+        },
+        {
+          "name": "ISO",
+          "type": "System.String",
+          "json_name": "iso",
+          "json_name_basis": "explicit JsonPropertyNameAttribute",
+          "json_ignore": false,
+          "attributes": [
+            {
+              "type": "System.Text.Json.Serialization.JsonPropertyNameAttribute",
+              "arguments": [
+                "iso"
+              ]
+            }
+          ],
+          "metadata_token": "0x17000048"
+        },
+        {
+          "name": "LanguageName",
+          "type": "System.String",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x17000049"
+        }
+      ],
+      "metadata_token": "0x02000021"
+    },
+    {
+      "type": "Spydus.Domain.DTO.LibraryDto",
+      "properties": [
+        {
+          "name": "ActivationCode",
+          "type": "System.String",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x1700004a"
+        },
+        {
+          "name": "Id",
+          "type": "System.Guid",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x1700004b"
+        },
+        {
+          "name": "Location",
+          "type": "Spydus.Domain.DTO.LocationDto",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x1700004c"
+        },
+        {
+          "name": "Logo",
+          "type": "System.String",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x1700004d"
+        },
+        {
+          "name": "Name",
+          "type": "System.String",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x1700004e"
+        },
+        {
+          "name": "PinningHash",
+          "type": "System.String[]",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x1700004f"
+        },
+        {
+          "name": "Url",
+          "type": "System.String",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x17000050"
+        }
+      ],
+      "metadata_token": "0x02000022"
+    },
+    {
+      "type": "Spydus.Domain.DTO.LocationDto",
+      "properties": [
+        {
+          "name": "Country",
+          "type": "System.String",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x17000051"
+        },
+        {
+          "name": "State",
+          "type": "System.String",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x17000052"
+        },
+        {
+          "name": "Latitude",
+          "type": "System.Nullable<System.Double>",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x17000053"
+        },
+        {
+          "name": "Longitude",
+          "type": "System.Nullable<System.Double>",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x17000054"
+        }
+      ],
+      "metadata_token": "0x02000023"
+    },
+    {
+      "type": "Spydus.Domain.DTO.Network",
+      "properties": [
+        {
+          "name": "Actions",
+          "type": "System.Collections.Generic.List<System.String>",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x17000055"
+        },
+        {
+          "name": "Description",
+          "type": "System.String",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x17000056"
+        },
+        {
+          "name": "Location",
+          "type": "System.String",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x17000057"
+        },
+        {
+          "name": "Name",
+          "type": "System.String",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x17000058"
+        }
+      ],
+      "metadata_token": "0x02000024"
+    },
+    {
+      "type": "Spydus.Domain.DTO.NotificationDto",
+      "properties": [
+        {
+          "name": "BorrowerConsortiumRecordIdentifier",
+          "type": "System.Int64",
+          "json_name": "brwdIrn",
+          "json_name_basis": "explicit JsonPropertyNameAttribute",
+          "json_ignore": false,
+          "attributes": [
+            {
+              "type": "System.Text.Json.Serialization.JsonPropertyNameAttribute",
+              "arguments": [
+                "brwdIrn"
+              ]
+            }
+          ],
+          "metadata_token": "0x17000059"
+        },
+        {
+          "name": "BorrowerLocalAccountIdentifier",
+          "type": "System.Int64",
+          "json_name": "brwIrn",
+          "json_name_basis": "explicit JsonPropertyNameAttribute",
+          "json_ignore": false,
+          "attributes": [
+            {
+              "type": "System.Text.Json.Serialization.JsonPropertyNameAttribute",
+              "arguments": [
+                "brwIrn"
+              ]
+            }
+          ],
+          "metadata_token": "0x1700005a"
+        },
+        {
+          "name": "CreatedDate",
+          "type": "System.DateTimeOffset",
+          "json_name": "createdDate",
+          "json_name_basis": "explicit JsonPropertyNameAttribute",
+          "json_ignore": false,
+          "attributes": [
+            {
+              "type": "System.Text.Json.Serialization.JsonPropertyNameAttribute",
+              "arguments": [
+                "createdDate"
+              ]
+            }
+          ],
+          "metadata_token": "0x1700005b"
+        },
+        {
+          "name": "Id",
+          "type": "System.Guid",
+          "json_name": "ntfId",
+          "json_name_basis": "explicit JsonPropertyNameAttribute",
+          "json_ignore": false,
+          "attributes": [
+            {
+              "type": "System.Text.Json.Serialization.JsonPropertyNameAttribute",
+              "arguments": [
+                "ntfId"
+              ]
+            }
+          ],
+          "metadata_token": "0x1700005c"
+        },
+        {
+          "name": "InstCode",
+          "type": "System.String",
+          "json_name": "instCode",
+          "json_name_basis": "explicit JsonPropertyNameAttribute",
+          "json_ignore": false,
+          "attributes": [
+            {
+              "type": "System.Text.Json.Serialization.JsonPropertyNameAttribute",
+              "arguments": [
+                "instCode"
+              ]
+            }
+          ],
+          "metadata_token": "0x1700005d"
+        },
+        {
+          "name": "IsRead",
+          "type": "System.Boolean",
+          "json_name": "isRead",
+          "json_name_basis": "explicit JsonPropertyNameAttribute",
+          "json_ignore": false,
+          "attributes": [
+            {
+              "type": "System.Text.Json.Serialization.JsonPropertyNameAttribute",
+              "arguments": [
+                "isRead"
+              ]
+            }
+          ],
+          "metadata_token": "0x1700005e"
+        },
+        {
+          "name": "LibraryId",
+          "type": "System.String",
+          "json_name": "libraryId",
+          "json_name_basis": "explicit JsonPropertyNameAttribute",
+          "json_ignore": false,
+          "attributes": [
+            {
+              "type": "System.Text.Json.Serialization.JsonPropertyNameAttribute",
+              "arguments": [
+                "libraryId"
+              ]
+            }
+          ],
+          "metadata_token": "0x1700005f"
+        },
+        {
+          "name": "Message",
+          "type": "System.String",
+          "json_name": "message",
+          "json_name_basis": "explicit JsonPropertyNameAttribute",
+          "json_ignore": false,
+          "attributes": [
+            {
+              "type": "System.Text.Json.Serialization.JsonPropertyNameAttribute",
+              "arguments": [
+                "message"
+              ]
+            }
+          ],
+          "metadata_token": "0x17000060"
+        },
+        {
+          "name": "Subject",
+          "type": "System.String",
+          "json_name": "subject",
+          "json_name_basis": "explicit JsonPropertyNameAttribute",
+          "json_ignore": false,
+          "attributes": [
+            {
+              "type": "System.Text.Json.Serialization.JsonPropertyNameAttribute",
+              "arguments": [
+                "subject"
+              ]
+            }
+          ],
+          "metadata_token": "0x17000061"
+        },
+        {
+          "name": "Url",
+          "type": "System.String",
+          "json_name": "url",
+          "json_name_basis": "explicit JsonPropertyNameAttribute",
+          "json_ignore": false,
+          "attributes": [
+            {
+              "type": "System.Text.Json.Serialization.JsonPropertyNameAttribute",
+              "arguments": [
+                "url"
+              ]
+            }
+          ],
+          "metadata_token": "0x17000062"
+        }
+      ],
+      "metadata_token": "0x02000025"
+    },
+    {
+      "type": "Spydus.Domain.DTO.NotificationResponseDto",
+      "properties": [
+        {
+          "name": "Notifications",
+          "type": "System.Collections.Generic.List<Spydus.Domain.DTO.NotificationDto>",
+          "json_name": "notifications",
+          "json_name_basis": "explicit JsonPropertyNameAttribute",
+          "json_ignore": false,
+          "attributes": [
+            {
+              "type": "System.Text.Json.Serialization.JsonPropertyNameAttribute",
+              "arguments": [
+                "notifications"
+              ]
+            }
+          ],
+          "metadata_token": "0x17000063"
+        },
+        {
+          "name": "TotalCount",
+          "type": "System.Int64",
+          "json_name": "totalCount",
+          "json_name_basis": "explicit JsonPropertyNameAttribute",
+          "json_ignore": false,
+          "attributes": [
+            {
+              "type": "System.Text.Json.Serialization.JsonPropertyNameAttribute",
+              "arguments": [
+                "totalCount"
+              ]
+            }
+          ],
+          "metadata_token": "0x17000064"
+        }
+      ],
+      "metadata_token": "0x02000026"
+    },
+    {
+      "type": "Spydus.Domain.DTO.RegisterDeviceTokenRequest",
+      "properties": [
+        {
+          "name": "DeviceToken",
+          "type": "System.String",
+          "json_name": "deviceToken",
+          "json_name_basis": "explicit JsonPropertyNameAttribute",
+          "json_ignore": false,
+          "attributes": [
+            {
+              "type": "System.Text.Json.Serialization.JsonPropertyNameAttribute",
+              "arguments": [
+                "deviceToken"
+              ]
+            }
+          ],
+          "metadata_token": "0x17000065"
+        },
+        {
+          "name": "Platform",
+          "type": "System.String",
+          "json_name": "platform",
+          "json_name_basis": "explicit JsonPropertyNameAttribute",
+          "json_ignore": false,
+          "attributes": [
+            {
+              "type": "System.Text.Json.Serialization.JsonPropertyNameAttribute",
+              "arguments": [
+                "platform"
+              ]
+            }
+          ],
+          "metadata_token": "0x17000066"
+        },
+        {
+          "name": "Tags",
+          "type": "System.Collections.Generic.List<System.String>",
+          "json_name": "tags",
+          "json_name_basis": "explicit JsonPropertyNameAttribute",
+          "json_ignore": false,
+          "attributes": [
+            {
+              "type": "System.Text.Json.Serialization.JsonPropertyNameAttribute",
+              "arguments": [
+                "tags"
+              ]
+            }
+          ],
+          "metadata_token": "0x17000067"
+        }
+      ],
+      "metadata_token": "0x02000027"
+    },
+    {
+      "type": "Spydus.Domain.DTO.SelfIssueAlertDto",
+      "properties": [
+        {
+          "name": "Code",
+          "type": "System.String",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x17000068"
+        },
+        {
+          "name": "Critical",
+          "type": "System.Boolean",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x17000069"
+        },
+        {
+          "name": "Irn",
+          "type": "System.Int32",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x1700006a"
+        },
+        {
+          "name": "Ref",
+          "type": "System.String",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x1700006b"
+        },
+        {
+          "name": "Text",
+          "type": "System.String",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x1700006c"
+        }
+      ],
+      "metadata_token": "0x02000029"
+    },
+    {
+      "type": "Spydus.Domain.DTO.SelfIssueResponseDto",
+      "properties": [
+        {
+          "name": "Alerts",
+          "type": "System.Collections.Generic.List<Spydus.Domain.DTO.SelfIssueAlertDto>",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x1700006d"
+        },
+        {
+          "name": "BibAuthor",
+          "type": "System.String",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x1700006e"
+        },
+        {
+          "name": "BibIssueTitle",
+          "type": "System.String",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x1700006f"
+        },
+        {
+          "name": "BibTitle",
+          "type": "System.String",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x17000070"
+        },
+        {
+          "name": "CoverImage",
+          "type": "System.String",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x17000071"
+        },
+        {
+          "name": "DueDate",
+          "type": "System.Nullable<System.DateTime>",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x17000072"
+        },
+        {
+          "name": "IsIssued",
+          "type": "System.Nullable<System.Boolean>",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x17000073"
+        },
+        {
+          "name": "ItemCheckedIn",
+          "type": "System.Nullable<System.Boolean>",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x17000074"
+        },
+        {
+          "name": "ItemId",
+          "type": "System.String",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x17000075"
+        },
+        {
+          "name": "ItemIrn",
+          "type": "System.Nullable<System.Int32>",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x17000076"
+        },
+        {
+          "name": "ItemRfid",
+          "type": "System.String",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x17000077"
+        },
+        {
+          "name": "LoanIrn",
+          "type": "System.Nullable<System.Int32>",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x17000078"
+        },
+        {
+          "name": "PatronIrn",
+          "type": "System.Nullable<System.Int32>",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x17000079"
+        },
+        {
+          "name": "RentalAmount",
+          "type": "System.Nullable<System.Double>",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x1700007a"
+        }
+      ],
+      "metadata_token": "0x0200002a"
+    },
+    {
+      "type": "Spydus.Domain.DTO.ServerInfo",
+      "properties": [
+        {
+          "name": "Client",
+          "type": "System.String",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x1700007b"
+        },
+        {
+          "name": "Release",
+          "type": "System.String",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x1700007c"
+        },
+        {
+          "name": "License",
+          "type": "System.String",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x1700007d"
+        },
+        {
+          "name": "Server",
+          "type": "System.String",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x1700007e"
+        },
+        {
+          "name": "Patch",
+          "type": "System.String",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x1700007f"
+        }
+      ],
+      "metadata_token": "0x0200002b"
+    },
+    {
+      "type": "Spydus.Domain.DTO.StyleConfigDto",
+      "properties": [
+        {
+          "name": "BarcodeType",
+          "type": "System.String",
+          "json_name": "barcodeType",
+          "json_name_basis": "explicit JsonPropertyNameAttribute",
+          "json_ignore": false,
+          "attributes": [
+            {
+              "type": "System.Text.Json.Serialization.JsonPropertyNameAttribute",
+              "arguments": [
+                "barcodeType"
+              ]
+            }
+          ],
+          "metadata_token": "0x17000080"
+        },
+        {
+          "name": "BranchUrl",
+          "type": "System.String",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x17000081"
+        },
+        {
+          "name": "ContentContainerUrl",
+          "type": "System.String",
+          "json_name": "contentContainerUrl",
+          "json_name_basis": "explicit JsonPropertyNameAttribute",
+          "json_ignore": false,
+          "attributes": [
+            {
+              "type": "System.Text.Json.Serialization.JsonPropertyNameAttribute",
+              "arguments": [
+                "contentContainerUrl"
+              ]
+            }
+          ],
+          "metadata_token": "0x17000082"
+        },
+        {
+          "name": "Langs",
+          "type": "System.Collections.Generic.List<Spydus.Domain.DTO.LanguageDto>",
+          "json_name": "langs",
+          "json_name_basis": "explicit JsonPropertyNameAttribute",
+          "json_ignore": false,
+          "attributes": [
+            {
+              "type": "System.Text.Json.Serialization.JsonPropertyNameAttribute",
+              "arguments": [
+                "langs"
+              ]
+            }
+          ],
+          "metadata_token": "0x17000083"
+        },
+        {
+          "name": "LogoUrl",
+          "type": "System.String",
+          "json_name": "logoUrl",
+          "json_name_basis": "explicit JsonPropertyNameAttribute",
+          "json_ignore": false,
+          "attributes": [
+            {
+              "type": "System.Text.Json.Serialization.JsonPropertyNameAttribute",
+              "arguments": [
+                "logoUrl"
+              ]
+            }
+          ],
+          "metadata_token": "0x17000084"
+        },
+        {
+          "name": "NotificationHubConnectionString",
+          "type": "System.String",
+          "json_name": "notificationHubConnectionString",
+          "json_name_basis": "explicit JsonPropertyNameAttribute",
+          "json_ignore": false,
+          "attributes": [
+            {
+              "type": "System.Text.Json.Serialization.JsonPropertyNameAttribute",
+              "arguments": [
+                "notificationHubConnectionString"
+              ]
+            }
+          ],
+          "metadata_token": "0x17000085"
+        },
+        {
+          "name": "NotificationHubName",
+          "type": "System.String",
+          "json_name": "notificationHubName",
+          "json_name_basis": "explicit JsonPropertyNameAttribute",
+          "json_ignore": false,
+          "attributes": [
+            {
+              "type": "System.Text.Json.Serialization.JsonPropertyNameAttribute",
+              "arguments": [
+                "notificationHubName"
+              ]
+            }
+          ],
+          "metadata_token": "0x17000086"
+        },
+        {
+          "name": "SelfIssueEnabled",
+          "type": "System.Nullable<System.Boolean>",
+          "json_name": "selfIssueEnabled",
+          "json_name_basis": "explicit JsonPropertyNameAttribute",
+          "json_ignore": false,
+          "attributes": [
+            {
+              "type": "System.Text.Json.Serialization.JsonPropertyNameAttribute",
+              "arguments": [
+                "selfIssueEnabled"
+              ]
+            }
+          ],
+          "metadata_token": "0x17000087"
+        },
+        {
+          "name": "SelfReturnEnabled",
+          "type": "System.Nullable<System.Boolean>",
+          "json_name": "selfReturnEnabled",
+          "json_name_basis": "explicit JsonPropertyNameAttribute",
+          "json_ignore": false,
+          "attributes": [
+            {
+              "type": "System.Text.Json.Serialization.JsonPropertyNameAttribute",
+              "arguments": [
+                "selfReturnEnabled"
+              ]
+            }
+          ],
+          "metadata_token": "0x17000088"
+        },
+        {
+          "name": "EnableJoinOnline",
+          "type": "System.Nullable<System.Boolean>",
+          "json_name": "enableJoinOnline",
+          "json_name_basis": "explicit JsonPropertyNameAttribute",
+          "json_ignore": false,
+          "attributes": [
+            {
+              "type": "System.Text.Json.Serialization.JsonPropertyNameAttribute",
+              "arguments": [
+                "enableJoinOnline"
+              ]
+            }
+          ],
+          "metadata_token": "0x17000089"
+        },
+        {
+          "name": "SpydusViewOverride",
+          "type": "System.String",
+          "json_name": "spydusViewOverride",
+          "json_name_basis": "explicit JsonPropertyNameAttribute",
+          "json_ignore": false,
+          "attributes": [
+            {
+              "type": "System.Text.Json.Serialization.JsonPropertyNameAttribute",
+              "arguments": [
+                "spydusViewOverride"
+              ]
+            }
+          ],
+          "metadata_token": "0x1700008a"
+        },
+        {
+          "name": "Style",
+          "type": "System.Collections.Generic.Dictionary<System.String, System.String>",
+          "json_name": "style",
+          "json_name_basis": "explicit JsonPropertyNameAttribute",
+          "json_ignore": false,
+          "attributes": [
+            {
+              "type": "System.Text.Json.Serialization.JsonPropertyNameAttribute",
+              "arguments": [
+                "style"
+              ]
+            }
+          ],
+          "metadata_token": "0x1700008b"
+        },
+        {
+          "name": "Wifi",
+          "type": "Spydus.Domain.DTO.Wifi",
+          "json_name": "wifi",
+          "json_name_basis": "explicit JsonPropertyNameAttribute",
+          "json_ignore": false,
+          "attributes": [
+            {
+              "type": "System.Text.Json.Serialization.JsonPropertyNameAttribute",
+              "arguments": [
+                "wifi"
+              ]
+            }
+          ],
+          "metadata_token": "0x1700008c"
+        },
+        {
+          "name": "Discovery",
+          "type": "Spydus.Domain.DTO.DiscoveryDto",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x1700008d"
+        },
+        {
+          "name": "JoinOnlineIcon",
+          "type": "System.String",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x1700008e"
+        },
+        {
+          "name": "DistanceUnit",
+          "type": "System.String",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x1700008f"
+        },
+        {
+          "name": "LibraryAppTimeZone",
+          "type": "System.String",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x17000090"
+        },
+        {
+          "name": "ShowNearbyBranches",
+          "type": "System.Nullable<System.Boolean>",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x17000091"
+        }
+      ],
+      "metadata_token": "0x0200002c"
+    },
+    {
+      "type": "Spydus.Domain.DTO.UpdateDeviceTokenRequest",
+      "properties": [
+        {
+          "name": "NewDeviceToken",
+          "type": "System.String",
+          "json_name": "newDeviceToken",
+          "json_name_basis": "explicit JsonPropertyNameAttribute",
+          "json_ignore": false,
+          "attributes": [
+            {
+              "type": "System.Text.Json.Serialization.JsonPropertyNameAttribute",
+              "arguments": [
+                "newDeviceToken"
+              ]
+            }
+          ],
+          "metadata_token": "0x17000092"
+        },
+        {
+          "name": "OldDeviceToken",
+          "type": "System.String",
+          "json_name": "oldDeviceToken",
+          "json_name_basis": "explicit JsonPropertyNameAttribute",
+          "json_ignore": false,
+          "attributes": [
+            {
+              "type": "System.Text.Json.Serialization.JsonPropertyNameAttribute",
+              "arguments": [
+                "oldDeviceToken"
+              ]
+            }
+          ],
+          "metadata_token": "0x17000093"
+        },
+        {
+          "name": "Platform",
+          "type": "System.String",
+          "json_name": "platform",
+          "json_name_basis": "explicit JsonPropertyNameAttribute",
+          "json_ignore": false,
+          "attributes": [
+            {
+              "type": "System.Text.Json.Serialization.JsonPropertyNameAttribute",
+              "arguments": [
+                "platform"
+              ]
+            }
+          ],
+          "metadata_token": "0x17000094"
+        }
+      ],
+      "metadata_token": "0x0200002d"
+    },
+    {
+      "type": "Spydus.Domain.DTO.ValidateSessionRequest",
+      "properties": [
+        {
+          "name": "BorrowerSessionId",
+          "type": "System.String",
+          "json_name": "sessionId",
+          "json_name_basis": "explicit JsonPropertyNameAttribute",
+          "json_ignore": false,
+          "attributes": [
+            {
+              "type": "System.Text.Json.Serialization.JsonPropertyNameAttribute",
+              "arguments": [
+                "sessionId"
+              ]
+            }
+          ],
+          "metadata_token": "0x17000095"
+        }
+      ],
+      "metadata_token": "0x0200002e"
+    },
+    {
+      "type": "Spydus.Domain.DTO.ValidateSessionResponse",
+      "properties": [
+        {
+          "name": "InstitutionId",
+          "type": "System.String",
+          "json_name": "institutionId",
+          "json_name_basis": "explicit JsonPropertyNameAttribute",
+          "json_ignore": false,
+          "attributes": [
+            {
+              "type": "System.Text.Json.Serialization.JsonPropertyNameAttribute",
+              "arguments": [
+                "institutionId"
+              ]
+            }
+          ],
+          "metadata_token": "0x17000096"
+        },
+        {
+          "name": "Name",
+          "type": "System.String",
+          "json_name": "name",
+          "json_name_basis": "explicit JsonPropertyNameAttribute",
+          "json_ignore": false,
+          "attributes": [
+            {
+              "type": "System.Text.Json.Serialization.JsonPropertyNameAttribute",
+              "arguments": [
+                "name"
+              ]
+            }
+          ],
+          "metadata_token": "0x17000097"
+        },
+        {
+          "name": "Barcode",
+          "type": "System.String",
+          "json_name": "barcode",
+          "json_name_basis": "explicit JsonPropertyNameAttribute",
+          "json_ignore": false,
+          "attributes": [
+            {
+              "type": "System.Text.Json.Serialization.JsonPropertyNameAttribute",
+              "arguments": [
+                "barcode"
+              ]
+            }
+          ],
+          "metadata_token": "0x17000098"
+        },
+        {
+          "name": "BorrowerLocalAccountIdentifier",
+          "type": "System.String",
+          "json_name": "brwIrn",
+          "json_name_basis": "explicit JsonPropertyNameAttribute",
+          "json_ignore": false,
+          "attributes": [
+            {
+              "type": "System.Text.Json.Serialization.JsonPropertyNameAttribute",
+              "arguments": [
+                "brwIrn"
+              ]
+            }
+          ],
+          "metadata_token": "0x17000099"
+        },
+        {
+          "name": "BorrowerConsortiumRecordIdentifier",
+          "type": "System.String",
+          "json_name": "brwdIrn",
+          "json_name_basis": "explicit JsonPropertyNameAttribute",
+          "json_ignore": false,
+          "attributes": [
+            {
+              "type": "System.Text.Json.Serialization.JsonPropertyNameAttribute",
+              "arguments": [
+                "brwdIrn"
+              ]
+            }
+          ],
+          "metadata_token": "0x1700009a"
+        },
+        {
+          "name": "BorrowerSessionId",
+          "type": "System.String",
+          "json_name": "brwSessionId",
+          "json_name_basis": "explicit JsonPropertyNameAttribute",
+          "json_ignore": false,
+          "attributes": [
+            {
+              "type": "System.Text.Json.Serialization.JsonPropertyNameAttribute",
+              "arguments": [
+                "brwSessionId"
+              ]
+            }
+          ],
+          "metadata_token": "0x1700009b"
+        }
+      ],
+      "metadata_token": "0x0200002f"
+    },
+    {
+      "type": "Spydus.Domain.DTO.Wifi",
+      "properties": [
+        {
+          "name": "Networks",
+          "type": "System.Collections.Generic.List<Spydus.Domain.DTO.Network>",
+          "json_name": null,
+          "json_name_basis": "unresolved runtime naming policy",
+          "json_ignore": false,
+          "attributes": [],
+          "metadata_token": "0x1700009c"
+        }
+      ],
+      "metadata_token": "0x02000030"
+    },
+    {
+      "type": "Spydus.Domain.DTO.Auth.AccessTokenResponse",
+      "properties": [
+        {
+          "name": "AccessToken",
+          "type": "System.String",
+          "json_name": "accessToken",
+          "json_name_basis": "explicit JsonPropertyNameAttribute",
+          "json_ignore": false,
+          "attributes": [
+            {
+              "type": "System.Text.Json.Serialization.JsonPropertyNameAttribute",
+              "arguments": [
+                "accessToken"
+              ]
+            }
+          ],
+          "metadata_token": "0x1700009d"
+        },
+        {
+          "name": "RefreshToken",
+          "type": "System.String",
+          "json_name": "refreshToken",
+          "json_name_basis": "explicit JsonPropertyNameAttribute",
+          "json_ignore": false,
+          "attributes": [
+            {
+              "type": "System.Text.Json.Serialization.JsonPropertyNameAttribute",
+              "arguments": [
+                "refreshToken"
+              ]
+            }
+          ],
+          "metadata_token": "0x1700009e"
+        }
+      ],
+      "metadata_token": "0x02000031"
+    },
+    {
+      "type": "Spydus.Domain.DTO.Auth.RefreshTokenResponse",
+      "properties": [
+        {
+          "name": "AccessToken",
+          "type": "System.String",
+          "json_name": "access_token",
+          "json_name_basis": "explicit JsonPropertyNameAttribute",
+          "json_ignore": false,
+          "attributes": [
+            {
+              "type": "System.Text.Json.Serialization.JsonPropertyNameAttribute",
+              "arguments": [
+                "access_token"
+              ]
+            }
+          ],
+          "metadata_token": "0x1700009f"
+        },
+        {
+          "name": "RefreshToken",
+          "type": "System.String",
+          "json_name": "refresh_token",
+          "json_name_basis": "explicit JsonPropertyNameAttribute",
+          "json_ignore": false,
+          "attributes": [
+            {
+              "type": "System.Text.Json.Serialization.JsonPropertyNameAttribute",
+              "arguments": [
+                "refresh_token"
+              ]
+            }
+          ],
+          "metadata_token": "0x170000a0"
+        }
+      ],
+      "metadata_token": "0x02000032"
+    }
+  ],
+  "live_captures": [
+    {
+      "file": "emulator.har",
+      "sha256": "16a270987bad76b5457450766a40d85fff01c29f3386219bce0f1ad8c083db96",
+      "entry_count": 8,
+      "matched_entry_count": 8,
+      "redaction": "All credentials and patron values excluded. Only field/header names, blank values, whitelisted public paging defaults and the explicit non-personal test search retained."
+    },
+    {
+      "file": "discover.har",
+      "sha256": "a53107b08c68a1a97d480a722d8e3b215f8175419560e5376d493b11e887e1d5",
+      "entry_count": 3,
+      "matched_entry_count": 3,
+      "redaction": "All credentials and patron values excluded. Only field/header names, blank values, whitelisted public paging defaults and the explicit non-personal test search retained."
+    }
+  ],
+  "distinct_live_observed_operations": 8
+}

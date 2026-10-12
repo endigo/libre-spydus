@@ -1,0 +1,199 @@
+{
+  "schema_version": 1,
+  "tenant": "Canning Libraries / OPAC context",
+  "purpose": "Sanitized selector and field-shape fixture for a future Flutter HTML compatibility parser; contains no account or reading values.",
+  "source_snapshots": [
+    ".private/web/auth/mobile-dashboard.html",
+    ".private/web/auth/loans-1.html",
+    ".private/web/auth/reservations-2.html",
+    ".private/web/auth/reservations-5.html"
+  ],
+  "limitations": [
+    "Observed Canning HTML only; selectors are not a supported cross-tenant API.",
+    "HTML tables include desktop/mobile duplicate cells and action menus; deduplicate rows and action hrefs.",
+    "Numeric IDs, CSRF, member details, book titles, dates and counts are omitted.",
+    "Date/status/collection are server display text; locale and structured machine semantics unverified."
+  ],
+  "session": {
+    "csrf": {
+      "selector": "body[data-csrf]",
+      "extract": "attribute:data-csrf",
+      "type": "opaque string; private",
+      "optional": true
+    },
+    "displayContext": {
+      "selector": "body[data-displaycontext]",
+      "extract": "attribute:data-displaycontext",
+      "type": "string"
+    },
+    "querySetId": {
+      "selector": "main[data-setid]",
+      "extract": "attribute:data-setid",
+      "type": "opaque string; private"
+    },
+    "selectionName": {
+      "selector": "main[data-selname]",
+      "extract": "attribute:data-selname",
+      "observed_constant": "SVL"
+    }
+  },
+  "dashboard": {
+    "row_selector": ".brw-dashboard-item",
+    "fields": {
+      "navigationUrl": {
+        "selector": ":scope",
+        "extract": "attribute:href",
+        "type": "URL; follow only allowlisted read route"
+      },
+      "label": {
+        "selector": ".brw-dashboard-item-footer",
+        "extract": "text",
+        "type": "string"
+      },
+      "value": {
+        "selector": ".brw-dashboard-item-header",
+        "extract": "text",
+        "type": "server display string; may represent count"
+      },
+      "styleState": {
+        "selector": ":scope",
+        "extract": "class list",
+        "type": "string[]; observed brw-dashboard-alert-success optional"
+      },
+      "icon": {
+        "selector": ".brw-dashboard-item-body [class*=\"fa-\"]",
+        "extract": "class list",
+        "type": "icon class names; body contains icon, not count"
+      }
+    },
+    "notes": [
+      "Native book-count API and web dashboard card values are different sources; do not assume they share keys.",
+      "Observed counts are in header, footer contains label; body is icon display."
+    ]
+  },
+  "lists": {
+    "common": {
+      "form_selector": "#frmSVL",
+      "method": "GET",
+      "row_selector": "#mainContent .result-content-records table.table-stacked-image tbody > tr",
+      "field_mappings": {
+        "selectionId": {
+          "selector": "td.counter-select input[type=\"checkbox\"][name=\"SVL\"]",
+          "extract": "attribute:value",
+          "type": "opaque loan/reservation record IRN; distinct from bibliographic IRN"
+        },
+        "ordinal": {
+          "selector": ".item-num",
+          "extract": "text",
+          "type": "display integer"
+        },
+        "title": {
+          "selector": "td:nth-of-type(3) h3.card-title a",
+          "extract": "text",
+          "type": "string; omitted from fixture"
+        },
+        "recordUrl": {
+          "selector": "td:nth-of-type(3) h3.card-title a",
+          "extract": "attribute:href",
+          "type": "URL; identify enquiry type before parsing ID"
+        },
+        "metadataLines": {
+          "selector": "td:nth-of-type(3) .card-text > span.d-block",
+          "extract": "each text",
+          "type": "string[]; publication/author lines have no verified standalone field labels"
+        },
+        "coverCandidates": {
+          "selector": "td.col-image img.imgsc[data-imgurls]",
+          "extract": "attribute:data-imgurls",
+          "type": "string; source splits on ** and tries candidate URLs"
+        },
+        "formatDisplay": {
+          "selector": ".recfrmt-icon[title]",
+          "extract": "attribute:title",
+          "type": "string"
+        },
+        "actions": {
+          "selector": ".record-options a[href]",
+          "extract": "href+label",
+          "type": "array; duplicate mobile/desktop menus",
+          "notes": [
+            "Record full supplied href; classify renew/cancel/edit as mutations."
+          ]
+        }
+      },
+      "hidden_form_fields": [
+        "SETDESC",
+        "NREC"
+      ],
+      "submit_helper": "SubmitSetoptsAction(button,url): sets #frmSVL action then submits checked SVL fields with GET"
+    },
+    "current_loans": {
+      "route_fmt": "LOANRENQ / FMT=CL",
+      "dateDue": {
+        "selector": "td[data-caption=\"Due\"] > span.d-block",
+        "extract": "text",
+        "type": "date display string"
+      },
+      "status": {
+        "selector": "td:nth-of-type(5)",
+        "extract": "text",
+        "type": "server status text"
+      },
+      "actions": [
+        "Renew loan",
+        "Renew selections",
+        "Renew all"
+      ]
+    },
+    "pickup_reservations": {
+      "route_fmt": "RSVCENQ / FMT=AR",
+      "statusAndPickupLocation": {
+        "selector": "td[data-caption=\"Status\"]",
+        "extract": "text and child a href",
+        "type": "server status string + pickup branch link"
+      },
+      "actions": [
+        "Cancel reservation",
+        "Edit reservation",
+        "Cancel selections",
+        "Cancel all",
+        "Edit selections"
+      ]
+    },
+    "pending_reservations": {
+      "route_fmt": "RSVCENQ / FMT=WR",
+      "placed": {
+        "selector": "td[data-caption=\"Placed\"]",
+        "extract": "text",
+        "type": "date display string"
+      },
+      "expires": {
+        "selector": "td:nth-of-type(6)",
+        "extract": "text",
+        "type": "optional date display string; mobile duplicate"
+      },
+      "desktopDates": {
+        "selector": "td:nth-of-type(4)",
+        "extract": "labelled spans",
+        "type": "combined placed/expiry values"
+      },
+      "rank": {
+        "selector": "td[data-caption=\"Rank\"]",
+        "extract": "text",
+        "type": "display integer or string"
+      },
+      "statusAndPickupLocation": {
+        "selector": "td[data-caption=\"Status\"]",
+        "extract": "text and child a href",
+        "type": "server status string + pickup branch link"
+      },
+      "actions": [
+        "Cancel reservation",
+        "Edit reservation",
+        "Cancel selections",
+        "Cancel all",
+        "Edit selections"
+      ]
+    }
+  }
+}
