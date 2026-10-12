@@ -4,7 +4,10 @@ import LibreSpydusCore
 /// Demo mode (DEBUG, `-LSDemo YES`; docs/native-apps.md §5.4).
 ///
 /// Public reads (search/page/availability/record/related) go to a real backend: public GETs are
-/// allowed. Every account call is answered from `DemoFixtures` and never touches the network.
+/// allowed. The demo account's own books are the exception: `DemoCatalogue` answers for them
+/// offline, the way the OPAC does (a loan's session-set link loads an empty record, the
+/// session-free one the full record). Every account call is answered from `DemoFixtures` and never
+/// touches the network.
 /// `login("demo", "demo")` succeeds, anything else is `CredentialsRejected`. Mutations succeed
 /// after `mutationDelay` and update the in-memory lists: cancel removes the row, reserve adds a
 /// pending row, edit changes the pickup location. `accountSnapshot` takes `snapshotDelay`, so the
@@ -27,8 +30,8 @@ actor DemoBackend: LibraryBackend {
     private let failsAccountSnapshot: Bool
     private var fixtures: DemoFixtures
     /// Search records seen through this backend, by `RecordFormat.reserveUrl`, so a demo
-    /// reservation can show the right title.
-    private var reservable: [String: SearchRecord] = [:]
+    /// reservation can show the right title and link to the right bib.
+    private var reservable: [String: (record: SearchRecord, format: RecordFormat)] = [:]
     private var reservedUrls: Set<String> = []
     private var nextIrn = 19_100_000
 
@@ -61,11 +64,13 @@ actor DemoBackend: LibraryBackend {
     // MARK: Public reads → real backend
 
     func search(query: String) async throws -> SearchResults {
-        remember(try await publicBackend.search(query: query))
+        if let results = fixtures.catalogue.search(query: query) { return remember(results) }
+        return remember(try await publicBackend.search(query: query))
     }
 
     func searchSorted(query: String, sort: SearchSortOption) async throws -> SearchResults {
-        remember(try await publicBackend.searchSorted(query: query, sort: sort))
+        if let results = fixtures.catalogue.search(query: query) { return remember(results) }
+        return remember(try await publicBackend.searchSorted(query: query, sort: sort))
     }
 
     func page(url: String) async throws -> SearchResults {
@@ -73,11 +78,13 @@ actor DemoBackend: LibraryBackend {
     }
 
     func availability(url: String) async throws -> Availability {
-        try await publicBackend.availability(url: url)
+        if let availability = fixtures.catalogue.availability(url: url) { return availability }
+        return try await publicBackend.availability(url: url)
     }
 
     func record(url: String) async throws -> RecordDetail {
-        try await publicBackend.record(url: url)
+        if let record = fixtures.catalogue.record(url: url) { return record }
+        return try await publicBackend.record(url: url)
     }
 
     func related(url: String) async throws -> RelatedList {
@@ -140,11 +147,14 @@ actor DemoBackend: LibraryBackend {
             return ReserveResult(ok: false, message: "You already have a reservation for this title.")
         }
         reservedUrls.insert(url)
-        let record = reservable[url]
+        let record = reservable[url]?.record
         let irn = nextIrn
         nextIrn += 1
+        // Like the library's own row: the reserved edition's bib, linked through the patron's set.
+        let bibIrn = await editionIrn(of: reservable[url]?.format)
         let item = PatronItem(
-            irn: String(irn), bibIrn: nil, title: record?.title ?? "Reserved title", bibUrl: record?.detailUrl,
+            irn: String(irn), bibIrn: bibIrn, title: record?.title ?? "Reserved title",
+            bibUrl: bibIrn.map { DemoCatalogue.sessionSetURL(origin: origin, irn: $0) } ?? record?.detailUrl,
             author: record?.author, year: record?.year, coverUrls: record?.coverUrls ?? [], isbn: record?.isbn,
             fields: [
                 "Status": "Pending",
@@ -213,10 +223,18 @@ actor DemoBackend: LibraryBackend {
     private func remember(_ results: SearchResults) -> SearchResults {
         for record in results.records {
             for format in record.formats {
-                if let reserveUrl = format.reserveUrl { reservable[reserveUrl] = record }
+                if let reserveUrl = format.reserveUrl { reservable[reserveUrl] = (record, format) }
             }
         }
         return results
+    }
+
+    /// The bib IRN `format` resolves to: the catalogue's, else the library's availability page
+    /// (a public GET, usually cached by the detail page already); nil if that fails.
+    private func editionIrn(of format: RecordFormat?) async -> String? {
+        guard let url = format?.availabilityUrl.nonEmpty else { return nil }
+        if let irn = fixtures.catalogue.bibIrn(availabilityUrl: url) { return irn }
+        return (try? await publicBackend.availability(url: url))?.bibRecordIrn.nonEmpty
     }
 
     private func reservationActions(irn: Int) -> [PatronAction] {

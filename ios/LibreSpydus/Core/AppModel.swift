@@ -36,6 +36,9 @@ final class AppModel {
     var paths: [AppTab: [Route]] = [:]
     /// Query typed on Home, picked up by the Search tab (`takePendingSearch()`).
     var pendingSearch: String?
+    /// The Your Books segment to show (a book page's "On loan" / "Reserved" pill), picked up by
+    /// that tab (`takePendingBorrowedSegment()`).
+    private(set) var pendingBorrowedSegment: BorrowedViewModel.Segment?
 
     // MARK: Root sheets (RootView presents `rootSheet`)
 
@@ -281,6 +284,19 @@ final class AppModel {
         return pendingSearch
     }
 
+    /// A book page's "On loan" / "Reserved" pill: Your Books, back at its list, on `segment`.
+    func openYourBooks(on segment: BorrowedViewModel.Segment) {
+        pendingBorrowedSegment = segment
+        paths[.borrowed] = []
+        selectedTab = .borrowed
+    }
+
+    /// For Your Books: the segment a book page asked for (nil if none), cleared once taken.
+    func takePendingBorrowedSegment() -> BorrowedViewModel.Segment? {
+        defer { pendingBorrowedSegment = nil }
+        return pendingBorrowedSegment
+    }
+
     // MARK: Private
 
     private func install(_ newBackend: any LibraryBackend) {
@@ -288,6 +304,7 @@ final class AppModel {
         backend = newBackend
         paths = [:]
         pendingSearch = nil
+        pendingBorrowedSegment = nil
         loginNeeded = false
         verificationNeeded = false
         installSecrets()

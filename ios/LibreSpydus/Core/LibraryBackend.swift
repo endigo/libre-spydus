@@ -25,7 +25,8 @@ protocol LibraryBackend: Sendable {
     func page(url: String) async throws -> SearchResults
     /// A format's `availabilityUrl`.
     func availability(url: String) async throws -> Availability
-    /// `SearchRecord.detailUrl`, `PatronItem.bibUrl`, `RelatedItem.bibUrl`, a format's
+    /// `SearchRecord.detailUrl`, `patronItemRecordUrl(item:)` for a loan or reservation (its own
+    /// `bibUrl` needs the patron's OPAC session), `RelatedItem.bibUrl`, a format's
     /// `availabilityUrl`, or a stored `BookRef.url`.
     func record(url: String) async throws -> RecordDetail
     /// One of `RecordDetail.related.*`.

@@ -47,14 +47,16 @@ struct BookRef: Codable, Hashable, Identifiable, Sendable {
         )
     }
 
-    /// A loan or reservation (`PatronItem.bibUrl` loads with `record`).
+    /// A loan or reservation. Its own `bibUrl` uses a set from the patron's OPAC session and loads
+    /// an empty record without it, so the ref keeps the session-free link (`patronItemRecordUrl`).
+    /// The id `bib:<IRN>` remembers which edition the patron has (`bibIrn`).
     init(_ item: PatronItem) {
         self.init(
             id: Self.key(("bib", item.bibIrn), url: item.bibUrl, title: item.title),
             title: Self.title(item.title),
             author: item.author.nonEmpty,
             coverUrl: item.coverUrls.first,
-            url: item.bibUrl,
+            url: patronItemRecordUrl(item: item) ?? item.bibUrl,
             isbn: item.isbn.nonEmpty,
             year: item.year.nonEmpty
         )
@@ -76,6 +78,13 @@ struct BookRef: Codable, Hashable, Identifiable, Sendable {
     /// Just a URL (the `-LSRoute detail:<url>` hook, deep links).
     init(url: String, title: String = "") {
         self.init(id: Self.key(url: url, title: title), title: title, url: url)
+    }
+
+    /// The bib IRN of a ref made from a loan or reservation (id `bib:<IRN>`, saved favourites too):
+    /// the edition the patron has, which the book page selects and checks against the account.
+    var bibIrn: String? {
+        guard id.hasPrefix("bib:") else { return nil }
+        return Optional(String(id.dropFirst(4))).nonEmpty
     }
 
     /// This ref updated from its loaded record: stable bookmark URL, better cover/ISBN/title.

@@ -6,7 +6,7 @@
         "irn": "19000001",
         "bibIrn": "8753080",
         "title": "The midnight library",
-        "bibUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/78500000?QRY=IRN(8753080)&SETLVL=SET",
+        "bibUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/78500000?SETLVL=&QRY=IRN(8753080)&NAVLVL=SET",
         "author": "Haig, Matt, author",
         "year": "2020",
         "coverUrls": [
@@ -35,13 +35,15 @@
     "items": [
       {
         "irn": "19000002",
-        "bibIrn": "17651573",
-        "title": "Baby-sitters club. 18, Boy-crazy Stacey",
-        "bibUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/78500000?SETLVL=&IRN=17651573",
-        "author": "Galligan, Gale, 1964- illustrator",
-        "year": "2025 - 2026",
-        "coverUrls": [],
-        "isbn": null,
+        "bibIrn": "7467272",
+        "title": "The Baby-sitters club graphic novels. 7, Boy-crazy Stacey",
+        "bibUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/78500000?SETLVL=&QRY=IRN(7467272)&NAVLVL=SET",
+        "author": "Galligan, Gale, author, artist",
+        "year": "2019",
+        "coverUrls": [
+          "https://secure.syndetics.com/index.aspx?isbn=9781338304510/lc.gif&client=citycanning&upc=&oclc=&issn="
+        ],
+        "isbn": "9781338304510",
         "fields": {
           "Status": "In transit"
         },
@@ -49,9 +51,9 @@
       },
       {
         "irn": "19000003",
-        "bibIrn": null,
+        "bibIrn": "19243431",
         "title": "Hollow bones",
-        "bibUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ?SETLVL=&BRN=465783",
+        "bibUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/78500000?SETLVL=&QRY=IRN(19243431)&NAVLVL=SET",
         "author": "Picoult, Jodi, 1966-",
         "year": "2026",
         "coverUrls": [
@@ -77,9 +79,9 @@
       },
       {
         "irn": "19000004",
-        "bibIrn": null,
+        "bibIrn": "19242577",
         "title": "Time travel for beginners",
-        "bibUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ?SETLVL=&BRN=464918",
+        "bibUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/78500000?SETLVL=&QRY=IRN(19242577)&NAVLVL=SET",
         "author": "Moriarty, Jaclyn",
         "year": "2026",
         "coverUrls": [

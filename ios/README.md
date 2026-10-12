@@ -123,19 +123,28 @@ xcrun simctl launch --terminate-running-process "$UDID" com.librespydus -LSReset
 `-LSDemo YES` swaps `CoreBackend` for `DemoBackend`:
 
 - **Public reads** (search, page, availability, record, related) go to the real library. These are
-  public GETs.
+  public GETs. The demo account's own books are the exception: `demo-catalogue.json` (their public
+  Canning records, captured 2026-10-12 and trimmed) answers for them offline, the way the OPAC
+  does. A loan's or reservation's own `bibUrl` (`…/BIBENQ/78500000?SETLVL=&QRY=IRN(<irn>)&NAVLVL=SET`,
+  a set in the patron's session) loads an **empty** record, the session-free
+  `…/BIBENQ?SETLVL=&IRN=<irn>` the full one. A search that names one of those works (every word of
+  its main title, e.g. "midnight library") returns just that work, with demo availability and
+  reserve URLs. "The Midnight Library" has a Book (the ready reservation's bib) and a Large Print
+  edition; "The Long Night" has a Book and a Large Print (the overdue loan's bib).
 - **Account calls** never touch the network. They're served from `Resources/DemoData/`:
   - `demo-account.json`, `demo-reserve-options.json` and `demo-edit-options.json` are the synthetic
     goldens verbatim (a test checks this);
   - `demo-reservations.json` is `patron-items.json` plus two pending rows built from the public
-    `related.json` golden;
+    `related.json` golden, each pointed at its real Canning bib (`bibIrn` + the session-set
+    `bibUrl`; the Baby-sitters club row is the real "graphic novels. 7" edition);
   - `demo-loans.json` holds five loans whose "Due" date is generated from `dueInDays` relative to
-    today (−2, 2, 5, 12, 19).
+    today (−2, 2, 5, 12, 19), linked to their bibs the same way.
 - **Sign-in:** `login("demo", "demo")` succeeds and anything else is `CredentialsRejected`. The
   session lives in memory only, never in the Keychain.
 - **Mutations** succeed after 0.6 s and update the in-memory lists: cancel removes the row,
-  reserve adds a pending row (titled from the search that produced the reserve URL), and edit
-  changes the pickup location. Reserving the same title twice gives `ok: false`.
+  reserve adds a pending row (titled from the search that produced the reserve URL and linked to
+  the reserved edition's bib, so the book page then says "Reserved"), and edit changes the pickup
+  location. Reserving the same title twice gives `ok: false`.
 - **`accountSnapshot`** takes 1.5 s, so the refreshing state is visible, and reflects those
   changes. The account is never saved on the device in demo mode (see `-LSPersistDemoAccount`).
 
@@ -224,13 +233,23 @@ Only a person may do this. It needs the Search screen (I3) merged.
   every tab's stack. Use `NavigationLink(value:)` or `model.push(_:on:)`.
 - **`BookRef`** has initialisers from `SearchRecord`, `PatronItem` and `RelatedItem`, plus
   `init(url:)`. `updated(with: RecordDetail)` switches to the stable `bookmarkUrl` and keeps the
-  favourite key.
+  favourite key. A ref from a `PatronItem` loads `patronItemRecordUrl(item:)` (the row's own
+  `bibUrl` needs the patron's OPAC session) and keeps the row's bib IRN in its id `bib:<IRN>`
+  (`bibIrn`).
+- **Book page "Already yours"** (docs/native-apps.md §6): `BookDetailModel.holding(in:)` runs
+  `accountHolding` on the saved account with the shown edition's bib IRNs (the selected format's
+  `Availability.bibRecordIrn`, else the record's and the opened row's). A holding replaces Reserve
+  with a status pill (`HeldStatus`: "On loan · Due 14 Oct", "Ready to collect · Riverton Library",
+  "Reserved · #2 in queue") that opens Your Books on that segment (`AppModel.openYourBooks(on:)`).
+  A page opened from a loan or reservation selects the format whose `bibRecordIrn` is the row's,
+  and a record that comes back empty counts as a failed load.
 
 ### Core helpers in use
 
 `CoreBackend.searchSorted` → `client.searchSorted(query:sort:)` (`SearchSortOption.core` maps to
 the core's `SearchSort`); `SearchResults.isNoResults` → the core's `noResults`;
 `AppModel.webViewUserAgent` → `userAgent()`; `FormatRef.isDigital` → `isDigitalFormat(format:)`;
-`DueDate.parse` → `parseDueDate(text:)`. Use `availabilitySummary(availability:)` for availability
+`DueDate.parse` → `parseDueDate(text:)`; `BookRef(PatronItem)` → `patronItemRecordUrl(item:)`;
+`BookDetailModel.holding(in:)` → `accountHolding(snapshot:bibIrns:)`. Use `availabilitySummary(availability:)` for availability
 labels and `homeShelves()` / `homeGenres()` for Home. "Reserve" depends on a format's
 `reserveUrl` only — some libraries (Brazoria County) accept holds on ebooks.

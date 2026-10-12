@@ -30,8 +30,10 @@ struct BookRefTests {
         )
         let ref = BookRef(item)
         #expect(ref.id == "bib:8753080")
+        #expect(ref.bibIrn == "8753080")
         #expect(ref.title == "The midnight library")
-        #expect(ref.url == item.bibUrl)
+        // The row's own link needs the patron's OPAC session; the session-free one doesn't.
+        #expect(ref.url == "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ?SETLVL=&IRN=8753080")
         #expect(ref.coverUrl == item.coverUrls.first)
         #expect(ref.formats.isEmpty)
     }
