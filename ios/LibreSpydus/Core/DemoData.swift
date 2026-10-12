@@ -6,7 +6,9 @@ import LibreSpydusCore
 /// Those files are the synthetic goldens (`core/tests/golden/synthetic/account-links.json`,
 /// `patron-items.json`, `reserve-options.json`, `edit-options.json`; fabricated "Test Borrower")
 /// plus loans/pending reservations built from the public `related.json` golden. Loans carry a
-/// `dueInDays` offset; the "Due" field is generated relative to today.
+/// `dueInDays` offset; the "Due" field is generated relative to today. Every loan and reservation
+/// links to its bib the way the OPAC does (`bibIrn` + a session-set `bibUrl`), and `catalogue`
+/// holds those bibs' public records, so their book pages work offline.
 struct DemoFixtures: Sendable {
     /// The origin every URL in the bundled JSON uses; rewritten to the demo backend's origin.
     static let fixtureOrigin = "https://canning.spydus.com"
@@ -17,6 +19,7 @@ struct DemoFixtures: Sendable {
     var pending: [PatronItem]
     var reserveOptions: ReserveOptions
     var editOptions: EditOptions
+    var catalogue: DemoCatalogue
 
     /// Loads the bundled fixtures, with URLs moved to `origin` and loan due dates set from `today`.
     static func bundled(origin: String = fixtureOrigin, today: Date = .now, bundle: Bundle = .main) throws -> DemoFixtures {
@@ -44,7 +47,8 @@ struct DemoFixtures: Sendable {
             ready: reservations.ready.items.map(\.model),
             pending: reservations.pending.items.map(\.model),
             reserveOptions: try load("demo-reserve-options", as: ReserveOptionsDTO.self).model,
-            editOptions: try load("demo-edit-options", as: EditOptionsDTO.self).model
+            editOptions: try load("demo-edit-options", as: EditOptionsDTO.self).model,
+            catalogue: DemoCatalogue(try load("demo-catalogue", as: DemoCatalogueDTO.self), origin: origin)
         )
     }
 }

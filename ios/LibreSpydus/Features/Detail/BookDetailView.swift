@@ -3,7 +3,9 @@ import SwiftUI
 
 /// Book detail for `Route.detail` (docs/native-apps.md §6): navy header with cover, title,
 /// availability, format chips, "Reserve" and the favourite bookmark; a white sheet with the
-/// synopsis, subject chips, details and related carousels.
+/// synopsis, subject chips, details and related carousels. When the saved account has the edition
+/// on screen on loan or reserved, a status pill ("On loan · Due 14 Oct") takes Reserve's place and
+/// opens Your Books.
 struct BookDetailView: View {
     @Environment(AppModel.self) private var app
     @State private var model: BookDetailModel
@@ -99,10 +101,18 @@ struct BookDetailView: View {
 
     // MARK: Reserve + bookmark
 
+    /// The patron's loan or reservation of the edition on screen, recomputed as the saved account
+    /// or the selected format changes.
+    private var held: HeldStatus? {
+        model.holding(in: app.isSignedIn ? app.account.snapshot : nil).map { HeldStatus($0) }
+    }
+
     private var actions: some View {
         let isFavourite = app.favourites.contains(id: model.ref.id)
         return HStack(spacing: Theme.Spacing.m) {
-            if let format = model.reservableFormat {
+            if let held {
+                HeldStatusPill(status: held) { app.openYourBooks(on: held.segment) }
+            } else if let format = model.reservableFormat {
                 PrimaryPillButton(title: "Reserve", fillsWidth: true) { borrow(format) }
                     .accessibilityHint(app.isSignedIn
                         ? "Reserve the \(format.displayLabel.lowercased())"
@@ -135,7 +145,8 @@ struct BookDetailView: View {
         Task {
             // Let the login sheet finish dismissing before this screen presents its own.
             try? await Task.sleep(for: .milliseconds(650))
-            guard app.isSignedIn, app.rootSheet == nil else { return }
+            // Signed in to an account that has this edition already: the pill shows instead.
+            guard app.isSignedIn, app.rootSheet == nil, held == nil else { return }
             reserveRequest = ReserveRequest(format: format, book: model.ref)
         }
     }
@@ -332,6 +343,46 @@ private struct DetailHeader: View {
         case .normal: Theme.Colors.textPrimary
         case .digital: Theme.Colors.digital
         case .muted: Theme.Colors.textSecondary
+        }
+    }
+}
+
+/// Reserve's slot when the patron already has the edition: a status, not a primary action
+/// (elevated surface, tinted icon and text), that opens Your Books on the loan or reservation.
+private struct HeldStatusPill: View {
+    let status: HeldStatus
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: Theme.Spacing.s) {
+                Image(systemName: status.systemImage)
+                Text(status.text)
+                    .themeFont(.bodyStrong)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+            }
+            .foregroundStyle(tint)
+            .padding(.horizontal, Theme.Spacing.l)
+            .frame(minHeight: 50)
+            .frame(maxWidth: .infinity)
+            .background(Capsule().fill(Theme.Colors.surfaceElevated))
+            .overlay(Capsule().strokeBorder(tint.opacity(0.35), lineWidth: 1))
+            .contentShape(Capsule())
+        }
+        .buttonStyle(PressScaleStyle())
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(status.accessibilityLabel)
+        .accessibilityHint("Opens Your Books")
+        .accessibilityAddTraits(.isButton)
+    }
+
+    private var tint: Color {
+        switch status.tone {
+        case .loan: Theme.Colors.textPrimary
+        case .overdue: Theme.Colors.danger
+        case .ready: Theme.Colors.success
+        case .reserved: Theme.Colors.warning
         }
     }
 }

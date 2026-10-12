@@ -12,18 +12,40 @@ enum DetailRecordSource {
     /// A search record's `detailUrl` (`…/FULL/OPAC/ALLWRKENQ/…`) loads the OPAC's work-level page:
     /// a summary but no subjects, imprint, ISBNs, similar titles or other editions. A format's
     /// `availabilityUrl` loads the full bib page (the core supports it), so it comes first for
-    /// work-level refs. Bib URLs (loans, related items, saved bookmarks) are tried first as they are.
-    static func candidateURLs(refURL: String?, format: FormatRef?) -> [String] {
+    /// work-level refs. Bib URLs (loans, related items, saved bookmarks) are tried first as they are,
+    /// except a loan's or reservation's own set link saved before (`bibIrn` given): its
+    /// session-free form goes first.
+    static func candidateURLs(refURL: String?, bibIrn: String? = nil, format: FormatRef?) -> [String] {
         let formatURL = format?.availabilityUrl.nonEmpty
         let refURL = refURL.nonEmpty
-        let ordered = isWorkLevel(refURL) ? [formatURL, refURL] : [refURL, formatURL]
+        let ordered = isWorkLevel(refURL)
+            ? [formatURL, refURL]
+            : [sessionFreeURL(refURL, bibIrn: bibIrn), refURL, formatURL]
         var seen = Set<String>()
         return ordered.compactMap { $0 }.filter { seen.insert($0).inserted }
+    }
+
+    /// For a loan's or reservation's own link (`…/BIBENQ/<set>?…QRY=IRN(…)`, which needs the
+    /// patron's OPAC session), the link that loads the same bib without one (`patronItemRecordUrl`).
+    static func sessionFreeURL(_ url: String?, bibIrn: String?) -> String? {
+        guard let url = url.nonEmpty, let bibIrn = bibIrn.nonEmpty,
+              url.range(of: #"/BIBENQ/[^/?]+"#, options: [.regularExpression, .caseInsensitive]) != nil else { return nil }
+        let item = PatronItem(irn: nil, bibIrn: bibIrn, title: nil, bibUrl: url, author: nil, year: nil, coverUrls: [],
+                              isbn: nil, fields: [:], actions: [])
+        return patronItemRecordUrl(item: item).flatMap { $0 == url ? nil : $0 }
     }
 
     /// `…/ALLWRKENQ/…`, `…/WRKENQ?…`: a work (grouped editions), not one bib record.
     static func isWorkLevel(_ url: String?) -> Bool {
         url?.range(of: "WRKENQ", options: .caseInsensitive) != nil
+    }
+}
+
+extension RecordDetail {
+    /// No title, summary or details: what the OPAC sends for a page it won't show (a session-set
+    /// link without the session). Loading it counts as a failure.
+    var isEmptyRecord: Bool {
+        title.nonEmpty == nil && summary.nonEmpty == nil && details.isEmpty
     }
 }
 
@@ -46,6 +68,39 @@ enum FormatSelection {
     static func defaultIndex(_ formats: [FormatRef]) -> Int? {
         guard !formats.isEmpty else { return nil }
         return formats.firstIndex { !$0.isDigital } ?? 0
+    }
+}
+
+/// A format's availability as the detail page keeps it: the counts' summary, and which edition
+/// (bib record) the format is.
+struct FormatAvailability: Equatable, Sendable {
+    var summary: AvailabilitySummary
+    /// `Availability.bibRecordIrn`: the edition the patron may have on loan or reserved.
+    var bibRecordIrn: String?
+
+    init(summary: AvailabilitySummary, bibRecordIrn: String?) {
+        self.summary = summary
+        self.bibRecordIrn = bibRecordIrn
+    }
+
+    init(_ availability: Availability) {
+        self.init(summary: availabilitySummary(availability: availability), bibRecordIrn: availability.bibRecordIrn.nonEmpty)
+    }
+}
+
+// MARK: - Already yours
+
+enum HoldingIrns {
+    /// The bib IRNs to look up in the account (`accountHolding`) for the edition on screen: the
+    /// selected format's own (`Availability.bibRecordIrn`) once known; else the record's and the
+    /// opened loan's or reservation's — minus any known to be another format's, so a format whose
+    /// availability is still loading isn't taken for its neighbour.
+    static func forPage(selectedFormatIrn: String?, recordIrn: String?, openedIrn: String?,
+                        otherFormatIrns: Set<String> = []) -> [String] {
+        if let irn = selectedFormatIrn.nonEmpty { return [irn] }
+        var seen = Set<String>()
+        return [recordIrn.nonEmpty, openedIrn.nonEmpty].compactMap { $0 }
+            .filter { !otherFormatIrns.contains($0) && seen.insert($0).inserted }
     }
 }
 

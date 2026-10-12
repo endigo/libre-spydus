@@ -43,10 +43,16 @@ final class BookDetailModel {
     private(set) var selectedFormatIndex: Int?
     private(set) var formatLookup: FormatLookup
     /// Keyed by `availabilityUrl`, so switching back to a format doesn't fetch it again.
-    private(set) var availability: [String: Loadable<AvailabilitySummary>] = [:]
+    private(set) var availability: [String: Loadable<FormatAvailability>] = [:]
     private(set) var related: [RelatedPanel: Loadable<[BookRef]>] = [:]
     /// The related links whose panels were requested (a record upgrade brings new ones).
     @ObservationIgnored private var relatedRequestedFor: RecordRelated?
+    /// A format was picked on screen: the patron's edition is no longer selected for them.
+    @ObservationIgnored private var formatPickedOnScreen = false
+    /// Picking the patron's edition among the formats (`selectHeldFormat`).
+    private var heldFormatSearch = HeldFormatSearch.idle
+
+    private enum HeldFormatSearch { case idle, running, done }
 
     init(ref: BookRef) {
         opened = ref
@@ -89,9 +95,28 @@ final class BookDetailModel {
         }
         switch availability[url] ?? .idle {
         case .idle, .loading: return .loading("Checking availability…")
-        case .loaded(let summary): return .line(AvailabilityLine(summary: summary, format: format))
+        case .loaded(let loaded): return .line(AvailabilityLine(summary: loaded.summary, format: format))
         case .failed: return .availabilityFailed
         }
+    }
+
+    /// The bib IRNs of the edition on screen, to find it in the account (`HoldingIrns`). While the
+    /// patron's edition is being picked, the default format isn't the page's yet: the opened row's
+    /// IRN stands, so the pill doesn't flicker to Reserve.
+    var holdingIrns: [String] {
+        let known = { (format: FormatRef) in format.availabilityUrl.flatMap { self.availability[$0]?.value?.bibRecordIrn } }
+        let others = formats.indices.filter { $0 != selectedFormatIndex }.compactMap { known(formats[$0]) }
+        let selected = heldFormatSearch == .running ? nil : selectedFormat.flatMap(known)
+        return HoldingIrns.forPage(selectedFormatIrn: selected, recordIrn: record.value?.bibIrn,
+                                   openedIrn: opened.bibIrn, otherFormatIrns: Set(others))
+    }
+
+    /// The patron's loan or reservation of the edition on screen, from the saved account (nil when
+    /// signed out or before the account has loaded): "On loan" / "Reserved" instead of Reserve.
+    func holding(in snapshot: AccountSnapshot?) -> AccountHolding? {
+        let irns = holdingIrns
+        guard let snapshot, !irns.isEmpty else { return nil }
+        return accountHolding(snapshot: snapshot, bibIrns: irns)
     }
 
     /// What a favourite stores: the stable bookmark URL once the record is known, and the formats.
@@ -120,13 +145,16 @@ final class BookDetailModel {
 
     // MARK: Actions
 
+    /// A format chip was tapped.
     func select(formatAt index: Int) {
         guard formats.indices.contains(index) else { return }
+        formatPickedOnScreen = true
         selectedFormatIndex = index
     }
 
-    /// Loads what's missing: the record, then (for a ref without formats) its formats. Safe to call
-    /// again after a failure or verification.
+    /// Loads what's missing: the record, then (for a ref without formats) its formats, then for a
+    /// loan or reservation the format that is the patron's edition. Safe to call again after a
+    /// failure or verification.
     func load(backend: any LibraryBackend, report: Reporter) async {
         if record.isLoading { return }
         if record.value == nil {
@@ -136,10 +164,11 @@ final class BookDetailModel {
         case .pending, .failed: await refindFormats(backend: backend, report: report)
         default: break
         }
+        await selectHeldFormat(backend: backend, report: report)
     }
 
     func loadRecord(backend: any LibraryBackend, report: Reporter) async {
-        let urls = DetailRecordSource.candidateURLs(refURL: opened.url, format: selectedFormat)
+        let urls = DetailRecordSource.candidateURLs(refURL: opened.url, bibIrn: opened.bibIrn, format: selectedFormat)
         guard !urls.isEmpty else {
             record = .failed(UserFacingError(kind: .unexpected, message: "This book has no link to the library's record."))
             return
@@ -149,6 +178,11 @@ final class BookDetailModel {
         for url in urls {
             do {
                 let detail = try await backend.record(url: url)
+                // The OPAC's answer to a link it won't show (a loan's set without the session).
+                guard !detail.isEmptyRecord else {
+                    failure = SpydusError.Upstream(message: "empty record from \(url)")
+                    continue
+                }
                 apply(detail)
                 return
             } catch {
@@ -192,19 +226,51 @@ final class BookDetailModel {
 
     /// The selected format's availability (once per URL; again after a failure).
     func loadAvailability(backend: any LibraryBackend, report: Reporter) async {
-        guard let url = selectedFormat?.availabilityUrl.nonEmpty else { return }
-        switch availability[url] {
-        case .loaded, .loading: return
-        default: break
-        }
+        guard let url = selectedFormat?.availabilityUrl.nonEmpty, needsAvailability(url) else { return }
         availability[url] = .loading
         do {
-            let result = try await backend.availability(url: url)
-            availability[url] = .loaded(availabilitySummary(availability: result))
+            setAvailability(.success(try await backend.availability(url: url)), url: url, report: report)
         } catch {
-            availability[url] = report(error).map { .failed($0) } ?? .idle
+            setAvailability(.failure(error), url: url, report: report)
         }
     }
+
+    /// Opened from Your Books or Home's borrowed shelf (a `bib:` ref): once the formats are known,
+    /// selects the one that is the patron's edition (its `bibRecordIrn` is the opened IRN), from
+    /// every format's availability, at most 6 at a time and each fetched once. No match keeps the
+    /// default; neither does a format picked on screen meanwhile.
+    func selectHeldFormat(backend: any LibraryBackend, report: Reporter) async {
+        guard let irn = opened.bibIrn, heldFormatSearch == .idle, formats.count > 1,
+              formatLookup == .provided || formatLookup == .found else { return }
+        heldFormatSearch = .running
+        let urls = formats.compactMap { $0.availabilityUrl.nonEmpty }
+        let missing = urls.filter(needsAvailability)
+        for url in missing { availability[url] = .loading }
+        let fetch: @Sendable (String) async -> (String, Result<Availability, any Error>) = { url in
+            do { return (url, .success(try await backend.availability(url: url))) } catch { return (url, .failure(error)) }
+        }
+        await withTaskGroup(of: (String, Result<Availability, any Error>).self) { group in
+            var next = missing.makeIterator()
+            for _ in 0..<Self.maxConcurrentAvailability {
+                guard let url = next.next() else { break }
+                group.addTask { await fetch(url) }
+            }
+            for await (url, result) in group {
+                setAvailability(result, url: url, report: report)
+                if let url = next.next() { group.addTask { await fetch(url) } }
+            }
+        }
+        let match = formats.firstIndex { format in
+            format.availabilityUrl.flatMap { availability[$0]?.value?.bibRecordIrn } == irn
+        }
+        if let match, !formatPickedOnScreen { selectedFormatIndex = match }
+        // A format that failed (or was cancelled) may be the one: look again on the next load.
+        let settled = urls.allSatisfy { availability[$0]?.value != nil || availability[$0]?.isLoading == true }
+        heldFormatSearch = match != nil || settled ? .done : .idle
+    }
+
+    /// The library's limit for one page's concurrent requests (docs/native-apps.md §2).
+    static let maxConcurrentAvailability = 6
 
     /// Starts loading the related panels once per record, when the carousels scroll into view.
     func startRelated(backend: any LibraryBackend) {
@@ -259,8 +325,23 @@ final class BookDetailModel {
         guard let current = record.value,
               DetailRecordSource.isWorkLevel(current.bookmarkUrl) || DetailRecordSource.isWorkLevel(opened.url),
               let url = selectedFormat?.availabilityUrl.nonEmpty,
-              let detail = try? await backend.record(url: url) else { return }
+              let detail = try? await backend.record(url: url), !detail.isEmptyRecord else { return }
         apply(detail)
+    }
+
+    /// Not loaded or loading yet (each format's availability is fetched once; again after a failure).
+    private func needsAvailability(_ url: String) -> Bool {
+        switch availability[url] {
+        case .loaded, .loading: false
+        default: true
+        }
+    }
+
+    private func setAvailability(_ result: Result<Availability, any Error>, url: String, report: Reporter) {
+        switch result {
+        case .success(let loaded): availability[url] = .loaded(FormatAvailability(loaded))
+        case .failure(let error): availability[url] = report(error).map { .failed($0) } ?? .idle
+        }
     }
 
     private func apply(_ detail: RecordDetail) {

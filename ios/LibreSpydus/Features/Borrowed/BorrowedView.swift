@@ -60,6 +60,11 @@ struct BorrowedView: View {
             Task { await model.refreshAccount(force: false) }
         }
         .onChange(of: viewModel.segment) { viewModel.swipedRowID = nil }
+        .onChange(of: model.pendingBorrowedSegment, initial: true) { _, segment in
+            // A book page's "On loan" / "Reserved" pill asked for this segment.
+            guard segment != nil, let segment = model.takePendingBorrowedSegment() else { return }
+            viewModel.segment = segment
+        }
         .onChange(of: viewModel.confirmingCancel == nil) { _, answered in
             // Confirmed or dismissed: either way the card closes.
             if answered { closeSwipe() }
