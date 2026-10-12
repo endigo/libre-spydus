@@ -44,6 +44,10 @@ final class FakeBackend: LibraryBackend, @unchecked Sendable {
     func reservations(session: String) async throws -> Reservations {
         Reservations(ready: PatronList(total: 0, items: []), pending: PatronList(total: 0, items: []))
     }
+    /// `accountResult`'s name, no loans or reservations.
+    func accountSnapshot(session: String) async throws -> AccountSnapshot {
+        TestData.snapshot(name: try accountResult.get().name)
+    }
     func reserveOptions(url: String, session: String) async throws -> ReserveOptions { throw SpydusError.NotLoggedIn(message: "") }
     func placeReservation(url: String, session: String, xdays: String?, pickup: String?) async throws -> ReserveResult {
         ReserveResult(ok: false, message: nil)
@@ -56,6 +60,24 @@ final class FakeBackend: LibraryBackend, @unchecked Sendable {
 }
 
 enum TestData {
+    /// An account snapshot with these loan titles (and reservation titles, all pending).
+    static func snapshot(name: String? = "Borrower, Test", loans: [String] = [], reservations: [String] = [],
+                         fetchedAt: Date = .now) -> AccountSnapshot {
+        func items(_ titles: [String], prefix: String) -> PatronList {
+            PatronList(total: Int64(titles.count), items: titles.enumerated().map { index, title in
+                PatronItem(irn: "\(prefix)\(index)", bibIrn: nil, title: title, bibUrl: nil, author: nil, year: nil,
+                           coverUrls: [], isbn: nil, fields: [:],
+                           actions: prefix == "r" ? [PatronAction(label: "Cancel reservation",
+                                                                  href: "https://canning.spydus.com/cancel?SVL=\(index)")] : [])
+            })
+        }
+        return AccountSnapshot(version: DemoBackend.snapshotVersion, accountName: name,
+                               loans: items(loans, prefix: "l"),
+                               reservations: Reservations(ready: PatronList(total: 0, items: []),
+                                                          pending: items(reservations, prefix: "r")),
+                               fetchedAtMs: Int64((fetchedAt.timeIntervalSince1970 * 1000).rounded(.down)))
+    }
+
     static let reserveUrl = "https://canning.spydus.com/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/78529863/0/V/0/R/9/ALLWRKENQ?SVL=15974354&RECFMT=BK"
 
     static let searchRecord = SearchRecord(

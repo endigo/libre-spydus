@@ -7,7 +7,8 @@ struct LibreSpydusApp: App {
     init() {
         Appearance.configure()
         let options = LaunchOptions.current
-        let dependencies = AppModel.Dependencies.live(demo: options.demo)
+        let dependencies = AppModel.Dependencies.live(demo: options.demo, persistDemoAccount: options.persistDemoAccount,
+                                                      demoRefreshFails: options.demoRefreshFails)
         if options.reset {
             dependencies.resetPersistentState()
         }

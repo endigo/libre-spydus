@@ -11,10 +11,12 @@ extension AppModel.Dependencies {
                         cookies: InMemorySecretStore = InMemorySecretStore(),
                         directory: URL = TestData.temporaryDirectory(),
                         demo: Bool = false,
+                        accountCache: URL? = nil,
+                        persistsDemoAccount: Bool = false,
                         onBackend: @escaping @MainActor (FakeBackend) -> Void = { _ in }) -> AppModel.Dependencies {
         AppModel.Dependencies(
             defaults: defaults, sessions: sessions, verificationCookies: cookies, favouritesDirectory: directory,
-            isDemo: demo,
+            isDemo: demo, accountCacheDirectory: accountCache, persistsDemoAccount: persistsDemoAccount,
             makeBackend: { origin in
                 let backend = FakeBackend(origin: origin ?? "https://canning.spydus.com")
                 onBackend(backend)

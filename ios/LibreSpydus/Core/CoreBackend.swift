@@ -58,6 +58,10 @@ final class CoreBackend: LibraryBackend {
         try await client.reservations(session: session)
     }
 
+    func accountSnapshot(session: String) async throws -> AccountSnapshot {
+        try await client.accountSnapshot(session: session)
+    }
+
     func reserveOptions(url: String, session: String) async throws -> ReserveOptions {
         try await client.reserveOptions(url: url, session: session)
     }

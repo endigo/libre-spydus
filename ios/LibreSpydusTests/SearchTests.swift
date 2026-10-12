@@ -57,6 +57,11 @@ final class PagingFakeBackend: LibraryBackend, @unchecked Sendable {
     func reservations(session: String) async throws -> Reservations {
         Reservations(ready: PatronList(total: 0, items: []), pending: PatronList(total: 0, items: []))
     }
+    func accountSnapshot(session: String) async throws -> AccountSnapshot {
+        AccountSnapshot(version: DemoBackend.snapshotVersion, accountName: "Borrower, Test", loans: try loansResult.get(),
+                        reservations: try await reservations(session: session),
+                        fetchedAtMs: Int64(Date.now.timeIntervalSince1970 * 1000))
+    }
     func reserveOptions(url: String, session: String) async throws -> ReserveOptions { throw SpydusError.NotLoggedIn(message: "") }
     func placeReservation(url: String, session: String, xdays: String?, pickup: String?) async throws -> ReserveResult {
         ReserveResult(ok: false, message: nil)

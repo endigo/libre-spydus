@@ -3,12 +3,15 @@ import SwiftUI
 /// "Your Books" (docs/native-apps.md §6 Borrowed): Loans | Reservations. Loans are sorted by due
 /// date with the danger colour when due within 3 days or overdue; reservations show "Ready for
 /// pickup" first, then pending. A reservation's Edit (sheet) and Cancel (confirmed) sit behind a
-/// swipe to the left, in its long-press menu and in its VoiceOver actions. Pull to refresh;
-/// reloads on sign-in/out and library change.
+/// swipe to the left, in its long-press menu and in its VoiceOver actions.
+///
+/// Both lists come from the saved account (`AppModel.account`, §5.2a): shown at once, with
+/// "Updated 12 min ago" under the segments, and fetched again in the background when it's out of
+/// date on opening the tab, on pull to refresh and after a cancel or edit. A failed refresh keeps
+/// the saved lists ("Couldn't refresh — showing saved data").
 struct BorrowedView: View {
     @Environment(AppModel.self) private var model
     @State private var viewModel = BorrowedViewModel()
-    @State private var lastLoad: Date?
     @State private var scrollMark = ScrollMark()
 
     var body: some View {
@@ -21,7 +24,10 @@ struct BorrowedView: View {
                     .accessibilityAddTraits(.isHeader)
                     .padding(.top, Theme.Spacing.l)
                 if model.isSignedIn {
-                    segmentPicker
+                    VStack(alignment: .leading, spacing: Theme.Spacing.s) {
+                        segmentPicker
+                        statusLine
+                    }
                     if let notice = viewModel.notice {
                         noticeBanner(notice)
                     }
@@ -45,13 +51,13 @@ struct BorrowedView: View {
         }
         .defaultScrollAnchor(BorrowedDebugHooks.initialScrollAnchor)
         .screenBackground()
-        .refreshable { await load(keepContent: true) }
-        .task(id: model.reloadKey) { await load(keepContent: false) }
+        .refreshable { await model.refreshAccount(force: true) }
+        .task(id: model.reloadKey) { await appear() }
         .onChange(of: model.selectedTab) { _, tab in
             viewModel.swipedRowID = nil
-            // Back on the tab after a while (e.g. a reservation placed from a book): refresh quietly.
-            guard tab == .borrowed, model.isSignedIn, let lastLoad, Date.now.timeIntervalSince(lastLoad) > 30 else { return }
-            Task { await load(keepContent: true) }
+            // Back on the tab: refresh in the background if the account is out of date.
+            guard tab == .borrowed, model.isSignedIn else { return }
+            Task { await model.refreshAccount(force: false) }
         }
         .onChange(of: viewModel.segment) { viewModel.swipedRowID = nil }
         .onChange(of: viewModel.confirmingCancel == nil) { _, answered in
@@ -62,7 +68,13 @@ struct BorrowedView: View {
             if let notice { AccessibilityNotification.Announcement(notice.message).post() }
         }
         .toolbar(.hidden, for: .navigationBar)
-        .sheet(item: $viewModel.editing, onDismiss: { viewModel.reportDeferredError(model) }) { row in
+        .onChange(of: viewModel.editing != nil) { _, editing in
+            if editing { model.isPresentingFeatureSheet = true }
+        }
+        .sheet(item: $viewModel.editing, onDismiss: {
+            model.isPresentingFeatureSheet = false
+            viewModel.reportDeferredError(model)
+        }) { row in
             EditReservationSheet(row: row) { outcome in
                 Task { await viewModel.finishEdit(outcome, row: row, model: model) }
             }
@@ -71,12 +83,20 @@ struct BorrowedView: View {
         }
     }
 
-    private func load(keepContent: Bool) async {
-        await viewModel.load(model, keepContent: keepContent)
-        lastLoad = .now
+    private func appear() async {
+        await viewModel.appear(model)
         #if DEBUG
         await BorrowedDebugHooks.run(viewModel, model: model)
         #endif
+    }
+
+    /// Retry after a failed refresh.
+    private func retry() {
+        Task { await model.refreshAccount(force: true) }
+    }
+
+    private var lists: BorrowedViewModel.Lists? {
+        viewModel.lists(model)
     }
 
     // MARK: Header
@@ -93,10 +113,32 @@ struct BorrowedView: View {
 
     private func segmentTitle(_ segment: BorrowedViewModel.Segment) -> String {
         let count: Int? = switch segment {
-        case .loans: viewModel.loans.value?.count
-        case .reservations: viewModel.reservations.value?.count
+        case .loans: lists?.loans.count
+        case .reservations: lists?.reservations.count
         }
         return count.map { "\(segment.title) (\($0))" } ?? segment.title
+    }
+
+    /// "Updated 12 min ago" (+ a spinner while refreshing), or the failed-refresh note; only once
+    /// there's something on screen.
+    @ViewBuilder
+    private var statusLine: some View {
+        if let updatedAt = model.account.updatedAt {
+            AccountStatusLine(updatedAt: updatedAt, isRefreshing: model.account.isRefreshing,
+                              failed: model.account.lastRefreshError != nil, retry: retry)
+        }
+    }
+
+    /// No snapshot yet: loading, or why the first fetch failed.
+    @ViewBuilder
+    private func placeholder(loading message: String) -> some View {
+        if let error = model.account.lastRefreshError, !model.account.isRefreshing {
+            ErrorStateView(error: error, retry: retry)
+                .frame(minHeight: Self.stateHeight)
+        } else {
+            LoadingView(message: message)
+                .frame(minHeight: Self.stateHeight)
+        }
     }
 
     private func noticeBanner(_ notice: BorrowedViewModel.Notice) -> some View {
@@ -115,18 +157,20 @@ struct BorrowedView: View {
 
     @ViewBuilder
     private var loansContent: some View {
-        switch viewModel.loans {
-        case .idle, .loading:
-            LoadingView(message: "Loading your loans…")
-                .frame(minHeight: Self.stateHeight)
-        case .failed(let error):
-            ErrorStateView(error: error) { Task { await load(keepContent: false) } }
-                .frame(minHeight: Self.stateHeight)
-        case .loaded(let rows) where rows.isEmpty:
+        if let rows = lists?.loans {
+            loansList(rows)
+        } else {
+            placeholder(loading: "Loading your loans…")
+        }
+    }
+
+    @ViewBuilder
+    private func loansList(_ rows: [LoanRow]) -> some View {
+        if rows.isEmpty {
             EmptyStateView(systemImage: "books.vertical", title: "No loans right now",
                            message: "Books you borrow from \(model.libraryName) show up here with their due dates.")
                 .frame(minHeight: Self.stateHeight)
-        case .loaded(let rows):
+        } else {
             ForEach(rows) { row in
                 loanCard(row)
             }
@@ -156,18 +200,20 @@ struct BorrowedView: View {
 
     @ViewBuilder
     private var reservationsContent: some View {
-        switch viewModel.reservations {
-        case .idle, .loading:
-            LoadingView(message: "Loading your reservations…")
-                .frame(minHeight: Self.stateHeight)
-        case .failed(let error):
-            ErrorStateView(error: error) { Task { await load(keepContent: false) } }
-                .frame(minHeight: Self.stateHeight)
-        case .loaded(let sections) where sections.isEmpty:
+        if let sections = lists?.reservations {
+            reservationsList(sections)
+        } else {
+            placeholder(loading: "Loading your reservations…")
+        }
+    }
+
+    @ViewBuilder
+    private func reservationsList(_ sections: ReservationSections) -> some View {
+        if sections.isEmpty {
             EmptyStateView(systemImage: "bookmark.circle", title: "No reservations",
                            message: "Tap Reserve on any book and follow it here until it's ready to collect.")
                 .frame(minHeight: Self.stateHeight)
-        case .loaded(let sections):
+        } else {
             if !sections.ready.isEmpty {
                 SectionHeader(title: "Ready for pickup")
                     .padding(.top, Theme.Spacing.xs)

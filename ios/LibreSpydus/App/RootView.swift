@@ -4,6 +4,7 @@ import SwiftUI
 /// (library picker, login, verification) driven by `AppModel` flags.
 struct RootView: View {
     @Environment(AppModel.self) private var model
+    @Environment(\.scenePhase) private var scenePhase
     /// Tabs are built on first visit and then kept alive, so each keeps its stack and state.
     @State private var visitedTabs: Set<AppTab> = []
 
@@ -62,7 +63,12 @@ struct RootView: View {
         }
         #endif
         .task(id: model.backend.origin) {
+            // Launch and library change: the saved account is on screen; fetch a fresh one.
             await model.refreshAccount()
+        }
+        .onChange(of: scenePhase) { _, phase in
+            // Back in the app: refresh the account if it's more than a couple of minutes old.
+            if phase == .active { Task { await model.refreshAccount(force: false) } }
         }
     }
 

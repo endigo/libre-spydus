@@ -37,6 +37,9 @@ protocol LibraryBackend: Sendable {
     func account(session: String) async throws -> AccountLinks
     func loans(session: String) async throws -> PatronList
     func reservations(session: String) async throws -> Reservations
+    /// Name, loans and both reservation lists in one call (loans and reservations concurrently):
+    /// what `AccountStore` shows and saves on the device.
+    func accountSnapshot(session: String) async throws -> AccountSnapshot
     func reserveOptions(url: String, session: String) async throws -> ReserveOptions
     func placeReservation(url: String, session: String, xdays: String?, pickup: String?) async throws -> ReserveResult
     func cancelReservation(url: String, session: String) async throws -> ReserveResult

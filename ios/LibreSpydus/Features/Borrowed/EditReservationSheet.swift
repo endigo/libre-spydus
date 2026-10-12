@@ -303,9 +303,13 @@ struct EditReservationSheet: View {
         isSaving = true
         defer { isSaving = false }
         problem = nil
+        let backend = model.backend
+        let overrides = draft.overrides(calendar: calendar)
         do {
-            let result = try await model.backend.editReservation(url: href, session: session,
-                                                                 overrides: draft.overrides(calendar: calendar))
+            // An accepted change fetches the account again (Your Books shows the new pickup).
+            let result = try await model.account.performChange {
+                try await backend.editReservation(url: href, session: session, overrides: overrides)
+            } accepted: { $0.ok }
             if result.ok {
                 finish(.saved(result))
             } else {

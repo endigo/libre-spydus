@@ -10,6 +10,11 @@ import Foundation
 ///   `favourites`, `profile`, `libraries`, `login`, `verify`, `gallery` (DesignSystem gallery).
 /// - `-LSDemo YES`: demo mode, already signed in as "Test Borrower".
 /// - `-LSReset YES`: clear the persisted library, sessions, verification and favourites first.
+/// - `-LSPersistDemoAccount YES` (with `-LSDemo`): save the demo account on the device like a real
+///   one (in its own folder), to show a cold launch with saved data. Off by default: demo mode
+///   keeps the account in memory.
+/// - `-LSDemoRefreshFails YES` (with `-LSDemo`): every account refresh fails, to show the
+///   "Couldn't refresh" state.
 struct LaunchOptions: Equatable, Sendable {
     enum LaunchRoute: Equatable, Sendable {
         case home
@@ -61,6 +66,8 @@ struct LaunchOptions: Equatable, Sendable {
     var route: LaunchRoute?
     var demo = false
     var reset = false
+    var persistDemoAccount = false
+    var demoRefreshFails = false
 
     /// This process's options; always empty in release builds.
     static var current: LaunchOptions {
@@ -90,6 +97,8 @@ struct LaunchOptions: Equatable, Sendable {
             case "-LSRoute": options.route = LaunchRoute(value)
             case "-LSDemo": options.demo = isYes(value)
             case "-LSReset": options.reset = isYes(value)
+            case "-LSPersistDemoAccount": options.persistDemoAccount = isYes(value)
+            case "-LSDemoRefreshFails": options.demoRefreshFails = isYes(value)
             default:
                 index = next
                 continue

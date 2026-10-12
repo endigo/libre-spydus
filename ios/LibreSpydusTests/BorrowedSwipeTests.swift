@@ -119,7 +119,7 @@ struct SwipeRevealTests {
 struct BorrowedSwipeViewModelTests {
     private func load() async throws -> (BorrowedViewModel, AppModel, ReservationSections) {
         let demo = DemoBackend(publicBackend: FakeBackend(), fixtures: try DemoFixtures.bundled(),
-                               mutationDelay: .milliseconds(80))
+                               mutationDelay: .milliseconds(80), snapshotDelay: .milliseconds(10))
         let dependencies = AppModel.Dependencies(
             defaults: UserDefaults(suiteName: "LibreSpydusTests-\(UUID().uuidString)")!,
             sessions: InMemorySecretStore(), verificationCookies: InMemorySecretStore(),
@@ -129,8 +129,8 @@ struct BorrowedSwipeViewModelTests {
         let model = AppModel(dependencies: dependencies)
         model.selectLibrary(.canning)
         let viewModel = BorrowedViewModel()
-        await viewModel.load(model)
-        return (viewModel, model, try #require(viewModel.reservations.value))
+        await viewModel.appear(model)
+        return (viewModel, model, try #require(viewModel.lists(model)?.reservations))
     }
 
     @Test func editClosesTheSwipeAndOpensTheSheet() async throws {
@@ -173,14 +173,14 @@ struct BorrowedSwipeViewModelTests {
         #expect(viewModel.confirmingCancel == nil)
         #expect(viewModel.editing == nil)
         await cancelling.value
-        #expect(viewModel.reservations.value?.row(id: row.id) == nil)
+        #expect(viewModel.lists(model)?.reservations.row(id: row.id) == nil)
     }
 
     @Test func signingOutForgetsTheOpenCard() async throws {
         let (viewModel, model, sections) = try await load()
         viewModel.swipedRowID = try #require(sections.ready.first).id
         model.signOut()
-        await viewModel.load(model)
+        await viewModel.appear(model)
         #expect(viewModel.swipedRowID == nil)
     }
 }

@@ -2,8 +2,9 @@ import Foundation
 import LibreSpydusCore
 import Observation
 
-/// State for "Your Books": loans and reservations from the core, cancel/edit results, and which
-/// rows have a mutation in flight (one at a time per row, so nothing is submitted twice).
+/// State for "Your Books": the cards built from the saved account (`AppModel.account`), cancel/edit
+/// results, and which rows have a mutation in flight (one at a time per row, so nothing is
+/// submitted twice).
 @MainActor
 @Observable
 final class BorrowedViewModel {
@@ -27,9 +28,13 @@ final class BorrowedViewModel {
         var isError: Bool
     }
 
+    /// The cards for one account snapshot.
+    struct Lists: Equatable {
+        var loans: [LoanRow]
+        var reservations: ReservationSections
+    }
+
     var segment: Segment = .loans
-    private(set) var loans: Loadable<[LoanRow]> = .idle
-    private(set) var reservations: Loadable<ReservationSections> = .idle
     /// Rows with a cancel or edit in flight.
     private(set) var busyRows: Set<String> = []
     var notice: Notice?
@@ -44,54 +49,39 @@ final class BorrowedViewModel {
     @ObservationIgnored var deferredError: (any Error)?
 
     @ObservationIgnored private let today: () -> Date
-    /// Bumped when a cancel or edit starts and ends: a reservations fetch that began before is
-    /// out of date and is dropped (it could bring a cancelled reservation back).
-    @ObservationIgnored private var reservationsVersion = 0
+    /// The last snapshot's cards, so a redraw doesn't rebuild them.
+    @ObservationIgnored private var built: (snapshot: AccountSnapshot, lists: Lists)?
 
     init(today: @escaping () -> Date = { .now }) {
         self.today = today
     }
 
-    // MARK: Loading
+    // MARK: Lists
 
-    /// Loads loans and reservations together. `keepContent` (pull to refresh, after a cancel)
-    /// leaves the current lists on screen until the new ones arrive.
-    func load(_ model: AppModel, keepContent: Bool = false) async {
-        guard let session = model.session else {
-            loans = .idle
-            reservations = .idle
+    /// The cards for `snapshot`; nil before the first one has loaded.
+    func lists(for snapshot: AccountSnapshot?) -> Lists? {
+        guard let snapshot else { return nil }
+        if let built, built.snapshot == snapshot { return built.lists }
+        let lists = Lists(loans: LoanRow.rows(from: snapshot.loans.items, today: today()),
+                          reservations: ReservationSections(snapshot.reservations))
+        built = (snapshot, lists)
+        return lists
+    }
+
+    /// The cards for the account on screen.
+    func lists(_ model: AppModel) -> Lists? {
+        lists(for: model.account.snapshot)
+    }
+
+    /// The screen opened, or the library, session or verification changed: fetch the account if
+    /// it's out of date (the saved one stays on screen meanwhile).
+    func appear(_ model: AppModel) async {
+        guard model.isSignedIn else {
             busyRows = []
             swipedRowID = nil
             return
         }
-        let key = model.reloadKey
-        let version = reservationsVersion
-        let backend = model.backend
-        if !keepContent || loans.value == nil { loans = .loading }
-        if !keepContent || reservations.value == nil { reservations = .loading }
-
-        async let loanList = Self.capture { try await backend.loans(session: session) }
-        async let reservationLists = Self.capture { try await backend.reservations(session: session) }
-        let (loanResult, reservationResult) = await (loanList, reservationLists)
-        // A sign-out, library switch or verification while loading: the next load takes over.
-        guard model.reloadKey == key, model.session == session else { return }
-
-        let now = today()
-        apply(loanResult.map { LoanRow.rows(from: $0.items, today: now) }, to: \.loans, model: model)
-        // A lost session was just reported (sign-in sheet); don't report it twice.
-        guard model.session == session, reservationsVersion == version else { return }
-        apply(reservationResult.map { ReservationSections($0) }, to: \.reservations, model: model)
-    }
-
-    /// Reloads only the reservations, keeping the list on screen (after a cancel or edit).
-    func reloadReservations(_ model: AppModel) async {
-        guard let session = model.session else { return }
-        let key = model.reloadKey
-        let version = reservationsVersion
-        let backend = model.backend
-        let result = await Self.capture { try await backend.reservations(session: session) }
-        guard model.reloadKey == key, model.session == session, reservationsVersion == version else { return }
-        apply(result.map { ReservationSections($0) }, to: \.reservations, model: model)
+        await model.refreshAccount(force: false)
     }
 
     // MARK: Cancel
@@ -108,28 +98,26 @@ final class BorrowedViewModel {
     }
 
     /// Cancels `row` after the user confirmed. Ignored while that row is busy or once it's gone.
+    /// On success the card goes at once and the account is fetched again.
     func cancel(_ row: ReservationRow, model: AppModel) async {
         guard let href = row.cancelHref, let session = model.session, !busyRows.contains(row.id),
-              reservations.value?.row(id: row.id) != nil else { return }
+              lists(model)?.reservations.row(id: row.id) != nil else { return }
         let key = model.reloadKey
+        let backend = model.backend
         busyRows.insert(row.id)
         if swipedRowID == row.id { swipedRowID = nil }
-        reservationsVersion += 1
         defer { busyRows.remove(row.id) }
         do {
-            let result = try await model.backend.cancelReservation(url: href, session: session)
-            reservationsVersion += 1
+            let result = try await model.account.performChange {
+                try await backend.cancelReservation(url: href, session: session)
+            } accepted: { $0.ok }
             guard model.reloadKey == key else { return }
             notice = Notice(message: result.message.nonEmpty ?? (result.ok ? "Reservation cancelled." : "The library didn't cancel this reservation."),
                             isError: !result.ok)
             if result.ok {
-                if let sections = reservations.value {
-                    reservations = .loaded(sections.removing(id: row.id))
-                }
-                await reloadReservations(model)
+                model.account.update { $0 = $0.removingReservation(actionHref: href) }
             }
         } catch {
-            reservationsVersion += 1
             guard model.reloadKey == key, let shown = report(error, model: model) else { return }
             notice = Notice(message: shown.message, isError: true)
         }
@@ -140,12 +128,12 @@ final class BorrowedViewModel {
     /// Opens the edit sheet for `row` (not while it's busy).
     func edit(_ row: ReservationRow) {
         guard row.editHref != nil, !busyRows.contains(row.id) else { return }
-        reservationsVersion += 1
         swipedRowID = nil
         editing = row
     }
 
-    /// `row`'s edit sheet finished: show the result and refresh on success.
+    /// `row`'s edit sheet finished: show the result (the sheet's save already asked for a fresh
+    /// account).
     func finishEdit(_ outcome: EditReservationSheet.Outcome, row: ReservationRow, model: AppModel) async {
         // A sheet that's already gone (closed while loading) can still finish late: keep only
         // its error, reported now or when the sheet on screen closes.
@@ -156,13 +144,11 @@ final class BorrowedViewModel {
             return
         }
         editing = nil
-        reservationsVersion += 1
         switch outcome {
         case .closed:
             break
         case .saved(let result):
             notice = Notice(message: result.message.nonEmpty ?? "Reservation updated.", isError: !result.ok)
-            if result.ok { await reloadReservations(model) }
         case .failed(let error):
             deferredError = error
         }
@@ -179,21 +165,6 @@ final class BorrowedViewModel {
 
     // MARK: Private
 
-    private func apply<Value>(_ result: Result<Value, any Error>,
-                              to keyPath: ReferenceWritableKeyPath<BorrowedViewModel, Loadable<Value>>,
-                              model: AppModel) {
-        switch result {
-        case .success(let value):
-            self[keyPath: keyPath] = .loaded(value)
-        case .failure(let error):
-            if let shown = report(error, model: model) {
-                self[keyPath: keyPath] = .failed(shown)
-            } else if self[keyPath: keyPath].isLoading {
-                self[keyPath: keyPath] = .idle // cancelled
-            }
-        }
-    }
-
     /// `AppModel.report`, except while the edit sheet is up: sign-in and verification are root
     /// sheets that can't appear over it, so those wait until it closes (`reportDeferredError`).
     private func report(_ error: any Error, model: AppModel) -> UserFacingError? {
@@ -209,14 +180,19 @@ final class BorrowedViewModel {
         default: false
         }
     }
+}
 
-    private nonisolated static func capture<Value: Sendable>(
-        _ work: @Sendable () async throws -> Value
-    ) async -> Result<Value, any Error> {
-        do {
-            return .success(try await work())
-        } catch {
-            return .failure(error)
+extension AccountSnapshot {
+    /// Without the reservation whose actions include `href` (just cancelled), until the next fetch.
+    func removingReservation(actionHref href: String) -> AccountSnapshot {
+        func removing(from list: PatronList) -> PatronList {
+            let items = list.items.filter { item in !item.actions.contains { $0.href == href } }
+            let removed = Int64(list.items.count - items.count)
+            return PatronList(total: list.total.map { max(0, $0 - removed) }, items: items)
         }
+        var snapshot = self
+        snapshot.reservations = Reservations(ready: removing(from: reservations.ready),
+                                             pending: removing(from: reservations.pending))
+        return snapshot
     }
 }
