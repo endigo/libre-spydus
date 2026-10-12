@@ -114,8 +114,9 @@ pickup?)`, `cancelReservation(url,session)`, `editOptions(url,session)`,
 `CredentialsRejected`, `NotLoggedIn`, `Upstream`, `Parse`, `HumanVerificationRequired`.
 
 Data notes (verified on real pages):
-- `SearchRecord.detailUrl` / `PatronItem.bibUrl` / `RelatedItem.bibUrl` all load with `record(url)`.
-  URLs embed a per-search set id that can expire; `RecordDetail.bookmarkUrl` is the best stable
+- `SearchRecord.detailUrl` / `RelatedItem.bibUrl` load with `record(url)`; a loan or reservation
+  loads with `record(patronItemRecordUrl(item))` — its own `bibUrl` uses a set from the patron's
+  OPAC session and comes back empty without it. URLs embed a per-search set id that can expire; `RecordDetail.bookmarkUrl` is the best stable
   link to store (verify it loads with `record()`; else fall back to a title/ISBN `search`).
 - `RecordFormat{code,label,reserveUrl,availabilityUrl}` lives on search records only; a detail
   opened from a loan/favourite without formats may re-find them with a `search` by ISBN or title.
@@ -138,7 +139,9 @@ Data notes (verified on real pages):
 `enum SearchSort { relevance, newest }` + `searchSorted` · `userAgent()` ·
 `isDigitalFormat(format: RecordFormat) -> Bool` · `availabilitySummary(Availability) ->
 AvailabilitySummary{available?, copies?, reserved?, label}` · `parseDueDate(text) -> SimpleDate?` ·
-`homeGenres() -> [Genre{key,label,query}]` · `homeShelves() -> [Shelf{key,title,query,sort}]`.
+`homeGenres() -> [Genre{key,label,query}]` · `homeShelves() -> [Shelf{key,title,query,sort}]` ·
+`patronItemRecordUrl(item) -> String?` · `accountHolding(snapshot, bibIrns) -> AccountHolding{kind,
+item}?` (`HoldingKind`: loan, reservationReady, reservationPending).
 Newest = `SORTS=MAIN.CREATED_DATE.DESC]MAIN.CREATED_TIME.DESC` (the OPAC's own new-items RSS order).
 
 ## 5. App architecture (same shape on both platforms)
@@ -237,6 +240,10 @@ subject chips (from `details` rows like Subjects/Genre/Audience, max ~6), a comp
 (publisher, ISBN, series, …), and carousels **"Similar books"**, **"More by this author"**,
 **"In this series"** from `related` panels (hide empty ones). Reserve sheet: pickup location,
 available summary, expiry picker (`expiryChoices`), Confirm → `placeReservation` → result banner.
+**Already yours (I8/A6):** when the saved account (§5.2a) has the shown format's bib on loan or
+reserved (`accountHolding`), the Reserve pill is replaced by a status pill — "On loan · Due 14 Oct",
+"Ready to collect · Riverton Library", "Reserved · Riverton Library" — that opens Your Books on the
+right segment. A page opened from Your Books selects the format that is on loan/reserved.
 
 **Your Books (I5/A2; tab label "Your Books").** Segments: **Loans** | **Reservations**. Cards
 (surface colour, radius card): cover, title, "By author", meta line — loans: "Due 27 Oct ·
