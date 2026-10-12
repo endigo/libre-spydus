@@ -1,6 +1,6 @@
 import Foundation
 
-/// The five tabs (docs/native-apps.md §5.5). Search is the raised centre button.
+/// The five tabs (docs/native-apps.md §5.5), all ordinary tab-bar items.
 enum AppTab: String, CaseIterable, Hashable, Identifiable, Sendable {
     case home
     case borrowed
@@ -13,7 +13,7 @@ enum AppTab: String, CaseIterable, Hashable, Identifiable, Sendable {
     var title: String {
         switch self {
         case .home: "Home"
-        case .borrowed: "Borrowed"
+        case .borrowed: "Your Books"
         case .search: "Search"
         case .favourites: "Favourites"
         case .profile: "Profile"

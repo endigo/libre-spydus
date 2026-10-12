@@ -99,8 +99,6 @@ object LsCover {
 
 object LsTabBar {
     val height = 64.dp
-    val centerButtonDiameter = 64.dp
-    val centerButtonLift = 22.dp
 }
 
 /** tokens.shadow: elevation-style approximations (Compose shadows take one blur/offset). */

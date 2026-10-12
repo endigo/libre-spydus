@@ -61,8 +61,6 @@ struct ThemeTokensTests {
         #expect(number("cover", "smallWidth") == Theme.Cover.smallWidth)
         #expect(number("cover", "detailWidth") == Theme.Cover.detailWidth)
         #expect(number("tabBar", "height") == Theme.TabBar.height)
-        #expect(number("tabBar", "centerButtonDiameter") == Theme.TabBar.centerButtonDiameter)
-        #expect(number("tabBar", "centerButtonLift") == Theme.TabBar.centerButtonLift)
         let type = try #require(tokens["type"] as? [String: [String: Any]])
         for token in ThemeFont.allCases {
             let size = (type[String(describing: token)]?["size"] as? NSNumber).map { CGFloat($0.doubleValue) }

@@ -24,7 +24,7 @@ struct HomeView: View {
                         .id(Self.loansID)
                 }
                 .padding(.top, Theme.Spacing.s)
-                .padding(.bottom, Theme.Spacing.xxl + Theme.TabBar.centerButtonLift)
+                .padding(.bottom, Theme.Spacing.xxl)
             }
             .scrollIndicators(.hidden)
             #if DEBUG

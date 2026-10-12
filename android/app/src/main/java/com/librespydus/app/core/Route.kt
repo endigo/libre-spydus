@@ -6,7 +6,7 @@ import uniffi.librespydus_core.SearchSort
 /** The five tabs (§5.5); [SEARCH] is the raised centre button. Each tab keeps its own stack. */
 enum class Tab(val label: String) {
     HOME("Home"),
-    BORROWED("Borrowed"),
+    BORROWED("Your Books"),
     SEARCH("Search"),
     FAVOURITES("Favourites"),
     PROFILE("Profile"),

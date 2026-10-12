@@ -48,7 +48,7 @@ struct SearchResultsList: View {
                     footer
                         .id(Self.footerID)
                 }
-                .padding(.bottom, Theme.Spacing.xxl + Theme.TabBar.centerButtonLift)
+                .padding(.bottom, Theme.Spacing.xxl)
             }
             .scrollDismissesKeyboard(.immediately)
             #if DEBUG

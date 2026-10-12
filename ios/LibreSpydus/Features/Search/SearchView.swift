@@ -160,7 +160,7 @@ private struct RecentSearchesView: View {
                 }
                 .padding(.horizontal, Theme.Spacing.l)
                 .padding(.top, Theme.Spacing.s)
-                .padding(.bottom, Theme.Spacing.xxl + Theme.TabBar.centerButtonLift)
+                .padding(.bottom, Theme.Spacing.xxl)
             }
             .scrollDismissesKeyboard(.immediately)
         }

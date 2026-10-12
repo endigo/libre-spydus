@@ -61,8 +61,8 @@ import com.librespydus.app.ui.theme.LsTabBar
 import com.librespydus.app.ui.theme.LsType
 import java.text.NumberFormat
 
-/** Bottom padding for scrolling content on a tab: clears the raised centre Search button. */
-val BrowseBottomClearance: Dp = LsSpacing.xxl + LsTabBar.centerButtonLift
+/** Bottom padding under scrolling content on a tab, above the tab bar. */
+val BrowseBottomClearance: Dp = LsSpacing.xxl
 
 /**
  * The results list both the Search tab and [SearchResultsScreen] show: count line, result rows

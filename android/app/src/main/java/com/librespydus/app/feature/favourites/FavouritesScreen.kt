@@ -130,7 +130,7 @@ fun FavouritesScreen(appState: AppState, navigator: AppNavigator, modifier: Modi
                 start = LsSpacing.l,
                 end = LsSpacing.l,
                 // Clear the raised Search button at max scroll.
-                bottom = LsTabBar.centerButtonLift + LsSpacing.xxl,
+                bottom = LsSpacing.xxl,
             ),
             horizontalArrangement = Arrangement.spacedBy(LsSpacing.l),
             verticalArrangement = Arrangement.spacedBy(LsSpacing.xl),

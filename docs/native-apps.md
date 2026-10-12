@@ -177,8 +177,8 @@ demo lists (cancel removes the row, reserve adds a pending row). This is how wor
 test and screenshot every account screen.
 
 ### 5.5 Navigation
-Five tabs: **Home · Borrowed · Search · Favourites · Profile**; Search is the raised centre
-button. Each tab has its own stack. Shared routes: `detail(BookRef)` → Book detail (I4/A3) and
+Five tabs: **Home · Your Books · Search · Favourites · Profile**, all ordinary tab-bar items (the
+inspiration's raised centre Search button was dropped at the user's request). Each tab has its own stack. Shared routes: `detail(BookRef)` → Book detail (I4/A3) and
 `results(query, sort, title)` → Search results list (I3/A3, used by Home "View all" and genre
 tiles). `BookRef` constructors from `SearchRecord`, `PatronItem`, `RelatedItem`, favourite.
 
@@ -228,11 +228,15 @@ subject chips (from `details` rows like Subjects/Genre/Audience, max ~6), a comp
 **"In this series"** from `related` panels (hide empty ones). Reserve sheet: pickup location,
 available summary, expiry picker (`expiryChoices`), Confirm → `placeReservation` → result banner.
 
-**Borrowed (I5/A2).** Title "Your Books". Segments: **Loans** | **Reservations**. Cards
+**Your Books (I5/A2; tab label "Your Books").** Segments: **Loans** | **Reservations**. Cards
 (surface colour, radius card): cover, title, "By author", meta line — loans: "Due 27 Oct ·
-3 days left" (danger when ≤ 3 days or overdue); reservations: status / rank / pickup; trailing
-coral text action: reservations → "Cancel" (confirm dialog → `cancelReservation`) and "Edit"
-(sheet: pickup choice, delay until, not required after → `editReservation`). Ready-for-pickup
+3 days left" (danger when ≤ 3 days or overdue); reservations: status / rank / pickup (Canning
+writes the pickup branch into Status: "Requested pickup location: …" / "Please pickup from: …
+by <date>"). Reservation actions are hidden by default: swipe a card left to reveal rounded
+**Edit** (accent; sheet: pickup choice, delay until, not required after → `editReservation`)
+and **Cancel** (danger; confirm dialog → `cancelReservation`) tiles — a full swipe only opens
+the card, one card open at a time; long-press and screen-reader actions offer the same two;
+a footnote hints "Swipe left on a reservation to change or cancel it." (I6/A4). Ready-for-pickup
 reservations first, highlighted. Pull to refresh. Signed out → sign-in prompt.
 
 **Favourites (I5/A2).** Local list/grid of saved books (cover cards), tap → detail, swipe/long-press
@@ -257,8 +261,7 @@ Never inject scripts into or interact with the challenge programmatically.
 Tokens: `design/tokens.json` (colours, radii, spacing, type, cover sizes, tab bar). The visual
 reference (third-party inspiration, do not commit or redistribute) is
 `/Users/tsogt/Project/personal/spydus_clone/.private/design/inspiration.jpg` — view it; reading
-that one image is allowed (nothing else under `.private/`). Navy screens; white tab bar with a
-raised white circular centre Search button; covers with rounded corners and soft shadow; coral
+that one image is allowed (nothing else under `.private/`). Navy screens; white tab bar with five equal items; covers with rounded corners and soft shadow; coral
 gradient pill primary button; blue circular bookmark; Borrowed-style cards on `surface`; detail
 screen = navy header + white rounded sheet. System fonts (SF Pro / Roboto). Respect Dynamic
 Type / font scale reasonably and safe areas; support dark status bar content.

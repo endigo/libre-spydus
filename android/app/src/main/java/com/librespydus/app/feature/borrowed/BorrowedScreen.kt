@@ -155,7 +155,7 @@ fun BorrowedScreen(appState: AppState, navigator: AppNavigator, modifier: Modifi
                 start = LsSpacing.l,
                 end = LsSpacing.l,
                 // Clear the raised Search button at max scroll.
-                bottom = LsTabBar.centerButtonLift + LsSpacing.xxl,
+                bottom = LsSpacing.xxl,
             ),
             verticalArrangement = Arrangement.spacedBy(LsSpacing.l),
             modifier = Modifier

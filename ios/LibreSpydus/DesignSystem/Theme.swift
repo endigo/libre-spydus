@@ -73,8 +73,6 @@ enum Theme {
 
     enum TabBar {
         static let height: CGFloat = 64
-        static let centerButtonDiameter: CGFloat = 64
-        static let centerButtonLift: CGFloat = 22
     }
 
     struct Shadow: Sendable {

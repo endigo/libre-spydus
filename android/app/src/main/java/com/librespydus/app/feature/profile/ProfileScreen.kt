@@ -125,7 +125,7 @@ fun ProfileScreen(appState: AppState, navigator: AppNavigator, modifier: Modifie
             .verticalScroll(rememberScrollState())
             .padding(horizontal = LsSpacing.l)
             // Clear the raised Search button at max scroll.
-            .padding(bottom = LsTabBar.centerButtonLift + LsSpacing.xxl),
+            .padding(bottom = LsSpacing.xxl),
         verticalArrangement = Arrangement.spacedBy(LsSpacing.xl),
     ) {
         Text(
