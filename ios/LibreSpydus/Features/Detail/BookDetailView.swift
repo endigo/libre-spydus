@@ -51,7 +51,14 @@ struct BookDetailView: View {
         .task(id: model.selectedFormat?.availabilityUrl) {
             await model.loadAvailability(backend: app.backend, report: app.report)
         }
-        .sheet(item: $reserveRequest, onDismiss: reportDeferredError) { request in
+        .onChange(of: reserveRequest != nil) { _, reserving in
+            // A login/verification sheet from a background refresh waits until this one closes.
+            if reserving { app.isPresentingFeatureSheet = true }
+        }
+        .sheet(item: $reserveRequest, onDismiss: {
+            app.isPresentingFeatureSheet = false
+            reportDeferredError()
+        }) { request in
             ReserveSheet(request: request) { error in
                 deferredError = error
                 if case .NotLoggedIn = error as? SpydusError { pendingBorrow = request.format }

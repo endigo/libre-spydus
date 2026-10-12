@@ -164,9 +164,11 @@ A hand-written protocol/interface mirroring the `SpydusClient` methods the app u
 `accountSnapshot(session)` fetches name + loans + reservations in one call; the app saves it per
 origin (`encodeAccountSnapshot` JSON, app-private storage) and on launch / foreground / pull to
 refresh shows the saved one at once ("Updated 10 min ago") while a fresh one loads in the
-background. A failed refresh keeps the saved data with a "Couldn't refresh" note; sign-out,
-session expiry (NotLoggedIn) and library change clear it; demo mode never saves it; a successful
-reserve / cancel / edit triggers a refresh.
+background. A failed refresh keeps the saved data with a "Couldn't refresh" note; sign-out and
+session expiry (NotLoggedIn) delete that library's file (switching library keeps each library's
+own file); demo mode never saves it; a successful reserve / cancel / edit triggers a refresh.
+iOS: `Application Support/AccountCache/<sha256(origin)>.json`, complete-until-first-unlock,
+excluded from backup. Android: `noBackupFilesDir`, AES-GCM with an Android Keystore key.
 
 ### 5.3 Favourites (local only)
 Per-origin list of `BookRef` (Codable/serializable): `id` (stable key: bib IRN / BRN / work IRN,
