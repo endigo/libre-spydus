@@ -1,0 +1,28 @@
+[package]
+name = "librespydus-core"
+version = "0.1.0"
+edition = "2024"
+description = "LibreSpydus shared on-device core (Spydus OPAC client + parsers) for native iOS/Android via UniFFI"
+publish = false
+
+[lib]
+name = "librespydus_core"
+crate-type = ["lib", "staticlib", "cdylib"]
+
+[[bin]]
+name = "uniffi-bindgen"
+path = "src/bin/uniffi-bindgen.rs"
+
+[dependencies]
+base64 = "0.23.1"
+indexmap = { version = "2.14.2", features = ["serde"] }
+lol_html = "3.0.1"
+rand = "0.8"
+regex = "1.13.1"
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "gzip"] }
+rsa = "0.9.10"
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.154"
+thiserror = "2.0.21"
+tokio = { version = "1.53.2", features = ["rt-multi-thread", "macros"] }
+uniffi = { version = "0.32.2", features = ["tokio", "cli"] }

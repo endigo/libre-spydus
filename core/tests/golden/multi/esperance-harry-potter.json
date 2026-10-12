@@ -1,0 +1,271 @@
+{
+  "query": "harry potter",
+  "setId": "132814005",
+  "totalResults": 306,
+  "showing": {
+    "from": 1,
+    "to": 10
+  },
+  "nextPageUrl": "https://esperance.spydus.com/cgi-bin/spydus.exe/SET/OPAC/ALLWRKENQ/132814005/22057744?NREC=10",
+  "prevPageUrl": null,
+  "records": [
+    {
+      "rank": 1,
+      "workIrn": "19574208",
+      "title": "Harry Potter : Little Guides to the Harry Potter Stories",
+      "detailUrl": "https://esperance.spydus.com/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/132814005/19574208,1",
+      "author": "Rowling, J. K., 1965-",
+      "authorRole": "author",
+      "authorUrl": null,
+      "year": "2025",
+      "language": "English",
+      "summary": "This eBook is optimised for full-colour devices such as Fire tablets and the Kindle App. It is not suitable for e-Ink kindle devices, such as the PaperWhite. We recommend you download a sample to your device before purchase if in doubt. Whether you have a little Harry PotterTM fan in your life or want to introduce them to this magical world, the Pocket Potters are perfect for young readers to learn more. In this edition you will meet Harry Potter, and find out why he's as famous in the wizarding world as he is in ours. This digital version is compatible with Guided View which will allow you to experience Natalie Smillie's charming full colour artwork in beautiful detail.",
+      "isbn": "9781789393606",
+      "coverUrls": [
+        "https://covers.borrowbox.com/backend/covers/PTM_7321360?w=427",
+        "https://secure.syndetics.com/index.aspx?isbn=9781789393606/mc.gif&client=cityofalban&type=unbound&upc=&oclc=&issn=&nicaption="
+      ],
+      "formats": [
+        {
+          "code": "EBK",
+          "label": "eBook",
+          "reserveUrl": null,
+          "availabilityUrl": "https://esperance.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/132814005?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=132814005&QRY=WRK01%5C19574208+%2B+03902\\EBK"
+        }
+      ]
+    },
+    {
+      "rank": 2,
+      "workIrn": "19026847",
+      "title": "Harry Potter knitting magic : the official Harry Potter knitting pattern book",
+      "detailUrl": "https://esperance.spydus.com/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/132814005/19026847,2",
+      "author": "Gray, Tanis",
+      "authorRole": "author",
+      "authorUrl": "https://esperance.spydus.com/cgi-bin/spydus.exe/NAV/OPAC/AUTHENQ/132814005?SETLVL=&QRY=IRN(148316)&QRYTEXT=Gray%2C%20Tanis&NAVLVL=SET",
+      "year": "2020",
+      "language": "English",
+      "summary": "Introducing the first official Harry Potter knitting book - a deluxe guide to creating over 25 authentic Harry Potter knits based on the iconic films. Channel the magic of the Harry Potter films from the screen to your needles with the ultimate knitter's guide to the Wizarding World. Featuring over 25 magical knits, the book includes patterns for clothing, home projects and keepsakes pulled straight from the movies - and even includes a few iconic costume pieces as seen on-screen. With yarn suggestions based on the true colours used in the films, projects ranging from simple patterns like the Hogwarts house scarves to more complex projects like Mrs. Weasley's Christmas sweater, knit your own wizarding world. Projects: Crafty Creatures: patterns for Hedwig; Cornish Pixies; Fluffy the Three-Headed Dog Wizarding Wardrobe: patterns for Mrs Weasley's Home-Knit Christmas jumpers; Hogwarts House Scarves; and Hogwarts' house scarves. Inspired Apparel: clothes and accessories inspired by characters, artefacts and themes from the films such as a Expecto Patronum! mittens and Quidditch socks. Delightful Decor: Dress your home with Harry Potter decorative accessories such as Hogwarts House mug cosies and Seven Horcruxes tea towels. A true fan must-have, this book also includes fun facts, original costume sketches, film stills, and other behind-the-scenes treasures. Harry Potter Knitting Magic is sure to have fans everywhere summoning needles, conjuring yarn, and practicing their best knitting wizardry.",
+      "isbn": "1911641921",
+      "coverUrls": [
+        "https://secure.syndetics.com/index.aspx?isbn=1911641921/mc.gif&client=cityofalban&type=unbound&upc=&oclc=&issn=&nicaption=",
+        "https://secure.syndetics.com/index.aspx?isbn=9781911641926/mc.gif&client=cityofalban&type=unbound&upc=&oclc=&issn=&nicaption="
+      ],
+      "formats": [
+        {
+          "code": "BK",
+          "label": "Book",
+          "reserveUrl": "https://esperance.spydus.com/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/132814005/0/V/0/R/9/ALLWRKENQ?SVL=19026847&RECFMT=BK",
+          "availabilityUrl": "https://esperance.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/132814005?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=132814005&QRY=WRK01%5C19026847+%2B+03902\\BK"
+        }
+      ]
+    },
+    {
+      "rank": 3,
+      "workIrn": "22065164",
+      "title": "Harry Potter ve Felsefe Taşı",
+      "detailUrl": "https://esperance.spydus.com/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/132814005/22065164,3",
+      "author": "Rowling, J. K., 1965-",
+      "authorRole": "author",
+      "authorUrl": null,
+      "year": "2021",
+      "language": "Turkish",
+      "summary": null,
+      "isbn": "9781789390797",
+      "coverUrls": [
+        "https://img1.od-cdn.com/ImageType-100/3450-1/{4AC83A8B-8476-49F0-955E-AB0AC4DA5CC0}IMG100.JPG",
+        "https://secure.syndetics.com/index.aspx?isbn=9781789390797/mc.gif&client=cityofalban&type=unbound&upc=&oclc=&issn=&nicaption="
+      ],
+      "formats": [
+        {
+          "code": "EBK",
+          "label": "eBook",
+          "reserveUrl": null,
+          "availabilityUrl": "https://esperance.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/132814005?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=132814005&QRY=WRK01%5C22065164+%2B+03902\\EBK"
+        }
+      ]
+    },
+    {
+      "rank": 4,
+      "workIrn": "22065163",
+      "title": "Harry Potter ve Felsefe Taşı",
+      "detailUrl": "https://esperance.spydus.com/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/132814005/22065163,4",
+      "author": "Rowling, J. K., 1965-",
+      "authorRole": "author",
+      "authorUrl": null,
+      "year": "2019",
+      "language": "Turkish",
+      "summary": null,
+      "isbn": "9781781107669",
+      "coverUrls": [
+        "https://img1.od-cdn.com/ImageType-100/3450-1/{7C766874-5195-4627-8BFC-E80A7BFF3CAC}IMG100.JPG",
+        "https://secure.syndetics.com/index.aspx?isbn=9781781107669/mc.gif&client=cityofalban&type=unbound&upc=&oclc=&issn=&nicaption="
+      ],
+      "formats": [
+        {
+          "code": "EAUD",
+          "label": "eAudioBook",
+          "reserveUrl": null,
+          "availabilityUrl": "https://esperance.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/132814005?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=132814005&QRY=WRK01%5C22065163+%2B+03902\\EAUD"
+        }
+      ]
+    },
+    {
+      "rank": 5,
+      "workIrn": "22062588",
+      "title": "Harry Potter og viskusteinninn",
+      "detailUrl": "https://esperance.spydus.com/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/132814005/22062588,5",
+      "author": "Rowling, J. K., 1965-",
+      "authorRole": "author",
+      "authorUrl": null,
+      "year": "2018",
+      "language": "Icelandic",
+      "summary": "„Með skjálfandi höndum sneri hann umslaginu við. Á bakhliðinni var purpuralitt innsigli með skjaldamerki: Ljón, örn, greifingi og snákur sem umluktu bókstafinn H.\" Harry Potter hafði aldrei heyrt um Hogwart þegar bréfin hófu að detta á dyramottuna á Runnaflöt númer 4. Þau eru skrifuð með grænu bleki á gulleitan pappír og með fjólubláu innsigli og gerð tafarlaust upptæk af hræðilegu frænku hans og frænda. En á ellefta afmælisdegi Harrys ryðst risi með glitrandi augu að nafni Rubeus Hagrid inn með undraverðar fréttir: Harry Potter er galdramaður og hefur fengið námsvist við Hogwart, skóla galdra og seiða. Ótrúleg ævintýri eru rétt í þann mund að hefjast! Þematónlist samin af James Hannigan.",
+      "isbn": "9781781108659",
+      "coverUrls": [
+        "https://img1.od-cdn.com/ImageType-100/3450-1/{5DE7DBA5-8BE3-4EAD-A331-CE058BD21FE6}IMG100.JPG",
+        "https://secure.syndetics.com/index.aspx?isbn=9781781108659/mc.gif&client=cityofalban&type=unbound&upc=&oclc=&issn=&nicaption="
+      ],
+      "formats": [
+        {
+          "code": "EAUD",
+          "label": "eAudioBook",
+          "reserveUrl": null,
+          "availabilityUrl": "https://esperance.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/132814005?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=132814005&QRY=WRK01%5C22062588+%2B+03902\\EAUD"
+        }
+      ]
+    },
+    {
+      "rank": 6,
+      "workIrn": "22062569",
+      "title": "Harry Potter i Kamien Filozoficzny",
+      "detailUrl": "https://esperance.spydus.com/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/132814005/22062569,6",
+      "author": "Rowling, J. K., 1965-",
+      "authorRole": "author",
+      "authorUrl": null,
+      "year": "2017",
+      "language": "Polish",
+      "summary": "Harry Potter, sierota i podrzutek, od niemowlęcia wychowywany był przez ciotkę i wuja, którzy traktowali go jak piąte koło u wozu. Pochodzenie chłopca owiane jest tajemnicą; jedyną pamiątką Harry'ego z przeszłości jest zagadkowa blizna na czole. Skąd jednak biorą się niesamowite zjawiska, które towarzyszą nieświadomemu niczego Potterowi? Harry nigdy by się nie spodziewał, że można latać na miotle, znać bardzo pożyteczne zaklęcia i nosić pelerynę niewidkę. Nigdy też nie przyszłoby mu do głowy, że to właśnie on stoczy walkę z potężnym i złym Lordem Voldermortem. Temat muzyczny skomponował James Hannigan",
+      "isbn": "9781781107270",
+      "coverUrls": [
+        "https://img1.od-cdn.com/ImageType-100/3450-1/{9669F16F-485D-4D4C-B556-F6E44335A75B}IMG100.JPG",
+        "https://secure.syndetics.com/index.aspx?isbn=9781781107270/mc.gif&client=cityofalban&type=unbound&upc=&oclc=&issn=&nicaption="
+      ],
+      "formats": [
+        {
+          "code": "EAUD",
+          "label": "eAudioBook",
+          "reserveUrl": null,
+          "availabilityUrl": "https://esperance.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/132814005?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=132814005&QRY=WRK01%5C22062569+%2B+03902\\EAUD"
+        }
+      ]
+    },
+    {
+      "rank": 7,
+      "workIrn": "22062542",
+      "title": "Harry Potter og De vises stein",
+      "detailUrl": "https://esperance.spydus.com/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/132814005/22062542,7",
+      "author": "Rowling, J. K., 1965-",
+      "authorRole": "author",
+      "authorUrl": null,
+      "year": "2016 - 2018",
+      "language": "Norwegian",
+      "summary": "«Harry snudde konvolutten med skjelvende hender. På baksida var det et purpurrødt vokssegl med våpenskjold: en løve, en ørn, en grevling og en slange som omga en stor G.» Harry Potter hadde aldri hørt om Galtvort når brevene begynte å komme på dørmatten i Hekkveien 4. Brevene, som var adressert med smaragdgrønt blekk og hadde purpurrød forsegling, ble fort konfiskert av hans ondskapsfulle tante og onkel.Da Harry fylte 11 år, kom en kjempe av en mann med øyne som svarte biller stormende inn. Mannen het Rubeus Gygrid og han hadde noen fantastiske nyheter å komme med:Harry Potter er en trollmann, og han har en plass på Galtvort høyere skole for hekseri og trolldom. Et utrolig eventyr er på vei til å starte! Temamusikk komponert av James Hannigan",
+      "isbn": "9781781107454",
+      "coverUrls": [
+        "https://img1.od-cdn.com/ImageType-100/3450-1/{78ED2EAD-3D9F-4DBE-A03C-FEAAD5F69C48}IMG100.JPG",
+        "https://secure.syndetics.com/index.aspx?isbn=9781781107454/mc.gif&client=cityofalban&type=unbound&upc=&oclc=&issn=&nicaption=",
+        "https://secure.syndetics.com/index.aspx?isbn=9781781109922/mc.gif&client=cityofalban&type=unbound&upc=&oclc=&issn=&nicaption="
+      ],
+      "formats": [
+        {
+          "code": "EBK",
+          "label": "eBook",
+          "reserveUrl": null,
+          "availabilityUrl": "https://esperance.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/132814005?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=132814005&QRY=WRK01%5C22062542+%2B+03902\\EBK"
+        },
+        {
+          "code": "EAUD",
+          "label": "eAudioBook",
+          "reserveUrl": null,
+          "availabilityUrl": "https://esperance.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/132814005?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=132814005&QRY=WRK01%5C22062542+%2B+03902\\EAUD"
+        }
+      ]
+    },
+    {
+      "rank": 8,
+      "workIrn": "22062541",
+      "title": "Harry Potter ja viisasten kivi",
+      "detailUrl": "https://esperance.spydus.com/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/132814005/22062541,8",
+      "author": "Rowling, J. K., 1965-",
+      "authorRole": "author",
+      "authorUrl": null,
+      "year": "2016 - 2017",
+      "language": "Finnish",
+      "summary": "\"Kun Harry käänsi kirjekuoren vapisevin käsin ympäri, hän näki purppuranpunaisen vahasinetin, jossa oli vaakuna: leijona, kotka, mäyrä ja käärme ison T-kirjaimen ympärillä. \" Harry Potter ei ole koskaan kuullutkaan Tylypahkasta kun kirjeitä alkaa sadella sisään Likusteritie 4:n postiluukusta. Harryn karmea setä ja täti takavarikoivat pikaisesti kellertävälle pergamenttipaperille vihreällä musteella kirjoitetut kirjeet. Sitten, Harryn 11. syntymäpäivänä, koppakuoriaissilmäinen ja jättikokoinen mies nimeltä Rubeus Hagrid paukahtaa ovesta sisään hämmentävien uutisten kera: Harry Potter on velho, ja hänelle on varattu paikka Tylypahkan noitien ja velhojen koulusta. Uskomaton seikkailu on alkamassa! Teemamusiikin säveltäjä James Hannigan",
+      "isbn": "9781781101803",
+      "coverUrls": [
+        "https://img1.od-cdn.com/ImageType-100/3450-1/{D46314F5-D655-406B-B1F3-7D63FC24F902}IMG100.JPG",
+        "https://secure.syndetics.com/index.aspx?isbn=9781781101803/mc.gif&client=cityofalban&type=unbound&upc=&oclc=&issn=&nicaption=",
+        "https://secure.syndetics.com/index.aspx?isbn=9781781109038/mc.gif&client=cityofalban&type=unbound&upc=&oclc=&issn=&nicaption="
+      ],
+      "formats": [
+        {
+          "code": "EBK",
+          "label": "eBook",
+          "reserveUrl": null,
+          "availabilityUrl": "https://esperance.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/132814005?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=132814005&QRY=WRK01%5C22062541+%2B+03902\\EBK"
+        },
+        {
+          "code": "EAUD",
+          "label": "eAudioBook",
+          "reserveUrl": null,
+          "availabilityUrl": "https://esperance.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/132814005?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=132814005&QRY=WRK01%5C22062541+%2B+03902\\EAUD"
+        }
+      ]
+    },
+    {
+      "rank": 9,
+      "workIrn": "22057775",
+      "title": "Harry Potter and the Deathly Hallows, part 1",
+      "detailUrl": "https://esperance.spydus.com/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/132814005/22057775,9",
+      "author": null,
+      "authorRole": null,
+      "authorUrl": null,
+      "year": "2011",
+      "language": "English",
+      "summary": null,
+      "isbn": null,
+      "coverUrls": [],
+      "formats": [
+        {
+          "code": "PM",
+          "label": "DVDs and BluRay",
+          "reserveUrl": "https://esperance.spydus.com/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/132814005/0/V/0/R/9/ALLWRKENQ?SVL=22057775&RECFMT=PM",
+          "availabilityUrl": "https://esperance.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/132814005?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=132814005&QRY=WRK01%5C22057775+%2B+03902\\PM"
+        }
+      ]
+    },
+    {
+      "rank": 10,
+      "workIrn": "22057744",
+      "title": "Harry Potter and the Order of the Phoenix",
+      "detailUrl": "https://esperance.spydus.com/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/132814005/22057744,10",
+      "author": null,
+      "authorRole": null,
+      "authorUrl": null,
+      "year": "2007",
+      "language": "English",
+      "summary": null,
+      "isbn": null,
+      "coverUrls": [],
+      "formats": [
+        {
+          "code": "PM",
+          "label": "DVDs and BluRay",
+          "reserveUrl": "https://esperance.spydus.com/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/132814005/0/V/0/R/9/ALLWRKENQ?SVL=22057744&RECFMT=PM",
+          "availabilityUrl": "https://esperance.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/132814005?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=132814005&QRY=WRK01%5C22057744+%2B+03902\\PM"
+        }
+      ]
+    }
+  ]
+}

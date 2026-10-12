@@ -1,0 +1,310 @@
+# librespydus-core
+
+The shared on-device core of LibreSpydus. It's a Rust port of the Bun/TS `middleware/` that
+the native iOS (SwiftUI) and Android (Compose) apps call through [UniFFI](https://github.com/mozilla/uniffi-rs).
+It talks to a Spydus OPAC directly from the device, and it parses OPAC HTML into the same
+camelCase JSON-shaped records the middleware returns. The apps therefore need no server in
+between. Any library in Civica's public Spydus directory can be used (see
+[Multi-library use](#multi-library-use)); Canning (`https://canning.spydus.com`) is the default.
+
+The TS middleware is the **source of truth**. Every parser is golden-tested against the TS
+output, and `scripts/oracle-diff.sh` diffs the two live. The porting contract is in
+[`docs/rust-core-port.md`](../docs/rust-core-port.md).
+
+## Layout
+
+```
+core/
+  Cargo.toml            lib name `librespydus_core`; crate-type lib + staticlib + cdylib
+  src/
+    lib.rs              SpydusClient — the UniFFI facade (replicates middleware/src/server.ts)
+                        + list_libraries
+    config.rs           ORIGIN, USER_AGENT, UI_COOKIES, search/login/encrypt.js paths, timeouts
+    types.rs            UniFFI records (SearchResults, Availability, RecordDetail, LibraryInfo, …)
+    error.rs            SpydusError
+    directory.rs        Civica's library directory → LibraryInfo (region, test-instance flag)
+    fetch.rs            HTTP: search, fragments, authed GET, login, reservation wizards;
+                        origin guard, timeouts, AWS WAF detection, verification cookie
+    crypto.rs           encrypt.js → PEM, RSA PKCS#1 v1.5 (JSEncrypt-compatible) PIN encryption
+    cache.rs            thread-safe TTL cache
+    parse/              HTML → records (search, availability, record, reserve, account, decode)
+    bin/spydus-cli.rs   host CLI printing a public endpoint's JSON
+    bin/uniffi-bindgen.rs
+  tests/                one integration test per module + common/ helpers
+    fixtures/           captured public pages, synthetic/ hand-written pages, private/ (see below)
+    golden/             TS parser output for each fixture; MANIFEST.md maps fixture → TS fn → Rust fn
+  scripts/oracle-diff.sh      live middleware-vs-core diff (Canning)
+  scripts/library-survey.py   live multi-library compatibility survey
+  generated/{swift,kotlin}  generated bindings (checked in)
+```
+
+## API
+
+`listLibraries(includeTest)` → `[LibraryInfo]` (async): the library picker's list (see
+[Multi-library use](#multi-library-use)).
+
+`SpydusClient(origin)` → one client per library; `origin` is a `LibraryInfo.origin`, and `nil`
+means Canning. The async methods each return a record or throw `SpydusError`.
+
+| method | middleware route | cache |
+|---|---|---|
+| `origin()` → `String` (sync) | | |
+| `setVerificationCookie(cookie)` (sync) | | drops every cache |
+| `search(query)` | `GET /search?q=` | 10 min, case-insensitive query |
+| `page(url)` | `GET /page?url=` (next/prev page) | 10 min |
+| `availability(url)` | `GET /availability?url=` (a format's `availabilityUrl`) | 60 s |
+| `record(url)` | `GET /record?url=` (`availabilityUrl` → bib page, or a direct bib URL) | 10 min |
+| `related(url)` | `GET /related?url=` (one of `RecordDetail.related.*`) → `RelatedList` | 10 min |
+| `login(username, password)` → session | `POST /login` | |
+| `account(session)` → `AccountLinks` | (account entry) | 60 s per session |
+| `loans(session)` / `reservations(session)` | `GET /account/{loans,reservations}` | via `account` |
+| `reserveOptions(url, session)` / `editOptions(url, session)` | `GET /reserve/{options,edit}` | |
+| `placeReservation(url, session, xdays?, pickup?)` | `POST /reserve` | clears `account` |
+| `cancelReservation(url, session)` / `editReservation(url, session, overrides)` | `POST /reserve/{cancel,edit}` | clears `account` |
+
+- Every URL argument must start with `origin + "/"`, else `OriginForbidden`. Pass back the URLs
+  that earlier calls returned.
+- A blank session gives `NotLoggedIn`. A login the library doesn't accept gives `CredentialsRejected`.
+- Place, cancel and edit are **mutating**, so call them only after the user confirms. If one
+  can't be done, the result is `ok: false` data, not an error (the middleware's HTTP 409). A
+  logged-out session gives `message: "Please sign in again."`.
+- Errors: `Network` (transport, timeouts), `OriginForbidden`, `CredentialsRejected`,
+  `NotLoggedIn`, `Upstream` (non-2xx, "no bib record link in format fragment"), `Parse` (bad
+  input or an invalid origin), `HumanVerificationRequired` (AWS WAF challenge, see below).
+  Swift and Kotlin see each variant with its display message (`flat_error`): Swift as
+  `SpydusError.HumanVerificationRequired(message:)`, Kotlin as
+  `SpydusException.HumanVerificationRequired`.
+
+## Multi-library use
+
+**Directory.** `listLibraries(includeTest: false)` makes one public GET of Civica's directory
+(`https://librarylist.spydus.com/api/1.0/mobile/libraries?groupCode=`, not cached) and returns
+the production libraries sorted by name. Each `LibraryInfo` has `id`, `name`, `origin`,
+`logoUrl`, `country` (a display name), `region` (`AU`, `UK`, `US`, `NZ`, `SG` or `OTHER`) and
+`isTest`. Civica's own test, UAT, training, demo and QA instances (154 of 351 entries) are
+left out unless `includeTest` is true. Malformed directory URLs are repaired: `https//host`
+becomes `https://host`.
+
+**One client per library.** Create `SpydusClient(origin: library.origin)` when the user picks a
+library, and keep it while that library is selected. `origin()` returns it normalised (no
+trailing `/`). The client only talks to its own origin:
+- every URL argument must start with `origin + "/"`;
+- redirects are followed only within the origin, and a redirect elsewhere is `OriginForbidden`;
+- `Location` hops and form actions in the login and reservation flows are guarded the same way.
+
+A session token from one library is meaningless at another, so sign in again after switching.
+
+Search builds the OPAC's work-level `ALLWRKENQ` results URL directly. It doesn't use the mobile
+discover API, which returns 404 on many NZ and US libraries.
+
+**Timeouts.** Every request has a 10 s connect timeout and a 60 s total timeout
+(`config::CONNECT_TIMEOUT` and `config::REQUEST_TIMEOUT`; the directory GET uses the same
+values). A timeout is `Network`, with a message naming the limit, for example
+`network error: connect timed out after 10s (https://…)`. An unreachable library therefore
+fails in about 10 s instead of hanging.
+
+**Human verification (AWS WAF).** Some libraries sit behind AWS WAF. Every `*.spydus.co.uk`
+library does, and the WAF answers each request with HTTP 405, the header
+`x-amzn-waf-action: captcha` and a "Human Verification" page. Any response that carries
+`x-amzn-waf-action` becomes `HumanVerificationRequired`, whatever its status. The challenge
+page is never parsed as data, and the core never fetches, solves or bypasses the challenge.
+The native apps follow this contract:
+
+1. When a call throws `HumanVerificationRequired`, show `client.origin() + "/"` in an in-app
+   web view (`WKWebView` / Android `WebView`). Set the web view's User-Agent to the core's
+   `config::USER_AGENT`, because the WAF token may be tied to it. That string isn't exported
+   over FFI, so copy it into the app. The **user** completes the verification there.
+2. Read the `aws-waf-token` cookie for that host from the web view's cookie store
+   (`WKHTTPCookieStore` / `CookieManager.getCookie(origin)`), then call
+   `client.setVerificationCookie("aws-waf-token=<value>")`. The cookie is appended to the
+   `Cookie` header of every later request from that client, public or signed in.
+   `setVerificationCookie` also drops every cached response, so nothing fetched with the old
+   cookie, or without one, is served again. A call that was already running finishes into the
+   discarded caches.
+3. Retry the call. If it throws `HumanVerificationRequired` again (the token expired, or the
+   WAF doesn't accept it outside a browser), go back to step 1 once. After that, tell the user
+   the library can't be used from the app right now and offer its website instead.
+   Whether a WAF token works from a non-browser client is **unverified**.
+4. Keep the token per client (per library). Pass `nil` to clear it, for example when the user
+   switches library or the web view's cookies are cleared. Never store the token anywhere
+   other than the web view's own cookie store.
+
+**Current regional support** (from `scripts/library-survey.py`, 2026-10-12: a 21-library
+stratified sample searched for "harry potter", then availability and the record on the first
+format that has an availability URL):
+
+| region | production libraries | status |
+|---|---|---|
+| AU | 95 | works end to end (6/6) |
+| NZ | 10 | works end to end (3/4). The miss, Wairarapa Library Service, is a stale directory entry: the service split into `cartertonlibrary` and `swlibrary`, and the old host answers 404 (`Upstream`). |
+| US | 4 | works end to end (3/4). The miss, "LIVE - Microsoft Lib", has no public records for any query. |
+| UK | 84 | `HumanVerificationRequired` in about 1.2 s (4/4). Usable only through the verification flow above. |
+| SG | 3 | unreachable. `*.spydus.com.sg` gives a connect timeout at 10 s (school/private networks), and MOE's `singaporelib.com` doesn't resolve (DNS). Both are `Network`. |
+
+Off Canning, search pages parse 100% for title, formats and availability URL. Author coverage
+is 40–100% per library: films, games and compilations whose cards have no person line have no
+author.
+
+## Build
+
+```sh
+cd core
+cargo build                 # lib + cdylib/staticlib + bins (debug)
+cargo build --release
+```
+
+For the app targets, build the static library or cdylib for each platform triple. That means
+`aarch64-apple-ios`, `aarch64-apple-ios-sim` and so on for iOS, and the Android ABIs through
+`cargo ndk`. Then ship the library together with the generated bindings below.
+
+## Test
+
+```sh
+cargo test                  # every suite, offline
+cargo test --test search    # one module
+cargo clippy --all-targets
+```
+
+- **Golden tests** run each Rust parser on a fixture and compare the JSON with the TS parser's
+  output in `tests/golden/`. Key order is ignored. On a mismatch, the actual JSON is written to
+  `target/golden-actual/<golden>` and the first differing JSON pointers are listed. To regenerate
+  the goldens after changing a fixture or a TS parser, run
+  `bun middleware/scripts/emit-golden.ts`.
+- **Private goldens.** `tests/fixtures/private/` and `tests/golden/private/` hold one real
+  account's pages (loans, holds, the reserve form). They're staged locally and are **not
+  distributed**. Tests that use them check `common::private_available()` and skip cleanly when
+  the files are absent. A mismatch report for a private golden lists JSON pointers only, never
+  values.
+- **Network tests** (`tests/fetch.rs`, and the facade's cache test in `src/lib.rs`) run
+  login, redirect, timeout, WAF, verification-cookie and reservation-wizard flows against a
+  throwaway HTTP server on `127.0.0.1`. No test ever POSTs to a library. The live tests are
+  public GETs and are `#[ignore]`d by default: a Canning search, an NZ search, a UK search that
+  expects `HumanVerificationRequired`, and the directory. Run them with
+  `cargo test --test fetch --test directory -- --ignored`.
+
+## CLI
+
+`spydus-cli` prints a public endpoint's result as pretty camelCase JSON, the same shape as the
+middleware's response:
+
+```sh
+cargo run --bin spydus-cli -- search "the midnight library"
+cargo run --bin spydus-cli -- availability "<a format's availabilityUrl>"
+cargo run --bin spydus-cli -- record "<availabilityUrl or bib URL>"
+cargo run --bin spydus-cli -- related "<RecordDetail.related.* URL>"
+cargo run --bin spydus-cli -- page "<nextPageUrl>"
+cargo run --bin spydus-cli -- libraries          # the directory (JSON array), production only
+cargo run --bin spydus-cli -- libraries --all    # …including Civica's test instances
+SPYDUS_ORIGIN=https://hutt.spydus.co.nz cargo run --bin spydus-cli -- search "harry potter"
+```
+
+It has public reads only, with no account commands. `SPYDUS_ORIGIN` overrides the library origin.
+`SPYDUS_VERIFICATION_COOKIE`, if set, is passed to `set_verification_cookie` and never printed.
+On an error, stderr gets `spydus-cli <command>: <error>`, for example
+`spydus-cli search: human verification required`. The exit code is 1 on an error and 2 on a
+usage error.
+
+## Live oracle diff
+
+```sh
+core/scripts/oracle-diff.sh
+```
+
+The script needs `cargo`, `curl` and `jq`. It uses the middleware on `http://localhost:8787`
+(override with `MW_URL`). If the middleware isn't running, the script starts it with
+`bun run src/server.ts` and stops it at the end.
+
+For three fixed queries, it diffs `/search`. It then takes the first record that has a format
+availability URL (BK preferred) and diffs `/availability` and `/record` on that URL, followed by
+`/related` on the record's first related panel. Both sides are normalised with `jq -S`, and the
+script prints a per-endpoint PASS/DIFF summary. It exits non-zero on any DIFF.
+
+Two kinds of live nondeterminism are handled, and each one is shown in the PASS line:
+
+- **Set IDs.** Spydus creates a new result-set ID on every search or bib-page fetch and puts it in
+  URLs (`/BIBENQ/<set>?…&SETID=<set>`), so the two sides always see different numbers. When the
+  raw JSON differs, each side's own set IDs are masked and the pair is compared again. This gives
+  `PASS … (set ids masked)`.
+- **Availability counts.** Counts can change between the two fetches. On a counts-only diff, the
+  pair is re-run once after the middleware's 60 s availability cache has expired.
+
+The script only makes public GETs. It never logs in or sends a POST.
+
+## Multi-library survey
+
+```sh
+python3 -I core/scripts/library-survey.py              # needs cargo + python3 (stdlib only)
+python3 -I core/scripts/library-survey.py --dry-run    # print the sample; contact no library
+python3 -I core/scripts/library-survey.py --sample AU=10,NZ=10 --jobs 4 --json out.json
+```
+
+The script gets the production directory from `spydus-cli libraries` and takes a deterministic,
+region-stratified sample. By default that's AU 6, NZ 4, US 4, UK 4 and SG 3. For each region,
+the name-sorted list is cut into k equal strata and the middle library of each is taken. Test
+instances are never sampled. Each library goes through `spydus-cli` with `SPYDUS_ORIGIN` set to
+it, in this order:
+
+1. `search "harry potter"`. If that finds nothing, as at an academic or corporate library,
+   `--fallback-query` (default `history`) is searched instead, marked `*` in the matrix.
+2. `availability` and `record` on the first format that has an `availabilityUrl`.
+
+The output is a per-library matrix and a per-region summary:
+
+- per library: search status and time, total, records on page 1, % with title, author, formats
+  and availability URL, whether there's a next page, availability, and record;
+- per region: successes, fallbacks, median and maximum search time, and error kinds.
+
+Each library is then checked against its region's expectation:
+
+- AU, NZ, US and OTHER: end to end.
+- UK: `HumanVerificationRequired` within 5 s.
+- SG: a `Network` error within the connect timeout.
+
+The exit code is 1 if any library missed its expectation. This is live data, and a library can
+be down or a directory entry stale.
+
+Safety: public GETs only, one request at a time per library, and at most 6 libraries at once
+(`--jobs`, capped at 6). There's no login, session or POST. `SPYDUS_VERIFICATION_COOKIE` is
+removed from the CLI's environment, so no verification token is ever used.
+
+## Bindings
+
+The bindings are generated from the built library. Library mode reads the UniFFI metadata embedded
+in the cdylib:
+
+```sh
+cd core
+cargo build --lib
+cargo run --bin uniffi-bindgen -- generate --library target/debug/liblibrespydus_core.dylib \
+  --language swift --out-dir generated/swift
+cargo run --bin uniffi-bindgen -- generate --library target/debug/liblibrespydus_core.dylib \
+  --language kotlin --out-dir generated/kotlin
+```
+
+(Use `liblibrespydus_core.so` on Linux.) The output is:
+
+- **Swift:** `librespydus_core.swift`, `librespydus_coreFFI.h` and `librespydus_coreFFI.modulemap`.
+- **Kotlin:** `uniffi/librespydus_core/librespydus_core.kt`. It needs **JNA ≥ 5.12** (it uses
+  `com.sun.jna.internal.Cleaner`) and `kotlinx-coroutines-core` for the async methods.
+
+Kotlin output is formatted with `ktlint` when it's on `PATH`; otherwise it's left unformatted.
+Regenerate the bindings whenever the exported API or the types change.
+
+Compile checks on the host (macOS), linking the debug dylib:
+
+```sh
+G=core/generated/swift T=core/target/debug
+swiftc -parse-as-library -module-name Smoke -Xcc -fmodule-map-file=$G/librespydus_coreFFI.modulemap \
+  -I $G $G/librespydus_core.swift main.swift -L $T -llibrespydus_core \
+  -Xlinker -rpath -Xlinker $T -o smoke
+
+# kotlinc isn't on PATH. It's bundled with Android Studio.
+KOTLINC="/Applications/Android Studio.app/Contents/plugins/Kotlin/kotlinc/bin/kotlinc"
+"$KOTLINC" -cp "jna-5.17.0.jar:kotlinx-coroutines-core-jvm-1.9.0.jar" \
+  core/generated/kotlin/uniffi/librespydus_core/librespydus_core.kt Smoke.kt -include-runtime -d smoke.jar
+java -Djna.library.path=core/target/debug -cp "smoke.jar:jna-5.17.0.jar:kotlinx-coroutines-core-jvm-1.9.0.jar" SmokeKt
+```
+
+`main.swift` and `Smoke.kt` are small callers you write yourself. JNA 5.6 (an old Gradle cache
+copy) fails with `unresolved reference 'Cleaner'`. Gradle 9's distribution includes JNA 5.17.0
+under `lib/plugins/`.

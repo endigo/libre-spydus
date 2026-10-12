@@ -158,6 +158,33 @@ export function toEditOptions(form: EditForm | null): EditOptions {
   };
 }
 
+// An explicit cancel refusal: "This reservation cannot be cancelled.", "can't be cancelled",
+// "could not cancel", "unable to cancel", "not allowed to cancel", … The negation must sit right
+// before the cancel verb (only be/now/currently/yet between), so help text such as "If you cannot
+// collect it, you can cancel it" never trips it.
+const CANCEL_REFUSAL =
+  /\b(?:cannot|can not|can['’]?t|could not|couldn['’]?t|can no longer|unable to|not able to|not allowed to|not permitted to)(?:\s+(?:be|now|currently|yet))*\s+cancel/i;
+// The refusal's sentence: bounded by . ! ? or a block-element edge (\u0000), at most 160 chars each side.
+const CANCEL_REFUSAL_SENTENCE = new RegExp(
+  `[^.!?\\u0000]{0,160}${CANCEL_REFUSAL.source}[^.!?\\u0000]{0,160}[.!?]?`,
+  "i",
+);
+const SCRIPT_STYLE = /<script\b[^>]*>[\s\S]*?<\/script>|<style\b[^>]*>[\s\S]*?<\/style>/gi;
+const BLOCK_TAG =
+  /<\/?(?:address|article|aside|blockquote|body|br|button|caption|dd|details|div|dl|dt|fieldset|figcaption|figure|footer|form|h[1-6]|header|hr|html|label|legend|li|main|nav|ol|option|p|section|select|summary|table|tbody|td|textarea|tfoot|th|thead|title|tr|ul)\b[^>]*>/gi;
+
+/** The sentence that refuses a cancel, whitespace-collapsed; null when the page has none. */
+function cancelRefusal(html: string): string | null {
+  // Visible-ish text: scripts/styles dropped, block edges kept as \u0000 so a sentence never
+  // runs across elements, inline tags → spaces, entities decoded.
+  const text = decode(
+    html.replace(SCRIPT_STYLE, " ").replace(BLOCK_TAG, "\u0000").replace(/<[^>]+>/g, " "),
+  );
+  if (!CANCEL_REFUSAL.test(text)) return null;
+  const m = text.match(CANCEL_REFUSAL_SENTENCE);
+  return m ? m[0].replace(/\s+/g, " ").trim() : null;
+}
+
 /** Classify the page returned after committing a cancel / edit. */
 export function parseManageResult(html: string, kind: "cancel" | "edit"): ReserveResult {
   const text = collapse(html.replace(/<[^>]+>/g, " "));
@@ -165,6 +192,9 @@ export function parseManageResult(html: string, kind: "cancel" | "edit"): Reserv
   if (err && !/^error$/i.test(err)) return { ok: false, message: collapse(err) };
 
   if (kind === "cancel") {
+    // Checked before the success wording: a refusal also says "reservation" and "cancelled".
+    const refusal = cancelRefusal(html);
+    if (refusal) return { ok: false, message: refusal };
     if (/cancell?ed/i.test(text) && /reservation|request|hold/i.test(text)) {
       return { ok: true, message: "Reservation cancelled." };
     }

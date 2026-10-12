@@ -1,0 +1,27 @@
+{
+  "action": "https://canning.spydus.com/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/78500000/0/ER/2/RSVCENQ",
+  "body": {
+    "csrf": "edit-csrf",
+    "SDTE": "2026-11-01",
+    "XDTE": "",
+    "PICKUP": "25363",
+    "submitButton": "Continue"
+  },
+  "pickupChoices": [
+    {
+      "code": "25353",
+      "name": "CANNINGTON LIBRARY"
+    },
+    {
+      "code": "25363",
+      "name": "RIVERTON LIBRARY"
+    },
+    {
+      "code": "25379",
+      "name": "WILLETTON & DISTRICT"
+    }
+  ],
+  "pickupSelected": "25363",
+  "delayUntil": "2026-11-01",
+  "notRequiredAfter": null
+}

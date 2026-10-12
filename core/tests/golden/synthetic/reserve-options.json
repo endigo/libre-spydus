@@ -1,0 +1,20 @@
+{
+  "canReserve": true,
+  "pickupLocation": "RIVERTON LIBRARY",
+  "availableSummary": "Canning - Reservable items 3, available 0",
+  "expiryChoices": [
+    {
+      "days": "0",
+      "label": "No expiry"
+    },
+    {
+      "days": "30",
+      "label": "1 month"
+    },
+    {
+      "days": "730",
+      "label": "2 years"
+    }
+  ],
+  "message": null
+}

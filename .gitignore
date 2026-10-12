@@ -2,3 +2,8 @@
 __pycache__/
 .DS_Store
 build/
+
+# LibreSpydus Rust core: account-bearing fixtures/goldens + build output
+core/tests/fixtures/private/
+core/tests/golden/private/
+core/target/

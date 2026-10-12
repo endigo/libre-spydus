@@ -1,0 +1,8 @@
+{
+  "canEdit": false,
+  "pickupChoices": [],
+  "pickupSelected": null,
+  "delayUntil": null,
+  "notRequiredAfter": null,
+  "message": "This reservation can't be edited right now."
+}

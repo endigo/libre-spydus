@@ -1,0 +1,329 @@
+{
+  "query": "The baby-sitters club graphic novel",
+  "setId": "78529863",
+  "totalResults": 46,
+  "showing": {
+    "from": 1,
+    "to": 10
+  },
+  "nextPageUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/SET/OPAC/ALLWRKENQ/78529863/15930047?NREC=10",
+  "prevPageUrl": null,
+  "records": [
+    {
+      "rank": 1,
+      "workIrn": "15974354",
+      "title": "Baby-Sitter's Club graphic novels. 18, Jessi Ramsey, pet-sitter",
+      "detailUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/78529863/15974354,1",
+      "author": "Crenshaw, Ellen T.",
+      "authorRole": "author",
+      "authorUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/NAV/OPAC/AUTHENQ/78529863?SETLVL=&QRY=IRN(14127015)&QRYTEXT=Crenshaw%2C%20Ellen%20T.&NAVLVL=SET",
+      "year": "2025",
+      "language": "English",
+      "summary": "A Baby-sitters Club graphic novel adapted by National Book Award longlister and Eisner-nominated cartoonist Ellen T. Crenshaw! The Mancusis don't have any kids... but they sure do have a lot of pets! So when they're desperate for a sitter, who do they call? The Baby-sitters Club! Kristy feels pretty sure that the BSC does not pet-sit. But Jessi has always liked animals, and she talks Kristy into being okay with her taking the job. With snakes on the loose and sick hamsters, Jessi's got plenty of pet-sitting troubles, and things don't get any easier when she and her friends get into a big fight. Will Jessi be able to handle her pet-sitting job when things are going wrong with the baby-sitters, too?",
+      "isbn": "9781338835670",
+      "coverUrls": [
+        "https://img1.od-cdn.com/ImageType-100/0305-1/{ADF04936-02D9-4681-BB8C-1CA85D4DA1A6}IMG100.JPG",
+        "https://secure.syndetics.com/index.aspx?isbn=9781338835670/mc.gif&client=citycanning&upc=&oclc=&issn=",
+        "https://secure.syndetics.com/index.aspx?isbn=9781761725456/mc.gif&client=citycanning&upc=&oclc=&issn="
+      ],
+      "formats": [
+        {
+          "code": "BK",
+          "label": "Book",
+          "reserveUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/78529863/0/V/0/R/9/ALLWRKENQ?SVL=15974354&RECFMT=BK",
+          "availabilityUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/78529863?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=78529863&QRY=WRK01%5C15974354+%2B+03902\\BK"
+        },
+        {
+          "code": "EBK",
+          "label": "eBook",
+          "reserveUrl": null,
+          "availabilityUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/78529863?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=78529863&QRY=WRK01%5C15974354+%2B+03902\\EBK"
+        }
+      ]
+    },
+    {
+      "rank": 2,
+      "workIrn": "15990365",
+      "title": "The Baby-sitters Club graphic novels. 17, Mallory and the trouble with twins",
+      "detailUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/78529863/15990365,2",
+      "author": "Nopra, Arley",
+      "authorRole": "author",
+      "authorUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/NAV/OPAC/AUTHENQ/78529863?SETLVL=&QRY=IRN(14127690)&QRYTEXT=Nopra%2C%20Arley&NAVLVL=SET",
+      "year": "2025",
+      "language": "English",
+      "summary": "A Baby-sitters Club graphic novel adapted by New York Times bestselling cartoonist Arley Nopra! Mallory knows she's a good baby-sitter. She's been looking after her seven younger brothers and sisters for years. So when Kristy offers her a steady job baby-sitting for the Arnold twins, Mal thinks it'll be easy money. The twins sure are cute in their matching outfits. But once Mrs. Arnold leaves, Marilyn and Carolyn turn into twin terrors! They trick Mallory so that she can't tell them apart and they act like spoiled brats. Taking care of Marilyn and Carolyn is a baby-sitting nightmare. But Mallory is a responsible member of the Baby-sitters Club and she's not giving up!",
+      "isbn": "9781338835649",
+      "coverUrls": [
+        "https://img1.od-cdn.com/ImageType-100/0305-1/{89C112DF-C9CC-475F-B325-115E647562B5}IMG100.JPG",
+        "https://secure.syndetics.com/index.aspx?isbn=9781338835649/mc.gif&client=citycanning&upc=&oclc=&issn=",
+        "https://secure.syndetics.com/index.aspx?isbn=9781761645839/mc.gif&client=citycanning&upc=&oclc=&issn="
+      ],
+      "formats": [
+        {
+          "code": "BK",
+          "label": "Book",
+          "reserveUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/78529863/0/V/0/R/9/ALLWRKENQ?SVL=15990365&RECFMT=BK",
+          "availabilityUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/78529863?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=78529863&QRY=WRK01%5C15990365+%2B+03902\\BK"
+        },
+        {
+          "code": "EBK",
+          "label": "eBook",
+          "reserveUrl": null,
+          "availabilityUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/78529863?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=78529863&QRY=WRK01%5C15990365+%2B+03902\\EBK"
+        }
+      ]
+    },
+    {
+      "rank": 3,
+      "workIrn": "15939148",
+      "title": "The Baby-sitters Club graphic novels. 3, Mary Anne saves the day",
+      "detailUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/78529863/15939148,3",
+      "author": "Telgemeier, Raina",
+      "authorRole": "author",
+      "authorUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/NAV/OPAC/AUTHENQ/78529863?SETLVL=&QRY=IRN(282091)&QRYTEXT=Telgemeier%2C%20Raina&NAVLVL=SET",
+      "year": "2015",
+      "language": "English",
+      "summary": "This graphic novel adapted by Raina Telgemeier, the #1 New York Times bestselling, multiple Eisner Award-winning author of Smile, is now available in full color! When The Baby-sitters Club gets into a huge fight, Mary Anne is left to her own devices. She has to eat by herself in the school cafeteria, figure out how to make new friends, and deal with her overprotective father. But the worst happens when she finds herself in a baby-sitting emergency and can't turn to her friends for help. Will Mary Anne solve her problems and save The Baby-sitters Club from falling apart? Raina Telgemeier, using the signature style featured in her acclaimed graphic novels Smile and Sisters, perfectly captures all the drama and humor of the original novel!",
+      "isbn": "0545886171",
+      "coverUrls": [
+        "https://img1.od-cdn.com/ImageType-100/0305-1/{A9A798E1-D75A-400E-BE20-644ED13B722A}Img100.jpg",
+        "https://secure.syndetics.com/index.aspx?isbn=0545886171/mc.gif&client=citycanning&upc=&oclc=&issn=",
+        "https://secure.syndetics.com/index.aspx?isbn=054588621X/mc.gif&client=citycanning&upc=&oclc=&issn=",
+        "https://secure.syndetics.com/index.aspx?isbn=9780545886178/mc.gif&client=citycanning&upc=&oclc=&issn=",
+        "https://secure.syndetics.com/index.aspx?isbn=9780545886215/mc.gif&client=citycanning&upc=&oclc=&issn=",
+        "https://secure.syndetics.com/index.aspx?isbn=9780545890663/mc.gif&client=citycanning&upc=&oclc=&issn="
+      ],
+      "formats": [
+        {
+          "code": "BK",
+          "label": "Book",
+          "reserveUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/78529863/0/V/0/R/9/ALLWRKENQ?SVL=15939148&RECFMT=BK",
+          "availabilityUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/78529863?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=78529863&QRY=WRK01%5C15939148+%2B+03902\\BK"
+        },
+        {
+          "code": "EBK",
+          "label": "eBook",
+          "reserveUrl": null,
+          "availabilityUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/78529863?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=78529863&QRY=WRK01%5C15939148+%2B+03902\\EBK"
+        }
+      ]
+    },
+    {
+      "rank": 4,
+      "workIrn": "15938215",
+      "title": "The Baby-sitters Club graphic novels. 2, The truth about Stacey",
+      "detailUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/78529863/15938215,4",
+      "author": "Telgemeier, Raina",
+      "authorRole": "author",
+      "authorUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/NAV/OPAC/AUTHENQ/78529863?SETLVL=&QRY=IRN(282091)&QRYTEXT=Telgemeier%2C%20Raina&NAVLVL=SET",
+      "year": "2015",
+      "language": "English",
+      "summary": "This graphic novel adapted by Raina Telgemeier, the #1 New York Times bestselling, multiple Eisner Award-winning author of Smile, is now available in full color! Poor Stacey. She just moved to a new town, is still coming to terms with her diabetes, and is facing baby-sitting problems left and right. Fortunately, Stacey has three new friends — Kristy, Claudia, and Mary Anne. Together they're the BSC — and they will deal with whatever's thrown their way... even if it's a rival baby-sitting club! Raina Telgemeier, in the same signature style featured in Smile and Sisters, perfectly captures all the drama and humor of the original novel! Praise for the BSC Graphic Novels: \"The artist adds abundant energy to the pages and, largely through amusingly exaggerated facial expressions, ably captures each character's personality.\" — Publishers Weekly \"Crisp and spot on.\" — Booklist \"Unique and original.\" — VOYA",
+      "isbn": "0545813883",
+      "coverUrls": [
+        "https://img1.od-cdn.com/ImageType-100/0305-1/{3BC29DB1-B048-4B45-A3B9-B1D00CBEACC6}Img100.jpg",
+        "https://secure.syndetics.com/index.aspx?isbn=0545813883/mc.gif&client=citycanning&upc=&oclc=&issn=",
+        "https://secure.syndetics.com/index.aspx?isbn=0545813891/mc.gif&client=citycanning&upc=&oclc=&issn=",
+        "https://secure.syndetics.com/index.aspx?isbn=9780545813884/mc.gif&client=citycanning&upc=&oclc=&issn=",
+        "https://secure.syndetics.com/index.aspx?isbn=9780545813891/mc.gif&client=citycanning&upc=&oclc=&issn=",
+        "https://secure.syndetics.com/index.aspx?isbn=9780545829106/mc.gif&client=citycanning&upc=&oclc=&issn="
+      ],
+      "formats": [
+        {
+          "code": "BK",
+          "label": "Book",
+          "reserveUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/78529863/0/V/0/R/9/ALLWRKENQ?SVL=15938215&RECFMT=BK",
+          "availabilityUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/78529863?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=78529863&QRY=WRK01%5C15938215+%2B+03902\\BK"
+        },
+        {
+          "code": "EBK",
+          "label": "eBook",
+          "reserveUrl": null,
+          "availabilityUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/78529863?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=78529863&QRY=WRK01%5C15938215+%2B+03902\\EBK"
+        }
+      ]
+    },
+    {
+      "rank": 5,
+      "workIrn": "15933516",
+      "title": "The Baby-sitters Club graphic novels. 4, Claudia and mean Janine",
+      "detailUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/78529863/15933516,5",
+      "author": "Telgemeier, Raina",
+      "authorRole": "author",
+      "authorUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/NAV/OPAC/AUTHENQ/78529863?SETLVL=&QRY=IRN(282091)&QRYTEXT=Telgemeier%2C%20Raina&NAVLVL=SET",
+      "year": "2016",
+      "language": "English",
+      "summary": "This graphic novel adapted by Raina Telgemeier, the #1 New York Times bestselling, multiple Eisner Award-winning author of Smile, is now available in full color! Claudia and her sister, Janine, may as well be from two different planets. Claudia, who pays more attention to her artwork and The Baby-sitters Club than her homework, feels like she can't compete with her perfect sister. Janine studies nonstop, gets straight As, and even takes college-level courses! But when something unexpected happens to the most beloved person in their family, will the sisters be able to put aside their differences? Raina Telgemeier, using the signature style featured in her acclaimed graphic novels Smile and Sisters, perfectly captures all the drama and charm of the original novel!",
+      "isbn": "0545886228",
+      "coverUrls": [
+        "https://img1.od-cdn.com/ImageType-100/0305-1/{A1FAD466-0474-49FF-9992-FDA0193CFC28}Img100.jpg",
+        "https://secure.syndetics.com/index.aspx?isbn=0545886228/mc.gif&client=citycanning&upc=&oclc=&issn=",
+        "https://secure.syndetics.com/index.aspx?isbn=0545886236/mc.gif&client=citycanning&upc=&oclc=&issn=",
+        "https://secure.syndetics.com/index.aspx?isbn=9780545886222/mc.gif&client=citycanning&upc=&oclc=&issn=",
+        "https://secure.syndetics.com/index.aspx?isbn=9780545886239/mc.gif&client=citycanning&upc=&oclc=&issn=",
+        "https://secure.syndetics.com/index.aspx?isbn=9780545890687/mc.gif&client=citycanning&upc=&oclc=&issn="
+      ],
+      "formats": [
+        {
+          "code": "BK",
+          "label": "Book",
+          "reserveUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/78529863/0/V/0/R/9/ALLWRKENQ?SVL=15933516&RECFMT=BK",
+          "availabilityUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/78529863?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=78529863&QRY=WRK01%5C15933516+%2B+03902\\BK"
+        },
+        {
+          "code": "EBK",
+          "label": "eBook",
+          "reserveUrl": null,
+          "availabilityUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/78529863?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=78529863&QRY=WRK01%5C15933516+%2B+03902\\EBK"
+        }
+      ]
+    },
+    {
+      "rank": 6,
+      "workIrn": "15933218",
+      "title": "The Baby-sitters Club graphic novels. 10, Kristy and the snobs",
+      "detailUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/78529863/15933218,6",
+      "author": "Chau, Chan",
+      "authorRole": "author",
+      "authorUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/NAV/OPAC/AUTHENQ/78529863?SETLVL=&QRY=IRN(9189985)&QRYTEXT=Chau%2C%20Chan&NAVLVL=SET",
+      "year": "2021",
+      "language": "English",
+      "summary": "A brand-new Baby-sitters Club graphic novel adapted by Eisner-nominated artist Chan Chau! Kristy's mom got remarried and their family moved to the ritzy neighborhood across town. The other members of The Baby-sitters Club think it's a good opportunity to get some new business, but the kids who live nearby aren't very friendly. They criticize Kristy's clothes and make fun of the BSC. And, worst of all, they laugh at Louie, Kristy's pet collie, who's getting old and not feeling well. These kids are total snobs! But if anyone can put them in their place, it's The Baby-sitters Club!",
+      "isbn": "9781338304626",
+      "coverUrls": [
+        "https://img1.od-cdn.com/ImageType-100/0305-1/{8A91B483-7505-4CB7-919E-5B6354050E9F}Img100.jpg",
+        "https://secure.syndetics.com/index.aspx?isbn=9781338304626/mc.gif&client=citycanning&upc=&oclc=&issn="
+      ],
+      "formats": [
+        {
+          "code": "EBK",
+          "label": "eBook",
+          "reserveUrl": null,
+          "availabilityUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/78529863?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=78529863&QRY=WRK01%5C15933218+%2B+03902\\EBK"
+        }
+      ]
+    },
+    {
+      "rank": 7,
+      "workIrn": "15931890",
+      "title": "The Baby-sitters Club graphic novels. 11, Good-bye Stacey, good-bye",
+      "detailUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/78529863/15931890,7",
+      "author": "Epstein, Gabriela",
+      "authorRole": "author",
+      "authorUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/NAV/OPAC/AUTHENQ/78529863?SETLVL=&QRY=IRN(9194128)&QRYTEXT=Epstein%2C%20Gabriela&NAVLVL=SET",
+      "year": "2022",
+      "language": "English",
+      "summary": "A brand-new Baby-sitters Club graphic novel adapted by Gabriela Epstein! Stacey McGill is moving back to New York! That means no more Stoneybrook Middle School, no more Charlotte Johanssen, and worst of all... no more Baby-sitters Club. Stacey's friends are crushed when they hear that Stacey's moving, especially Claudia. Stacey is her best friend. What kind of going-away present is good enough for someone so special? And how will the BSC go on without Stacey?",
+      "isbn": "9781338616064",
+      "coverUrls": [
+        "https://img1.od-cdn.com/ImageType-100/0305-1/{B7E09D58-061D-404B-8479-CC0781104F3A}Img100.jpg",
+        "https://secure.syndetics.com/index.aspx?isbn=9781338616064/mc.gif&client=citycanning&upc=&oclc=&issn="
+      ],
+      "formats": [
+        {
+          "code": "EBK",
+          "label": "eBook",
+          "reserveUrl": null,
+          "availabilityUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/78529863?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=78529863&QRY=WRK01%5C15931890+%2B+03902\\EBK"
+        }
+      ]
+    },
+    {
+      "rank": 8,
+      "workIrn": "15930880",
+      "title": "The Baby-sitters Club graphic novels. 13, Mary Anne's bad luck mystery",
+      "detailUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/78529863/15930880,8",
+      "author": "Cheng, Cynthia Yuan",
+      "authorRole": "author",
+      "authorUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/NAV/OPAC/AUTHENQ/78529863?SETLVL=&QRY=IRN(11020524)&QRYTEXT=Cheng%2C%20Cynthia%20Yuan&NAVLVL=SET",
+      "year": "2022 - 2023",
+      "language": "English",
+      "summary": "A brand-new Baby-sitters Club graphic novel adapted by newcomer Cynthia Yuan Cheng! Mary Anne should never have thrown away that chain letter she got in the mail. Ever since she did, bad things have been happening to everyone in The Baby-sitters Club. With Halloween coming up, Mary Anne's even more worried — what kind of spooky thing will happen next? Then Mary Anne finds a new note in her mailbox: Wear this bad-luck charm, it says. OR ELSE. Mary Anne has to follow the note's instructions. But who sent the charm? And why did they send it to Mary Anne? The BSC might never see an end to their bad luck if they don't solve this mystery soon!",
+      "isbn": "9781338616101",
+      "coverUrls": [
+        "https://img1.od-cdn.com/ImageType-100/0305-1/{63C9CD23-AD8E-4DAE-8FBE-F63F727BBE9A}IMG100.JPG",
+        "https://secure.syndetics.com/index.aspx?isbn=9781338616101/mc.gif&client=citycanning&upc=&oclc=&issn=",
+        "https://secure.syndetics.com/index.aspx?isbn=9781338616118/mc.gif&client=citycanning&upc=&oclc=&issn=",
+        "https://secure.syndetics.com/index.aspx?isbn=9781338616125/mc.gif&client=citycanning&upc=&oclc=&issn="
+      ],
+      "formats": [
+        {
+          "code": "BK",
+          "label": "Book",
+          "reserveUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/78529863/0/V/0/R/9/ALLWRKENQ?SVL=15930880&RECFMT=BK",
+          "availabilityUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/78529863?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=78529863&QRY=WRK01%5C15930880+%2B+03902\\BK"
+        },
+        {
+          "code": "EBK",
+          "label": "eBook",
+          "reserveUrl": null,
+          "availabilityUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/78529863?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=78529863&QRY=WRK01%5C15930880+%2B+03902\\EBK"
+        }
+      ]
+    },
+    {
+      "rank": 9,
+      "workIrn": "15930459",
+      "title": "The Baby-sitters Club graphic novels. 15, Claudia and the bad joke",
+      "detailUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/78529863/15930459,9",
+      "author": "Nopra, Arley",
+      "authorRole": "adapter",
+      "authorUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/NAV/OPAC/AUTHENQ/78529863?SETLVL=&QRY=IRN(14127690)&QRYTEXT=Nopra%2C%20Arley&NAVLVL=SET",
+      "year": "2023 - 2024",
+      "language": "English",
+      "summary": "A Baby-sitters Club graphic novel adapted by newcomer Arley Nopra! Claudia isn't worried when she hears her newest baby-sitting charge, Betsy Sobak, is a big practical joker. After all, how much harm can one little girl do? Plenty. Claudia breaks her leg as a result of one of Betsy's jokes. Now Claudia is feeling like baby-sitting might be too dangerous and she's talking about quitting the club. Kristy thinks Betsy needs to be taught a lesson, and that the baby-sitters are just the ones to do it. Watch out, Betsy Sobak. The joke war is on!",
+      "isbn": "9781338835526",
+      "coverUrls": [
+        "https://img1.od-cdn.com/ImageType-100/0305-1/{1AA64A20-07E3-4C0D-85EE-F650BE8C765F}IMG100.JPG",
+        "https://secure.syndetics.com/index.aspx?isbn=9781338835526/mc.gif&client=citycanning&upc=&oclc=&issn=",
+        "https://secure.syndetics.com/index.aspx?isbn=9781760269838/mc.gif&client=citycanning&upc=&oclc=&issn="
+      ],
+      "formats": [
+        {
+          "code": "BK",
+          "label": "Book",
+          "reserveUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/78529863/0/V/0/R/9/ALLWRKENQ?SVL=15930459&RECFMT=BK",
+          "availabilityUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/78529863?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=78529863&QRY=WRK01%5C15930459+%2B+03902\\BK"
+        },
+        {
+          "code": "EBK",
+          "label": "eBook",
+          "reserveUrl": null,
+          "availabilityUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/78529863?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=78529863&QRY=WRK01%5C15930459+%2B+03902\\EBK"
+        }
+      ]
+    },
+    {
+      "rank": 10,
+      "workIrn": "15930047",
+      "title": "The Baby-sitters Club graphic novels. 16, Kristy and the walking disaster",
+      "detailUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/78529863/15930047,10",
+      "author": "Crenshaw, Ellen T.",
+      "authorRole": "author",
+      "authorUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/NAV/OPAC/AUTHENQ/78529863?SETLVL=&QRY=IRN(14127015)&QRYTEXT=Crenshaw%2C%20Ellen%20T.&NAVLVL=SET",
+      "year": "2024",
+      "language": "English",
+      "summary": "A Baby-sitters Club graphic novel adapted by National Book Award longlister and Eisner-nominated cartoonist Ellen T. Crenshaw! They're lean, they're mean, they're the pride of Stoneybrook. Who are they? They're Kristy's Krushers! When Kristy sees how much her little brothers and sister want to play on a softball team, she starts a ragtag team of her own. Maybe Kristy's Krushers aren't world champions (how could they be, with Jackie Rodowsky, walking disaster, playing for them?), but nobody beats them when it comes to team spirit. Now Bart's Bashers have challenged the Krushers to a game. It's bad enough that the Bashers truly are lean and mean — but what's worse is that Kristy has a crush on the Bashers' coach!",
+      "isbn": "9781338835588",
+      "coverUrls": [
+        "https://img1.od-cdn.com/ImageType-100/0305-1/{F2E9850A-7B98-4C07-83E3-C4588A8FD08E}IMG100.JPG",
+        "https://secure.syndetics.com/index.aspx?isbn=9781338835588/mc.gif&client=citycanning&upc=&oclc=&issn=",
+        "https://secure.syndetics.com/index.aspx?isbn=9781761529016/mc.gif&client=citycanning&upc=&oclc=&issn="
+      ],
+      "formats": [
+        {
+          "code": "BK",
+          "label": "Book",
+          "reserveUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/78529863/0/V/0/R/9/ALLWRKENQ?SVL=15930047&RECFMT=BK",
+          "availabilityUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/78529863?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=78529863&QRY=WRK01%5C15930047+%2B+03902\\BK"
+        },
+        {
+          "code": "EBK",
+          "label": "eBook",
+          "reserveUrl": null,
+          "availabilityUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/78529863?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=78529863&QRY=WRK01%5C15930047+%2B+03902\\EBK"
+        }
+      ]
+    }
+  ]
+}

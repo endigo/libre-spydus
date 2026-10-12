@@ -1,0 +1,259 @@
+{
+  "query": "harry potter",
+  "setId": "4303030",
+  "totalResults": 427,
+  "showing": {
+    "from": 1,
+    "to": 10
+  },
+  "nextPageUrl": "https://cumberlandlibraries.spydus.com/cgi-bin/spydus.exe/SET/OPAC/ALLWRKENQ/4303030/10183323?NREC=10",
+  "prevPageUrl": null,
+  "records": [
+    {
+      "rank": 1,
+      "workIrn": "6192716",
+      "title": "The Harry Potter wizarding almanac : the official magical companion to J.K. Rowling's Harry Potter books",
+      "detailUrl": "https://cumberlandlibraries.spydus.com/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/4303030/6192716,1",
+      "author": "Rowling, J. K. 1965-",
+      "authorRole": "author",
+      "authorUrl": "https://cumberlandlibraries.spydus.com/cgi-bin/spydus.exe/NAV/OPAC/AUTHENQ/4303030?SETLVL=&QRY=IRN(676667)&QRYTEXT=Rowling%2C%20J.%20K.%201965-&NAVLVL=SET",
+      "year": "2023",
+      "language": "English",
+      "summary": "From the Sorting Hat to spell-casting, it's all packed inside! This dazzling gift book brings together beloved characters, unforgettable moments and iconic locations from Harry Potter and the Philosopher's Stone all the way through to The Deathly Hallows. It's the ultimate magical miscellany, filled with facts and fun about the wizarding world, beautifully catalogued and brilliantly explored. Joyfully illustrated throughout in full colour by seven stunning artists and tingling with things to spot on every page, this is the ideal introduction to the Harry Potter stories for new readers and the perfect book for families to share. The Harry Potter Wizarding Almanac also features an astonishing level of detail that is sure to surprise and fascinate lifelong fans. From incredible cross-sections to magical maps and ingenious lists, lose yourself exploring Hogwarts and beyond.",
+      "isbn": "1526646714",
+      "coverUrls": [
+        "https://secure.syndetics.com/index.aspx?isbn=1526646714/mc.gif&client=cumberlcc&upc=&oclc=&issn=",
+        "https://secure.syndetics.com/index.aspx?isbn=9781526646712/mc.gif&client=cumberlcc&upc=&oclc=&issn="
+      ],
+      "formats": [
+        {
+          "code": "BK",
+          "label": "Book",
+          "reserveUrl": "https://cumberlandlibraries.spydus.com/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/4303030/0/V/0/R/9/ALLWRKENQ?SVL=6192716&RECFMT=BK",
+          "availabilityUrl": "https://cumberlandlibraries.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/4303030?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=4303030&QRY=WRK01%5C6192716+%2B+03902\\BK"
+        }
+      ]
+    },
+    {
+      "rank": 2,
+      "workIrn": "1234914",
+      "title": "Harry Potter and the Deathly Hallows (Harry Potter, Book 7)",
+      "detailUrl": "https://cumberlandlibraries.spydus.com/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/4303030/1234914,2",
+      "author": "Rowling, J. K. 1965-",
+      "authorRole": "author",
+      "authorUrl": "https://cumberlandlibraries.spydus.com/cgi-bin/spydus.exe/NAV/OPAC/AUTHENQ/4303030?SETLVL=&QRY=IRN(676667)&QRYTEXT=Rowling%2C%20J.%20K.%201965-&NAVLVL=SET",
+      "year": "2023",
+      "language": "English",
+      "summary": "Burdened with the dark, dangerous, and seemingly impossible task of locating and destroying Voldermort's remaining Horcruxes, Harry, feeling alone and uncertain about his future, struggles to find the inner strength he needs to follow the path set out before him.",
+      "isbn": "9781338878981",
+      "coverUrls": [
+        "https://secure.syndetics.com/index.aspx?isbn=9781338878981/mc.gif&client=cumberlcc&upc=&oclc=&issn="
+      ],
+      "formats": [
+        {
+          "code": "BK",
+          "label": "Book",
+          "reserveUrl": "https://cumberlandlibraries.spydus.com/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/4303030/0/V/0/R/9/ALLWRKENQ?SVL=1234914&RECFMT=BK",
+          "availabilityUrl": "https://cumberlandlibraries.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/4303030?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=4303030&QRY=WRK01%5C1234914+%2B+03902\\BK"
+        }
+      ]
+    },
+    {
+      "rank": 3,
+      "workIrn": "868136",
+      "title": "Harry Potter và bảo bối tử thần = Harry Potter and the deathly hallows",
+      "detailUrl": "https://cumberlandlibraries.spydus.com/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/4303030/868136,3",
+      "author": "Rowling, J. K. 1965-",
+      "authorRole": "author",
+      "authorUrl": "https://cumberlandlibraries.spydus.com/cgi-bin/spydus.exe/NAV/OPAC/AUTHENQ/4303030?SETLVL=&QRY=IRN(676667)&QRYTEXT=Rowling%2C%20J.%20K.%201965-&NAVLVL=SET",
+      "year": "2007",
+      "language": "English, Vietnamese",
+      "summary": "Burdened with the dark, dangerous, and seemingly impossible task of locating and destroying Voldermort's remaining Horcruxes, Harry, feeling alone and uncertain about his future, struggles to find the inner strength he needs to follow the path set out before him.",
+      "isbn": "8934974069645",
+      "coverUrls": [
+        "https://secure.syndetics.com/index.aspx?isbn=8934974069645/mc.gif&client=cumberlcc&upc=&oclc=&issn="
+      ],
+      "formats": [
+        {
+          "code": "BK",
+          "label": "Book",
+          "reserveUrl": "https://cumberlandlibraries.spydus.com/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/4303030/0/V/0/R/9/ALLWRKENQ?SVL=868136&RECFMT=BK",
+          "availabilityUrl": "https://cumberlandlibraries.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/4303030?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=4303030&QRY=WRK01%5C868136+%2B+03902\\BK"
+        }
+      ]
+    },
+    {
+      "rank": 4,
+      "workIrn": "608782",
+      "title": "Harry Potter : little guides to the Harry Potter stories",
+      "detailUrl": "https://cumberlandlibraries.spydus.com/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/4303030/608782,4",
+      "author": "Rowling, J. K. 1965-",
+      "authorRole": "author",
+      "authorUrl": "https://cumberlandlibraries.spydus.com/cgi-bin/spydus.exe/NAV/OPAC/AUTHENQ/4303030?SETLVL=&QRY=IRN(676667)&QRYTEXT=Rowling%2C%20J.%20K.%201965-&NAVLVL=SET",
+      "year": "2025",
+      "language": "English",
+      "summary": "How old was Harry when he first started at Hogwarts? Who gave him the Marauder's Map, and how big is a Golden Snitch? Find out all this and much more about Harry Potter! Peek at Harry in his spidery cupboard under the stairs, find out what he buys in Diagon Alley and explore the Gryffindor dormitory. Get set for dragon encounters, Quidditch thrills, secret passwords and a wand from Ollivanders...",
+      "isbn": "9781526672605",
+      "coverUrls": [
+        "https://secure.syndetics.com/index.aspx?isbn=9781526672605/mc.gif&client=cumberlcc&upc=&oclc=&issn="
+      ],
+      "formats": [
+        {
+          "code": "BK",
+          "label": "Book",
+          "reserveUrl": "https://cumberlandlibraries.spydus.com/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/4303030/0/V/0/R/9/ALLWRKENQ?SVL=608782&RECFMT=BK",
+          "availabilityUrl": "https://cumberlandlibraries.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/4303030?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=4303030&QRY=WRK01%5C608782+%2B+03902\\BK"
+        }
+      ]
+    },
+    {
+      "rank": 5,
+      "workIrn": "6606698",
+      "title": "Harry Potter And The Goblet Of Fire (Original Motion Picture Soundtrack)",
+      "detailUrl": "https://cumberlandlibraries.spydus.com/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/4303030/6606698,5",
+      "author": "Potter, Harry",
+      "authorRole": "artist",
+      "authorUrl": "https://cumberlandlibraries.spydus.com/cgi-bin/spydus.exe/NAV/OPAC/AUTHENQ/4303030?SETLVL=&QRY=IRN(6543303)&QRYTEXT=Potter%2C%20Harry&NAVLVL=SET",
+      "year": "2005",
+      "language": "English",
+      "summary": null,
+      "isbn": null,
+      "coverUrls": [
+        "https://cover.hoopladigital.com/wea_093624963127_270.jpeg"
+      ],
+      "formats": [
+        {
+          "code": "MU",
+          "label": "Music CDs",
+          "reserveUrl": null,
+          "availabilityUrl": "https://cumberlandlibraries.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/4303030?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=4303030&QRY=WRK01%5C6606698+%2B+03902\\MU"
+        }
+      ]
+    },
+    {
+      "rank": 6,
+      "workIrn": "8194495",
+      "title": "Transforming Harry : The Adaptation of Harry Potter in the Transmedia Age",
+      "detailUrl": "https://cumberlandlibraries.spydus.com/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/4303030/8194495,6",
+      "author": "Alberti, John",
+      "authorRole": "author",
+      "authorUrl": "https://cumberlandlibraries.spydus.com/cgi-bin/spydus.exe/NAV/OPAC/AUTHENQ/4303030?SETLVL=&QRY=IRN(8096728)&QRYTEXT=Alberti%2C%20John&NAVLVL=SET",
+      "year": "2018",
+      "language": "English",
+      "summary": "Transforming Harry: The Adaptation of Harry Potter in the Transmedia Age is an edited volume of eight essays that look at how the cinematic versions of the seven Harry Potter novels represent an unprecedented cultural event in the history of cinematic adaptation. The movie version of the first Harry Potter book, Harry Potter and the Sorcerer's Stone, premiered in 2001, in between publication of the fourth and fifth books of this global literary phenomenon. As a result, the production and reception of both novel and movie series became intertwined with one another, creating a fan base who accessed the series' first through the books, first through the movies, and in various other combinations. John Alberti and P. Andrew Miller have gathered scholars to explore and examine the cultural, political, aesthetic, and pedagogical dimensions of this pop culture phenomenon and how it has changed the reception of both the films and books. While the primary focus of the collection is an academic a...",
+      "isbn": "9781684413898",
+      "coverUrls": [
+        "https://cover.hoopladigital.com/rcb_9781684413898_270.jpeg",
+        "https://secure.syndetics.com/index.aspx?isbn=9781684413898/mc.gif&client=cumberlcc&upc=&oclc=&issn="
+      ],
+      "formats": [
+        {
+          "code": "EAUD",
+          "label": "eAudioBook",
+          "reserveUrl": null,
+          "availabilityUrl": "https://cumberlandlibraries.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/4303030?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=4303030&QRY=WRK01%5C8194495+%2B+03902\\EAUD"
+        }
+      ]
+    },
+    {
+      "rank": 7,
+      "workIrn": "10299952",
+      "title": "Harry Potter",
+      "detailUrl": "https://cumberlandlibraries.spydus.com/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/4303030/10299952,7",
+      "author": "Mooney, Carla",
+      "authorRole": "author",
+      "authorUrl": "https://cumberlandlibraries.spydus.com/cgi-bin/spydus.exe/NAV/OPAC/AUTHENQ/4303030?SETLVL=&QRY=IRN(7140535)&QRYTEXT=Mooney%2C%20Carla&NAVLVL=SET",
+      "year": "2025",
+      "language": "English",
+      "summary": null,
+      "isbn": "9798384931836",
+      "coverUrls": [
+        "https://cover.hoopladigital.com/abd_9798384931836_270.jpeg",
+        "https://secure.syndetics.com/index.aspx?isbn=9798384931836/mc.gif&client=cumberlcc&upc=&oclc=&issn="
+      ],
+      "formats": [
+        {
+          "code": "EBK",
+          "label": "eBook",
+          "reserveUrl": null,
+          "availabilityUrl": "https://cumberlandlibraries.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/4303030?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=4303030&QRY=WRK01%5C10299952+%2B+03902\\EBK"
+        }
+      ]
+    },
+    {
+      "rank": 8,
+      "workIrn": "10280720",
+      "title": "An A–Z of Harry Potter",
+      "detailUrl": "https://cumberlandlibraries.spydus.com/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/4303030/10280720,8",
+      "author": "Malone, Aubrey",
+      "authorRole": "author",
+      "authorUrl": "https://cumberlandlibraries.spydus.com/cgi-bin/spydus.exe/NAV/OPAC/AUTHENQ/4303030?SETLVL=&QRY=IRN(10313651)&QRYTEXT=Malone%2C%20Aubrey&NAVLVL=SET",
+      "year": "2009",
+      "language": "English",
+      "summary": null,
+      "isbn": "9780007328567",
+      "coverUrls": [
+        "https://cover.hoopladigital.com/hpc_9780007328567_270.jpeg",
+        "https://secure.syndetics.com/index.aspx?isbn=9780007328567/mc.gif&client=cumberlcc&upc=&oclc=&issn="
+      ],
+      "formats": [
+        {
+          "code": "EBK",
+          "label": "eBook",
+          "reserveUrl": null,
+          "availabilityUrl": "https://cumberlandlibraries.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/4303030?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=4303030&QRY=WRK01%5C10280720+%2B+03902\\EBK"
+        }
+      ]
+    },
+    {
+      "rank": 9,
+      "workIrn": "10184839",
+      "title": "Harry Potter ve Felsefe Taşı",
+      "detailUrl": "https://cumberlandlibraries.spydus.com/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/4303030/10184839,9",
+      "author": "Rowling, J. K. 1965-",
+      "authorRole": "author",
+      "authorUrl": "https://cumberlandlibraries.spydus.com/cgi-bin/spydus.exe/NAV/OPAC/AUTHENQ/4303030?SETLVL=&QRY=IRN(676667)&QRYTEXT=Rowling%2C%20J.%20K.%201965-&NAVLVL=SET",
+      "year": "2021",
+      "language": "Turkish",
+      "summary": null,
+      "isbn": "9781789390797",
+      "coverUrls": [
+        "https://cover.hoopladigital.com/csp_9781789390797_270.jpeg",
+        "https://secure.syndetics.com/index.aspx?isbn=9781789390797/mc.gif&client=cumberlcc&upc=&oclc=&issn="
+      ],
+      "formats": [
+        {
+          "code": "EBK",
+          "label": "eBook",
+          "reserveUrl": null,
+          "availabilityUrl": "https://cumberlandlibraries.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/4303030?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=4303030&QRY=WRK01%5C10184839+%2B+03902\\EBK"
+        }
+      ]
+    },
+    {
+      "rank": 10,
+      "workIrn": "10183323",
+      "title": "Harry Potter ve Felsefe Taşı",
+      "detailUrl": "https://cumberlandlibraries.spydus.com/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/4303030/10183323,10",
+      "author": "Rowling, J. K. 1965-",
+      "authorRole": "author",
+      "authorUrl": "https://cumberlandlibraries.spydus.com/cgi-bin/spydus.exe/NAV/OPAC/AUTHENQ/4303030?SETLVL=&QRY=IRN(676667)&QRYTEXT=Rowling%2C%20J.%20K.%201965-&NAVLVL=SET",
+      "year": "2019",
+      "language": "Turkish",
+      "summary": null,
+      "isbn": "9781781107669",
+      "coverUrls": [
+        "https://cover.hoopladigital.com/csp_9781781107669_270.jpeg",
+        "https://secure.syndetics.com/index.aspx?isbn=9781781107669/mc.gif&client=cumberlcc&upc=&oclc=&issn="
+      ],
+      "formats": [
+        {
+          "code": "EAUD",
+          "label": "eAudioBook",
+          "reserveUrl": null,
+          "availabilityUrl": "https://cumberlandlibraries.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/4303030?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=4303030&QRY=WRK01%5C10183323+%2B+03902\\EAUD"
+        }
+      ]
+    }
+  ]
+}

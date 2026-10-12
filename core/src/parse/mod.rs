@@ -1,0 +1,9 @@
+//! OPAC HTML → typed records. Each module is a faithful port of its
+//! `middleware/src/parse/*.ts` counterpart; goldens in `tests/golden/` are the oracle.
+
+pub mod account;
+pub mod availability;
+pub mod decode;
+pub mod record;
+pub mod reserve;
+pub mod search;
