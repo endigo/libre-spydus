@@ -259,6 +259,7 @@ final class DetailBackend: LibraryBackend, @unchecked Sendable {
     func account(session: String) async throws -> AccountLinks { throw SpydusError.NotLoggedIn(message: "") }
     func loans(session: String) async throws -> PatronList { throw SpydusError.NotLoggedIn(message: "") }
     func reservations(session: String) async throws -> Reservations { throw SpydusError.NotLoggedIn(message: "") }
+    func accountSnapshot(session: String) async throws -> AccountSnapshot { throw SpydusError.NotLoggedIn(message: "") }
     func reserveOptions(url: String, session: String) async throws -> ReserveOptions { throw SpydusError.NotLoggedIn(message: "") }
     func placeReservation(url: String, session: String, xdays: String?, pickup: String?) async throws -> ReserveResult {
         throw SpydusError.NotLoggedIn(message: "")

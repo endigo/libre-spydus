@@ -107,6 +107,8 @@ Pass them as launch arguments (docs/native-apps.md §5.6):
 | `-LSPickerQuery <text>` | the library picker starts with this search text |
 | `-LSLoginCard <card> -LSLoginPIN <pin>` | with `-LSRoute login`: fill the sign-in form; add `-LSLoginSubmit YES` to sign in once. **Demo mode only** (ignored without `-LSDemo YES`), so a worker can't sign in to a real library by accident |
 | `-LSProfileAnchor bottom` | with `-LSRoute profile`: start scrolled to the end of Profile |
+| `-LSPersistDemoAccount YES` | with `-LSDemo YES`: save the demo account on the device (in `AccountCache/Demo/`), to show a cold launch with saved data. Off by default: demo mode keeps the account in memory |
+| `-LSDemoRefreshFails YES` | with `-LSDemo YES`: every account refresh fails, to show "Couldn't refresh — showing saved data" (with saved data) or the error state (without) |
 
 `gallery` opens the **components gallery**, which shows every DesignSystem component on one
 screen. Example:
@@ -134,6 +136,8 @@ xcrun simctl launch --terminate-running-process "$UDID" com.librespydus -LSReset
 - **Mutations** succeed after 0.6 s and update the in-memory lists: cancel removes the row,
   reserve adds a pending row (titled from the search that produced the reserve URL), and edit
   changes the pickup location. Reserving the same title twice gives `ok: false`.
+- **`accountSnapshot`** takes 1.5 s, so the refreshing state is visible, and reflects those
+  changes. The account is never saved on the device in demo mode (see `-LSPersistDemoAccount`).
 
 Use demo mode to build and screenshot every account screen. Never sign in to a real library
 (docs/native-apps.md §2).
@@ -194,6 +198,20 @@ Only a person may do this. It needs the Search screen (I3) merged.
   - the root-sheet flags `loginNeeded`, `verificationNeeded` and `libraryPickerPresented`;
   - the reload counters `verificationGeneration` and `accountGeneration`, combined in `reloadKey`
     for `.task(id: model.reloadKey)`.
+- **Saved account** (docs/native-apps.md §5.2a): `model.account` is an `AccountStore` holding the
+  `accountSnapshot` (name, loans, reservations) for the current origin and session. It's saved
+  per origin by `AccountSnapshotCache` (`Application Support/AccountCache/<sha256(origin)>.json`,
+  the core's `encodeAccountSnapshot` JSON, written atomically, `.completeUntilFirstUserAuthentication`,
+  excluded from backup; a file that doesn't decode is deleted) and loaded synchronously at launch
+  and on a library change, so Your Books, Home's shelf, the greeting and Profile show it on the
+  first frame. `refresh(force:)` fetches in the background: at launch and on a library change,
+  on sign-in, after a reserve / cancel / edit (`performChange`, `accountDidChange()`), on pull to
+  refresh (force), and, when the snapshot is more than 2 minutes old or the last refresh failed,
+  on returning to the app and on opening Your Books or Home. One fetch runs at a time and callers
+  share it; a result for another origin or session, or one that overlaps a change, is dropped. A
+  failed refresh keeps the snapshot and sets `lastRefreshError` (Your Books: "Couldn't refresh —
+  showing saved data" + Retry). Sign-out and an expired session delete the origin's file; other
+  libraries' files stay. Demo mode never saves it.
 - **Errors:** `model.report(error)` returns a `UserFacingError` to show (nil for cancellation) and
   performs the side effects. `HumanVerificationRequired` presents the verification sheet. After two
   completed verifications that are still rejected, it stops asking and returns

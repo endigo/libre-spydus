@@ -46,13 +46,13 @@ extension BorrowedDebugHooks {
     /// `edit-saved`: the edit sheet changes the pickup branch and saves by itself.
     static var autoSavesEdit: Bool { script == .editSaved }
 
-    /// Runs the launch script once, after the first load in demo mode.
+    /// Runs the launch script once, after the account first shows in demo mode.
     @MainActor
     static func run(_ viewModel: BorrowedViewModel, model: AppModel) async {
         guard model.isDemo, model.backend.isDemo, !didRun else { return }
         didRun = true
         if let segment { viewModel.segment = segment }
-        guard let script, let sections = viewModel.reservations.value else { return }
+        guard let script, let sections = viewModel.lists(model)?.reservations else { return }
         let ready = sections.ready.first { $0.cancelHref != nil }
         let editable = sections.pending.first { $0.editHref != nil }
         switch script {

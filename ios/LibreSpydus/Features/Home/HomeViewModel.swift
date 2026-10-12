@@ -3,8 +3,8 @@ import LibreSpydusCore
 import Observation
 
 /// Home's shelves: "New arrivals" (the first `homeShelves()` entry) and, signed in, the current
-/// loans. Each loads concurrently with its own state, so one slow or failing shelf never blocks
-/// the other.
+/// loans. New arrivals load here; the loans come from the saved account (`AppModel.account`), so
+/// a slow or failing shelf never blocks the other.
 @MainActor
 @Observable
 final class HomeViewModel {
@@ -15,30 +15,36 @@ final class HomeViewModel {
     let genres: [Genre]
 
     private(set) var arrivals: Loadable<[BookRef]> = .idle
-    /// `.idle` while signed out.
-    private(set) var loans: Loadable<[LoanShelfItem]> = .idle
 
-    /// The `AppModel.reloadKey` the shelves were last loaded for.
+    /// The `AppModel.reloadKey` the shelf was last loaded for.
     @ObservationIgnored private var loadedKey: AppModel.ReloadKey?
-    /// Per shelf, bumped by each load of it: a late answer for an older load is dropped.
+    /// Bumped by each load: a late answer for an older load is dropped.
     @ObservationIgnored private var arrivalsGeneration = 0
-    @ObservationIgnored private var loansGeneration = 0
+    @ObservationIgnored private let today: () -> Date
+    /// The last snapshot's loans, so a redraw doesn't rebuild them.
+    @ObservationIgnored private var builtLoans: (snapshot: AccountSnapshot, items: [LoanShelfItem])?
 
-    init(shelves: [Shelf] = homeShelves(), genres: [Genre] = homeGenres()) {
+    init(shelves: [Shelf] = homeShelves(), genres: [Genre] = homeGenres(), today: @escaping () -> Date = { .now }) {
         arrivalsShelf = shelves.first
         self.genres = genres
+        self.today = today
     }
 
-    /// `.task(id: model.reloadKey)`: loads once per key, so coming back from a pushed screen
-    /// doesn't reload; a new library, verification or sign-in/out does.
+    /// `.task(id: model.reloadKey)`: loads New arrivals once per key, so coming back from a pushed
+    /// screen doesn't reload; a new library, verification or sign-in/out does. The account is
+    /// fetched in the background when it's out of date.
     func loadIfNeeded(_ model: AppModel) async {
-        guard model.reloadKey != loadedKey else { return }
-        await load(model, keepContent: false)
+        async let account: Bool = model.refreshAccount(force: false)
+        if model.reloadKey != loadedKey { await load(model, keepContent: false) }
+        _ = await account
     }
 
-    /// Pull to refresh keeps the current covers on screen while reloading.
+    /// Pull to refresh keeps the current covers on screen while reloading, and fetches the
+    /// account too.
     func refresh(_ model: AppModel) async {
+        async let account: Bool = model.refreshAccount(force: true)
         await load(model, keepContent: true)
+        _ = await account
     }
 
     func retryArrivals(_ model: AppModel) async {
@@ -46,19 +52,30 @@ final class HomeViewModel {
     }
 
     func retryLoans(_ model: AppModel) async {
-        await loadLoans(model, keepContent: false)
+        await model.refreshAccount(force: true)
     }
 
-    /// Both shelves at once; each settles on its own.
+    /// "Your borrowed books" from the saved account: `.idle` signed out, `.loading` until the
+    /// first snapshot (or while retrying one that failed), else its loans in due order.
+    func loans(_ model: AppModel) -> Loadable<[LoanShelfItem]> {
+        guard model.isSignedIn else { return .idle }
+        if let snapshot = model.account.snapshot {
+            if let builtLoans, builtLoans.snapshot == snapshot { return .loaded(builtLoans.items) }
+            let items = LoanShelfItem.make(from: snapshot.loans.items, today: today())
+            builtLoans = (snapshot, items)
+            return .loaded(items)
+        }
+        if let error = model.account.lastRefreshError, !model.account.isRefreshing { return .failed(error) }
+        return .loading
+    }
+
     private func load(_ model: AppModel, keepContent: Bool) async {
         let key = model.reloadKey
-        async let arrivalsDone: Void = loadArrivals(model, keepContent: keepContent)
-        async let loansDone: Void = loadLoans(model, keepContent: keepContent)
-        _ = await (arrivalsDone, loansDone)
-        // Keyed on what the shelves show, not on task cancellation: core calls finish even when
+        await loadArrivals(model, keepContent: keepContent)
+        // Keyed on what the shelf shows, not on task cancellation: core calls finish even when
         // the view's task is cancelled (a screen pushed mid-load), and their results still count.
         // A shelf left `.loading` by a real cancellation loads again when Home reappears.
-        if model.reloadKey == key, !arrivals.isLoading, !loans.isLoading { loadedKey = key }
+        if model.reloadKey == key, !arrivals.isLoading { loadedKey = key }
     }
 
     private func loadArrivals(_ model: AppModel, keepContent: Bool) async {
@@ -86,25 +103,6 @@ final class HomeViewModel {
             guard generation == arrivalsGeneration, let userError = model.report(error) else { return }
             if keepContent, arrivals.value != nil { return }
             arrivals = .failed(userError)
-        }
-    }
-
-    private func loadLoans(_ model: AppModel, keepContent: Bool) async {
-        loansGeneration += 1
-        let generation = loansGeneration
-        guard let session = model.session else {
-            loans = .idle
-            return
-        }
-        if !(keepContent && loans.value != nil) { loans = .loading }
-        do {
-            let list = try await model.backend.loans(session: session)
-            guard generation == loansGeneration else { return }
-            loans = .loaded(LoanShelfItem.make(from: list.items))
-        } catch {
-            guard generation == loansGeneration, let userError = model.report(error) else { return }
-            if keepContent, loans.value != nil { return }
-            loans = .failed(userError)
         }
     }
 

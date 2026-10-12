@@ -18,8 +18,11 @@ final class AppModel {
 
     /// Session token for the current origin (Keychain; in memory in demo mode).
     private(set) var session: String?
-    /// `AccountLinks.name` once `refreshAccount()` succeeds.
-    private(set) var accountName: String?
+    /// The signed-in account (name, loans, reservations), saved on the device per origin and
+    /// refreshed in the background (§5.2a). Screens show `account.snapshot`.
+    let account: AccountStore
+    /// The borrower's name from the account snapshot.
+    var accountName: String? { account.snapshot?.accountName }
     var isSignedIn: Bool { session != nil }
 
     // MARK: Local data
@@ -39,6 +42,10 @@ final class AppModel {
     var loginNeeded = false
     var verificationNeeded = false
     var libraryPickerPresented = false
+    /// A screen's own sheet is up (Your Books' edit sheet). Two sheets can't be up at once, so a
+    /// root sheet asked for meanwhile (a background refresh found the session expired) waits
+    /// until it has gone.
+    var isPresentingFeatureSheet = false
     #if DEBUG
     /// `-LSRoute gallery`: the DesignSystem components gallery.
     var componentsGalleryPresented = false
@@ -67,6 +74,10 @@ final class AppModel {
         library = stored
         backend = dependencies.makeBackend(stored?.origin)
         favourites = FavouritesStore(directory: dependencies.favouritesDirectory)
+        // Demo mode never saves the account, unless a DEBUG launch flag asks to (screenshots).
+        let savesAccount = !dependencies.isDemo || dependencies.persistsDemoAccount
+        account = AccountStore(cache: savesAccount ? dependencies.accountCacheDirectory.map(AccountSnapshotCache.init) : nil)
+        account.report = { [weak self] error in self?.report(error) }
         installSecrets()
     }
 
@@ -91,7 +102,7 @@ final class AppModel {
 
     /// The sheet RootView shows; verification wins over login over the library picker.
     var rootSheet: RootSheet? {
-        guard library != nil else { return nil }
+        guard library != nil, !isPresentingFeatureSheet else { return nil }
         if verificationNeeded { return .verification }
         if loginNeeded { return .login }
         if libraryPickerPresented { return .libraryPicker }
@@ -151,39 +162,28 @@ final class AppModel {
         dependencies.sessions.setValue(token, for: backend.origin)
         loginNeeded = false
         accountGeneration += 1
-        await refreshAccount()
+        account.use(origin: backend.origin, session: token, backend: backend)
+        await account.refresh(force: true)
     }
 
-    /// A hold was placed (or otherwise changed outside Borrowed): screens showing account data
-    /// (Borrowed, Home's shelf) reload via `reloadKey`.
+    /// A hold was placed (or the account otherwise changed outside Your Books): the saved account
+    /// is fetched again, so Your Books and Home's shelf show it.
     func accountDidChange() {
-        accountGeneration += 1
+        account.libraryDidChange()
     }
 
     func signOut() {
         clearSession()
     }
 
-    /// Loads `accountName`; a lost session clears itself through `report`.
-    /// Loads the signed-in borrower's name. Returns false only when the request failed; a library
-    /// page without a name is a success with `accountName == nil`.
+    /// Fetches the account snapshot (name, loans, reservations) now, or only when it's out of
+    /// date unless `force`; a lost session clears itself through `report`. Returns false only
+    /// when the request failed; a library page without a name is a success with
+    /// `accountName == nil`.
     @discardableResult
-    func refreshAccount() async -> Bool {
-        guard let session else {
-            accountName = nil
-            return true
-        }
-        let generation = backendGeneration
-        do {
-            let links = try await backend.account(session: session)
-            guard generation == backendGeneration, self.session == session else { return true }
-            accountName = links.name
-            return true
-        } catch {
-            guard generation == backendGeneration else { return true }
-            report(error)
-            return false
-        }
+    func refreshAccount(force: Bool = true) async -> Bool {
+        await account.refresh(force: force)
+        return account.lastRefreshError == nil
     }
 
     // MARK: Errors
@@ -225,6 +225,8 @@ final class AppModel {
         verificationCompletions[origin, default: 0] += 1
         verificationNeeded = false
         verificationGeneration += 1
+        // A refresh the challenge stopped tries again.
+        Task { await account.refresh() }
     }
 
     func clearVerification() {
@@ -307,14 +309,14 @@ final class AppModel {
         } else {
             session = dependencies.sessions.value(for: origin)
         }
-        accountName = nil
+        account.use(origin: library == nil ? nil : origin, session: session, backend: backend)
         favourites.load(origin: library == nil ? nil : origin)
     }
 
     private func clearSession() {
         dependencies.sessions.setValue(nil, for: backend.origin)
         session = nil
-        accountName = nil
+        account.clear(origin: backend.origin)
         accountGeneration += 1
     }
 
@@ -343,29 +345,40 @@ extension AppModel {
         var verificationCookies: any SecretStore
         var favouritesDirectory: URL
         var isDemo: Bool
+        /// Where the account is saved per origin (`AccountSnapshotCache`); nil: in memory only.
+        var accountCacheDirectory: URL?
+        /// DEBUG `-LSPersistDemoAccount`: demo mode saves its account too (otherwise it never does).
+        var persistsDemoAccount = false
         var makeBackend: @MainActor (_ origin: String?) -> any LibraryBackend
 
-        /// The app's real stores. Demo mode keeps its session in memory (never the Keychain).
-        static func live(demo: Bool) -> Dependencies {
+        /// The app's real stores. Demo mode keeps its session in memory (never the Keychain), and
+        /// its account too unless `persistDemoAccount` (then in a folder of its own).
+        static func live(demo: Bool, persistDemoAccount: Bool = false, demoRefreshFails: Bool = false) -> Dependencies {
             Dependencies(
                 defaults: .standard,
                 sessions: demo ? InMemorySecretStore() : KeychainSecretStore(service: "com.librespydus.session"),
                 verificationCookies: KeychainSecretStore(service: "com.librespydus.verification"),
                 favouritesDirectory: FavouritesStore.defaultDirectory,
                 isDemo: demo,
+                accountCacheDirectory: demo
+                    ? AccountSnapshotCache.defaultDirectory.appending(path: "Demo", directoryHint: .isDirectory)
+                    : AccountSnapshotCache.defaultDirectory,
+                persistsDemoAccount: demo && persistDemoAccount,
                 makeBackend: { origin -> any LibraryBackend in
-                    demo ? DemoBackend.live(origin: origin) : CoreBackend(origin: origin)
+                    demo ? DemoBackend.live(origin: origin, failsAccountSnapshot: demoRefreshFails) : CoreBackend(origin: origin)
                 }
             )
         }
 
-        /// `-LSReset`: forget the library, every session, verification, favourite and recent search.
+        /// `-LSReset`: forget the library, every session, verification, favourite, recent search
+        /// and saved account.
         func resetPersistentState() {
             defaults.removeObject(forKey: AppModel.libraryKey)
             defaults.removeObject(forKey: "LibreSpydus.recentSearches") // RecentSearchStore.defaultsKey
             sessions.removeAll()
             verificationCookies.removeAll()
             FavouritesStore.deleteAll(in: favouritesDirectory)
+            if let accountCacheDirectory { AccountSnapshotCache.deleteAll(in: accountCacheDirectory) }
         }
     }
 }

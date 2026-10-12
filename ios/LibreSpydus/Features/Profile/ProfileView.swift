@@ -3,13 +3,11 @@ import SwiftUI
 
 /// Profile (docs/native-apps.md §6): the library card + Change library, the account (Sign in /
 /// Sign out), human verification for libraries that needed it, About, and (DEBUG) demo mode.
+/// The borrower's name comes from the saved account (`AppModel.account`).
 struct ProfileView: View {
     @Environment(AppModel.self) private var model
-    @State private var accountLoad: AccountLoad = .idle
     @State private var confirmingSignOut = false
     @State private var confirmingClearVerification = false
-
-    private enum AccountLoad: Equatable { case idle, loading, failed }
 
     var body: some View {
         ScrollViewReader { proxy in
@@ -27,7 +25,6 @@ struct ProfileView: View {
         }
         .screenBackground()
         .toolbar(.hidden, for: .navigationBar)
-        .task(id: model.reloadKey) { await loadAccountName() }
         .confirmationDialog("Sign out of \(model.libraryName)?", isPresented: $confirmingSignOut,
                             titleVisibility: .visible) {
             Button("Sign out", role: .destructive) { model.signOut() }
@@ -130,7 +127,7 @@ struct ProfileView: View {
                     Text(name)
                         .themeFont(.bodyStrong)
                         .foregroundStyle(Theme.Colors.textPrimary)
-                } else if accountLoad == .loading {
+                } else if model.account.snapshot == nil, model.account.isRefreshing {
                     HStack(spacing: Theme.Spacing.s) {
                         ProgressView().tint(Theme.Colors.textSecondary)
                         Text("Loading your account…")
@@ -150,13 +147,14 @@ struct ProfileView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .accessibilityElement(children: .combine)
-        if accountLoad == .failed, model.accountName == nil {
+        // A library page without a name isn't an error: Profile then just says "Signed in".
+        if model.account.snapshot == nil, model.account.lastRefreshError != nil, !model.account.isRefreshing {
             HStack(spacing: Theme.Spacing.s) {
                 Text("Couldn't load your account details.")
                     .themeFont(.caption)
                     .foregroundStyle(Theme.Colors.warning)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                Button("Retry") { Task { await loadAccountName(force: true) } }
+                Button("Retry") { Task { await model.refreshAccount(force: true) } }
                     .themeFont(.bodyStrong)
                     .foregroundStyle(Theme.Colors.primary)
                     .buttonStyle(.borderless)
@@ -199,19 +197,6 @@ struct ProfileView: View {
         let parts = name.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }
         let ordered = parts.count == 2 ? "\(parts[1]) \(parts[0])" : name
         return LibraryDirectory.monogram(for: ordered)
-    }
-
-    private func loadAccountName(force: Bool = false) async {
-        guard model.isSignedIn else {
-            accountLoad = .idle
-            return
-        }
-        guard force || model.accountName == nil else { return }
-        accountLoad = .loading
-        let loaded = await model.refreshAccount()
-        guard !Task.isCancelled else { return }
-        // A library page without a name isn't an error: Profile then just says "Signed in".
-        accountLoad = !loaded && model.isSignedIn && model.accountName == nil ? .failed : .idle
     }
 
     // MARK: Verification

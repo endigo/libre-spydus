@@ -47,6 +47,24 @@ enum Formatting {
         date.formatted(.dateTime.day().month(.abbreviated))
     }
 
+    /// When the saved account was fetched, relative to `now`: "Updated just now",
+    /// "Updated 12 min ago", "Updated today at 9:05 am", "Updated yesterday at 4:20 pm",
+    /// "Updated 3 Oct at 4:20 pm" (time and date in the device's locale).
+    static func updated(_ date: Date, now: Date = .now, calendar: Calendar = .current, locale: Locale = .current) -> String {
+        let seconds = now.timeIntervalSince(date)
+        if seconds < 60 { return "Updated just now" }
+        if seconds < 60 * 60 { return "Updated \(Int(seconds / 60)) min ago" }
+        let style = Date.FormatStyle(locale: locale, calendar: calendar, timeZone: calendar.timeZone)
+        let time = date.formatted(style.hour().minute())
+        if calendar.isDate(date, inSameDayAs: now) { return "Updated today at \(time)" }
+        if let yesterday = calendar.date(byAdding: .day, value: -1, to: now), calendar.isDate(date, inSameDayAs: yesterday) {
+            return "Updated yesterday at \(time)"
+        }
+        let sameYear = calendar.component(.year, from: date) == calendar.component(.year, from: now)
+        let day = date.formatted(sameYear ? style.day().month(.abbreviated) : style.day().month(.abbreviated).year())
+        return "Updated \(day) at \(time)"
+    }
+
     private static func isGivenName(_ part: String) -> Bool {
         guard let first = part.first, first.isLetter else { return false }
         let roles: Set<String> = [

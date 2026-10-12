@@ -244,7 +244,8 @@ struct EditDraftTests {
 struct BorrowedViewModelTests {
     /// An AppModel on Canning whose backend is a demo backend wrapped in a call counter.
     private func makeModel(session: String? = nil, delay: Duration = .milliseconds(80)) throws -> (AppModel, CountingBackend) {
-        let demo = DemoBackend(publicBackend: FakeBackend(), fixtures: try DemoFixtures.bundled(), mutationDelay: delay)
+        let demo = DemoBackend(publicBackend: FakeBackend(), fixtures: try DemoFixtures.bundled(), mutationDelay: delay,
+                               snapshotDelay: .milliseconds(20))
         let backend = CountingBackend(demo)
         let sessions = InMemorySecretStore()
         if let session { sessions.setValue(session, for: LibraryInfo.canning.origin) }
@@ -260,19 +261,26 @@ struct BorrowedViewModelTests {
     }
 
     @Test func loadsSortedLoansAndSplitReservations() async throws {
-        let (model, _) = try makeModel()
+        let (model, backend) = try makeModel()
         let viewModel = BorrowedViewModel()
-        await viewModel.load(model)
-        #expect(viewModel.loans.value?.compactMap(\.due?.daysLeft) == [-2, 2, 5, 12, 19])
-        #expect(viewModel.reservations.value?.ready.count == 1)
-        #expect(viewModel.reservations.value?.pending.count == 3)
+        #expect(viewModel.lists(model) == nil)
+        await viewModel.appear(model)
+        let lists = try #require(viewModel.lists(model))
+        #expect(lists.loans.compactMap(\.due?.daysLeft) == [-2, 2, 5, 12, 19])
+        #expect(lists.reservations.ready.count == 1)
+        #expect(lists.reservations.pending.count == 3)
+        // One call for everything, and opening the screen again while it's fresh fetches nothing.
+        #expect(backend.snapshotCalls == 1)
+        await viewModel.appear(model)
+        #expect(backend.snapshotCalls == 1)
+        #expect(backend.accountCalls == 0)
     }
 
     @Test func cancelIsSubmittedOnceAndRemovesTheRow() async throws {
         let (model, backend) = try makeModel()
         let viewModel = BorrowedViewModel()
-        await viewModel.load(model)
-        let row = try #require(viewModel.reservations.value?.ready.first)
+        await viewModel.appear(model)
+        let row = try #require(viewModel.lists(model)?.reservations.ready.first)
 
         async let first: Void = viewModel.cancel(row, model: model)
         async let second: Void = viewModel.cancel(row, model: model)
@@ -281,42 +289,52 @@ struct BorrowedViewModelTests {
         #expect(backend.cancelCalls == 1)
         #expect(viewModel.notice?.message == "Reservation cancelled.")
         #expect(viewModel.notice?.isError == false)
-        #expect(viewModel.reservations.value?.ready.isEmpty == true)
+        // Gone at once, then fetched again in the background.
+        #expect(viewModel.lists(model)?.reservations.ready.isEmpty == true)
+        #expect(model.account.isRefreshing)
+        await model.account.refresh()
+        #expect(backend.snapshotCalls == 2)
+        #expect(viewModel.lists(model)?.reservations.ready.isEmpty == true)
         #expect(!viewModel.isBusy(row))
     }
 
     @Test func editResultIsShownAndRefreshes() async throws {
         let (model, backend) = try makeModel()
         let viewModel = BorrowedViewModel()
-        await viewModel.load(model)
-        let row = try #require(viewModel.reservations.value?.pending.first { $0.editHref != nil })
+        await viewModel.appear(model)
+        let row = try #require(viewModel.lists(model)?.reservations.pending.first { $0.editHref != nil })
         viewModel.edit(row)
         #expect(viewModel.editing == row)
 
+        // What EditReservationSheet's Save does.
         let href = try #require(row.editHref)
-        let result = try await backend.editReservation(
-            url: href, session: DemoBackend.session,
-            overrides: EditOverrides(pickup: "25353", delayUntil: nil, notRequiredAfter: nil, clearDelay: false, clearExpiry: false))
+        let result = try await model.account.performChange {
+            try await backend.editReservation(
+                url: href, session: DemoBackend.session,
+                overrides: EditOverrides(pickup: "25353", delayUntil: nil, notRequiredAfter: nil, clearDelay: false, clearExpiry: false))
+        } accepted: { $0.ok }
         await viewModel.finishEdit(.saved(result), row: row, model: model)
         #expect(viewModel.editing == nil)
         #expect(viewModel.notice?.message == "Reservation updated.")
-        #expect(viewModel.reservations.value?.row(id: row.id)?.pickup == "Cannington Library")
+        await model.account.refresh()
+        #expect(viewModel.lists(model)?.reservations.row(id: row.id)?.pickup == "Cannington Library")
     }
 
     @Test func aLostSessionSignsOutAndAsksForLogin() async throws {
         let (model, _) = try makeModel(session: "expired")
         #expect(model.isSignedIn)
         let viewModel = BorrowedViewModel()
-        await viewModel.load(model)
+        await viewModel.appear(model)
         #expect(!model.isSignedIn)
         #expect(model.loginNeeded)
+        #expect(model.account.snapshot == nil)
     }
 
     @Test func editSheetSignOutIsReportedAfterTheSheetCloses() async throws {
         let (model, _) = try makeModel()
         let viewModel = BorrowedViewModel()
-        await viewModel.load(model)
-        let row = try #require(viewModel.reservations.value?.pending.first { $0.editHref != nil })
+        await viewModel.appear(model)
+        let row = try #require(viewModel.lists(model)?.reservations.pending.first { $0.editHref != nil })
         viewModel.edit(row)
         await viewModel.finishEdit(.failed(SpydusError.NotLoggedIn(message: "not logged in")), row: row, model: model)
         #expect(viewModel.editing == nil)
@@ -329,52 +347,66 @@ struct BorrowedViewModelTests {
     @Test func aSheetClosedWhileLoadingCantCloseAnother() async throws {
         let (model, _) = try makeModel()
         let viewModel = BorrowedViewModel()
-        await viewModel.load(model)
-        let rows = try #require(viewModel.reservations.value).pending.filter { $0.editHref != nil }
+        await viewModel.appear(model)
+        let rows = try #require(viewModel.lists(model)).reservations.pending.filter { $0.editHref != nil }
         #expect(rows.count == 2)
         viewModel.edit(rows[1])
         await viewModel.finishEdit(.closed, row: rows[0], model: model)
         #expect(viewModel.editing == rows[1])
     }
 
-    @Test func signInErrorsWaitForTheEditSheet() async throws {
+    @Test func aBackgroundSignOutWaitsForTheEditSheet() async throws {
         let (model, backend) = try makeModel()
         let viewModel = BorrowedViewModel()
-        await viewModel.load(model)
-        let sections = try #require(viewModel.reservations.value)
-        let editable = try #require(sections.pending.first { $0.editHref != nil })
+        await viewModel.appear(model)
+        let editable = try #require(viewModel.lists(model)?.reservations.pending.first { $0.editHref != nil })
         viewModel.edit(editable)
-        backend.failReservations = SpydusError.NotLoggedIn(message: "not logged in")
-        await viewModel.reloadReservations(model)
-        #expect(model.isSignedIn && !model.loginNeeded) // login can't show over the edit sheet
-        await viewModel.finishEdit(.closed, row: editable, model: model)
-        viewModel.reportDeferredError(model)
+        model.isPresentingFeatureSheet = true // BorrowedView, while the edit sheet is up
+        backend.failSnapshot = SpydusError.NotLoggedIn(message: "not logged in")
+        await model.refreshAccount(force: true)
         #expect(!model.isSignedIn && model.loginNeeded)
+        #expect(model.rootSheet == nil) // login can't show over the edit sheet
+        await viewModel.finishEdit(.closed, row: editable, model: model)
+        model.isPresentingFeatureSheet = false // the sheet's onDismiss
+        #expect(model.rootSheet == .login)
     }
 
     @Test func aRefreshFromBeforeACancelDoesntBringTheRowBack() async throws {
         let (model, backend) = try makeModel()
         let viewModel = BorrowedViewModel()
-        await viewModel.load(model)
-        let row = try #require(viewModel.reservations.value?.ready.first)
+        await viewModel.appear(model)
+        let row = try #require(viewModel.lists(model)?.reservations.ready.first)
 
-        backend.delayNextReservations = .milliseconds(400) // fetched now, delivered late
-        async let refresh: Void = viewModel.load(model, keepContent: true)
+        backend.delayNextSnapshot = .milliseconds(400) // fetched now, delivered late
+        async let refresh: Void = model.account.refresh(force: true)
         try await Task.sleep(for: .milliseconds(50))
         await viewModel.cancel(row, model: model)
         await refresh
 
         #expect(backend.cancelCalls == 1)
-        #expect(viewModel.reservations.value?.row(id: row.id) == nil)
+        #expect(backend.snapshotCalls == 3) // the first load, the late one (dropped), one after the cancel
+        #expect(viewModel.lists(model)?.reservations.row(id: row.id) == nil)
+    }
+
+    @Test func aFailedRefreshKeepsTheLists() async throws {
+        let (model, backend) = try makeModel()
+        let viewModel = BorrowedViewModel()
+        await viewModel.appear(model)
+        backend.failSnapshot = SpydusError.Network(message: "timed out")
+        await model.refreshAccount(force: true)
+        #expect(viewModel.lists(model)?.loans.count == 5)
+        #expect(model.account.lastRefreshError?.kind == .network)
+        #expect(model.isSignedIn)
     }
 
     @Test func signedOutLoadsNothing() async throws {
         let (model, backend) = try makeModel()
         model.signOut()
         let viewModel = BorrowedViewModel()
-        await viewModel.load(model)
+        await viewModel.appear(model)
         #expect(backend.accountCalls == 0)
-        #expect(viewModel.loans == .idle)
+        #expect(backend.snapshotCalls == 0)
+        #expect(viewModel.lists(model) == nil)
     }
 }
 
@@ -384,21 +416,24 @@ private final class CountingBackend: LibraryBackend, @unchecked Sendable {
     private let lock = NSLock()
     private var _cancelCalls = 0
     private var _accountCalls = 0
-    private var _delayNextReservations: Duration?
-    private var _failReservations: SpydusError?
+    private var _snapshotCalls = 0
+    private var _delayNextSnapshot: Duration?
+    private var _failSnapshot: SpydusError?
 
     init(_ inner: DemoBackend) { self.inner = inner }
 
     var cancelCalls: Int { lock.withLock { _cancelCalls } }
+    /// `account`, `loans` and `reservations` (the screens use `accountSnapshot` instead).
     var accountCalls: Int { lock.withLock { _accountCalls } }
-    /// The next `reservations` answers with what it fetched, but only after this delay.
-    var delayNextReservations: Duration? {
-        get { lock.withLock { _delayNextReservations } }
-        set { lock.withLock { _delayNextReservations = newValue } }
+    var snapshotCalls: Int { lock.withLock { _snapshotCalls } }
+    /// The next `accountSnapshot` answers with what it fetched, but only after this delay.
+    var delayNextSnapshot: Duration? {
+        get { lock.withLock { _delayNextSnapshot } }
+        set { lock.withLock { _delayNextSnapshot = newValue } }
     }
-    var failReservations: SpydusError? {
-        get { lock.withLock { _failReservations } }
-        set { lock.withLock { _failReservations = newValue } }
+    var failSnapshot: SpydusError? {
+        get { lock.withLock { _failSnapshot } }
+        set { lock.withLock { _failSnapshot = newValue } }
     }
     private func countAccount() { lock.withLock { _accountCalls += 1 } }
 
@@ -426,12 +461,16 @@ private final class CountingBackend: LibraryBackend, @unchecked Sendable {
     }
     func reservations(session: String) async throws -> Reservations {
         countAccount()
-        if let failure = failReservations { throw failure }
+        return try await inner.reservations(session: session)
+    }
+    func accountSnapshot(session: String) async throws -> AccountSnapshot {
         let delay = lock.withLock {
-            defer { _delayNextReservations = nil }
-            return _delayNextReservations
+            _snapshotCalls += 1
+            defer { _delayNextSnapshot = nil }
+            return _delayNextSnapshot
         }
-        let snapshot = try await inner.reservations(session: session)
+        if let failure = failSnapshot { throw failure }
+        let snapshot = try await inner.accountSnapshot(session: session)
         if let delay { try await Task.sleep(for: delay) }
         return snapshot
     }

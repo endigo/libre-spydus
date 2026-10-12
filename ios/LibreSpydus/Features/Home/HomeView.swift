@@ -2,8 +2,9 @@ import LibreSpydusCore
 import SwiftUI
 
 /// Home: library logo (→ Profile), greeting, search field (→ Search tab), "New arrivals",
-/// "Popular genres" and "Your borrowed books". Shelves load concurrently, each with its own
-/// skeleton and error; pull to refresh; reloads on library, verification and sign-in changes.
+/// "Popular genres" and "Your borrowed books". New arrivals loads with its own skeleton and error;
+/// the loans come from the saved account, shown at once and fetched again in the background when
+/// out of date. Pull to refresh; reloads on library, verification and sign-in changes.
 struct HomeView: View {
     @Environment(AppModel.self) private var model
     @State private var home = HomeViewModel()
@@ -40,6 +41,11 @@ struct HomeView: View {
         }
         .refreshable { await home.refresh(model) }
         .task(id: model.reloadKey) { await home.loadIfNeeded(model) }
+        .onChange(of: model.selectedTab) { _, tab in
+            // Back on Home: refresh the account in the background if it's out of date.
+            guard tab == .home, model.isSignedIn else { return }
+            Task { await model.refreshAccount(force: false) }
+        }
         .toolbar(.hidden, for: .navigationBar)
     }
 
@@ -124,7 +130,7 @@ struct HomeView: View {
             if !model.isSignedIn {
                 SignInCard(libraryName: model.libraryName) { model.loginNeeded = true }
             } else {
-                switch home.loans {
+                switch home.loans(model) {
                 case .idle, .loading:
                     ShelfSkeleton()
                 case .failed(let error):

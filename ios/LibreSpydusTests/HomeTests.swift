@@ -108,7 +108,8 @@ struct HomeViewModelTests {
 
         await home.loadIfNeeded(app)
         #expect(home.arrivals.value?.count == HomeViewModel.shelfLimit)
-        #expect(home.loans.error?.kind == .network)
+        #expect(home.loans(app).error?.kind == .network)
+        #expect(app.account.snapshot == nil)
         // New arrivals is the first shelf, newest first.
         #expect(backend.searchCalls == ["\(homeShelves()[0].query)|newest"])
 
@@ -121,7 +122,7 @@ struct HomeViewModelTests {
                        isbn: nil, fields: ["Due": DueDate.format(.now)], actions: []),
         ]))
         await home.retryLoans(app)
-        #expect(home.loans.value?.map(\.caption) == ["Due today"])
+        #expect(home.loans(app).value?.map(\.caption) == ["Due today"])
     }
 
     @Test func aLoadWhoseTaskWasCancelledStillCounts() async {
@@ -144,12 +145,31 @@ struct HomeViewModelTests {
         let home = HomeViewModel()
         await home.loadIfNeeded(app)
         #expect(!app.isSignedIn)
-        #expect(home.loans.isIdle)
+        #expect(home.loans(app).isIdle)
         #expect(home.arrivals.value?.count == 1)
 
         app.report(SpydusError.NotLoggedIn(message: "")) // bumps accountGeneration
         await home.loadIfNeeded(app)
         #expect(backend.searchCalls.count == 2)
+    }
+
+    @Test func theLoansShelfShowsTheSavedAccount() async {
+        let backend = PagingFakeBackend(first: .success(SearchFixtures.page([SearchFixtures.record("1")])))
+        backend.loansResult = .success(PatronList(total: 1, items: [
+            PatronItem(irn: "1", bibIrn: "1", title: "Whistler", bibUrl: nil, author: nil, year: nil, coverUrls: [],
+                       isbn: nil, fields: ["Due": DueDate.format(.now)], actions: []),
+        ]))
+        let app = model(backend: backend, demo: true)
+        let home = HomeViewModel()
+        #expect(home.loans(app).isLoading) // nothing saved yet
+        await home.loadIfNeeded(app)
+        #expect(home.loans(app).value?.map(\.ref.title) == ["Whistler"])
+
+        // A failed refresh keeps the shelf.
+        backend.loansResult = .failure(.Network(message: "timed out"))
+        await home.refresh(app)
+        #expect(home.loans(app).value?.map(\.ref.title) == ["Whistler"])
+        #expect(app.account.lastRefreshError?.kind == .network)
     }
 
     @Test func anUnrecognisedArrivalsPageIsAnError() async {
