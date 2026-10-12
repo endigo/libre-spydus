@@ -226,6 +226,11 @@ class AppState(
         }
     }
 
+    /** An account mutation succeeded (e.g. a reservation was placed): account screens reload. */
+    fun accountDidChange() {
+        _accountGeneration.update { it + 1 }
+    }
+
     fun requestLogin() {
         _loginNeeded.value = true
     }
