@@ -1,6 +1,6 @@
 //! Pure helpers both native apps share, so iOS and Android show the same thing for the same
-//! data: whether a format is digital, a short availability line, loan due dates, and the home
-//! screen's genre tiles and shelves. No I/O. Every function is UniFFI-exported; tests are in
+//! data: whether a format is digital, a short availability line, loan due dates, the home
+//! screen's genre tiles and shelves, and how a loan or reservation links to its book. No I/O. Every function is UniFFI-exported; tests are in
 //! `tests/app.rs`. The calibration behind each rule (surveys of live libraries, 2026-10-12) is in
 //! `docs/rust-core-port.md` §11.
 
@@ -10,7 +10,7 @@ use regex::Regex;
 
 use crate::parse::decode::collapse;
 use crate::SpydusError;
-use crate::types::{AccountSnapshot, Availability, RecordFormat, SearchSort};
+use crate::types::{AccountSnapshot, Availability, PatronItem, RecordFormat, SearchSort};
 
 // ---- is_digital_format ----------------------------------------------------------------------
 
@@ -327,4 +327,62 @@ pub fn decode_account_snapshot(json: String) -> Result<AccountSnapshot, SpydusEr
         return Err(SpydusError::Parse { message });
     }
     Ok(snapshot)
+}
+
+// ---- loans and reservations on the book page -------------------------------------------------
+
+/// A URL that loads `item`'s bib record with `SpydusClient::record`, without a session.
+///
+/// Loan and reservation rows link to `…/BIBENQ/{setId}?SETLVL=&QRY=IRN({bibIrn})&NAVLVL=SET`,
+/// and that set lives in the patron's OPAC session: fetched without it, the OPAC answers "Session
+/// must be logged in" and the record comes back empty. `…/BIBENQ?SETLVL=&IRN={bibIrn}` loads the
+/// full bib record anonymously (Canning, Hutt City and Geelong, 2026-10-12). `bibUrl` as it is
+/// when there's no numeric bib IRN or the link isn't a BIBENQ one; `None` without a `bibUrl`.
+#[uniffi::export]
+pub fn patron_item_record_url(item: PatronItem) -> Option<String> {
+    let bib_url = item.bib_url.filter(|url| !url.is_empty())?;
+    let irn = item.bib_irn.filter(|irn| !irn.is_empty() && irn.bytes().all(|b| b.is_ascii_digit()));
+    // ASCII upper-casing keeps byte offsets, so `at` indexes `bib_url` too.
+    let at = bib_url.to_ascii_uppercase().find("/BIBENQ");
+    match (irn, at) {
+        (Some(irn), Some(at)) => Some(format!("{}?SETLVL=&IRN={irn}", &bib_url[..at + "/BIBENQ".len()])),
+        _ => Some(bib_url),
+    }
+}
+
+/// How the patron already has a title (`AccountHolding.kind`).
+#[derive(uniffi::Enum, Debug, Clone, Copy, PartialEq, Eq)]
+pub enum HoldingKind {
+    Loan,
+    /// Waiting at the pickup branch (`reservations.ready`).
+    ReservationReady,
+    /// Queued or in transit (`reservations.pending`).
+    ReservationPending,
+}
+
+/// A loan or reservation of the title a book page shows.
+#[derive(uniffi::Record, Debug, Clone, PartialEq)]
+pub struct AccountHolding {
+    pub kind: HoldingKind,
+    /// The row as Your Books shows it (`fields` has Due, or Status/Rank/Placed).
+    pub item: PatronItem,
+}
+
+/// The loan or reservation in `snapshot` for any of `bib_irns`, so a book page can say "On loan"
+/// or "Reserved" instead of offering Reserve again. Pass the IRNs the page knows for the format
+/// it shows: `Availability.bibRecordIrn`, else `RecordDetail.bibIrn` and the opened item's
+/// `PatronItem.bibIrn`. A loan wins over a ready reservation, which wins over a pending one.
+/// Bib IRNs only: a loan of the book doesn't match its large-print edition, a separate bib.
+#[uniffi::export]
+pub fn account_holding(snapshot: AccountSnapshot, bib_irns: Vec<String>) -> Option<AccountHolding> {
+    let wanted: Vec<&str> = bib_irns.iter().map(|irn| irn.trim()).filter(|irn| !irn.is_empty()).collect();
+    let matches = |item: &PatronItem| item.bib_irn.as_deref().is_some_and(|irn| wanted.contains(&irn.trim()));
+    let AccountSnapshot { loans, reservations, .. } = snapshot;
+    [
+        (HoldingKind::Loan, loans.items),
+        (HoldingKind::ReservationReady, reservations.ready.items),
+        (HoldingKind::ReservationPending, reservations.pending.items),
+    ]
+    .into_iter()
+    .find_map(|(kind, items)| items.into_iter().find(|item| matches(item)).map(|item| AccountHolding { kind, item }))
 }

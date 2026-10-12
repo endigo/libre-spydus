@@ -686,6 +686,8 @@ internal object IntegrityCheckingUniffiLib {
     ): Int
     external fun uniffi_librespydus_core_checksum_func_user_agent(
     ): Int
+    external fun uniffi_librespydus_core_checksum_func_account_holding(
+    ): Int
     external fun uniffi_librespydus_core_checksum_func_availability_summary(
     ): Int
     external fun uniffi_librespydus_core_checksum_func_decode_account_snapshot(
@@ -699,6 +701,8 @@ internal object IntegrityCheckingUniffiLib {
     external fun uniffi_librespydus_core_checksum_func_is_digital_format(
     ): Int
     external fun uniffi_librespydus_core_checksum_func_parse_due_date(
+    ): Int
+    external fun uniffi_librespydus_core_checksum_func_patron_item_record_url(
     ): Int
     external fun uniffi_librespydus_core_checksum_method_spydusclient_account(
     ): Int
@@ -804,6 +808,8 @@ internal object UniffiLib {
     ): Long
     external fun uniffi_librespydus_core_fn_func_user_agent(uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
+    external fun uniffi_librespydus_core_fn_func_account_holding(`snapshot`: RustBuffer.ByValue,`bibIrns`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
     external fun uniffi_librespydus_core_fn_func_availability_summary(`availability`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     external fun uniffi_librespydus_core_fn_func_decode_account_snapshot(`json`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
@@ -817,6 +823,8 @@ internal object UniffiLib {
     external fun uniffi_librespydus_core_fn_func_is_digital_format(`format`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Byte
     external fun uniffi_librespydus_core_fn_func_parse_due_date(`text`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    external fun uniffi_librespydus_core_fn_func_patron_item_record_url(`item`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     external fun ffi_librespydus_core_rustbuffer_alloc(`size`: Long,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
@@ -943,6 +951,9 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
     if ((lib.uniffi_librespydus_core_checksum_func_user_agent() and 0xFFFF) != 13571) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
+    if ((lib.uniffi_librespydus_core_checksum_func_account_holding() and 0xFFFF) != 31138) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
     if ((lib.uniffi_librespydus_core_checksum_func_availability_summary() and 0xFFFF) != 54331) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
@@ -962,6 +973,9 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if ((lib.uniffi_librespydus_core_checksum_func_parse_due_date() and 0xFFFF) != 38620) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_librespydus_core_checksum_func_patron_item_record_url() and 0xFFFF) != 26917) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if ((lib.uniffi_librespydus_core_checksum_method_spydusclient_account() and 0xFFFF) != 60698) {
@@ -2248,6 +2262,50 @@ public object FfiConverterTypeSpydusClient: FfiConverter<SpydusClient, Long> {
 
     override fun write(value: SpydusClient, buf: ByteBuffer) {
         buf.putLong(lower(value))
+    }
+}
+
+
+
+/**
+ * A loan or reservation of the title a book page shows.
+ */
+data class AccountHolding (
+    var `kind`: HoldingKind
+    , 
+    /**
+     * The row as Your Books shows it (`fields` has Due, or Status/Rank/Placed).
+     */
+    var `item`: PatronItem
+    
+){
+    
+
+    
+
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeAccountHolding: FfiConverterRustBuffer<AccountHolding> {
+    override fun read(buf: ByteBuffer): AccountHolding {
+        return AccountHolding(
+            FfiConverterTypeHoldingKind.read(buf),
+            FfiConverterTypePatronItem.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: AccountHolding) = (
+            FfiConverterTypeHoldingKind.allocationSize(value.`kind`) +
+            FfiConverterTypePatronItem.allocationSize(value.`item`)
+    )
+
+    override fun write(value: AccountHolding, buf: ByteBuffer) {
+            FfiConverterTypeHoldingKind.write(value.`kind`, buf)
+            FfiConverterTypePatronItem.write(value.`item`, buf)
     }
 }
 
@@ -3858,6 +3916,50 @@ public object FfiConverterTypeSimpleDate: FfiConverterRustBuffer<SimpleDate> {
 
 
 /**
+ * How the patron already has a title (`AccountHolding.kind`).
+ */
+
+enum class HoldingKind {
+    
+    LOAN,
+    /**
+     * Waiting at the pickup branch (`reservations.ready`).
+     */
+    RESERVATION_READY,
+    /**
+     * Queued or in transit (`reservations.pending`).
+     */
+    RESERVATION_PENDING;
+
+    
+
+
+    companion object
+}
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeHoldingKind: FfiConverterRustBuffer<HoldingKind> {
+    override fun read(buf: ByteBuffer) = try {
+        HoldingKind.values()[buf.getInt() - 1]
+    } catch (e: IndexOutOfBoundsException) {
+        throw RuntimeException("invalid enum value, something is very wrong!!", e)
+    }
+
+    override fun allocationSize(value: HoldingKind) = 4UL
+
+    override fun write(value: HoldingKind, buf: ByteBuffer) {
+        buf.putInt(value.ordinal + 1)
+    }
+}
+
+
+
+
+
+/**
  * Result order for `SpydusClient::search_sorted`.
  */
 
@@ -4063,6 +4165,38 @@ public object FfiConverterOptionalString: FfiConverterRustBuffer<kotlin.String?>
         } else {
             buf.put(1)
             FfiConverterString.write(value, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterOptionalTypeAccountHolding: FfiConverterRustBuffer<AccountHolding?> {
+    override fun read(buf: ByteBuffer): AccountHolding? {
+        if (buf.get().toInt() == 0) {
+            return null
+        }
+        return FfiConverterTypeAccountHolding.read(buf)
+    }
+
+    override fun allocationSize(value: AccountHolding?): ULong {
+        if (value == null) {
+            return 1UL
+        } else {
+            return 1UL + FfiConverterTypeAccountHolding.allocationSize(value)
+        }
+    }
+
+    override fun write(value: AccountHolding?, buf: ByteBuffer) {
+        if (value == null) {
+            buf.put(0)
+        } else {
+            buf.put(1)
+            FfiConverterTypeAccountHolding.write(value, buf)
         }
     }
 }
@@ -4618,6 +4752,25 @@ public object FfiConverterMapStringString: FfiConverterRustBuffer<Map<kotlin.Str
     
 
         /**
+         * The loan or reservation in `snapshot` for any of `bib_irns`, so a book page can say "On loan"
+         * or "Reserved" instead of offering Reserve again. Pass the IRNs the page knows for the format
+         * it shows: `Availability.bibRecordIrn`, else `RecordDetail.bibIrn` and the opened item's
+         * `PatronItem.bibIrn`. A loan wins over a ready reservation, which wins over a pending one.
+         * Bib IRNs only: a loan of the book doesn't match its large-print edition, a separate bib.
+         */ fun `accountHolding`(`snapshot`: AccountSnapshot, `bibIrns`: List<kotlin.String>): AccountHolding? {
+            return FfiConverterOptionalTypeAccountHolding.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_librespydus_core_fn_func_account_holding(
+    
+        
+        FfiConverterTypeAccountSnapshot.lower(`snapshot`),
+        FfiConverterSequenceString.lower(`bibIrns`),_status)
+}
+    )
+    }
+    
+
+        /**
          * `availability` → its counts and a one-line label. The OPAC's availability fragment has
          * `Label: value` pairs, and the keys seen on live libraries are only these (lower-cased):
          *
@@ -4736,6 +4889,26 @@ public object FfiConverterMapStringString: FfiConverterRustBuffer<Map<kotlin.Str
     
         
         FfiConverterString.lower(`text`),_status)
+}
+    )
+    }
+    
+
+        /**
+         * A URL that loads `item`'s bib record with `SpydusClient::record`, without a session.
+         *
+         * Loan and reservation rows link to `…/BIBENQ/{setId}?SETLVL=&QRY=IRN({bibIrn})&NAVLVL=SET`,
+         * and that set lives in the patron's OPAC session: fetched without it, the OPAC answers "Session
+         * must be logged in" and the record comes back empty. `…/BIBENQ?SETLVL=&IRN={bibIrn}` loads the
+         * full bib record anonymously (Canning, Hutt City and Geelong, 2026-10-12). `bibUrl` as it is
+         * when there's no numeric bib IRN or the link isn't a BIBENQ one; `None` without a `bibUrl`.
+         */ fun `patronItemRecordUrl`(`item`: PatronItem): kotlin.String? {
+            return FfiConverterOptionalString.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_librespydus_core_fn_func_patron_item_record_url(
+    
+        
+        FfiConverterTypePatronItem.lower(`item`),_status)
 }
     )
     }

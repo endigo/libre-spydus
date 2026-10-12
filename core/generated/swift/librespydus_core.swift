@@ -1207,6 +1207,69 @@ public func FfiConverterTypeSpydusClient_lower(_ value: SpydusClient) -> UInt64 
 
 
 /**
+ * A loan or reservation of the title a book page shows.
+ */
+public struct AccountHolding: Equatable, Hashable {
+    public var kind: HoldingKind
+    /**
+     * The row as Your Books shows it (`fields` has Due, or Status/Rank/Placed).
+     */
+    public var item: PatronItem
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(kind: HoldingKind, 
+        /**
+         * The row as Your Books shows it (`fields` has Due, or Status/Rank/Placed).
+         */item: PatronItem) {
+        self.kind = kind
+        self.item = item
+    }
+
+    
+
+    
+}
+
+#if compiler(>=6)
+extension AccountHolding: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeAccountHolding: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> AccountHolding {
+        return
+            try AccountHolding(
+                kind: FfiConverterTypeHoldingKind.read(from: &buf), 
+                item: FfiConverterTypePatronItem.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: AccountHolding, into buf: inout [UInt8]) {
+        FfiConverterTypeHoldingKind.write(value.kind, into: &buf)
+        FfiConverterTypePatronItem.write(value.item, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeAccountHolding_lift(_ buf: RustBuffer) throws -> AccountHolding {
+    return try FfiConverterTypeAccountHolding.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeAccountHolding_lower(_ value: AccountHolding) -> RustBuffer {
+    return FfiConverterTypeAccountHolding.lower(value)
+}
+
+
+/**
  * Links extracted from the authenticated account (BRWENQ) page.
  */
 public struct AccountLinks: Equatable, Hashable {
@@ -3289,6 +3352,88 @@ public func FfiConverterTypeSimpleDate_lower(_ value: SimpleDate) -> RustBuffer 
 
 
 /**
+ * How the patron already has a title (`AccountHolding.kind`).
+ */
+
+public enum HoldingKind: Equatable, Hashable {
+    
+    case loan
+    /**
+     * Waiting at the pickup branch (`reservations.ready`).
+     */
+    case reservationReady
+    /**
+     * Queued or in transit (`reservations.pending`).
+     */
+    case reservationPending
+
+
+
+
+
+}
+
+#if compiler(>=6)
+extension HoldingKind: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeHoldingKind: FfiConverterRustBuffer {
+    typealias SwiftType = HoldingKind
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> HoldingKind {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+        
+        case 1: return .loan
+        
+        case 2: return .reservationReady
+        
+        case 3: return .reservationPending
+        
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: HoldingKind, into buf: inout [UInt8]) {
+        switch value {
+        
+        
+        case .loan:
+            writeInt(&buf, Int32(1))
+        
+        
+        case .reservationReady:
+            writeInt(&buf, Int32(2))
+        
+        
+        case .reservationPending:
+            writeInt(&buf, Int32(3))
+        
+        }
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeHoldingKind_lift(_ buf: RustBuffer) throws -> HoldingKind {
+    return try FfiConverterTypeHoldingKind.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeHoldingKind_lower(_ value: HoldingKind) -> RustBuffer {
+    return FfiConverterTypeHoldingKind.lower(value)
+}
+
+
+
+/**
  * Result order for `SpydusClient::search_sorted`.
  */
 
@@ -3549,6 +3694,30 @@ fileprivate struct FfiConverterOptionString: FfiConverterRustBuffer {
         switch try readInt(&buf) as Int8 {
         case 0: return nil
         case 1: return try FfiConverterString.read(from: &buf)
+        default: throw UniffiInternalError.unexpectedOptionalTag
+        }
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterOptionTypeAccountHolding: FfiConverterRustBuffer {
+    typealias SwiftType = AccountHolding?
+
+    public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
+        guard let value = value else {
+            writeInt(&buf, Int8(0))
+            return
+        }
+        writeInt(&buf, Int8(1))
+        FfiConverterTypeAccountHolding.write(value, into: &buf)
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SwiftType {
+        switch try readInt(&buf) as Int8 {
+        case 0: return nil
+        case 1: return try FfiConverterTypeAccountHolding.read(from: &buf)
         default: throw UniffiInternalError.unexpectedOptionalTag
         }
     }
@@ -4059,6 +4228,22 @@ public func userAgent() -> String  {
 })
 }
 /**
+ * The loan or reservation in `snapshot` for any of `bib_irns`, so a book page can say "On loan"
+ * or "Reserved" instead of offering Reserve again. Pass the IRNs the page knows for the format
+ * it shows: `Availability.bibRecordIrn`, else `RecordDetail.bibIrn` and the opened item's
+ * `PatronItem.bibIrn`. A loan wins over a ready reservation, which wins over a pending one.
+ * Bib IRNs only: a loan of the book doesn't match its large-print edition, a separate bib.
+ */
+public func accountHolding(snapshot: AccountSnapshot, bibIrns: [String]) -> AccountHolding?  {
+    return try!  FfiConverterOptionTypeAccountHolding.lift(try! rustCall() {
+        uniffiCallStatus in
+    uniffi_librespydus_core_fn_func_account_holding(
+        FfiConverterTypeAccountSnapshot_lower(snapshot),
+        FfiConverterSequenceString.lower(bibIrns),uniffiCallStatus
+    )
+})
+}
+/**
  * `availability` → its counts and a one-line label. The OPAC's availability fragment has
  * `Label: value` pairs, and the keys seen on live libraries are only these (lower-cased):
  *
@@ -4160,6 +4345,23 @@ public func parseDueDate(text: String) -> SimpleDate?  {
     )
 })
 }
+/**
+ * A URL that loads `item`'s bib record with `SpydusClient::record`, without a session.
+ *
+ * Loan and reservation rows link to `…/BIBENQ/{setId}?SETLVL=&QRY=IRN({bibIrn})&NAVLVL=SET`,
+ * and that set lives in the patron's OPAC session: fetched without it, the OPAC answers "Session
+ * must be logged in" and the record comes back empty. `…/BIBENQ?SETLVL=&IRN={bibIrn}` loads the
+ * full bib record anonymously (Canning, Hutt City and Geelong, 2026-10-12). `bibUrl` as it is
+ * when there's no numeric bib IRN or the link isn't a BIBENQ one; `None` without a `bibUrl`.
+ */
+public func patronItemRecordUrl(item: PatronItem) -> String?  {
+    return try!  FfiConverterOptionString.lift(try! rustCall() {
+        uniffiCallStatus in
+    uniffi_librespydus_core_fn_func_patron_item_record_url(
+        FfiConverterTypePatronItem_lower(item),uniffiCallStatus
+    )
+})
+}
 
 private enum InitializationResult {
     case ok
@@ -4182,6 +4384,9 @@ private let initializationResult: InitializationResult = {
     if (uniffi_librespydus_core_checksum_func_user_agent() != 13571) {
         return InitializationResult.apiChecksumMismatch
     }
+    if (uniffi_librespydus_core_checksum_func_account_holding() != 31138) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_librespydus_core_checksum_func_availability_summary() != 54331) {
         return InitializationResult.apiChecksumMismatch
     }
@@ -4201,6 +4406,9 @@ private let initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_librespydus_core_checksum_func_parse_due_date() != 38620) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_librespydus_core_checksum_func_patron_item_record_url() != 26917) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_librespydus_core_checksum_method_spydusclient_account() != 60698) {

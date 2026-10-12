@@ -359,6 +359,11 @@ RustBuffer uniffi_librespydus_core_fn_func_user_agent(RustCallStatus *_Nonnull o
     
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_FN_FUNC_ACCOUNT_HOLDING
+#define UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_FN_FUNC_ACCOUNT_HOLDING
+RustBuffer uniffi_librespydus_core_fn_func_account_holding(RustBuffer snapshot, RustBuffer bib_irns, RustCallStatus *_Nonnull out_status
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_FN_FUNC_AVAILABILITY_SUMMARY
 #define UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_FN_FUNC_AVAILABILITY_SUMMARY
 RustBuffer uniffi_librespydus_core_fn_func_availability_summary(RustBuffer availability, RustCallStatus *_Nonnull out_status
@@ -394,6 +399,11 @@ int8_t uniffi_librespydus_core_fn_func_is_digital_format(RustBuffer format, Rust
 #ifndef UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_FN_FUNC_PARSE_DUE_DATE
 #define UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_FN_FUNC_PARSE_DUE_DATE
 RustBuffer uniffi_librespydus_core_fn_func_parse_due_date(RustBuffer text, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_FN_FUNC_PATRON_ITEM_RECORD_URL
+#define UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_FN_FUNC_PATRON_ITEM_RECORD_URL
+RustBuffer uniffi_librespydus_core_fn_func_patron_item_record_url(RustBuffer item, RustCallStatus *_Nonnull out_status
 );
 #endif
 #ifndef UNIFFI_FFIDEF_FFI_LIBRESPYDUS_CORE_RUSTBUFFER_ALLOC
@@ -668,6 +678,12 @@ uint16_t uniffi_librespydus_core_checksum_func_user_agent(void
     
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_CHECKSUM_FUNC_ACCOUNT_HOLDING
+#define UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_CHECKSUM_FUNC_ACCOUNT_HOLDING
+uint16_t uniffi_librespydus_core_checksum_func_account_holding(void
+    
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_CHECKSUM_FUNC_AVAILABILITY_SUMMARY
 #define UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_CHECKSUM_FUNC_AVAILABILITY_SUMMARY
 uint16_t uniffi_librespydus_core_checksum_func_availability_summary(void
@@ -707,6 +723,12 @@ uint16_t uniffi_librespydus_core_checksum_func_is_digital_format(void
 #ifndef UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_CHECKSUM_FUNC_PARSE_DUE_DATE
 #define UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_CHECKSUM_FUNC_PARSE_DUE_DATE
 uint16_t uniffi_librespydus_core_checksum_func_parse_due_date(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_CHECKSUM_FUNC_PATRON_ITEM_RECORD_URL
+#define UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_CHECKSUM_FUNC_PATRON_ITEM_RECORD_URL
+uint16_t uniffi_librespydus_core_checksum_func_patron_item_record_url(void
     
 );
 #endif

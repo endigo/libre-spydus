@@ -1,6 +1,7 @@
 //! `app` helpers: format classification (calibrated on every format in the goldens and on the
 //! codes/labels seen on live libraries), availability labels (on the availability goldens and
-//! the live `counts` shapes), due dates, and the home screen's genres and shelves.
+//! the live `counts` shapes), due dates, the home screen's genres and shelves, and loans and
+//! reservations on the book page.
 
 mod common;
 
@@ -9,9 +10,9 @@ use std::fs;
 use std::path::Path;
 
 use librespydus_core::app::{
-    ACCOUNT_SNAPSHOT_VERSION, AvailabilitySummary, SimpleDate, availability_summary,
-    decode_account_snapshot, encode_account_snapshot, home_genres, home_shelves,
-    is_digital_format, parse_due_date,
+    ACCOUNT_SNAPSHOT_VERSION, AccountHolding, AvailabilitySummary, HoldingKind, SimpleDate,
+    account_holding, availability_summary, decode_account_snapshot, encode_account_snapshot,
+    home_genres, home_shelves, is_digital_format, parse_due_date, patron_item_record_url,
 };
 use librespydus_core::types::{
     AccountSnapshot, Availability, PatronItem, PatronList, RecordFormat, Reservations, SearchSort,
@@ -374,3 +375,81 @@ fn account_snapshot_rejects_other_versions_and_garbage() {
     assert!(matches!(decode_account_snapshot("{not json".into()), Err(SpydusError::Parse { .. })));
 }
 
+// ---- loans and reservations on the book page ----
+
+const CANNING_BIBENQ: &str = "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ";
+
+fn patron_item(bib_irn: Option<&str>, bib_url: Option<&str>) -> PatronItem {
+    PatronItem { bib_irn: bib_irn.map(Into::into), bib_url: bib_url.map(Into::into), ..PatronItem::default() }
+}
+
+#[test]
+fn patron_item_record_url_drops_the_session_set() {
+    // The shape every loan and reservation row in the private goldens has.
+    let row = format!("{CANNING_BIBENQ}/78577835?SETLVL=&QRY=IRN(8753080)&NAVLVL=SET");
+    assert_eq!(
+        patron_item_record_url(patron_item(Some("8753080"), Some(&row))),
+        Some(format!("{CANNING_BIBENQ}?SETLVL=&IRN=8753080"))
+    );
+    // Lower-case path, as some templates write it.
+    let lower = "https://hutt.spydus.co.nz/cgi-bin/spydus.exe/ENQ/OPAC/bibenq/1?QRY=IRN(1965306)";
+    assert_eq!(
+        patron_item_record_url(patron_item(Some("1965306"), Some(lower))).as_deref(),
+        Some("https://hutt.spydus.co.nz/cgi-bin/spydus.exe/ENQ/OPAC/bibenq?SETLVL=&IRN=1965306")
+    );
+}
+
+#[test]
+fn patron_item_record_url_keeps_what_it_cannot_rewrite() {
+    let row = format!("{CANNING_BIBENQ}/78577835?SETLVL=&QRY=IRN(8753080)&NAVLVL=SET");
+    assert_eq!(patron_item_record_url(patron_item(None, Some(&row))), Some(row.clone()));
+    assert_eq!(patron_item_record_url(patron_item(Some("87a"), Some(&row))), Some(row.clone()));
+    let work = "https://canning.spydus.com/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/1/15642035,1";
+    assert_eq!(patron_item_record_url(patron_item(Some("8753080"), Some(work))).as_deref(), Some(work));
+    assert_eq!(patron_item_record_url(patron_item(Some("8753080"), None)), None);
+    assert_eq!(patron_item_record_url(patron_item(Some("8753080"), Some(""))), None);
+}
+
+fn holdings_snapshot() -> AccountSnapshot {
+    let item = |irn: &str, title: &str| PatronItem {
+        bib_irn: Some(irn.into()),
+        title: Some(title.into()),
+        ..PatronItem::default()
+    };
+    AccountSnapshot {
+        version: ACCOUNT_SNAPSHOT_VERSION,
+        account_name: None,
+        loans: PatronList { total: Some(1), items: vec![item("100", "Loan")] },
+        reservations: Reservations {
+            ready: PatronList { total: Some(1), items: vec![item("200", "Ready"), item("100", "Ready again")] },
+            pending: PatronList { total: Some(2), items: vec![item("300", "Pending"), item("200", "Pending too")] },
+        },
+        fetched_at_ms: 0,
+    }
+}
+
+fn holding(irns: &[&str]) -> Option<(HoldingKind, String)> {
+    let irns = irns.iter().map(|irn| irn.to_string()).collect();
+    account_holding(holdings_snapshot(), irns)
+        .map(|AccountHolding { kind, item }| (kind, item.title.unwrap_or_default()))
+}
+
+#[test]
+fn account_holding_finds_the_loan_or_reservation_by_bib_irn() {
+    assert_eq!(holding(&["100"]), Some((HoldingKind::Loan, "Loan".into())));
+    assert_eq!(holding(&["200"]), Some((HoldingKind::ReservationReady, "Ready".into())));
+    assert_eq!(holding(&["300"]), Some((HoldingKind::ReservationPending, "Pending".into())));
+    // Any of the page's IRNs; a loan beats a reservation whichever IRN comes first.
+    assert_eq!(holding(&["300", " 100 "]), Some((HoldingKind::Loan, "Loan".into())));
+}
+
+#[test]
+fn account_holding_needs_a_matching_bib_irn() {
+    assert_eq!(holding(&["999"]), None);
+    assert_eq!(holding(&[]), None);
+    assert_eq!(holding(&["", " "]), None);
+    // A row without a bib IRN never matches an empty one.
+    let mut snapshot = holdings_snapshot();
+    snapshot.loans.items[0].bib_irn = None;
+    assert_eq!(account_holding(snapshot, vec![String::new()]), None);
+}
