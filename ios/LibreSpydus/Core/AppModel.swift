@@ -154,6 +154,12 @@ final class AppModel {
         await refreshAccount()
     }
 
+    /// A hold was placed (or otherwise changed outside Borrowed): screens showing account data
+    /// (Borrowed, Home's shelf) reload via `reloadKey`.
+    func accountDidChange() {
+        accountGeneration += 1
+    }
+
     func signOut() {
         clearSession()
     }

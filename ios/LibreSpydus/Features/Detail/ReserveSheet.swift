@@ -28,6 +28,10 @@ struct ReserveSheet: View {
             .safeAreaInset(edge: .bottom, spacing: 0) {
                 footer
             }
+            .onChange(of: model.result?.ok) { _, ok in
+                // The new hold shows up in Borrowed without a manual refresh.
+                if ok == true { app.accountDidChange() }
+            }
             .screenBackground()
             .navigationTitle("Reserve")
             .navigationBarTitleDisplayMode(.inline)
