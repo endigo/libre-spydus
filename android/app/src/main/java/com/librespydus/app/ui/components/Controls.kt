@@ -307,8 +307,8 @@ fun Chip(
 ) {
     val shape = RoundedCornerShape(LsRadius.pill)
     val (container, content) = when {
-        selected && onSheet -> LsColors.accent to LsColors.onAccent
-        selected -> LsColors.textPrimary to LsColors.background
+        // Selected = coral, as on iOS (design/tokens.json `primary`).
+        selected -> LsColors.primary to LsColors.onPrimary
         tint != null -> tint.copy(alpha = 0.18f) to tint
         onSheet -> LsColors.chipOnSheet to LsColors.onSheet
         else -> LsColors.surfaceElevated to LsColors.textPrimary
@@ -349,7 +349,7 @@ fun SegmentedToggle(
                     .weight(1f)
                     .heightIn(min = 36.dp)
                     .clip(shape)
-                    .background(if (selected) LsColors.textPrimary else Color.Transparent)
+                    .background(if (selected) LsColors.primary else Color.Transparent)
                     .clickable(interactionSource = interaction, indication = null, role = Role.Tab) { onSelect(index) }
                     .semantics {
                         this.selected = selected
@@ -361,7 +361,7 @@ fun SegmentedToggle(
                 Text(
                     label,
                     style = LsType.bodyStrong,
-                    color = if (selected) LsColors.background else LsColors.textSecondary,
+                    color = if (selected) LsColors.onPrimary else LsColors.textSecondary,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )

@@ -128,13 +128,14 @@ private fun CenterSearchButton(selected: Boolean, onClick: () -> Unit, modifier:
         Box(
             Modifier
                 .size(d - 12.dp)
-                .background(if (selected) LsColors.background else LsColors.chipOnSheet, CircleShape),
+                .background(LsColors.tabBar, CircleShape),
             contentAlignment = Alignment.Center,
         ) {
             Icon(
                 LsIcons.Search,
                 contentDescription = null,
-                tint = if (selected) LsColors.textPrimary else LsColors.tabActive,
+                // Like iOS: a white button whose icon turns coral on the Search tab.
+                tint = if (selected) LsColors.primary else LsColors.tabActive,
                 modifier = Modifier.size(26.dp),
             )
         }
