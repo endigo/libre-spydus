@@ -1,0 +1,104 @@
+import SwiftUI
+
+/// The app shell: five tab stacks under the custom tab bar, plus the root sheets
+/// (library picker, login, verification) driven by `AppModel` flags.
+struct RootView: View {
+    @Environment(AppModel.self) private var model
+    /// Tabs are built on first visit and then kept alive, so each keeps its stack and state.
+    @State private var visitedTabs: Set<AppTab> = []
+
+    var body: some View {
+        @Bindable var model = model
+        ZStack {
+            Theme.Colors.background.ignoresSafeArea()
+            ForEach(AppTab.allCases) { tab in
+                if visitedTabs.contains(tab) || tab == model.selectedTab {
+                    let isSelected = tab == model.selectedTab
+                    TabStack(tab: tab)
+                        .opacity(isSelected ? 1 : 0)
+                        .allowsHitTesting(isSelected)
+                        .accessibilityHidden(!isSelected)
+                }
+            }
+        }
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            LSTabBar(selection: model.selectedTab) { model.select($0) }
+        }
+        .ignoresSafeArea(.keyboard, edges: .bottom)
+        .onChange(of: model.selectedTab, initial: true) { _, tab in
+            visitedTabs.insert(tab)
+        }
+        .sheet(item: rootSheet) { sheet in
+            Group {
+                switch sheet {
+                case .libraryPicker: LibraryPickerView()
+                case .login: LoginView()
+                case .verification: VerificationView()
+                }
+            }
+            .environment(model)
+        }
+        .fullScreenCover(isPresented: onboarding) {
+            LibraryPickerView()
+                .environment(model)
+        }
+        #if DEBUG
+        .fullScreenCover(isPresented: $model.componentsGalleryPresented) {
+            ComponentsGallery()
+                .environment(model)
+        }
+        #endif
+        .task(id: model.backend.origin) {
+            await model.refreshAccount()
+        }
+    }
+
+    private var rootSheet: Binding<RootSheet?> {
+        Binding(
+            get: { model.rootSheet },
+            set: { newValue in
+                if newValue == nil, let shown = model.rootSheet { model.dismiss(shown) }
+            }
+        )
+    }
+
+    /// First launch: the picker can't be dismissed until a library is chosen.
+    private var onboarding: Binding<Bool> {
+        Binding(get: { model.needsOnboarding }, set: { _ in })
+    }
+}
+
+/// One tab's `NavigationStack`, handling the shared routes.
+private struct TabStack: View {
+    let tab: AppTab
+    @Environment(AppModel.self) private var model
+
+    var body: some View {
+        NavigationStack(path: path) {
+            root
+                .navigationDestination(for: Route.self) { route in
+                    switch route {
+                    case .detail(let ref):
+                        BookDetailView(ref: ref)
+                    case let .results(query, sort, title):
+                        SearchResultsView(query: query, sort: sort, title: title)
+                    }
+                }
+        }
+    }
+
+    @ViewBuilder
+    private var root: some View {
+        switch tab {
+        case .home: HomeView()
+        case .borrowed: BorrowedView()
+        case .search: SearchView()
+        case .favourites: FavouritesView()
+        case .profile: ProfileView()
+        }
+    }
+
+    private var path: Binding<[Route]> {
+        Binding(get: { model.path(for: tab) }, set: { model.setPath($0, for: tab) })
+    }
+}

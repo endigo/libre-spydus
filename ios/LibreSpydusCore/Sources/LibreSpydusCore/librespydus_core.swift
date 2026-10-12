@@ -1,0 +1,1 @@
+../../../../core/generated/swift/librespydus_core.swift

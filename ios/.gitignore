@@ -1,0 +1,8 @@
+# Build output of scripts/build-core.sh (also covered by the repo .gitignore)
+LibreSpydusCore/*.xcframework
+# SwiftPM state if the package is ever built/opened on its own
+LibreSpydusCore/.build/
+LibreSpydusCore/.swiftpm/
+# Per-worker build dirs
+build/
+DerivedData/

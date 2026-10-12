@@ -1,0 +1,137 @@
+import Foundation
+
+/// Debug launch hooks (docs/native-apps.md §5.6), read from launch arguments in DEBUG builds only:
+///
+///     xcrun simctl launch <udid> com.librespydus \
+///       -LSLibraryOrigin https://canning.spydus.com -LSDemo YES -LSRoute borrowed
+///
+/// - `-LSLibraryOrigin <origin>`: select a library, skip the picker.
+/// - `-LSRoute <route>`: `home`, `search:<query>`, `results:<query>`, `detail:<url>`, `borrowed`,
+///   `favourites`, `profile`, `libraries`, `login`, `verify`, `gallery` (DesignSystem gallery).
+/// - `-LSDemo YES`: demo mode, already signed in as "Test Borrower".
+/// - `-LSReset YES`: clear the persisted library, sessions, verification and favourites first.
+struct LaunchOptions: Equatable, Sendable {
+    enum LaunchRoute: Equatable, Sendable {
+        case home
+        case search(String)
+        case results(String)
+        case detail(String)
+        case borrowed
+        case favourites
+        case profile
+        case libraries
+        case login
+        case verify
+        case gallery
+
+        /// Parses `name` or `name:<argument>`; nil for an unknown route or a missing argument.
+        init?(_ text: String) {
+            let name: Substring
+            let argument: String?
+            if let colon = text.firstIndex(of: ":") {
+                name = text[..<colon]
+                argument = String(text[text.index(after: colon)...]).trimmingCharacters(in: .whitespaces)
+            } else {
+                name = Substring(text)
+                argument = nil
+            }
+            let nonEmptyArgument = argument.flatMap { $0.isEmpty ? nil : $0 }
+            switch name.lowercased() {
+            case "home": self = .home
+            case "search": self = .search(argument ?? "")
+            case "results":
+                guard let query = nonEmptyArgument else { return nil }
+                self = .results(query)
+            case "detail":
+                guard let url = nonEmptyArgument else { return nil }
+                self = .detail(url)
+            case "borrowed": self = .borrowed
+            case "favourites", "favorites": self = .favourites
+            case "profile": self = .profile
+            case "libraries": self = .libraries
+            case "login": self = .login
+            case "verify": self = .verify
+            case "gallery": self = .gallery
+            default: return nil
+            }
+        }
+    }
+
+    var libraryOrigin: String?
+    var route: LaunchRoute?
+    var demo = false
+    var reset = false
+
+    /// This process's options; always empty in release builds.
+    static var current: LaunchOptions {
+        #if DEBUG
+        parse(ProcessInfo.processInfo.arguments)
+        #else
+        LaunchOptions()
+        #endif
+    }
+
+    /// Parses `-LSKey value` pairs (the same form `UserDefaults` reads); unknown keys are ignored.
+    static func parse(_ arguments: [String]) -> LaunchOptions {
+        var options = LaunchOptions()
+        var index = arguments.startIndex
+        while index < arguments.endIndex {
+            let key = arguments[index]
+            let next = arguments.index(after: index)
+            guard key.hasPrefix("-LS"), next < arguments.endIndex else {
+                index = next
+                continue
+            }
+            let value = arguments[next]
+            switch key {
+            case "-LSLibraryOrigin":
+                let origin = value.trimmingCharacters(in: .whitespaces)
+                options.libraryOrigin = origin.isEmpty ? nil : origin
+            case "-LSRoute": options.route = LaunchRoute(value)
+            case "-LSDemo": options.demo = isYes(value)
+            case "-LSReset": options.reset = isYes(value)
+            default:
+                index = next
+                continue
+            }
+            index = arguments.index(after: next)
+        }
+        return options
+    }
+
+    private static func isYes(_ value: String) -> Bool {
+        ["yes", "true", "1"].contains(value.lowercased())
+    }
+}
+
+#if DEBUG
+extension LaunchOptions {
+    /// Applies the library and route hooks to a freshly created model (`-LSReset` and `-LSDemo`
+    /// are handled before the model exists, in `LibreSpydusApp.init`).
+    @MainActor
+    func apply(to model: AppModel) {
+        if let libraryOrigin {
+            model.selectLibrary(origin: libraryOrigin)
+            Task { await model.refreshLibraryInfo() }
+        }
+        switch route {
+        case nil: break
+        case .home: model.selectedTab = .home
+        case .search(let query): model.openSearch(query: query)
+        case .results(let query):
+            model.setPath([.results(query: query, sort: .relevance, title: query)], for: .search)
+            model.selectedTab = .search
+        case .detail(let url):
+            model.setPath([.detail(BookRef(url: url))], for: .home)
+            model.selectedTab = .home
+        case .borrowed: model.selectedTab = .borrowed
+        case .favourites: model.selectedTab = .favourites
+        case .profile: model.selectedTab = .profile
+        case .libraries: model.libraryPickerPresented = true
+        case .login: model.loginNeeded = true
+        case .verify: model.verificationNeeded = true
+        case .gallery: model.componentsGalleryPresented = true
+        }
+    }
+}
+#endif
