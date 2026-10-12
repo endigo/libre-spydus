@@ -104,6 +104,9 @@ Pass them as launch arguments (docs/native-apps.md §5.6):
 | `-LSDemo YES` | demo mode, already signed in as "Test Borrower" |
 | `-LSReset YES` | first clear the persisted library, sessions, verification cookies and favourites |
 | `-LSGalleryAnchor <section>` | with `-LSRoute gallery`: scroll to `rows`, `chips`, `buttons`, `sheet`, `states` or `type` |
+| `-LSPickerQuery <text>` | the library picker starts with this search text |
+| `-LSLoginCard <card> -LSLoginPIN <pin>` | with `-LSRoute login`: fill the sign-in form; add `-LSLoginSubmit YES` to sign in once. **Demo mode only** (ignored without `-LSDemo YES`), so a worker can't sign in to a real library by accident |
+| `-LSProfileAnchor bottom` | with `-LSRoute profile`: start scrolled to the end of Profile |
 
 `gallery` opens the **components gallery**, which shows every DesignSystem component on one
 screen. Example:
@@ -134,6 +137,51 @@ xcrun simctl launch --terminate-running-process "$UDID" com.librespydus -LSReset
 
 Use demo mode to build and screenshot every account screen. Never sign in to a real library
 (docs/native-apps.md §2).
+
+## Human verification (UK)
+
+Every `*.spydus.co.uk` library sits behind AWS WAF. Its OPAC answers each request with a "Human
+Verification" page, so the core throws `HumanVerificationRequired` (core/README.md "Human
+verification"). `AppModel.report` then presents the verification sheet (`VerificationView`):
+
+- The sheet loads `origin + "/"` in a `WKWebView` that uses the default (persistent) website data
+  store and `customUserAgent = userAgent()`, the core's own User-Agent, because the WAF token may
+  be tied to it.
+- The **user** completes the check. A `WKHTTPCookieStoreObserver`, plus a check after every
+  finished page load, looks for an `aws-waf-token` cookie whose domain matches the library's host
+  (`VerificationCookie.header`, unit-tested: host-only or leading-dot parent domains, not expired,
+  not empty). The token is taken only after the last page response has no `x-amzn-waf-action`
+  header, which means the web view shows the library's own page again. A token the challenge sets
+  before the user finishes is therefore never used.
+- `completeVerification(cookie: "aws-waf-token=<value>")` stores the cookie per origin (Keychain)
+  and applies it to the client. The sheet closes, and screens rerun their loads through
+  `verificationGeneration`. After two completed verifications that the library still rejects, the
+  app stops asking and says the library can't be used from the app right now.
+- The app never injects scripts into the challenge or interacts with it. Workers may open the
+  sheet to check that it renders, and nothing more (docs/native-apps.md §2).
+- Profile shows "Verified on this device" while a cookie is stored. **Clear verification**
+  removes it from the Keychain, the client and the web view's cookie store.
+
+Shortcut to the sheet: `-LSLibraryOrigin https://aberdeencity.spydus.co.uk -LSRoute verify`.
+
+### Manual end-to-end test (for the user)
+
+Only a person may do this. It needs the Search screen (I3) merged.
+
+1. Install a debug build and launch it with `-LSReset YES`, without `-LSDemo`.
+2. In "Choose your library", search `aberdeen` and pick **Aberdeen City Libraries**. Any UK row
+   works; they're marked "Asks you to verify you're human".
+3. Open the Search tab and search `harry potter`. The "Verify you're human" sheet opens on the
+   library's "Let's confirm you are human" page.
+4. Tap **Begin** and complete the puzzle.
+5. The page reloads into the library's website and the sheet closes by itself within a second
+   or two.
+6. **Expected:** the search reruns and results load. Profile shows "Verified on this device".
+7. If the sheet opens again, the library rejected the token from the app. Complete the check
+   once more. If it's rejected again, the screen says the library can't be used from the app
+   right now. Report which of these happened, because whether a WAF token works outside a browser
+   is still unverified (core/README.md).
+8. Profile → **Clear verification** → confirm, then search again. The sheet opens again.
 
 ## App core in brief
 
