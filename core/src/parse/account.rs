@@ -38,7 +38,10 @@ fn settings<'h>(
         })
 }
 
-const NAME_SELECTOR: &str = ".navbar .dropdown-toggle-account, .account-name, #accountDropdown";
+// `#navbarLoginMenuLinkName` is the signed-in navbar link on current Spydus templates (Canning,
+// 2026-10-12: "First Last"); the others are older/alternative templates.
+const NAME_SELECTOR: &str =
+    ".navbar .dropdown-toggle-account, .account-name, #accountDropdown, #navbarLoginMenuLinkName";
 
 // ---------------------------------------------------------------------------
 // Account page → navigation links (account.ts:16-60)

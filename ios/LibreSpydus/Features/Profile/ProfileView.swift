@@ -130,17 +130,17 @@ struct ProfileView: View {
                     Text(name)
                         .themeFont(.bodyStrong)
                         .foregroundStyle(Theme.Colors.textPrimary)
-                } else if accountLoad == .failed {
-                    Text("Signed in")
-                        .themeFont(.bodyStrong)
-                        .foregroundStyle(Theme.Colors.textPrimary)
-                } else {
+                } else if accountLoad == .loading {
                     HStack(spacing: Theme.Spacing.s) {
                         ProgressView().tint(Theme.Colors.textSecondary)
                         Text("Loading your account…")
                             .themeFont(.body)
                             .foregroundStyle(Theme.Colors.textSecondary)
                     }
+                } else {
+                    Text("Signed in")
+                        .themeFont(.bodyStrong)
+                        .foregroundStyle(Theme.Colors.textPrimary)
                 }
                 Text("Signed in to \(model.libraryName)")
                     .themeFont(.caption)
@@ -208,9 +208,10 @@ struct ProfileView: View {
         }
         guard force || model.accountName == nil else { return }
         accountLoad = .loading
-        await model.refreshAccount()
+        let loaded = await model.refreshAccount()
         guard !Task.isCancelled else { return }
-        accountLoad = model.isSignedIn && model.accountName == nil ? .failed : .idle
+        // A library page without a name isn't an error: Profile then just says "Signed in".
+        accountLoad = !loaded && model.isSignedIn && model.accountName == nil ? .failed : .idle
     }
 
     // MARK: Verification

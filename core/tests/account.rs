@@ -164,6 +164,12 @@ const LINK_CASES: &[(&str, &str, &str)] = &[
         r#"{"name": null, "loansUrl": null, "reservationsReadyUrl": null, "reservationsPendingUrl": null}"#,
     ),
     (
+        // Current Spydus template (Canning, 2026-10-12): the signed-in navbar link carries the name.
+        "links_navbar_login_menu_name",
+        r##"<li class="brw-loggedin nav-item dropup dropdown-lg"><a class="nav-link dropdown-toggle pseudo-icon-after" href="#" id="navbarLoginMenuLinkName" role="button">Ada  Lovelace</a></li>"##,
+        r#"{"name": "Ada Lovelace", "loansUrl": null, "reservationsReadyUrl": null, "reservationsPendingUrl": null}"#,
+    ),
+    (
         "links_none",
         r#"<p>guest</p>"#,
         r#"{"name": null, "loansUrl": null, "reservationsReadyUrl": null, "reservationsPendingUrl": null}"#,

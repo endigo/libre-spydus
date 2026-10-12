@@ -36,7 +36,8 @@ export function parseAccountLinks(html: string, origin: string): AccountLinks {
       },
     })
     // Logged-in borrower name — the navbar account dropdown toggle.
-    .on(".navbar .dropdown-toggle-account, .account-name, #accountDropdown", {
+    // #navbarLoginMenuLinkName: the signed-in navbar link on current Spydus templates ("First Last").
+    .on(".navbar .dropdown-toggle-account, .account-name, #accountDropdown, #navbarLoginMenuLinkName", {
       element() {
         if (name == null) nameBuf = "";
       },

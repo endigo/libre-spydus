@@ -215,14 +215,20 @@ class AppState(
     }
 
     /** Reloads [accountName] (errors are routed through [report] and otherwise ignored). */
-    suspend fun refreshAccount() {
-        val backend = _backend.value ?: return
-        val session = _session.value ?: return
-        try {
+    /**
+     * Loads the signed-in borrower's name. Returns false only when the request failed; a library
+     * page without a name is a success with a null [accountName].
+     */
+    suspend fun refreshAccount(): Boolean {
+        val backend = _backend.value ?: return true
+        val session = _session.value ?: return true
+        return try {
             val links = backend.account(session)
             if (backend === _backend.value && session == _session.value) _accountName.value = links.name
+            true
         } catch (e: SpydusException) {
             report(e)
+            false
         }
     }
 

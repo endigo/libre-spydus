@@ -111,8 +111,9 @@ fun ProfileScreen(appState: AppState, navigator: AppNavigator, modifier: Modifie
         }
         if (!force && appState.accountName.value != null) return
         accountLoad = AccountLoad.LOADING
-        appState.refreshAccount()
-        accountLoad = if (appState.isSignedIn.value && appState.accountName.value == null) AccountLoad.FAILED else AccountLoad.IDLE
+        val loaded = appState.refreshAccount()
+        // A library page without a name isn't an error: Profile then just says "Signed in".
+        accountLoad = if (!loaded && appState.isSignedIn.value && appState.accountName.value == null) AccountLoad.FAILED else AccountLoad.IDLE
     }
 
     LaunchedEffect(accountGeneration, signedIn) { loadAccountName() }
@@ -273,12 +274,12 @@ private fun AccountSection(
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(LsSpacing.xs)) {
                         when {
                             accountName != null -> Text(accountName, style = LsType.bodyStrong, color = LsColors.textPrimary)
-                            load == AccountLoad.FAILED -> Text("Signed in", style = LsType.bodyStrong, color = LsColors.textPrimary)
-                            else -> Row(verticalAlignment = Alignment.CenterVertically) {
+                            load == AccountLoad.LOADING -> Row(verticalAlignment = Alignment.CenterVertically) {
                                 CircularProgressIndicator(color = LsColors.textSecondary, strokeWidth = 2.dp, modifier = Modifier.size(16.dp))
                                 Spacer(Modifier.width(LsSpacing.s))
                                 Text("Loading your account…", style = LsType.body, color = LsColors.textSecondary)
                             }
+                            else -> Text("Signed in", style = LsType.bodyStrong, color = LsColors.textPrimary)
                         }
                         Text("Signed in to $libraryName", style = LsType.caption, color = LsColors.textSecondary)
                     }

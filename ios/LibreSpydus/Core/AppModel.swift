@@ -165,19 +165,24 @@ final class AppModel {
     }
 
     /// Loads `accountName`; a lost session clears itself through `report`.
-    func refreshAccount() async {
+    /// Loads the signed-in borrower's name. Returns false only when the request failed; a library
+    /// page without a name is a success with `accountName == nil`.
+    @discardableResult
+    func refreshAccount() async -> Bool {
         guard let session else {
             accountName = nil
-            return
+            return true
         }
         let generation = backendGeneration
         do {
             let links = try await backend.account(session: session)
-            guard generation == backendGeneration, self.session == session else { return }
+            guard generation == backendGeneration, self.session == session else { return true }
             accountName = links.name
+            return true
         } catch {
-            guard generation == backendGeneration else { return }
+            guard generation == backendGeneration else { return true }
             report(error)
+            return false
         }
     }
 
