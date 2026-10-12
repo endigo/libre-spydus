@@ -3,7 +3,10 @@ package com.librespydus.app.feature.borrowed
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.scrollBy
+import androidx.compose.foundation.indication
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -20,20 +23,30 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.customActions
@@ -51,7 +64,6 @@ import com.librespydus.app.feature.onboarding.AccountBanner
 import com.librespydus.app.feature.onboarding.AccountBannerTone
 import com.librespydus.app.feature.onboarding.AccountIcons
 import com.librespydus.app.ui.components.BookRowCard
-import com.librespydus.app.ui.components.CardAction
 import com.librespydus.app.ui.components.EmptyStateView
 import com.librespydus.app.ui.components.ErrorStateView
 import com.librespydus.app.ui.components.LoadingView
@@ -59,6 +71,8 @@ import com.librespydus.app.ui.components.SectionHeader
 import com.librespydus.app.ui.components.SegmentedToggle
 import com.librespydus.app.ui.nav.AppNavigator
 import com.librespydus.app.ui.theme.LsColors
+import com.librespydus.app.ui.theme.LsIcons
+import com.librespydus.app.ui.theme.LsRadius
 import com.librespydus.app.ui.theme.LsSpacing
 import com.librespydus.app.ui.theme.LsTabBar
 import com.librespydus.app.ui.theme.LsType
@@ -67,8 +81,9 @@ import kotlinx.coroutines.delay
 /**
  * "Your Books" (docs/native-apps.md §6 Borrowed): Loans | Reservations. Loans are sorted by due
  * date with the danger colour when due within 3 days or overdue; reservations show "Ready for
- * pickup" first, then pending, each with Cancel (confirmed) and Edit (sheet). Pull to refresh;
- * reloads on sign-in/out, library change and verification.
+ * pickup" first, then pending. A reservation's Edit (sheet) and Cancel (confirmed) sit behind a
+ * swipe toward the leading edge, in its long-press menu and in its TalkBack actions. Pull to
+ * refresh; reloads on sign-in/out, library change and verification.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -95,8 +110,14 @@ fun BorrowedScreen(appState: AppState, navigator: AppNavigator, modifier: Modifi
     val refreshing by vm.refreshing.collectAsStateWithLifecycle()
     val libraryName = library?.name ?: "your library"
     val listState = rememberLazyListState()
+    // The swiped-open reservation card (one at a time): closed by a scroll, a tap or a segment switch.
+    val swipe = remember { ReservationSwipeController() }
 
     LaunchedEffect(backend, session, accountGeneration, verificationGeneration) { vm.appear() }
+    LaunchedEffect(listState) {
+        snapshotFlow { listState.isScrollInProgress }.collect { if (it) swipe.close() }
+    }
+    LaunchedEffect(segment) { swipe.close() }
 
     // DEBUG screenshot hooks (demo mode only), once the lists have loaded.
     val loaded = loans is BorrowedLoad.Loaded && reservations is BorrowedLoad.Loaded
@@ -137,7 +158,9 @@ fun BorrowedScreen(appState: AppState, navigator: AppNavigator, modifier: Modifi
                 bottom = LsTabBar.centerButtonLift + LsSpacing.xxl,
             ),
             verticalArrangement = Arrangement.spacedBy(LsSpacing.l),
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .closesReservationSwipeOnTap(swipe),
         ) {
             item(key = "title") {
                 Text(
@@ -192,6 +215,7 @@ fun BorrowedScreen(appState: AppState, navigator: AppNavigator, modifier: Modifi
                 BorrowedModel.Segment.RESERVATIONS -> reservationsContent(
                     reservations,
                     busy = busy,
+                    swipe = swipe,
                     onRetry = vm::reload,
                     onOpen = { navigator.openBook(it.ref) },
                     onCancel = model::askToCancel,
@@ -255,18 +279,22 @@ private fun LazyListScope.loansContent(
             }
         } else {
             items(loans.value, key = { "loan-${it.id}" }) { row -> LoanCard(row, onClick = { onOpen(row) }) }
-            item(key = "renewals") {
-                Row(
-                    Modifier.fillMaxWidth().padding(top = LsSpacing.s),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Icon(AccountIcons.Sync, contentDescription = null, tint = LsColors.textMuted, modifier = Modifier.size(14.dp))
-                    Spacer(Modifier.width(LsSpacing.xs))
-                    Text("Renewals coming soon", style = LsType.caption, color = LsColors.textMuted)
-                }
-            }
+            item(key = "renewals") { Footnote(AccountIcons.Sync, "Renewals coming soon") }
         }
+    }
+}
+
+/** A muted line under a list ("Renewals coming soon", the swipe hint). */
+@Composable
+private fun Footnote(icon: ImageVector, text: String) {
+    Row(
+        Modifier.fillMaxWidth().padding(top = LsSpacing.s),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(icon, contentDescription = null, tint = LsColors.textMuted, modifier = Modifier.size(14.dp))
+        Spacer(Modifier.width(LsSpacing.xs))
+        Text(text, style = LsType.caption, color = LsColors.textMuted)
     }
 }
 
@@ -288,6 +316,7 @@ private fun LoanCard(row: LoanRow, onClick: () -> Unit) {
 private fun LazyListScope.reservationsContent(
     reservations: BorrowedLoad<ReservationSections>,
     busy: Set<String>,
+    swipe: ReservationSwipeController,
     onRetry: () -> Unit,
     onOpen: (ReservationRow) -> Unit,
     onCancel: (ReservationRow) -> Unit,
@@ -311,67 +340,154 @@ private fun LazyListScope.reservationsContent(
             if (sections.ready.isNotEmpty()) {
                 item(key = "ready-header") { SectionHeader("Ready for pickup", Modifier.padding(top = LsSpacing.xs)) }
                 items(sections.ready, key = { "reservation-${it.id}" }) { row ->
-                    ReservationCard(row, row.id in busy, onOpen, onCancel, onEdit)
+                    ReservationCard(row, row.id in busy, swipe, onOpen, onCancel, onEdit)
                 }
             }
             if (sections.pending.isNotEmpty()) {
                 item(key = "pending-header") { SectionHeader("Pending", Modifier.padding(top = LsSpacing.xs)) }
                 items(sections.pending, key = { "reservation-${it.id}" }) { row ->
-                    ReservationCard(row, row.id in busy, onOpen, onCancel, onEdit)
+                    ReservationCard(row, row.id in busy, swipe, onOpen, onCancel, onEdit)
+                }
+            }
+            if (sections.hasActions) {
+                item(key = "swipe-hint") { Footnote(LsIcons.ArrowBack, SWIPE_HINT) }
+            }
+        }
+    }
+}
+
+internal const val SWIPE_HINT = "Swipe left on a reservation to change or cancel it."
+
+/** Where `BookRowCard`'s surface starts below the cover rising above it (its `rise`). */
+private val CARD_RISE = 14.dp
+
+/**
+ * A reservation: tap opens the book; Edit / Cancel are behind a swipe ([ReservationSwipeBox]), in
+ * a long-press menu and in the card's TalkBack custom actions. While a cancel runs ([busy]) the
+ * card is dimmed with a spinner and takes no actions.
+ */
+@Composable
+private fun ReservationCard(
+    row: ReservationRow,
+    busy: Boolean,
+    swipe: ReservationSwipeController,
+    onOpen: (ReservationRow) -> Unit,
+    onCancel: (ReservationRow) -> Unit,
+    onEdit: (ReservationRow) -> Unit,
+) {
+    val actions = ReservationAction.of(row)
+    val run: (ReservationAction) -> Unit = { action ->
+        when (action) {
+            ReservationAction.EDIT -> onEdit(row)
+            ReservationAction.CANCEL -> onCancel(row)
+        }
+    }
+    var menuShown by remember { mutableStateOf(false) }
+    val presses = remember { MutableInteractionSource() }
+    val statusColor: Color = when {
+        row.isReady -> LsColors.success
+        row.isInTransit -> LsColors.warning
+        else -> LsColors.textSecondary
+    }
+    ReservationSwipeBox(
+        id = row.id,
+        controller = swipe,
+        actions = actions,
+        onAction = run,
+        enabled = !busy,
+        surfaceTop = CARD_RISE,
+    ) {
+        // One TalkBack node for the whole card (it merges the card's text), with the actions on it.
+        Box(
+            Modifier
+                .combinedClickable(
+                    interactionSource = presses,
+                    indication = null,
+                    enabled = !busy,
+                    onLongClickLabel = if (actions.isEmpty()) null else "Show reservation actions",
+                    onLongClick = if (actions.isEmpty()) null else ({
+                        swipe.close()
+                        menuShown = true
+                    }),
+                    // A tap while a card is swiped open only closes it.
+                    onClick = { if (!swipe.dismiss()) onOpen(row) },
+                )
+                .semantics {
+                    if (!busy) {
+                        customActions = actions.map { action -> CustomAccessibilityAction(action.fullTitle) { run(action); true } }
+                    }
+                },
+        ) {
+            BookRowCard(
+                title = row.ref.title,
+                coverUrl = row.ref.coverUrl,
+                byLine = Formatting.byLine(row.ref.author),
+                meta = row.meta,
+                metaColor = if (row.isReady) LsColors.textPrimary else LsColors.textSecondary,
+                badge = row.statusLabel,
+                badgeColor = statusColor,
+                highlighted = row.isReady,
+                modifier = Modifier.alpha(if (busy) 0.7f else 1f),
+            )
+            // The press ripple, on the card's surface only (not the strip the cover rises into).
+            Box(
+                Modifier
+                    .matchParentSize()
+                    .padding(top = CARD_RISE)
+                    .clip(RoundedCornerShape(LsRadius.card))
+                    .indication(presses, ripple()),
+            )
+            if (busy) {
+                CircularProgressIndicator(
+                    color = LsColors.textSecondary,
+                    strokeWidth = 2.dp,
+                    modifier = Modifier
+                        .align(Alignment.CenterEnd)
+                        .padding(end = LsSpacing.xl)
+                        .size(22.dp),
+                )
+            }
+            if (actions.isNotEmpty()) {
+                // Anchors the long-press menu under the card's trailing edge.
+                Box(Modifier.align(Alignment.BottomEnd)) {
+                    ReservationMenu(
+                        expanded = menuShown && !busy,
+                        actions = actions,
+                        onDismiss = { menuShown = false },
+                        onAction = { action ->
+                            menuShown = false
+                            run(action)
+                        },
+                    )
                 }
             }
         }
     }
 }
 
+/** The long-press menu: "Edit reservation", "Cancel reservation" (destructive, in coral). */
 @Composable
-private fun ReservationCard(
-    row: ReservationRow,
-    busy: Boolean,
-    onOpen: (ReservationRow) -> Unit,
-    onCancel: (ReservationRow) -> Unit,
-    onEdit: (ReservationRow) -> Unit,
+private fun ReservationMenu(
+    expanded: Boolean,
+    actions: List<ReservationAction>,
+    onDismiss: () -> Unit,
+    onAction: (ReservationAction) -> Unit,
 ) {
-    val actions = buildList {
-        if (row.cancelHref != null) add(CardAction("Cancel", { onCancel(row) }))
-        if (row.editHref != null) add(CardAction("Edit", { onEdit(row) }))
-    }
-    val statusColor: Color = when {
-        row.isReady -> LsColors.success
-        row.isInTransit -> LsColors.warning
-        else -> LsColors.textSecondary
-    }
-    Box(
-        Modifier.semantics {
-            if (!busy) {
-                customActions = buildList {
-                    if (row.cancelHref != null) add(CustomAccessibilityAction("Cancel reservation") { onCancel(row); true })
-                    if (row.editHref != null) add(CustomAccessibilityAction("Edit reservation") { onEdit(row); true })
-                }
-            }
-        },
+    DropdownMenu(
+        expanded = expanded,
+        onDismissRequest = onDismiss,
+        shape = RoundedCornerShape(LsRadius.field),
+        containerColor = LsColors.surfaceElevated,
     ) {
-        BookRowCard(
-            title = row.ref.title,
-            coverUrl = row.ref.coverUrl,
-            byLine = Formatting.byLine(row.ref.author),
-            meta = row.meta,
-            metaColor = if (row.isReady) LsColors.textPrimary else LsColors.textSecondary,
-            badge = row.statusLabel,
-            badgeColor = statusColor,
-            highlighted = row.isReady,
-            actions = if (busy) emptyList() else actions,
-            onClick = if (busy) null else ({ onOpen(row) }),
-            modifier = Modifier.alpha(if (busy) 0.7f else 1f),
-        )
-        if (busy) {
-            CircularProgressIndicator(
-                color = LsColors.textSecondary,
-                strokeWidth = 2.dp,
-                modifier = Modifier
-                    .align(Alignment.CenterEnd)
-                    .padding(end = LsSpacing.xl)
-                    .size(22.dp),
+        actions.forEach { action ->
+            val (icon, color) = when (action) {
+                ReservationAction.EDIT -> ReservationIcons.Edit to LsColors.textPrimary
+                ReservationAction.CANCEL -> LsIcons.Close to LsColors.danger
+            }
+            DropdownMenuItem(
+                text = { Text(action.fullTitle, style = LsType.body, color = color) },
+                leadingIcon = { Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(20.dp)) },
+                onClick = { onAction(action) },
             )
         }
     }
