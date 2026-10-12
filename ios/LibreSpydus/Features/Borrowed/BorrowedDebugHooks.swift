@@ -1,0 +1,67 @@
+import SwiftUI
+
+/// Screenshot hooks for "Your Books" and Favourites (DEBUG builds only), read from launch
+/// arguments like the app's other `-LS…` hooks (README "Debug launch hooks"):
+///
+/// - `-LSScrollToBottom YES` opens Borrowed and Favourites scrolled to the end, to check the last
+///   card clears the tab bar.
+/// - `-LSBorrowedSegment reservations` opens on Reservations.
+/// - `-LSBorrowedScript <step>` (demo mode only) runs one step once the lists have loaded:
+///   `cancel` (the confirmation for the first ready reservation), `cancel-confirmed` (cancels it
+///   and shows the result), `edit` (the edit sheet for the first editable pending reservation),
+///   `edit-saved` (that sheet picks another branch and saves).
+///
+/// Mutating steps only ever reach `DemoBackend`, never a real library.
+enum BorrowedDebugHooks {
+    /// Nil in release builds and without `-LSScrollToBottom`.
+    static var initialScrollAnchor: UnitPoint? {
+        #if DEBUG
+        UserDefaults.standard.bool(forKey: "LSScrollToBottom") ? .bottom : nil
+        #else
+        nil
+        #endif
+    }
+}
+
+#if DEBUG
+extension BorrowedDebugHooks {
+    enum Script: String {
+        case cancel
+        case cancelConfirmed = "cancel-confirmed"
+        case edit
+        case editSaved = "edit-saved"
+    }
+
+    static var segment: BorrowedViewModel.Segment? {
+        UserDefaults.standard.string(forKey: "LSBorrowedSegment").flatMap(BorrowedViewModel.Segment.init(rawValue:))
+    }
+
+    static var script: Script? {
+        UserDefaults.standard.string(forKey: "LSBorrowedScript").flatMap(Script.init(rawValue:))
+    }
+
+    /// `edit-saved`: the edit sheet changes the pickup branch and saves by itself.
+    static var autoSavesEdit: Bool { script == .editSaved }
+
+    /// Runs the launch script once, after the first load in demo mode.
+    @MainActor
+    static func run(_ viewModel: BorrowedViewModel, model: AppModel) async {
+        guard model.isDemo, model.backend.isDemo, !didRun else { return }
+        didRun = true
+        if let segment { viewModel.segment = segment }
+        guard let script, let sections = viewModel.reservations.value else { return }
+        let ready = sections.ready.first { $0.cancelHref != nil }
+        let editable = sections.pending.first { $0.editHref != nil }
+        switch script {
+        case .cancel:
+            viewModel.confirmingCancel = ready
+        case .cancelConfirmed:
+            if let ready { await viewModel.cancel(ready, model: model) }
+        case .edit, .editSaved:
+            if let editable { viewModel.edit(editable) }
+        }
+    }
+
+    @MainActor private static var didRun = false
+}
+#endif
