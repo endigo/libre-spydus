@@ -111,6 +111,24 @@ final class BookDetailModel {
                                    openedIrn: opened.bibIrn, otherFormatIrns: Set(others))
     }
 
+    /// The page can't tell yet which edition is on screen: the patron's is being picked, or the
+    /// selected format's availability (without one, the record) hasn't come back. A patron with
+    /// loans or reservations sees no Reserve until then, rather than Reserve flashing before
+    /// "On loan" / "Reserved" replaces it.
+    var isIdentifyingEdition: Bool {
+        if heldFormatSearch == .running { return true }
+        if let url = selectedFormat?.availabilityUrl.nonEmpty {
+            switch availability[url] ?? .idle {
+            case .loaded, .failed: return false
+            case .idle, .loading: return true
+            }
+        }
+        switch record {
+        case .loaded, .failed: return false
+        case .idle, .loading: return true
+        }
+    }
+
     /// The patron's loan or reservation of the edition on screen, from the saved account (nil when
     /// signed out or before the account has loaded): "On loan" / "Reserved" instead of Reserve.
     func holding(in snapshot: AccountSnapshot?) -> AccountHolding? {

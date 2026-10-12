@@ -107,6 +107,13 @@ struct BookDetailView: View {
         model.holding(in: app.isSignedIn ? app.account.snapshot : nil).map { HeldStatus($0) }
     }
 
+    /// Signed in with loans or reservations, and the edition on screen isn't identified yet.
+    private var awaitingHolding: Bool {
+        guard app.isSignedIn, let snapshot = app.account.snapshot, model.isIdentifyingEdition else { return false }
+        let reservations = snapshot.reservations
+        return !(snapshot.loans.items.isEmpty && reservations.ready.items.isEmpty && reservations.pending.items.isEmpty)
+    }
+
     private var actions: some View {
         let isFavourite = app.favourites.contains(id: model.ref.id)
         return HStack(spacing: Theme.Spacing.m) {
@@ -117,6 +124,11 @@ struct BookDetailView: View {
                     .accessibilityHint(app.isSignedIn
                         ? "Reserve the \(format.displayLabel.lowercased())"
                         : "Sign in to reserve the \(format.displayLabel.lowercased())")
+                    // Held or not isn't known yet: keep the slot, show nothing.
+                    .opacity(awaitingHolding ? 0 : 1)
+                    .disabled(awaitingHolding)
+                    .accessibilityHidden(awaitingHolding)
+                    .animation(.easeOut(duration: 0.15), value: awaitingHolding)
             } else {
                 Spacer(minLength: 0)
             }

@@ -1,5 +1,6 @@
 package com.librespydus.app.feature.detail
 
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -32,6 +33,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
@@ -152,6 +154,11 @@ fun BookDetailScreen(book: BookRef, appState: AppState, navigator: AppNavigator,
     val held = remember(account, session, heldIrns) {
         HeldStatus.holding(account.takeIf { session != null }, heldIrns)?.let { HeldStatus.of(it) }
     }
+    // Signed in with loans or reservations, and the edition on screen isn't identified yet.
+    val awaitingHolding = session != null && state.isIdentifyingEdition && account?.let { snapshot ->
+        snapshot.loans.items.isNotEmpty() || snapshot.reservations.ready.items.isNotEmpty() ||
+            snapshot.reservations.pending.items.isNotEmpty()
+    } == true
 
     Column(
         modifier
@@ -199,6 +206,7 @@ fun BookDetailScreen(book: BookRef, appState: AppState, navigator: AppNavigator,
                 DetailActions(
                     reservable = state.reservableFormat,
                     held = held,
+                    awaitingHolding = awaitingHolding,
                     onOpenHeld = appState::openBorrowed,
                     signedIn = session != null,
                     isFavourite = isFavourite,
@@ -375,6 +383,8 @@ private fun RetryLine(text: String, onRetry: () -> Unit) {
 private fun DetailActions(
     reservable: FormatRef?,
     held: HeldStatus?,
+    /** Held or not isn't known yet: Reserve keeps its slot but shows nothing. */
+    awaitingHolding: Boolean,
     onOpenHeld: (BorrowedSegment) -> Unit,
     signedIn: Boolean,
     isFavourite: Boolean,
@@ -393,12 +403,20 @@ private fun DetailActions(
             HeldStatusPill(held, onClick = { onOpenHeld(held.segment) }, modifier = Modifier.weight(1f))
         } else if (reservable != null) {
             val what = reservable.displayLabel.lowercase()
+            val alpha by animateFloatAsState(if (awaitingHolding) 0f else 1f, label = "reserve")
             PrimaryPillButton(
                 text = "Reserve",
-                onClick = { onBorrow(reservable) },
+                onClick = { if (!awaitingHolding) onBorrow(reservable) },
                 modifier = Modifier
                     .weight(1f)
-                    .semantics { contentDescription = if (signedIn) "Reserve the $what" else "Sign in to reserve the $what" },
+                    .alpha(alpha)
+                    .then(
+                        if (awaitingHolding) {
+                            Modifier.clearAndSetSemantics { }
+                        } else {
+                            Modifier.semantics { contentDescription = if (signedIn) "Reserve the $what" else "Sign in to reserve the $what" }
+                        },
+                    ),
             )
         } else {
             Spacer(Modifier.weight(1f))

@@ -66,6 +66,8 @@ data class DetailState(
     /** Keyed by `availabilityUrl`, so switching back to a format doesn't fetch it again. */
     val availability: Map<String, BrowseLoadable<FormatAvailability>> = emptyMap(),
     val related: Map<RelatedPanel, BrowseLoadable<List<BookRef>>> = emptyMap(),
+    /** [BookDetailModel.selectHeldFormat] is still picking the patron's edition. */
+    val choosingHeldFormat: Boolean = false,
 ) {
     val selectedFormat: FormatRef? get() = selectedFormatIndex?.let { formats.getOrNull(it) }
 
@@ -101,14 +103,35 @@ data class DetailState(
     /**
      * The bib IRNs of the format on screen, to look up in the saved account (§6 "Already yours"):
      * the selected format's own bib (its availability's `bibRecordIrn`) once known, else the
-     * record's and the opened loan's or reservation's. Editions are separate bibs, so a loan of the
+     * record's and the opened loan's or reservation's, minus any known to be another format's (so a
+     * format whose availability is still loading isn't taken for its neighbour). While the patron's
+     * edition is being picked the default format isn't the page's yet, so the opened row's IRN
+     * stands and the pill doesn't flicker to Reserve. Editions are separate bibs, so a loan of the
      * book doesn't hide Reserve on the large print.
      */
     val heldIrns: List<String>
         get() {
+            fun irnOf(format: FormatRef) =
+                format.availabilityUrl.trimmedOrNull()?.let { availability[it]?.valueOrNull?.bibRecordIrn.trimmedOrNull() }
+            if (!choosingHeldFormat) selectedFormat?.let(::irnOf)?.let { return listOf(it) }
+            val others = formats.filterIndexed { index, _ -> index != selectedFormatIndex }.mapNotNull(::irnOf).toSet()
+            return listOfNotNull(record.valueOrNull?.bibIrn.trimmedOrNull(), ref.bibIrn.trimmedOrNull())
+                .distinct()
+                .filter { it !in others }
+        }
+
+    /**
+     * The page can't tell yet which edition is on screen: the patron's is being picked, or the
+     * selected format's availability (without one, the record) hasn't come back. A patron with
+     * loans or reservations sees no Reserve until then, rather than Reserve flashing before
+     * "On loan" / "Reserved" replaces it.
+     */
+    val isIdentifyingEdition: Boolean
+        get() {
+            if (choosingHeldFormat) return true
             val url = selectedFormat?.availabilityUrl.trimmedOrNull()
-            url?.let { availability[it]?.valueOrNull?.bibRecordIrn }?.let { return listOf(it) }
-            return listOfNotNull(record.valueOrNull?.bibIrn.trimmedOrNull(), ref.bibIrn.trimmedOrNull()).distinct()
+            val pending = if (url != null) availability[url] ?: BrowseLoadable.Idle else record
+            return pending is BrowseLoadable.Idle || pending is BrowseLoadable.Loading
         }
 
     /** What a favourite stores: the stable bookmark URL once the record is known, and the formats. */
@@ -151,7 +174,9 @@ class BookDetailModel(
 
     fun select(formatIndex: Int) {
         userSelected = true
-        _state.update { if (formatIndex in it.formats.indices) it.copy(selectedFormatIndex = formatIndex) else it }
+        _state.update {
+            if (formatIndex in it.formats.indices) it.copy(selectedFormatIndex = formatIndex, choosingHeldFormat = false) else it
+        }
     }
 
     /**
@@ -288,14 +313,19 @@ class BookDetailModel(
             }
         }
         selectIfHeld()
-        val permits = Semaphore(MAX_CONCURRENT)
-        coroutineScope {
-            for (url in state.formats.mapNotNull { it.availabilityUrl.trimmedOrNull() }.distinct()) {
-                launch {
-                    permits.withPermit { loadAvailability(url, backend, report) }
-                    selectIfHeld()
+        if (!userSelected) _state.update { it.copy(choosingHeldFormat = true) }
+        try {
+            val permits = Semaphore(MAX_CONCURRENT)
+            coroutineScope {
+                for (url in state.formats.mapNotNull { it.availabilityUrl.trimmedOrNull() }.distinct()) {
+                    launch {
+                        permits.withPermit { loadAvailability(url, backend, report) }
+                        selectIfHeld()
+                    }
                 }
             }
+        } finally {
+            _state.update { it.copy(choosingHeldFormat = false) }
         }
     }
 

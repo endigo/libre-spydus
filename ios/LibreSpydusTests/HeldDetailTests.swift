@@ -147,6 +147,33 @@ struct HeldDetailTests {
         #expect(model.reservableFormat?.code == "LP")
     }
 
+    @Test func theEditionIsUnknownUntilTheSelectedFormatsAvailabilityIsBack() async {
+        let model = BookDetailModel(ref: BookRef(HeldFixtures.longNightWork))
+        let backend = HeldFixtures.longNightBackend()
+        #expect(model.isIdentifyingEdition)
+        await model.load(backend: backend, report: report)
+        // The record is in, but it doesn't say which format the page shows.
+        #expect(model.isIdentifyingEdition)
+        await model.loadAvailability(backend: backend, report: report)
+        #expect(!model.isIdentifyingEdition)
+        model.select(formatAt: 1)
+        #expect(model.isIdentifyingEdition)
+        await model.loadAvailability(backend: backend, report: report)
+        #expect(!model.isIdentifyingEdition)
+    }
+
+    @Test func aFailedLookupStopsWaitingForTheEdition() async {
+        let backend = DetailBackend(records: [:])
+        let noFormats = BookDetailModel(ref: BookRef(HeldFixtures.item(bibIrn: "8753080")))
+        await noFormats.load(backend: backend, report: report)
+        #expect(noFormats.record.error != nil)
+        #expect(!noFormats.isIdentifyingEdition)
+
+        let work = BookDetailModel(ref: BookRef(HeldFixtures.longNightWork))
+        await work.loadAvailability(backend: backend, report: report)
+        #expect(!work.isIdentifyingEdition)
+    }
+
     // MARK: The pill
 
     @Test func loanPillShowsTheDueDate() throws {

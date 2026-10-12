@@ -8,6 +8,7 @@ import com.librespydus.app.feature.search.errorOrNull
 import com.librespydus.app.feature.search.valueOrNull
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import uniffi.librespydus_core.Availability
@@ -173,5 +174,41 @@ class YourBooksDetailTest {
         assertTrue(model.state.value.availability.isEmpty())
         model.loadAvailability(backend, report)
         assertEquals(listOf("8753080"), model.state.value.heldIrns)
+    }
+
+    @Test
+    fun theEditionIsUnknownUntilTheSelectedFormatsAvailabilityIsBack() = runTest {
+        val backend = backend(
+            records = mapOf("$base/avail/BK" to d.midnightLibrary),
+            availability = mapOf("$base/avail/BK" to availability("8753080"), "$base/avail/LP" to availability("99000102")),
+        )
+        val model = BookDetailModel(BookRef.from(work))
+        assertTrue(model.state.value.isIdentifyingEdition)
+        model.load(backend, report)
+        // The record is in, but it doesn't say which format the page shows.
+        assertTrue(model.state.value.isIdentifyingEdition)
+        model.loadAvailability(backend, report)
+        assertFalse(model.state.value.isIdentifyingEdition)
+
+        model.select(1)
+        assertTrue(model.state.value.isIdentifyingEdition)
+        // The large print's availability is loading: the book's IRN is known to be the other format's.
+        assertEquals(emptyList<String>(), model.state.value.heldIrns)
+        model.loadAvailability(backend, report)
+        assertFalse(model.state.value.isIdentifyingEdition)
+        assertEquals(listOf("99000102"), model.state.value.heldIrns)
+    }
+
+    @Test
+    fun aFailedLookupStopsWaitingForTheEdition() = runTest {
+        val backend = backend(records = emptyMap())
+        val noRecord = BookDetailModel(BookRef.from(loan("8753080")))
+        noRecord.load(backend, report)
+        assertTrue(noRecord.state.value.record.errorOrNull != null)
+        assertFalse(noRecord.state.value.isIdentifyingEdition)
+
+        val noAvailability = BookDetailModel(BookRef.from(work))
+        noAvailability.loadAvailability(backend, report)
+        assertFalse(noAvailability.state.value.isIdentifyingEdition)
     }
 }
