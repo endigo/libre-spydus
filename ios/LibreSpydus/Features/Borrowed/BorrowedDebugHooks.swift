@@ -9,7 +9,8 @@ import SwiftUI
 /// - `-LSBorrowedScript <step>` (demo mode only) runs one step once the lists have loaded:
 ///   `cancel` (the confirmation for the first ready reservation), `cancel-confirmed` (cancels it
 ///   and shows the result), `edit` (the edit sheet for the first editable pending reservation),
-///   `edit-saved` (that sheet picks another branch and saves).
+///   `edit-saved` (that sheet picks another branch and saves), `swipe` (the first ready
+///   reservation's swipe actions showing), `swipe-cancel` (its confirmation over the open card).
 ///
 /// Mutating steps only ever reach `DemoBackend`, never a real library.
 enum BorrowedDebugHooks {
@@ -30,6 +31,8 @@ extension BorrowedDebugHooks {
         case cancelConfirmed = "cancel-confirmed"
         case edit
         case editSaved = "edit-saved"
+        case swipe
+        case swipeCancel = "swipe-cancel"
     }
 
     static var segment: BorrowedViewModel.Segment? {
@@ -59,6 +62,15 @@ extension BorrowedDebugHooks {
             if let ready { await viewModel.cancel(ready, model: model) }
         case .edit, .editSaved:
             if let editable { viewModel.edit(editable) }
+        case .swipe, .swipeCancel:
+            guard let ready else { return }
+            viewModel.segment = .reservations
+            try? await Task.sleep(for: .milliseconds(400))
+            viewModel.swipedRowID = ready.id
+            if script == .swipeCancel {
+                try? await Task.sleep(for: .milliseconds(600))
+                viewModel.requestCancel(ready)
+            }
         }
     }
 
