@@ -26,10 +26,20 @@ pub const LOGIN_RDT: &str = "/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/LB/1?ISGLB=0";
 pub const ENCRYPT_JS: &str = "/docs/OPAC/js/encrypt.js";
 
 /// Keyword search results, built directly instead of asking the mobile discover API (which 404s
-/// on many libraries). Byte-for-byte what Canning's `discover/search` returns, with every `{q}`
-/// replaced by the form-urlencoded query (`harry potter` → `harry+potter`). `ALLWRKENQ`
-/// (work-level results) works on every library tested.
-pub const SEARCH_PATH: &str = "/cgi-bin/spydus.exe/ENQ/OPAC/ALLWRKENQ?ENTRY={q}&ENTRY_NAME=BS&ENTRY_TYPE=K&SORTS=SQL_REL_GENWRK&GQ={q}";
+/// on many libraries). Every `{q}` is replaced by the form-urlencoded query (`harry potter` →
+/// `harry+potter`) and `{sorts}` by the form-urlencoded sort code. With [`SORTS_RELEVANCE`] it is
+/// byte-for-byte what Canning's `discover/search` returns. `ALLWRKENQ` (work-level results)
+/// works on every library tested.
+pub const SEARCH_PATH: &str = "/cgi-bin/spydus.exe/ENQ/OPAC/ALLWRKENQ?ENTRY={q}&ENTRY_NAME=BS&ENTRY_TYPE=K&SORTS={sorts}&GQ={q}";
+
+/// `SORTS` for relevance order (`SearchSort::Relevance`), what discover/search asks for.
+pub const SORTS_RELEVANCE: &str = "SQL_REL_GENWRK";
+
+/// `SORTS` for newest-added-first (`SearchSort::Newest`): the bib record's creation date, then
+/// time (`]` separates sort keys). It is the sort of the OPAC's own RSS feed link on every results
+/// page, and page 1 matched that feed's order on all 6 AU/NZ/US libraries checked (2026-10-12).
+/// `SQL_DATECREATEDDESC` is not an equivalent: its page 1 differed from the feed on 4 of the 6.
+pub const SORTS_NEWEST: &str = "MAIN.CREATED_DATE.DESC]MAIN.CREATED_TIME.DESC";
 
 /// TCP (+ TLS) connect timeout on every request; unreachable servers fail fast.
 pub const CONNECT_TIMEOUT: Duration = Duration::from_secs(10);

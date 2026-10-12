@@ -2,7 +2,7 @@
 //! camelCase JSON the Bun middleware returns (used by `scripts/oracle-diff.sh` and
 //! `scripts/library-survey.py`).
 //!
-//!   spydus-cli search "<query>"
+//!   spydus-cli search [--sort relevance|newest] "<query>"
 //!   spydus-cli <page|availability|record|related> "<url>"
 //!   spydus-cli libraries [--all]       # the Spydus library directory; --all adds test instances
 //!
@@ -13,10 +13,10 @@
 
 use std::process::ExitCode;
 
-use librespydus_core::{SpydusClient, SpydusError, list_libraries};
+use librespydus_core::{SearchSort, SpydusClient, SpydusError, list_libraries};
 use serde::Serialize;
 
-const USAGE: &str = "usage: spydus-cli <search|page|availability|record|related> <query-or-url>\n       spydus-cli libraries [--all]";
+const USAGE: &str = "usage: spydus-cli <search|page|availability|record|related> <query-or-url>\n       spydus-cli search --sort <relevance|newest> <query>\n       spydus-cli libraries [--all]";
 
 #[tokio::main]
 async fn main() -> ExitCode {
@@ -27,11 +27,16 @@ async fn main() -> ExitCode {
             to_json(list_libraries(true).await)
         }
         [command, ..] if command == "libraries" => return usage("libraries takes only --all"),
+        [command, flag, sort, query] if command == "search" && flag == "--sort" => {
+            let sort = match sort.as_str() {
+                "relevance" => SearchSort::Relevance,
+                "newest" => SearchSort::Newest,
+                _ => return usage(&format!("unknown sort {sort:?}")),
+            };
+            to_json(client().search_sorted(query.clone(), sort).await)
+        }
         [command, arg] => {
-            let client = SpydusClient::new(std::env::var("SPYDUS_ORIGIN").ok());
-            if let Ok(cookie) = std::env::var("SPYDUS_VERIFICATION_COOKIE") {
-                client.set_verification_cookie(Some(cookie));
-            }
+            let client = client();
             let arg = arg.clone();
             match command.as_str() {
                 "search" => to_json(client.search(arg).await),
@@ -54,6 +59,15 @@ async fn main() -> ExitCode {
             ExitCode::FAILURE
         }
     }
+}
+
+/// The client for `SPYDUS_ORIGIN` (default Canning), with `SPYDUS_VERIFICATION_COOKIE` if set.
+fn client() -> std::sync::Arc<SpydusClient> {
+    let client = SpydusClient::new(std::env::var("SPYDUS_ORIGIN").ok());
+    if let Ok(cookie) = std::env::var("SPYDUS_VERIFICATION_COOKIE") {
+        client.set_verification_cookie(Some(cookie));
+    }
+    client
 }
 
 fn usage(problem: &str) -> ExitCode {

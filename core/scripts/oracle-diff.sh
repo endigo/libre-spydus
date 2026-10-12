@@ -6,7 +6,8 @@
 #
 # For each query: /search, then for the first record that has a format availability URL
 # (BK preferred): /availability and /record on that URL, then /related on the record's first
-# non-null related panel. Both sides are normalised with `jq -S` and diffed.
+# non-null related panel. Both sides are normalised with `jq -S` and diffed. The last query is
+# nonsense, so the OPAC's "did not find any records" page (`noResults: true`) is diffed too.
 #
 # Live nondeterminism handled (each is reported in the PASS line, never silently):
 #  - Set ids: Spydus mints a new result-set id on every search/bib fetch and embeds it in URLs
@@ -17,13 +18,16 @@
 #    re-run once, after the middleware's 60 s availability cache has expired.
 #
 # Safety (docs/rust-core-port.md §3): public GETs only — no login, no session, no POST.
-# Env: MW_URL (default http://localhost:8787).
+# Env: MW_URL (default http://localhost:8787). A middleware this script starts listens on
+# MW_URL's port.
 set -uo pipefail
 
 MW="${MW_URL:-http://localhost:8787}"
+MW_PORT="$(printf '%s' "$MW" | sed -nE 's#^[a-z]+://[^/:]+:([0-9]+).*#\1#p')"
+MW_PORT="${MW_PORT:-8787}"
 CORE_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 REPO_DIR="$(cd "$CORE_DIR/.." && pwd)"
-QUERIES=("The baby-sitters club graphic novel" "the midnight library" "atomic habits")
+QUERIES=("The baby-sitters club graphic novel" "the midnight library" "atomic habits" "zzqxjv")
 # The middleware caches availability for 60 s; a re-run must wait that out to see fresh counts.
 AVAILABILITY_TTL=61
 
@@ -51,8 +55,8 @@ if curl -sf -m 5 "$MW/health" >/dev/null; then
   echo "middleware already up at $MW"
 else
   command -v bun >/dev/null || { echo "middleware down at $MW and bun not found" >&2; exit 2; }
-  echo "starting the middleware (bun run src/server.ts)…"
-  (cd "$REPO_DIR/middleware" && exec bun run src/server.ts) >"$WORK/middleware.log" 2>&1 &
+  echo "starting the middleware on port $MW_PORT (bun run src/server.ts)…"
+  (cd "$REPO_DIR/middleware" && PORT="$MW_PORT" exec bun run src/server.ts) >"$WORK/middleware.log" 2>&1 &
   MW_PID=$!
   for _ in $(seq 1 30); do
     curl -sf -m 2 "$MW/health" >/dev/null && break

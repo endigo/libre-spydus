@@ -53,6 +53,9 @@ const AUTHOR_ROLE = new RegExp(
 // Role-less personal name with life dates: "Haig, Matt, 1975-" / "Rowling, J. K. 1965-".
 const NAME_WITH_DATES = /^[^\d,:;\/()[\]]+,[^\d,:;\/()[\]]+(?:,\s*|\s+)\d{4}-(?:\d{4})?\.?$/;
 const YEAR = /^\d{4}(\s*[-–]\s*\d{4})?$/;
+// The OPAC's empty result, in a `div.alert` (same wording on every AU/NZ/US library surveyed):
+// "Sorry, your search for Anywhere: zzqxjv (Keywords) [in the local catalogue] did not find any records."
+const NO_RECORDS = /did not find any records/i;
 
 function newDraft(): Draft {
   return {
@@ -190,6 +193,7 @@ export function parseSearchResults(html: string, opts: ParseSearchOptions = {}):
 
   let setId: string | null = null;
   let headerBuf = "";
+  let alertBuf = "";
   let nextPageUrl: string | null = null;
   let prevPageUrl: string | null = null;
 
@@ -328,6 +332,12 @@ export function parseSearchResults(html: string, opts: ParseSearchOptions = {}):
         const href = el.getAttribute("data-tab-href");
         if (code && href) fmtOf(current, code).availabilityUrl = href;
       },
+    })
+    // ---- page-level: alert boxes (the "did not find any records" message lives in one) ----
+    .on(".alert", {
+      text(t) {
+        alertBuf += t.text;
+      },
     });
 
   rw.transform(html);
@@ -345,6 +355,7 @@ export function parseSearchResults(html: string, opts: ParseSearchOptions = {}):
     showing,
     nextPageUrl: absolute(origin, nextPageUrl),
     prevPageUrl: absolute(origin, prevPageUrl),
+    noResults: records.length === 0 && NO_RECORDS.test(collapse(alertBuf)),
     records,
   };
 }

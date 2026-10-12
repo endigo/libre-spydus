@@ -1,5 +1,6 @@
 //! Port of `middleware/src/parse/search-results.ts` (ALLWRKENQ results page; also the setId of
-//! edition-level ALLENQ pages). Owner: task B; Wave 2 author/setId rules: task G1.
+//! edition-level ALLENQ pages). Owner: task B; Wave 2 author/setId rules: task G1; Phase 2
+//! `noResults`: task P.
 //!
 //! Engine: `lol_html` (what Bun's `HTMLRewriter` wraps) in a single streaming pass. There is no
 //! DOM and handlers fire in document order, so descendant handlers write into the `current`
@@ -59,6 +60,11 @@ static CODE_FROM_QUERY: LazyLock<Regex> =
 // search-results.ts setId: work-level ALLWRKENQ or edition-level ALLENQ.
 static SET_ID: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"/OPAC/ALL(?:WRK)?ENQ/([0-9]+)").unwrap());
+// search-results.ts `NO_RECORDS` — the OPAC's empty result, in a `div.alert` (same wording on every
+// AU/NZ/US library surveyed): "Sorry, your search for Anywhere: zzqxjv (Keywords) [in the local
+// catalogue] did not find any records." Tested on the collapsed text, so spaces are single.
+static NO_RECORDS: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"(?i-u:did not find any records)").unwrap());
 // search-results.ts:293 — "Showing 1 - 10 of 46".
 static SHOWING: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(&format!(
@@ -122,6 +128,8 @@ struct State {
     records: Vec<SearchRecord>,
     set_id: Option<String>,
     header_buf: String,
+    /// Text of every `.alert` element (the no-records message lives in one).
+    alert_buf: String,
     next_page_url: Option<String>,
     prev_page_url: Option<String>,
 }
@@ -453,6 +461,11 @@ pub fn parse_search_results(html: &str, origin: &str, query: Option<&str>) -> Se
                 d.fmt_of(&code).availability_url = Some(href);
             }
             Ok(())
+        }))
+        // ---- page-level: alert boxes (the "did not find any records" message lives in one) ----
+        .append_element_content_handler(text!(".alert", |t| {
+            st.borrow_mut().alert_buf.push_str(t.as_str());
+            Ok(())
         }));
 
     // No handler returns an error and non-strict mode never bails out, so this can't fail;
@@ -482,6 +495,7 @@ pub fn parse_search_results(html: &str, origin: &str, query: Option<&str>) -> Se
         showing,
         next_page_url: absolute(origin, s.next_page_url.as_deref()),
         prev_page_url: absolute(origin, s.prev_page_url.as_deref()),
+        no_results: s.records.is_empty() && NO_RECORDS.is_match(&collapse(&s.alert_buf)),
         records: s.records,
     }
 }

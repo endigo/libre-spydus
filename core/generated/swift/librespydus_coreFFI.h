@@ -333,6 +333,11 @@ uint64_t uniffi_librespydus_core_fn_method_spydusclient_reserve_options(uint64_t
 uint64_t uniffi_librespydus_core_fn_method_spydusclient_search(uint64_t ptr, RustBuffer query
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_FN_METHOD_SPYDUSCLIENT_SEARCH_SORTED
+#define UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_FN_METHOD_SPYDUSCLIENT_SEARCH_SORTED
+uint64_t uniffi_librespydus_core_fn_method_spydusclient_search_sorted(uint64_t ptr, RustBuffer query, RustBuffer sort
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_FN_METHOD_SPYDUSCLIENT_SET_VERIFICATION_COOKIE
 #define UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_FN_METHOD_SPYDUSCLIENT_SET_VERIFICATION_COOKIE
 void uniffi_librespydus_core_fn_method_spydusclient_set_verification_cookie(uint64_t ptr, RustBuffer cookie, RustCallStatus *_Nonnull out_status
@@ -341,6 +346,39 @@ void uniffi_librespydus_core_fn_method_spydusclient_set_verification_cookie(uint
 #ifndef UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_FN_FUNC_LIST_LIBRARIES
 #define UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_FN_FUNC_LIST_LIBRARIES
 uint64_t uniffi_librespydus_core_fn_func_list_libraries(int8_t include_test
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_FN_FUNC_USER_AGENT
+#define UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_FN_FUNC_USER_AGENT
+RustBuffer uniffi_librespydus_core_fn_func_user_agent(RustCallStatus *_Nonnull out_status
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_FN_FUNC_AVAILABILITY_SUMMARY
+#define UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_FN_FUNC_AVAILABILITY_SUMMARY
+RustBuffer uniffi_librespydus_core_fn_func_availability_summary(RustBuffer availability, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_FN_FUNC_HOME_GENRES
+#define UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_FN_FUNC_HOME_GENRES
+RustBuffer uniffi_librespydus_core_fn_func_home_genres(RustCallStatus *_Nonnull out_status
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_FN_FUNC_HOME_SHELVES
+#define UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_FN_FUNC_HOME_SHELVES
+RustBuffer uniffi_librespydus_core_fn_func_home_shelves(RustCallStatus *_Nonnull out_status
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_FN_FUNC_IS_DIGITAL_FORMAT
+#define UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_FN_FUNC_IS_DIGITAL_FORMAT
+int8_t uniffi_librespydus_core_fn_func_is_digital_format(RustBuffer format, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_FN_FUNC_PARSE_DUE_DATE
+#define UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_FN_FUNC_PARSE_DUE_DATE
+RustBuffer uniffi_librespydus_core_fn_func_parse_due_date(RustBuffer text, RustCallStatus *_Nonnull out_status
 );
 #endif
 #ifndef UNIFFI_FFIDEF_FFI_LIBRESPYDUS_CORE_RUSTBUFFER_ALLOC
@@ -609,6 +647,42 @@ uint16_t uniffi_librespydus_core_checksum_func_list_libraries(void
     
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_CHECKSUM_FUNC_USER_AGENT
+#define UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_CHECKSUM_FUNC_USER_AGENT
+uint16_t uniffi_librespydus_core_checksum_func_user_agent(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_CHECKSUM_FUNC_AVAILABILITY_SUMMARY
+#define UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_CHECKSUM_FUNC_AVAILABILITY_SUMMARY
+uint16_t uniffi_librespydus_core_checksum_func_availability_summary(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_CHECKSUM_FUNC_HOME_GENRES
+#define UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_CHECKSUM_FUNC_HOME_GENRES
+uint16_t uniffi_librespydus_core_checksum_func_home_genres(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_CHECKSUM_FUNC_HOME_SHELVES
+#define UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_CHECKSUM_FUNC_HOME_SHELVES
+uint16_t uniffi_librespydus_core_checksum_func_home_shelves(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_CHECKSUM_FUNC_IS_DIGITAL_FORMAT
+#define UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_CHECKSUM_FUNC_IS_DIGITAL_FORMAT
+uint16_t uniffi_librespydus_core_checksum_func_is_digital_format(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_CHECKSUM_FUNC_PARSE_DUE_DATE
+#define UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_CHECKSUM_FUNC_PARSE_DUE_DATE
+uint16_t uniffi_librespydus_core_checksum_func_parse_due_date(void
+    
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_CHECKSUM_METHOD_SPYDUSCLIENT_ACCOUNT
 #define UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_CHECKSUM_METHOD_SPYDUSCLIENT_ACCOUNT
 uint16_t uniffi_librespydus_core_checksum_method_spydusclient_account(void
@@ -696,6 +770,12 @@ uint16_t uniffi_librespydus_core_checksum_method_spydusclient_reserve_options(vo
 #ifndef UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_CHECKSUM_METHOD_SPYDUSCLIENT_SEARCH
 #define UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_CHECKSUM_METHOD_SPYDUSCLIENT_SEARCH
 uint16_t uniffi_librespydus_core_checksum_method_spydusclient_search(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_CHECKSUM_METHOD_SPYDUSCLIENT_SEARCH_SORTED
+#define UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_CHECKSUM_METHOD_SPYDUSCLIENT_SEARCH_SORTED
+uint16_t uniffi_librespydus_core_checksum_method_spydusclient_search_sorted(void
     
 );
 #endif

@@ -395,3 +395,174 @@ author detection broadened (G1), cancel-refusal false positive fixed (G1), setId
   `private_available() -> bool`.
 - Each owner adds `tests/<module>.rs` with one golden test per manifest row plus focused unit tests for
   tricky regexes/edge cases. Live-network tests (if any) are `#[ignore]`.
+
+## 11. Phase 2 app additions (task P, 2026-10-12)
+
+What the native apps (`docs/native-apps.md` §4.1) need from the core beyond the port: an empty-result
+signal, a "newest" sort, the core's User-Agent, and pure display helpers shared by iOS and Android.
+P owned `core/**`, `middleware/src/types.ts`, `middleware/src/parse/search-results.ts`,
+`middleware/scripts/emit-golden.ts` and this section. §2/§3 rules applied: public GETs only, ≤ 6
+concurrent, no session, no POST. The TS stays the oracle (P1 is in both); P2–P4 are core-only.
+
+### Contract
+
+```rust
+// types.rs
+pub struct SearchResults { /* … */ pub prev_page_url: Option<String>,
+  pub no_results: bool,            // serde "noResults"; true only for the OPAC's "did not find any records" page
+  pub records: Vec<SearchRecord> }
+#[derive(uniffi::Enum, serde::Serialize, serde::Deserialize, Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
+#[serde(rename_all = "camelCase")] pub enum SearchSort { #[default] Relevance, Newest }
+
+// config.rs — SEARCH_PATH gains a {sorts} slot; relevance keeps the exact discover/search URL
+pub const SEARCH_PATH: &str = "/cgi-bin/spydus.exe/ENQ/OPAC/ALLWRKENQ?ENTRY={q}&ENTRY_NAME=BS&ENTRY_TYPE=K&SORTS={sorts}&GQ={q}";
+pub const SORTS_RELEVANCE: &str = "SQL_REL_GENWRK";
+pub const SORTS_NEWEST: &str = "MAIN.CREATED_DATE.DESC]MAIN.CREATED_TIME.DESC"; // sent as …DESC%5DMAIN…
+
+// fetch.rs — fetch_search_html(q) == fetch_search_html_sorted(q, Relevance)
+impl Http { pub async fn fetch_search_html_sorted(&self, query: &str, sort: SearchSort) -> Result<String, SpydusError>; }
+
+// lib.rs
+#[uniffi::export] pub fn user_agent() -> String;                       // config::USER_AGENT
+impl SpydusClient {                                                     // search(q) == search_sorted(q, Relevance)
+  pub async fn search_sorted(&self, query: String, sort: SearchSort) -> Result<SearchResults, SpydusError>;
+}                                                                       // cache key "s:{relevance|newest}:{lower(q)}"
+
+// app.rs — pure, #[uniffi::export], tests in tests/app.rs
+pub fn is_digital_format(format: RecordFormat) -> bool;
+pub struct AvailabilitySummary { pub available: Option<i64>, pub copies: Option<i64>, pub reserved: Option<i64>, pub label: String }
+pub fn availability_summary(availability: Availability) -> AvailabilitySummary;
+pub struct SimpleDate { pub year: i32, pub month: u8, pub day: u8 }
+pub fn parse_due_date(text: String) -> Option<SimpleDate>;
+pub struct Genre { pub key: String, pub label: String, pub query: String }
+pub fn home_genres() -> Vec<Genre>;
+pub struct Shelf { pub key: String, pub title: String, pub query: String, pub sort: SearchSort }
+pub fn home_shelves() -> Vec<Shelf>;
+```
+
+`spydus-cli search --sort <relevance|newest> "<query>"` exposes the sort. `scripts/oracle-diff.sh`
+now also diffs the nonsense query `zzqxjv` (live `noResults: true`), and a middleware it starts
+listens on `MW_URL`'s port (it used to start on 8787 whatever `MW_URL` said).
+
+### P1 — `noResults`
+
+A keyword search for `zzqxjv` on 9 production libraries (Canning, Cumberland, Esperance, Camden —
+AU; Hutt City, Porirua, Wellington — NZ; Niagara, Brazoria County — US) answers HTTP 200 with the
+same page: `<h1 class="visually-hidden">Error result</h1><div class="alert alert-info" role="alert">Sorry,
+your search for Anywhere: zzqxjv (Keywords) did not find any records.</div>`. Hutt City and Porirua
+say "… (Keywords) in the local catalogue did not find any records." The keyword `*` gives the same
+page shell with "Please enter something in the search form."
+
+Rule (TS and Rust alike): buffer the text of every `.alert` element; `noResults = records is empty
+&& /did not find any records/i matches collapse(buffer)`. Anything else without records (the `*`
+page, a WAF page, a changed template) keeps `noResults: false`, so the app can show "No results for
+…" only when the library really said so, and an error state otherwise.
+
+Fixtures (cookieless public GETs with the core's UA): `multi/{canning,cumberlandlibraries,hutt,
+niagara,mybcls}-no-results.html` (`noResults: true`) and `multi/canning-empty-search.html` (`*`,
+`noResults: false`), with TS-emitted goldens and MANIFEST rows. Regenerating every golden changed
+the 10 existing search goldens by exactly one line each, `"noResults": false,`. Live: oracle-diff
+`zzqxjv` PASS; `spydus-cli search "qqzzxv blorft"` gives `noResults: true` on Canning, Porirua,
+Esperance and Brazoria County, and `harry potter` gives `false` with 10 records.
+
+### P2 — `user_agent()`
+
+Returns `config::USER_AGENT`, so the human-verification web view sends the same UA as the core
+(the README's WAF steps no longer tell the apps to copy the string).
+
+### P3 — Newest sort
+
+Results pages carry no sort control (mobile or desktop UA; `spydus.js` neither). The one sort code
+on every results page is the OPAC's RSS feed link: `…&SORTS=MAIN.CREATED_DATE.DESC]MAIN.CREATED_TIME.DESC&FMT=RSS`.
+Each candidate was sent with `ALLWRKENQ` for `cooking`, and page 1's work IRNs (SVL values) were
+compared with the library's RSS feed for the same keyword:
+
+| library | region | `MAIN.CREATED_DATE.DESC]MAIN.CREATED_TIME.DESC` | `SQL_DATECREATEDDESC` |
+|---|---|---|---|
+| Canning | AU | = RSS order (10/10) | 2026 titles in ascending IRN order |
+| Cumberland | AU | = RSS order | = RSS order (relevance gives it too) |
+| Hutt City | NZ | = RSS order | ascending IRNs |
+| Wellington | NZ | = RSS order | ascending IRNs |
+| Niagara University | US | = RSS order | close, but out of order |
+| Brazoria County | US | = RSS order | = RSS order (relevance gives it too) |
+
+Through the core (`spydus-cli search --sort newest cooking`, then `page(nextPageUrl)`), pages 1–2
+(20 works) equal RSS items 1–20 on Canning, Cumberland, Hutt City, Wellington and Niagara. The
+parser gets 100% of titles and formats, and covers are 95–100%; publication years are mostly 2025–26.
+`MAIN.CREATED_DATE.DESC` alone orders same-day records differently from the feed; the time key
+reproduces it. "Newest" is per work: a work moves to the top when a new edition or format is added,
+so an older title can lead the list (Canning's #1 for `cooking` was work 15645586, with a 2026
+edition). Cumberland and Brazoria County return the same order for relevance and newest on keyword
+searches; that is the libraries' own configuration. Publication-date order was not needed.
+
+### P4 — app helpers
+
+**Availability `counts` keys.** About 100 availability fragments (BK, LP, TB, PM, OB, MU, EBK, EAUD)
+from Canning, Cumberland, Hutt City, Wellington, Niagara and Brazoria County, from relevance and
+newest searches. The only keys are `copies`, `available` and `reserved`, in two template families:
+
+| family | libraries | spans | e.g. |
+|---|---|---|---|
+| Reserved + Copies | Canning, Hutt City | `Reserved:` (only when > 0), `Copies:` | `{copies: 3, reserved: 2}`, `{copies: 1}` |
+| Available + Copies | Cumberland, Wellington, Niagara, Brazoria County | `Available:` (also 0), `Copies:` | `{available: 0, copies: 4}`, `{available: 3, copies: 5}` |
+
+Digital formats have no counts (`{}`) and no `reserveUrl` everywhere except Brazoria County, whose
+EBK and EAUD formats have `{available, copies}` and a "Place hold" `reserveUrl`. So
+`docs/native-apps.md` §4's "digital formats have `reserveUrl == null`" holds for most libraries but
+not all. Cumberland's "MU Music CDs" record was a streaming soundtrack ("[electronic resource]") with
+`{}` and no `reserveUrl`. Labels: `available` + `copies` → "A of C available" (0 included; the OPAC
+doesn't say whether copies are on loan, in transit, held or missing, so the label never says "on
+loan"); `copies` only → "C copies" / "1 copy"; `reserved` > 0 is appended as "· R reserved";
+`copies: 0` → "No copies"; no counts → "No copies listed". The typed `copies`/`reserved` fields win
+over the map when both are set.
+
+**Formats.** Codes and labels in every golden plus about 60 live results pages (and the libraries'
+search-option lists): BK Book, LP Large Print, TB Audiobooks, PM DVDs and BluRay, MU Music CDs /
+Music CDs & Vinyl, SE Magazines, OB Objects, GR Photographs (physical); EBK eBook, EAUD eAudioBook /
+eAudio, EMAG eMagazine, ECMC eComics (digital). `is_digital_format`: digital codes EBK, EAUD, EVID,
+EMAG, EMUS, EJNL, ECMC → true; physical codes BK, LP, TB, AB, PM, DVD, CD, MU, SE, MAG, OB, GR,
+KIT → false; any other code → its label: e-prefixed media words (eBook, e-audiobook, eVideo,
+eComics…), online, streaming, download(able), electronic, "digital <media>" → true, unless the
+label names a physical carrier (Playaway, CD, CD-ROM, DVD, Blu-ray, vinyl, cassette, kit). A test
+checks every format in the goldens against its code.
+
+**Home genres and shelves.** Each query was checked on page 1 (titles, formats, covers) with the TS
+parser. Genres use relevance order, and the totals below are works found:
+
+| key | query | Canning | Cumberland | Hutt City | Brazoria County |
+|---|---|---|---|---|---|
+| biography | biography | 7,782 | 41,106 | 9,326 | 52,598 |
+| fiction | fiction | 118,449 | 211,177 | 74,064 | 279,002 |
+| science | science | 12,697 | 81,385 | 8,989 | 96,443 |
+| history | history | 19,677 | 84,772 | 21,804 | 97,734 |
+| fantasy | fantasy | 18,641 | 42,815 | 10,502 | 55,404 |
+| crime | crime | 18,508 | 18,812 | 11,886 | 22,726 |
+| cooking | cooking | 3,581 | 11,214 | 3,225 | 11,653 |
+| children | juvenile fiction | 28,586 | 27,114 | 24,590 | 33,085 |
+
+Covers were on 100% of page 1 everywhere except Hutt City `history` (90%). Shelves (all `Newest`):
+`new_arrivals` "New arrivals" = `fiction` (Canning 118,450, Cumberland 211,150, Brazoria County
+279,002), `new_for_kids` "New for kids" = `juvenile fiction` (Canning 28,586, Cumberland 27,114,
+Hutt City 24,590, Wellington 32,062), `new_biographies` "New biographies" = `biography` (7,782,
+41,110, 9,326, 20,335); 100% titles, formats and covers on every page 1. Rejected: `*` (refused,
+"Please enter something in the search form."), `the` (159k–631k works; 10.7 s at Cumberland and
+over 60 s, a timeout, at Brazoria County), and `picture books` (25–38 s on 3 of 4 libraries).
+Brazoria County took 40–60 s for every query with more than about 20,000 hits, in either sort
+(`crime` 59.3 s), against 3 s for `cooking`. That is a property of that server, close to the core's
+60 s request timeout.
+
+**Due dates.** `parse_due_date` collapses whitespace and decodes entities, then accepts "27 Oct
+2026", "27 October 2026", "27 Oct. 2026", "27/10/2026", "27-10-2026" or "27.10.2026" (day first,
+one separator), "2026-10-27" and "Oct 27, 2026". Months are matched in any case, as full names,
+3-letter abbreviations or "Sept". Two-digit years, times, weekdays and impossible dates (31 Feb,
+29 Feb 2026) give `None`.
+
+### Bindings
+
+Regenerated into `core/generated/` (library mode, as in G4; ktlint not installed, so the Kotlin is
+unformatted as before). Both compile and run a smoke caller against the debug dylib: Swift with
+`swiftc`, Kotlin with Android Studio's `kotlinc`, JNA 5.17.0 (Gradle 9.5.0 `lib/plugins/`) and
+kotlinx-coroutines-core-jvm 1.10.2. The new names are `userAgent()`, `searchSorted(query:sort:)`,
+`SearchSort.relevance/.newest` (Kotlin `SearchSort.RELEVANCE/NEWEST`), `SearchResults.noResults`,
+`isDigitalFormat(format:)`, `availabilitySummary(availability:)`, `parseDueDate(text:)`,
+`homeGenres()`, `homeShelves()`. `SimpleDate.month/day` are `UInt8` in Swift and `UByte` in Kotlin.

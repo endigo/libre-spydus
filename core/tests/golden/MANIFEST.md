@@ -16,7 +16,10 @@ middleware/fixtures/record-recfmt.html; `record.html` = a guest (logged-out) BIB
 `bun middleware/scripts/capture-fixtures.ts` (cookieless public GETs). `multi/*` came from
 `bun middleware/scripts/capture-fixtures.ts --multi`: one cookieless GET per library of
 `{origin}/cgi-bin/spydus.exe/ENQ/OPAC/ALLWRKENQ?ENTRY=harry+potter&ENTRY_NAME=BS&ENTRY_TYPE=K&SORTS=SQL_REL_GENWRK&GQ=harry+potter`;
-each is parsed with that library's origin. `synthetic/*` is hand-written.
+each is parsed with that library's origin. `multi/*-no-results.html` (2026-10-12) are the same
+cookieless GET with the core's User-Agent for the nonsense keyword `zzqxjv` (`ENTRY=zzqxjv…GQ=zzqxjv`),
+and `multi/canning-empty-search.html` is that GET on Canning for the keyword `*` (`ENTRY=*…GQ=*`).
+`synthetic/*` is hand-written.
 
 | fixture | TS function | TS args | golden | Rust call | exercises |
 |---|---|---|---|---|---|
@@ -30,6 +33,12 @@ each is parsed with that library's origin. `synthetic/*` is hand-written.
 | `multi/porirua-harry-potter.html` | `parseSearchResults` | `html, { origin: "https://porirua.spydus.co.nz", query: "harry potter" }` | `multi/porirua-harry-potter.json` | `parse::search::parse_search_results(&html, "https://porirua.spydus.co.nz", Some("harry potter"))` |  |
 | `multi/hutt-harry-potter.html` | `parseSearchResults` | `html, { origin: "https://hutt.spydus.co.nz", query: "harry potter" }` | `multi/hutt-harry-potter.json` | `parse::search::parse_search_results(&html, "https://hutt.spydus.co.nz", Some("harry potter"))` |  |
 | `multi/niagara-harry-potter.html` | `parseSearchResults` | `html, { origin: "https://niagara.spydus.com", query: "harry potter" }` | `multi/niagara-harry-potter.json` | `parse::search::parse_search_results(&html, "https://niagara.spydus.com", Some("harry potter"))` |  |
+| `multi/canning-no-results.html` | `parseSearchResults` | `html, { origin: "https://canning.spydus.com", query: "zzqxjv" }` | `multi/canning-no-results.json` | `parse::search::parse_search_results(&html, "https://canning.spydus.com", Some("zzqxjv"))` | genuine empty result → noResults: true, no records |
+| `multi/cumberlandlibraries-no-results.html` | `parseSearchResults` | `html, { origin: "https://cumberlandlibraries.spydus.com", query: "zzqxjv" }` | `multi/cumberlandlibraries-no-results.json` | `parse::search::parse_search_results(&html, "https://cumberlandlibraries.spydus.com", Some("zzqxjv"))` | genuine empty result → noResults: true, no records |
+| `multi/hutt-no-results.html` | `parseSearchResults` | `html, { origin: "https://hutt.spydus.co.nz", query: "zzqxjv" }` | `multi/hutt-no-results.json` | `parse::search::parse_search_results(&html, "https://hutt.spydus.co.nz", Some("zzqxjv"))` | genuine empty result → noResults: true, no records |
+| `multi/niagara-no-results.html` | `parseSearchResults` | `html, { origin: "https://niagara.spydus.com", query: "zzqxjv" }` | `multi/niagara-no-results.json` | `parse::search::parse_search_results(&html, "https://niagara.spydus.com", Some("zzqxjv"))` | genuine empty result → noResults: true, no records |
+| `multi/mybcls-no-results.html` | `parseSearchResults` | `html, { origin: "https://mybcls.spydus.com", query: "zzqxjv" }` | `multi/mybcls-no-results.json` | `parse::search::parse_search_results(&html, "https://mybcls.spydus.com", Some("zzqxjv"))` | genuine empty result → noResults: true, no records |
+| `multi/canning-empty-search.html` | `parseSearchResults` | `html, { query: "*" }` | `multi/canning-empty-search.json` | `parse::search::parse_search_results(&html, ORIGIN, Some("*"))` | other error page ("Please enter something in the search form.") → noResults stays false, no records |
 | `synthetic/search-author-lines.html` | `parseSearchResults` | `html, {}` | `synthetic/search-author-lines.json` | `parse::search::parse_search_results(&html, ORIGIN, None)` | author rules: life dates before role, qualified role, role chain, new roles, role-less linked / dated name, ambiguous name, publisher/imprint/edition/format never author |
 | `synthetic/search-allenq.html` | `parseSearchResults` | `html, {}` | `synthetic/search-allenq.json` | `parse::search::parse_search_results(&html, ORIGIN, None)` | setId from an edition-level ALLENQ link (set-less ALLENQ link skipped) |
 | `availability.html` | `bibLinkFromFragment` | `html, ORIGIN` | `biblink-bsc.json` | `parse::record::bib_link_from_fragment(&html, ORIGIN)` |  |
@@ -131,3 +140,13 @@ keeps the first.
   in transit cannot be cancelled" on its list page would report a successful cancel as refused.
 - **setId** accepts edition-level `/OPAC/ALLENQ/<n>` as well as `/OPAC/ALLWRKENQ/<n>` (first
   matching `a[href*="/OPAC/ALL"]` wins).
+
+## Phase 2 additions (made in the TS oracle and the Rust core alike)
+
+- **noResults** (`search-results.ts`). The text of every `.alert` element is buffered, and
+  `noResults = records.length === 0 && /did not find any records/i.test(collapse(alertBuf))`. The
+  wording is the OPAC's own empty result, identical on the 9 AU/NZ/US libraries surveyed
+  ("Sorry, your search for Anywhere: zzqxjv (Keywords) [in the local catalogue] did not find any
+  records."). Any other page without records (another alert, a WAF page, a changed template) keeps
+  `noResults: false`, so callers can tell "nothing found" from "page not understood". Every other
+  search golden gains `"noResults": false` and is otherwise unchanged.

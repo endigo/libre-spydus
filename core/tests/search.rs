@@ -1,6 +1,6 @@
 //! `parse::search::parse_search_results` — golden parity with `parseSearchResults` (MANIFEST rows
 //! `search.json`, `search-midnight.json`, `multi/*`, `synthetic/search-*`) plus focused cases for
-//! the trickier TS quirks and the Wave 2 author / setId rules.
+//! the trickier TS quirks, the Wave 2 author / setId rules and the Phase 2 `noResults` flag.
 
 mod common;
 
@@ -61,6 +61,51 @@ fn golden_multi_hutt() {
 #[test]
 fn golden_multi_niagara() {
     golden_multi("niagara", "https://niagara.spydus.com");
+}
+
+// ---- Phase 2: the OPAC's "did not find any records" page, and another error page ----
+
+fn golden_no_results(label: &str, origin: &str) {
+    let html = common::fixture(&format!("multi/{label}-no-results.html"));
+    let actual = parse_search_results(&html, origin, Some("zzqxjv"));
+    assert!(actual.no_results && actual.records.is_empty(), "{label}");
+    common::assert_golden(&actual, &format!("multi/{label}-no-results.json"));
+}
+
+#[test]
+fn golden_no_results_canning() {
+    golden_no_results("canning", "https://canning.spydus.com");
+}
+
+#[test]
+fn golden_no_results_cumberlandlibraries() {
+    golden_no_results(
+        "cumberlandlibraries",
+        "https://cumberlandlibraries.spydus.com",
+    );
+}
+
+#[test]
+fn golden_no_results_hutt() {
+    golden_no_results("hutt", "https://hutt.spydus.co.nz");
+}
+
+#[test]
+fn golden_no_results_niagara() {
+    golden_no_results("niagara", "https://niagara.spydus.com");
+}
+
+#[test]
+fn golden_no_results_mybcls() {
+    golden_no_results("mybcls", "https://mybcls.spydus.com");
+}
+
+#[test]
+fn golden_empty_search_is_not_no_results() {
+    let html = common::fixture("multi/canning-empty-search.html");
+    let actual = parse_search_results(&html, ORIGIN, Some("*"));
+    assert!(!actual.no_results && actual.records.is_empty());
+    common::assert_golden(&actual, "multi/canning-empty-search.json");
 }
 
 #[test]
@@ -525,4 +570,39 @@ fn set_id_accepts_edition_level_allenq() {
       <a href="/cgi-bin/spydus.exe/ENQ/OPAC/ALLENQ/6/1">c</a>
       <a href="/cgi-bin/spydus.exe/ENQ/OPAC/ALLWRKENQ/7">d</a>"#;
     assert_eq!(page(links).as_deref(), Some("6"));
+}
+
+#[test]
+fn no_results_needs_the_wording_in_an_alert_and_no_records() {
+    let alert = |text: &str| format!(r#"<div class="alert alert-info" role="alert">{text}</div>"#);
+    let no_results = |html: &str| parse_search_results(html, ORIGIN, None).no_results;
+
+    // Nested markup, entities, line breaks and case are all fine (the text is collapsed first).
+    assert!(no_results(&alert(
+        "Sorry, your search for <b>Anywhere: x</b> did&nbsp;not\n  find any RECORDS."
+    )));
+    // NZ wording.
+    assert!(no_results(&alert(
+        "Sorry, your search for Anywhere: x (Keywords) in the local catalogue did not find any records."
+    )));
+    // A results page whose alert happens to say it still has records → false.
+    let with_record = format!(
+        r#"{}<fieldset class="card card-list"><h3 class="card-title"><a href="/b">T</a></h3></fieldset>"#,
+        alert("did not find any records")
+    );
+    assert!(!no_results(&with_record));
+    // The wording outside an alert, other alerts, and empty or foreign pages → false.
+    assert!(!no_results(
+        "<p>Sorry, your search did not find any records.</p>"
+    ));
+    assert!(!no_results(&alert(
+        "Please enter something in the search form."
+    )));
+    assert!(!no_results(&alert(
+        "To protect your privacy please logout when you have finished."
+    )));
+    assert!(!no_results(""));
+    assert!(!no_results(
+        "<html><title>Human Verification</title></html>"
+    ));
 }
