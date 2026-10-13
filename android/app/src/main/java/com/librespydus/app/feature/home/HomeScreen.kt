@@ -1,9 +1,11 @@
 package com.librespydus.app.feature.home
 
+import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -19,7 +21,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -28,6 +32,9 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.librespydus.app.core.AppState
 import com.librespydus.app.core.Tab
+import com.librespydus.app.feature.mycard.MyCardButton
+import com.librespydus.app.feature.mycard.MyCardDebugHooks
+import com.librespydus.app.feature.mycard.MyCardSheet
 import com.librespydus.app.feature.search.BrowseBottomClearance
 import com.librespydus.app.feature.search.BrowseIcons
 import com.librespydus.app.feature.search.BrowseLoadable
@@ -43,11 +50,11 @@ import com.librespydus.app.ui.theme.LsType
 import kotlinx.coroutines.launch
 
 /**
- * Home (§6): library logo (→ Profile), greeting, search field (→ Search tab), "New arrivals",
- * "Popular genres" and "Your borrowed books". New arrivals loads on its own (reloads on library
- * and verification changes); the loans shelf and greeting come from the account store's snapshot
- * (§5.2a), shown at once and refreshed in the background when it is over two minutes old. Each
- * shelf has its own skeleton and error; pull to refresh reloads both.
+ * Home (§6): library logo (→ Profile), greeting with "My card" (§5.9, signed in), search field
+ * (→ Search tab), "New arrivals", "Popular genres" and "Your borrowed books". New arrivals loads
+ * on its own (reloads on library and verification changes); the loans shelf and greeting come
+ * from the account store's snapshot (§5.2a), shown at once and refreshed in the background when it
+ * is over two minutes old. Each shelf has its own skeleton and error; pull to refresh reloads both.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -65,6 +72,8 @@ fun HomeScreen(appState: AppState, navigator: AppNavigator, modifier: Modifier =
     val loans = remember(snapshot, accountRefreshing, accountError) { HomeLoans.state(snapshot, accountRefreshing, accountError) }
     val report = remember(appState) { appState.browseReporter() }
     var refreshing by remember { mutableStateOf(false) }
+    var showingCard by rememberSaveable { mutableStateOf(false) }
+    val activity = LocalActivity.current
 
     val currentBackend = backend
     if (currentBackend == null) {
@@ -79,6 +88,7 @@ fun HomeScreen(appState: AppState, navigator: AppNavigator, modifier: Modifier =
     // Loads run in the model's scope: pushing a detail screen mid-load doesn't cancel them.
     LaunchedEffect(key) { model.viewModelScope.launch { model.loadIfNeeded(context) } }
     LaunchedEffect(currentBackend, session) { appState.account.refresh() }
+    LaunchedEffect(currentBackend) { if (MyCardDebugHooks.run(activity, appState)) showingCard = true }
 
     PullToRefreshBox(
         isRefreshing = refreshing,
@@ -114,12 +124,17 @@ fun HomeScreen(appState: AppState, navigator: AppNavigator, modifier: Modifier =
                     modifier = Modifier.padding(top = LsSpacing.l),
                 )
                 Column(verticalArrangement = Arrangement.spacedBy(LsSpacing.xs)) {
-                    Text(
-                        HomeGreeting.title(accountName),
-                        style = LsType.greeting,
-                        color = LsColors.textPrimary,
-                        modifier = Modifier.semantics { heading() },
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(LsSpacing.m)) {
+                        Text(
+                            HomeGreeting.title(accountName),
+                            style = LsType.greeting,
+                            color = LsColors.textPrimary,
+                            modifier = Modifier
+                                .weight(1f)
+                                .semantics { heading() },
+                        )
+                        if (signedIn) MyCardButton(onClick = { showingCard = true })
+                    }
                     Text(libraryName, style = LsType.body, color = LsColors.textSecondary)
                 }
             }
@@ -200,6 +215,8 @@ fun HomeScreen(appState: AppState, navigator: AppNavigator, modifier: Modifier =
             }
         }
     }
+
+    if (showingCard && signedIn) MyCardSheet(appState, onDismiss = { showingCard = false })
 }
 
 private fun LoanShelfItem.Tone.color() = when (this) {

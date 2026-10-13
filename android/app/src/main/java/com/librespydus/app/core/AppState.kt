@@ -52,6 +52,11 @@ class AppState(
     now: () -> Long = System::currentTimeMillis,
     /** "Ready to collect" alerts and due-date reminders (§5.8). */
     val alerts: Alerts = Alerts.inMemory(io),
+    /**
+     * The card number the library account itself gives (§5.9), for [cardNumber] when none is saved
+     * on the device. The core doesn't read one yet (Personal details), so: none.
+     */
+    private val accountCardNumber: (AccountSnapshot) -> String? = { null },
 ) {
     private val ops = Mutex()
 
@@ -81,6 +86,10 @@ class AppState(
     private val _galleryVisible = MutableStateFlow(false)
     private val _verificationGeneration = MutableStateFlow(0)
     private val _accountGeneration = MutableStateFlow(0)
+    private val _savedCardNumber = MutableStateFlow<String?>(null)
+
+    /** Demo card numbers by origin, in memory only; an origin not in the map has [DemoBackend.CARD_NUMBER]. */
+    private val demoCardNumbers = mutableMapOf<String, String?>()
 
     /** False until persisted state has been restored (show a splash meanwhile). */
     val ready: StateFlow<Boolean> = _ready.asStateFlow()
@@ -104,6 +113,14 @@ class AppState(
     /** The borrower's name, e.g. "Test Borrower": from [account]'s snapshot, else [refreshAccount]. */
     val accountName: StateFlow<String?> =
         combine(account.snapshot, _fallbackName) { snapshot, fallback -> snapshot?.accountName ?: fallback }
+            .stateIn(scope, SharingStarted.Eagerly, null)
+
+    /**
+     * The selected library's card number for My card (§5.9): the one saved on this device (entered
+     * or edited on the card), else the account's own. Null → the card asks for it.
+     */
+    val cardNumber: StateFlow<String?> =
+        combine(_savedCardNumber, account.snapshot) { saved, snapshot -> saved ?: snapshot?.let(accountCardNumber) }
             .stateIn(scope, SharingStarted.Eagerly, null)
 
     /** Demo mode (§5.4, debug `ls_demo`): fixture account data, no account network calls. */
@@ -202,6 +219,7 @@ class AppState(
             core
         }
         val session = if (demo) DemoBackend.SESSION else withContext(io) { secrets.get(sessionKey(origin)) }
+        val card = if (demo) demoCardNumber(origin) else withContext(io) { secrets.get(cardKey(origin)) }
         val key = cacheKey(backend)
         val saved = if (session != null && key != null) account.loadSaved(key) else null
 
@@ -215,6 +233,7 @@ class AppState(
         _loginNeeded.value = false
         _fallbackName.value = null
         _session.value = session
+        _savedCardNumber.value = card
         _accountGeneration.update { it + 1 }
         _verificationGeneration.update { it + 1 }
         if (session != null) account.refresh(force = true)
@@ -271,9 +290,11 @@ class AppState(
         val origin = backend.origin
         _session.value = null
         _fallbackName.value = null
+        _savedCardNumber.value = null
         val forgotten = account.discard()
         updateMorningCheck()
         withContext(io) { secrets.put(sessionKey(origin), null) }
+        storeCardNumber(backend, null)
         alerts.forget(alertScope(backend))
         forgotten.join()
         _accountGeneration.update { it + 1 }
@@ -317,6 +338,26 @@ class AppState(
     fun dismissLogin() {
         _loginNeeded.value = false
     }
+
+    /**
+     * Saves (trimmed) or, when blank or null, deletes the selected library's card number (§5.9):
+     * in the secure store next to the session, or in memory for demo mode. Sign-out deletes it;
+     * an expired session keeps it.
+     */
+    suspend fun setCardNumber(number: String?) = serial {
+        val backend = _backend.value ?: return@serial
+        val value = number?.trim()?.takeIf { it.isNotEmpty() }
+        _savedCardNumber.value = value
+        storeCardNumber(backend, value)
+    }
+
+    private suspend fun storeCardNumber(backend: LibraryBackend, number: String?) {
+        if (backend.isDemo) demoCardNumbers[backend.origin] = number
+        else withContext(io) { secrets.put(cardKey(backend.origin), number) }
+    }
+
+    private fun demoCardNumber(origin: String): String? =
+        if (origin in demoCardNumbers) demoCardNumbers[origin] else DemoBackend.CARD_NUMBER
 
     // endregion
     // region Alerts (§5.8)
@@ -541,6 +582,8 @@ class AppState(
         libraryStore.set(null)
         withContext(io) { secrets.clear() }
         favourites.clear()
+        demoCardNumbers.clear()
+        _savedCardNumber.value = null
         account.bind(null, null, null)
         account.deleteAllSaved()
         alerts.reset()
@@ -590,6 +633,7 @@ class AppState(
 
         internal fun sessionKey(origin: String) = "session:$origin"
         internal fun verifyKey(origin: String) = "verify:$origin"
+        internal fun cardKey(origin: String) = "card.$origin"
 
         /** A [LibraryInfo] for an origin that isn't in (or couldn't be read from) the directory. */
         internal fun fallbackLibrary(origin: String): LibraryInfo {
