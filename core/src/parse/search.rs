@@ -51,10 +51,10 @@ static YEAR: LazyLock<Regex> = LazyLock::new(|| {
 // search-results.ts:117 (case-sensitive).
 static LANGUAGE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(&format!(r"^[A-Z][a-z]+(?:,{JS_WS}*[A-Z][a-z]+)*$")).unwrap());
-// An edition-level record link: `…/FULL/OPAC/BIBENQ/{set}/{bibIrn},{n}` → the base before
-// `/FULL/` and the bib IRN.
+// An edition-level record link: `…/FULL/OPAC/BIBENQ/{set}/{bibIrn},{n}` (saved searches) or
+// `…/FULL/OPAC/ALLENQ/{set}/{bibIrn},{n}` (a Pick list) → the base before `/FULL/` and the bib IRN.
 static EDITION_LINK: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"^(.*)/FULL/OPAC/BIBENQ/[0-9]+/([0-9]+)").unwrap());
+    LazyLock::new(|| Regex::new(r"^(.*)/FULL/OPAC/(?:BIBENQ|ALLENQ)/[0-9]+/([0-9]+)").unwrap());
 // search-results.ts:66 — `BK-tab-15974354` / `BK-pane-15974354-url`.
 static CODE_FROM_ID: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^(?i-u)([A-Z0-9]+)-(?:tab|pane)-").unwrap());
@@ -66,9 +66,11 @@ static SET_ID: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"/OPAC/ALL(?:WRK)?ENQ/([0-9]+)").unwrap());
 // search-results.ts `NO_RECORDS` — the OPAC's empty result, in a `div.alert` (same wording on every
 // AU/NZ/US library surveyed): "Sorry, your search for Anywhere: zzqxjv (Keywords) [in the local
-// catalogue] did not find any records." Tested on the collapsed text, so spaces are single.
-static NO_RECORDS: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"(?i-u:did not find any records)").unwrap());
+// catalogue] did not find any records." Tested on the collapsed text, so spaces are single. An
+// empty Pick list says "Sorry, you do not have any items in your Pick list." (new; no TS counterpart).
+static NO_RECORDS: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"(?i-u:did not find any records|do not have any items in your pick list)").unwrap()
+});
 // search-results.ts:293 — "Showing 1 - 10 of 46".
 static SHOWING: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(&format!(
@@ -184,9 +186,9 @@ fn code_from_query(href: Option<&str>) -> Option<String> {
 
 /// search-results.ts `finalize` — derive author / year / language from the detail lines.
 ///
-/// Edition-level cards (saved-search and collection lists: `RUNSQRY/OPAC/BIBENQ`, ALLENQ) have no
-/// format tabs (new; no TS counterpart). Their detail lines are just "Lee, Min Jin" / "2026", so a
-/// first line that isn't a year is the author. They get one format with an empty `code` and no
+/// Edition-level cards (saved-search and collection lists: `RUNSQRY/OPAC/BIBENQ`; editions on a
+/// Pick list: `FULL/OPAC/ALLENQ`) have no format tabs (new; no TS counterpart). Their detail lines
+/// are just "Lee, Min Jin" / "2026", so a first line that isn't a year is the author. They get one format with an empty `code` and no
 /// label: the card's own "Place reservation" link and the bib's `FMT=RECFMT` fragment as its
 /// `availability_url` (`SpydusClient::availability` counts that bib's copies).
 fn finalize(d: Draft, origin: &str) -> SearchRecord {
@@ -344,7 +346,8 @@ pub fn parse_search_results(html: &str, origin: &str, query: Option<&str>) -> Se
             }
             Ok(())
         }))
-        .append_element_content_handler(element!(r#"fieldset.card-list input[name="SVL"]"#, |el| {
+        // A Pick list card's checkbox removes it from the list (`RSVL`) rather than saving it.
+        .append_element_content_handler(element!(r#"fieldset.card-list input[name="SVL"], fieldset.card-list input[name="RSVL"]"#, |el| {
             if let Some(d) = st.borrow_mut().current()
                 && is_blank(&d.work_irn)
             {

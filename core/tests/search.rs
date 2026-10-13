@@ -118,7 +118,14 @@ fn golden_synthetic_author_lines() {
 #[test]
 fn golden_synthetic_allenq() {
     let html = common::fixture("synthetic/search-allenq.html");
-    let actual = parse_search_results(&html, ORIGIN, None);
+    let mut actual = parse_search_results(&html, ORIGIN, None);
+    // A tab-less edition-level card gets one format for its bib (new; the TS parser has none).
+    let format = actual.records[0].formats.pop().expect("an edition-level format");
+    assert_eq!((format.code.as_str(), format.label.as_deref(), format.reserve_url.as_deref()), ("", None, None));
+    assert_eq!(
+        format.availability_url.as_deref(),
+        Some("https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ?SETLVL=&IRN=1001&FMT=RECFMT")
+    );
     common::assert_golden(&actual, "synthetic/search-allenq.json");
 }
 

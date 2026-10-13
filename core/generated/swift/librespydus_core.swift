@@ -737,6 +737,15 @@ public protocol SpydusClientProtocol: AnyObject, Sendable {
     func page(url: String) async throws  -> SearchResults
     
     /**
+     * The reader's active Pick list ("My Picks" on the website): `url` `None` for its first page,
+     * or a `nextPageUrl` / `prevPageUrl` of it. Its records are results cards — a work saved from
+     * search results, or an edition (one format with an empty `code`) saved from a saved-search
+     * list — whose `workIrn` is the IRN to pass to `remove_pick`. An empty list is `noResults`;
+     * a session that has ended is `NotLoggedIn`. Not cached: it changes with every save.
+     */
+    func picks(session: String, url: String?) async throws  -> SearchResults
+    
+    /**
      * Place a reservation (server.ts:201-220). MUTATING — call only on explicit user
      * confirmation. `xdays` / `pickup` override the form's expiry and pickup choices. Not
      * being able to place it is `ok: false` data, not an error.
@@ -756,6 +765,12 @@ public protocol SpydusClientProtocol: AnyObject, Sendable {
     func related(url: String) async throws  -> RelatedList
     
     /**
+     * Remove a record (its IRN, as for `save_pick`) from the reader's active Pick list. Returns
+     * how many records the list still holds. MUTATING — call only when the reader taps remove.
+     */
+    func removePick(irn: String, session: String) async throws  -> Int64
+    
+    /**
      * Ready-for-pickup and pending reservations, fetched concurrently (server.ts:305-322).
      * A missing link → an empty list for that half.
      */
@@ -766,6 +781,14 @@ public protocol SpydusClientProtocol: AnyObject, Sendable {
      * no hold is placed. A logged-out session yields `message: "Please sign in again."`.
      */
     func reserveOptions(url: String, session: String) async throws  -> ReserveOptions
+    
+    /**
+     * Save a record to the reader's active Pick list: a results card's `workIrn` (a work, or an
+     * edition on saved-search lists) or a record's `bibIrn`. Returns how many records the list
+     * now holds. MUTATING — call only when the reader taps save. Saving one already on the list
+     * changes nothing.
+     */
+    func savePick(irn: String, session: String) async throws  -> Int64
     
     /**
      * Keyword search → the first results page (server.ts:55-67), in relevance order: exactly
@@ -1149,6 +1172,29 @@ open func page(url: String)async throws  -> SearchResults  {
 }
     
     /**
+     * The reader's active Pick list ("My Picks" on the website): `url` `None` for its first page,
+     * or a `nextPageUrl` / `prevPageUrl` of it. Its records are results cards — a work saved from
+     * search results, or an edition (one format with an empty `code`) saved from a saved-search
+     * list — whose `workIrn` is the IRN to pass to `remove_pick`. An empty list is `noResults`;
+     * a session that has ended is `NotLoggedIn`. Not cached: it changes with every save.
+     */
+open func picks(session: String, url: String?)async throws  -> SearchResults  {
+    return
+        try  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_librespydus_core_fn_method_spydusclient_picks(
+                        self.uniffiCloneHandle(),FfiConverterString.lower(session),FfiConverterOptionString.lower(url)
+                )
+            },
+            pollFunc: ffi_librespydus_core_rust_future_poll_rust_buffer,
+            completeFunc: ffi_librespydus_core_rust_future_complete_rust_buffer,
+            freeFunc: ffi_librespydus_core_rust_future_free_rust_buffer,
+            liftFunc: FfiConverterTypeSearchResults_lift,
+            errorHandler: FfiConverterTypeSpydusError_lift
+        )
+}
+    
+    /**
      * Place a reservation (server.ts:201-220). MUTATING — call only on explicit user
      * confirmation. `xdays` / `pickup` override the form's expiry and pickup choices. Not
      * being able to place it is `ok: false` data, not an error.
@@ -1210,6 +1256,26 @@ open func related(url: String)async throws  -> RelatedList  {
 }
     
     /**
+     * Remove a record (its IRN, as for `save_pick`) from the reader's active Pick list. Returns
+     * how many records the list still holds. MUTATING — call only when the reader taps remove.
+     */
+open func removePick(irn: String, session: String)async throws  -> Int64  {
+    return
+        try  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_librespydus_core_fn_method_spydusclient_remove_pick(
+                        self.uniffiCloneHandle(),FfiConverterString.lower(irn),FfiConverterString.lower(session)
+                )
+            },
+            pollFunc: ffi_librespydus_core_rust_future_poll_i64,
+            completeFunc: ffi_librespydus_core_rust_future_complete_i64,
+            freeFunc: ffi_librespydus_core_rust_future_free_i64,
+            liftFunc: FfiConverterInt64.lift,
+            errorHandler: FfiConverterTypeSpydusError_lift
+        )
+}
+    
+    /**
      * Ready-for-pickup and pending reservations, fetched concurrently (server.ts:305-322).
      * A missing link → an empty list for that half.
      */
@@ -1245,6 +1311,28 @@ open func reserveOptions(url: String, session: String)async throws  -> ReserveOp
             completeFunc: ffi_librespydus_core_rust_future_complete_rust_buffer,
             freeFunc: ffi_librespydus_core_rust_future_free_rust_buffer,
             liftFunc: FfiConverterTypeReserveOptions_lift,
+            errorHandler: FfiConverterTypeSpydusError_lift
+        )
+}
+    
+    /**
+     * Save a record to the reader's active Pick list: a results card's `workIrn` (a work, or an
+     * edition on saved-search lists) or a record's `bibIrn`. Returns how many records the list
+     * now holds. MUTATING — call only when the reader taps save. Saving one already on the list
+     * changes nothing.
+     */
+open func savePick(irn: String, session: String)async throws  -> Int64  {
+    return
+        try  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_librespydus_core_fn_method_spydusclient_save_pick(
+                        self.uniffiCloneHandle(),FfiConverterString.lower(irn),FfiConverterString.lower(session)
+                )
+            },
+            pollFunc: ffi_librespydus_core_rust_future_poll_i64,
+            completeFunc: ffi_librespydus_core_rust_future_complete_i64,
+            freeFunc: ffi_librespydus_core_rust_future_free_i64,
+            liftFunc: FfiConverterInt64.lift,
             errorHandler: FfiConverterTypeSpydusError_lift
         )
 }
@@ -3976,7 +4064,9 @@ public func FfiConverterTypeReserveResult_lower(_ value: ReserveResult) -> RustB
 public struct SearchRecord: Equatable, Hashable {
     public var rank: Int64?
     /**
-     * Work IRN (the SVL checkbox value); identifies the grouped work.
+     * Work IRN (the SVL checkbox value); identifies the grouped work. It is also the IRN
+     * `save_pick` saves: an edition-level card's (saved-search lists) is its edition's bib IRN,
+     * and a Pick list card's is the IRN that was saved (its `RSVL` checkbox).
      */
     public var workIrn: String?
     public var title: String?
@@ -3995,7 +4085,9 @@ public struct SearchRecord: Equatable, Hashable {
     // declare one manually.
     public init(rank: Int64?, 
         /**
-         * Work IRN (the SVL checkbox value); identifies the grouped work.
+         * Work IRN (the SVL checkbox value); identifies the grouped work. It is also the IRN
+         * `save_pick` saves: an edition-level card's (saved-search lists) is its edition's bib IRN,
+         * and a Pick list card's is the IRN that was saved (its `RSVL` checkbox).
          */workIrn: String?, title: String?, detailUrl: String?, author: String?, authorRole: String?, authorUrl: String?, year: String?, language: String?, summary: String?, isbn: String?, coverUrls: [String], formats: [RecordFormat]) {
         self.rank = rank
         self.workIrn = workIrn
@@ -6031,6 +6123,9 @@ private let initializationResult: InitializationResult = {
     if (uniffi_librespydus_core_checksum_method_spydusclient_page() != 57599) {
         return InitializationResult.apiChecksumMismatch
     }
+    if (uniffi_librespydus_core_checksum_method_spydusclient_picks() != 56797) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_librespydus_core_checksum_method_spydusclient_place_reservation() != 9913) {
         return InitializationResult.apiChecksumMismatch
     }
@@ -6040,10 +6135,16 @@ private let initializationResult: InitializationResult = {
     if (uniffi_librespydus_core_checksum_method_spydusclient_related() != 46747) {
         return InitializationResult.apiChecksumMismatch
     }
+    if (uniffi_librespydus_core_checksum_method_spydusclient_remove_pick() != 49529) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_librespydus_core_checksum_method_spydusclient_reservations() != 43078) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_librespydus_core_checksum_method_spydusclient_reserve_options() != 26217) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_librespydus_core_checksum_method_spydusclient_save_pick() != 15428) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_librespydus_core_checksum_method_spydusclient_search() != 20559) {

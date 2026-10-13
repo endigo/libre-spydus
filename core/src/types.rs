@@ -58,7 +58,9 @@ pub enum SearchSort {
 #[serde(rename_all = "camelCase")]
 pub struct SearchRecord {
     pub rank: Option<i64>,
-    /// Work IRN (the SVL checkbox value); identifies the grouped work.
+    /// Work IRN (the SVL checkbox value); identifies the grouped work. It is also the IRN
+    /// `save_pick` saves: an edition-level card's (saved-search lists) is its edition's bib IRN,
+    /// and a Pick list card's is the IRN that was saved (its `RSVL` checkbox).
     pub work_irn: Option<String>,
     pub title: Option<String>,
     pub detail_url: Option<String>,

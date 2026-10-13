@@ -29,6 +29,7 @@ core/
     fetch.rs            HTTP: search, fragments, authed GET, login, reservation wizards;
                         origin guard, timeouts, AWS WAF detection, verification cookie
     parse/featured.rs   the home page's Featured list, collection pages, results-list URLs
+    parse/picks.rs      the Pick list's save/remove reply (the list itself is a results page)
     barcode.rs          card_barcode: a card number as Code 128 / Code 39 / Codabar modules
     timing.rs           opt-in timing log (set_timing_sink): network and parse time per page
     crypto.rs           encrypt.js → PEM, RSA PKCS#1 v1.5 (JSEncrypt-compatible) PIN encryption
@@ -149,6 +150,19 @@ Featured collections (`docs/native-apps.md` §5.10), all public:
 | `featured()` | The "Featured" list on the OPAC home page (`/cgi-bin/spydus.exe/MSGTRN/OPAC/HOME`) as `[FeaturedLink{title, description?, icon?, kind, url}]`, in order. `kind`: `.collection` (a `MSGTRNGEN` page for `collection`), `.search` (one saved search, already a results list for `page`) or `.web`. `icon` is the library's Font Awesome name without `fa-` (Canning: book, balloons, computer, circle, globe, game-board, map-location-dot, user-circle). Empty for a library without the list (Hutt, Geelong, Cumberland). Cached 10 min. |
 | `collection(url)` | `FeaturedCollection{title?, sections: [FeaturedSection{title, url}]}`: each section of the page is a saved search (`RUNSQRY`), its `url` a results list for `page` (20 a page, without the home page's grid view and random order). A page of outside links (eLibrary) has no sections. Cached 10 min. |
 | `holdings(url)` | An `Availability.holdingsUrl` → one `Holding{location, collection, callNumber, status, description, available}` per copy (`available`: the status starts with "Available", "On shelf" or "In library"). Cached 60 s. |
+
+My Picks (`docs/native-apps.md` §5.11), the reader's Pick list on the library account:
+
+| call | returns |
+|---|---|
+| `picks(session, url?)` | The active Pick list (`/cgi-bin/spydus.exe/SVL/OPAC/ALLENQ?ISGLB=1&NRECS=20`) as `SearchResults`; `url` a `nextPageUrl` / `prevPageUrl` of it, or nil for the first page. Works saved from search results keep their format tabs; editions saved from saved-search lists are edition-level (below). An empty list is `noResults` ("Sorry, you do not have any items in your Pick list."); a guest's page (it has the sign-in form) is `NotLoggedIn`. Not cached. |
+| `savePick(irn, session)` | MUTATING. Saves one record — a card's `workIrn` (a work, or an edition on saved-search lists) or a record's `bibIrn` — with `GET …/XSVL/OPAC/ALLENQ?SVL={irn}`, what the website's bookmark button requests. Returns the list's new size from the XML reply (`<XSVL COUNT="n">`). A non-numeric `irn` is `Parse`; the library's error page ("None found") or a `<REDIRECT>` is `Upstream`. |
+| `removePick(irn, session)` | MUTATING. The same with `?RSVL={irn}`; returns how many remain. |
+
+`SearchRecord.workIrn` is read from the card's `SVL` checkbox, or its `RSVL` checkbox on a Pick list
+page, so it is always the IRN these calls take. Tested on a guest's list (public fixtures in
+`tests/fixtures/picks/`); a guest's list is a cookie (`SVLID`) the core doesn't keep, so the apps
+use these signed in only.
 
 Saved-search lists are **edition-level**: each card is one bib, with no format tabs. `page` gives
 such a record one format with an empty `code` and no label: the card's "Place reservation" link as

@@ -108,7 +108,8 @@ AccountLinks{name,…}`, `loans(session) -> PatronList`, `reservations(session) 
 Reservations{ready,pending}`, `reserveOptions(url,session)`, `placeReservation(url,session,xdays?,
 pickup?)`, `cancelReservation(url,session)`, `editOptions(url,session)`,
 `editReservation(url,session,EditOverrides)`. Mutations return `ReserveResult{ok,message}` —
-`ok:false` is data to show, not an error.
+`ok:false` is data to show, not an error. My Picks (§5.11): `picks(session,url?)`,
+`savePick(irn,session)`, `removePick(irn,session)`.
 
 `SpydusError` (flat; message = Display string): `Network`, `OriginForbidden`,
 `CredentialsRejected`, `NotLoggedIn`, `Upstream`, `Parse`, `HumanVerificationRequired`.
@@ -182,7 +183,7 @@ own file); demo mode never saves it; a successful reserve / cancel / edit trigge
 iOS: `Application Support/AccountCache/<sha256(origin)>.json`, complete-until-first-unlock,
 excluded from backup. Android: `noBackupFilesDir`, AES-GCM with an Android Keystore key.
 
-### 5.3 Favourites (local only)
+### 5.3 Favourites (local; signed in → My Picks, §5.11)
 Per-origin list of `BookRef` (Codable/serializable): `id` (stable key: bib IRN / BRN / work IRN,
 else URL), `title`, `author`, `coverUrl`, `url` (bookmarkUrl preferred), `isbn`, `year`,
 `formats` (code,label,reserveUrl,availabilityUrl), `savedAt`. Toggle, contains, list (newest first),
@@ -343,6 +344,49 @@ More to Celebrate). Public data, cached in the core.
   `client.holdings(availability.holdingsUrl)` entry — location (title case), status (green when
   `available`), the description in secondary text when present, the call number in caption text.
   Items without an author show none (Library of Things).
+
+### 5.11 My Picks: Favourites on the library account (I12 iOS / A10 Android)
+The website's "Pick list" ("My Picks"): saved titles kept on the reader's library account, so they
+follow them to the website and other devices. **Signed in, Favourites is My Picks; signed out it is
+the local list of §5.3**, unchanged. Core (`core/README.md`, "My Picks"): `picks(session, url?)` →
+`SearchResults` (`url` nil = first page, else its `nextPageUrl`), `savePick(irn, session)` /
+`removePick(irn, session)` → the list's new size (`Int64`). Both are MUTATING: only on the reader's
+tap. Not cached in the core.
+- **The IRN** (what a pick is keyed on): `SearchRecord.workIrn` for any results card (a search
+  result saves the work; an edition-level card from a Featured list saves that edition; a Pick
+  list card's is the IRN to remove). A `BookRef` keyed `work:<IRN>` / `bib:<IRN>` → that IRN.
+  Otherwise (a loan, reservation or related item: `brn:` / `url:` keys) the book page's loaded
+  `RecordDetail.bibIrn`. No IRN yet (the record is still loading) → the bookmark waits (disabled).
+- **Picked state:** the app keeps the set of IRNs on the list (`workIrn` of every record on every
+  page, at most 10 pages), loaded after sign-in / launch while signed in, reloaded when Favourites
+  refreshes, and updated by each save/remove. A book is picked when its IRN is in the set. (A work
+  saved from search results and the same book opened from a loan are different IRNs; that's the
+  website's behaviour too.)
+- **Bookmark** (book page; and anywhere else a favourite toggle appears) when signed in: tap →
+  flip at once, call `savePick` / `removePick`; on failure flip back and show "Couldn't update My
+  Picks." (`NotLoggedIn` → the usual session-expired path, §5.2). Success shows a short
+  confirmation: "Saved to My Picks" / "Removed from My Picks". Accessibility label "Save to My
+  Picks" / "Remove from My Picks".
+- **Favourites tab** when signed in: title **"My Picks"**, subtitle "Saved on your library
+  account". Rows exactly like search results (cover, title, author, year, format chips; an
+  edition-level item has no chip), tap → the book page, `nextPageUrl` paging, pull to refresh.
+  Remove: swipe-to-delete (iOS) / the row's bookmark icon or long-press menu (Android) →
+  `removePick`, the row leaves at once (back on failure, with the error above). Empty
+  (`noResults`): "No picks yet" + "Tap the bookmark on a book to save it to your library
+  account." Loading / error(+Retry) as elsewhere; `NotLoggedIn` → session expired.
+- **Copy local favourites, once:** after an interactive sign-in (not a restored session), when the
+  library's local favourites aren't empty and this library hasn't been asked before: an alert
+  "Add your saved books to My Picks?" — "{n} books saved on this phone can be added to your
+  library account." — **Add** / **Not now**. Either answer is remembered per library (never asked
+  again). Add: `savePick` each one with an IRN (one at a time, oldest first); a ref without one
+  (`brn:` / `url:`) loads `record(url)` first for `bibIrn`, else is skipped. Then "Added {k} books
+  to My Picks" (+ " · {m} couldn't be added" when some failed or had no IRN) and reload the set.
+  The local list is kept (it's what Favourites shows when signed out).
+- **Demo mode:** `DemoBackend` keeps an in-memory pick list seeded with two of its search records
+  (one edition-level from its Featured data if it has one), with real `noResults` when emptied,
+  and counts from save/remove — so every flow above works signed in to the demo account.
+- **Verification:** workers use demo mode only — never save/remove on a real account. The
+  coordinator and the user check the real list on the phone.
 
 ### 5.7 User-facing errors
 `Network` → "Can't reach {library}. Check your connection." · `HumanVerificationRequired` →

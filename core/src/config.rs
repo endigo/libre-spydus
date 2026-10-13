@@ -35,6 +35,14 @@ pub const SEARCH_PATH: &str = "/cgi-bin/spydus.exe/ENQ/OPAC/ALLWRKENQ?ENTRY={q}&
 /// The OPAC home page: its "Featured" list (`SpydusClient::featured`).
 pub const HOME_PATH: &str = "/cgi-bin/spydus.exe/MSGTRN/OPAC/HOME";
 
+/// The signed-in reader's active Pick list ("My Picks"), 20 records a page (`SpydusClient::picks`).
+pub const PICK_LIST_PATH: &str = "/cgi-bin/spydus.exe/SVL/OPAC/ALLENQ?ISGLB=1&NRECS=20";
+
+/// Saves (`?SVL={irn}`) or removes (`?RSVL={irn}`) one record on the active Pick list: what the
+/// website's bookmark buttons request (`spydus.js` `onClickSVL`). A work's IRN and an edition's
+/// bib IRN both work, without a result set in the path.
+pub const PICK_TOGGLE_PATH: &str = "/cgi-bin/spydus.exe/XSVL/OPAC/ALLENQ";
+
 /// The Spydus mobile app's public library config (card `barcodeType`, branding). Optional: some
 /// libraries answer 404.
 pub const MOBILE_CONFIG_PATH: &str = "/api/mobile/1.0/general/config?wifiName=";

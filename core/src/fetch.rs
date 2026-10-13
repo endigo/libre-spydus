@@ -173,6 +173,26 @@ impl Http {
         self.ok_text(res, "authed GET").await
     }
 
+    /// The reader's Pick list page: `url` is [`config::PICK_LIST_PATH`] or one of its later pages.
+    /// The page a guest gets (it has the sign-in form) means the session has ended.
+    pub async fn fetch_pick_list(&self, url: &str, session: &str) -> Result<String, SpydusError> {
+        let html = self.fetch_authed(url, session).await?;
+        if html.contains(LOGIN_FORM) {
+            return Err(SpydusError::NotLoggedIn);
+        }
+        Ok(html)
+    }
+
+    /// Saves (`save`) or removes record `irn` on the reader's active Pick list; returns the
+    /// library's XML reply (`parse::picks::parse_pick_reply`). MUTATING.
+    pub async fn toggle_pick(&self, irn: &str, save: bool, session: &str) -> Result<String, SpydusError> {
+        if irn.is_empty() || !irn.bytes().all(|b| b.is_ascii_digit()) {
+            return Err(SpydusError::Parse { message: format!("not a record IRN: {irn:?}") });
+        }
+        let param = if save { "SVL" } else { "RSVL" };
+        self.fetch_authed(&format!("{}{}?{param}={irn}", self.origin, config::PICK_TOGGLE_PATH), session).await
+    }
+
     /// auth.ts:93-135 — returns the session token. The password leaves this process only
     /// RSA-encrypted and is never logged.
     pub async fn login(&self, username: &str, password: &str) -> Result<String, SpydusError> {

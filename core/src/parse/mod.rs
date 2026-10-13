@@ -5,6 +5,7 @@ pub mod account;
 pub mod availability;
 pub mod decode;
 pub mod featured;
+pub mod picks;
 pub mod record;
 pub mod reserve;
 pub mod search;

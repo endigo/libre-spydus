@@ -764,15 +764,21 @@ internal object IntegrityCheckingUniffiLib {
     ): Int
     external fun uniffi_librespydus_core_checksum_method_spydusclient_page(
     ): Int
+    external fun uniffi_librespydus_core_checksum_method_spydusclient_picks(
+    ): Int
     external fun uniffi_librespydus_core_checksum_method_spydusclient_place_reservation(
     ): Int
     external fun uniffi_librespydus_core_checksum_method_spydusclient_record(
     ): Int
     external fun uniffi_librespydus_core_checksum_method_spydusclient_related(
     ): Int
+    external fun uniffi_librespydus_core_checksum_method_spydusclient_remove_pick(
+    ): Int
     external fun uniffi_librespydus_core_checksum_method_spydusclient_reservations(
     ): Int
     external fun uniffi_librespydus_core_checksum_method_spydusclient_reserve_options(
+    ): Int
+    external fun uniffi_librespydus_core_checksum_method_spydusclient_save_pick(
     ): Int
     external fun uniffi_librespydus_core_checksum_method_spydusclient_search(
     ): Int
@@ -839,15 +845,21 @@ internal object UniffiLib {
     ): RustBuffer.ByValue
     external fun uniffi_librespydus_core_fn_method_spydusclient_page(`ptr`: Long,`url`: RustBuffer.ByValue,
     ): Long
+    external fun uniffi_librespydus_core_fn_method_spydusclient_picks(`ptr`: Long,`session`: RustBuffer.ByValue,`url`: RustBuffer.ByValue,
+    ): Long
     external fun uniffi_librespydus_core_fn_method_spydusclient_place_reservation(`ptr`: Long,`url`: RustBuffer.ByValue,`session`: RustBuffer.ByValue,`xdays`: RustBuffer.ByValue,`pickup`: RustBuffer.ByValue,
     ): Long
     external fun uniffi_librespydus_core_fn_method_spydusclient_record(`ptr`: Long,`url`: RustBuffer.ByValue,
     ): Long
     external fun uniffi_librespydus_core_fn_method_spydusclient_related(`ptr`: Long,`url`: RustBuffer.ByValue,
     ): Long
+    external fun uniffi_librespydus_core_fn_method_spydusclient_remove_pick(`ptr`: Long,`irn`: RustBuffer.ByValue,`session`: RustBuffer.ByValue,
+    ): Long
     external fun uniffi_librespydus_core_fn_method_spydusclient_reservations(`ptr`: Long,`session`: RustBuffer.ByValue,
     ): Long
     external fun uniffi_librespydus_core_fn_method_spydusclient_reserve_options(`ptr`: Long,`url`: RustBuffer.ByValue,`session`: RustBuffer.ByValue,
+    ): Long
+    external fun uniffi_librespydus_core_fn_method_spydusclient_save_pick(`ptr`: Long,`irn`: RustBuffer.ByValue,`session`: RustBuffer.ByValue,
     ): Long
     external fun uniffi_librespydus_core_fn_method_spydusclient_search(`ptr`: Long,`query`: RustBuffer.ByValue,
     ): Long
@@ -1104,6 +1116,9 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
     if ((lib.uniffi_librespydus_core_checksum_method_spydusclient_page() and 0xFFFF) != 57599) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
+    if ((lib.uniffi_librespydus_core_checksum_method_spydusclient_picks() and 0xFFFF) != 56797) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
     if ((lib.uniffi_librespydus_core_checksum_method_spydusclient_place_reservation() and 0xFFFF) != 9913) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
@@ -1113,10 +1128,16 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
     if ((lib.uniffi_librespydus_core_checksum_method_spydusclient_related() and 0xFFFF) != 46747) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
+    if ((lib.uniffi_librespydus_core_checksum_method_spydusclient_remove_pick() and 0xFFFF) != 49529) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
     if ((lib.uniffi_librespydus_core_checksum_method_spydusclient_reservations() and 0xFFFF) != 43078) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if ((lib.uniffi_librespydus_core_checksum_method_spydusclient_reserve_options() and 0xFFFF) != 26217) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_librespydus_core_checksum_method_spydusclient_save_pick() and 0xFFFF) != 15428) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if ((lib.uniffi_librespydus_core_checksum_method_spydusclient_search() and 0xFFFF) != 20559) {
@@ -1780,6 +1801,15 @@ public interface SpydusClientInterface {
     suspend fun `page`(`url`: kotlin.String): SearchResults
     
     /**
+     * The reader's active Pick list ("My Picks" on the website): `url` `None` for its first page,
+     * or a `nextPageUrl` / `prevPageUrl` of it. Its records are results cards — a work saved from
+     * search results, or an edition (one format with an empty `code`) saved from a saved-search
+     * list — whose `workIrn` is the IRN to pass to `remove_pick`. An empty list is `noResults`;
+     * a session that has ended is `NotLoggedIn`. Not cached: it changes with every save.
+     */
+    suspend fun `picks`(`session`: kotlin.String, `url`: kotlin.String?): SearchResults
+    
+    /**
      * Place a reservation (server.ts:201-220). MUTATING — call only on explicit user
      * confirmation. `xdays` / `pickup` override the form's expiry and pickup choices. Not
      * being able to place it is `ok: false` data, not an error.
@@ -1799,6 +1829,12 @@ public interface SpydusClientInterface {
     suspend fun `related`(`url`: kotlin.String): RelatedList
     
     /**
+     * Remove a record (its IRN, as for `save_pick`) from the reader's active Pick list. Returns
+     * how many records the list still holds. MUTATING — call only when the reader taps remove.
+     */
+    suspend fun `removePick`(`irn`: kotlin.String, `session`: kotlin.String): kotlin.Long
+    
+    /**
      * Ready-for-pickup and pending reservations, fetched concurrently (server.ts:305-322).
      * A missing link → an empty list for that half.
      */
@@ -1809,6 +1845,14 @@ public interface SpydusClientInterface {
      * no hold is placed. A logged-out session yields `message: "Please sign in again."`.
      */
     suspend fun `reserveOptions`(`url`: kotlin.String, `session`: kotlin.String): ReserveOptions
+    
+    /**
+     * Save a record to the reader's active Pick list: a results card's `workIrn` (a work, or an
+     * edition on saved-search lists) or a record's `bibIrn`. Returns how many records the list
+     * now holds. MUTATING — call only when the reader taps save. Saving one already on the list
+     * changes nothing.
+     */
+    suspend fun `savePick`(`irn`: kotlin.String, `session`: kotlin.String): kotlin.Long
     
     /**
      * Keyword search → the first results page (server.ts:55-67), in relevance order: exactly
@@ -2326,6 +2370,36 @@ open class SpydusClient: Disposable, AutoCloseable, SpydusClientInterface
 
     
     /**
+     * The reader's active Pick list ("My Picks" on the website): `url` `None` for its first page,
+     * or a `nextPageUrl` / `prevPageUrl` of it. Its records are results cards — a work saved from
+     * search results, or an edition (one format with an empty `code`) saved from a saved-search
+     * list — whose `workIrn` is the IRN to pass to `remove_pick`. An empty list is `noResults`;
+     * a session that has ended is `NotLoggedIn`. Not cached: it changes with every save.
+     */
+    @Throws(SpydusException::class)
+    @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
+    override suspend fun `picks`(`session`: kotlin.String, `url`: kotlin.String?) : SearchResults {
+        return uniffiRustCallAsync(
+        callWithHandle { uniffiHandle ->
+            UniffiLib.uniffi_librespydus_core_fn_method_spydusclient_picks(
+                uniffiHandle,
+                
+        FfiConverterString.lower(`session`),
+        FfiConverterOptionalString.lower(`url`),
+            )
+        },
+        { future, callback, continuation -> UniffiLib.ffi_librespydus_core_rust_future_poll_rust_buffer(future, callback, continuation) },
+        { future, continuation -> UniffiLib.ffi_librespydus_core_rust_future_complete_rust_buffer(future, continuation) },
+        { future -> UniffiLib.ffi_librespydus_core_rust_future_free_rust_buffer(future) },
+        // lift function
+        { FfiConverterTypeSearchResults.lift(it) },
+        // Error FFI converter
+        SpydusException.ErrorHandler,
+    )
+    }
+
+    
+    /**
      * Place a reservation (server.ts:201-220). MUTATING — call only on explicit user
      * confirmation. `xdays` / `pickup` override the form's expiry and pickup choices. Not
      * being able to place it is `ok: false` data, not an error.
@@ -2408,6 +2482,33 @@ open class SpydusClient: Disposable, AutoCloseable, SpydusClientInterface
 
     
     /**
+     * Remove a record (its IRN, as for `save_pick`) from the reader's active Pick list. Returns
+     * how many records the list still holds. MUTATING — call only when the reader taps remove.
+     */
+    @Throws(SpydusException::class)
+    @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
+    override suspend fun `removePick`(`irn`: kotlin.String, `session`: kotlin.String) : kotlin.Long {
+        return uniffiRustCallAsync(
+        callWithHandle { uniffiHandle ->
+            UniffiLib.uniffi_librespydus_core_fn_method_spydusclient_remove_pick(
+                uniffiHandle,
+                
+        FfiConverterString.lower(`irn`),
+        FfiConverterString.lower(`session`),
+            )
+        },
+        { future, callback, continuation -> UniffiLib.ffi_librespydus_core_rust_future_poll_i64(future, callback, continuation) },
+        { future, continuation -> UniffiLib.ffi_librespydus_core_rust_future_complete_i64(future, continuation) },
+        { future -> UniffiLib.ffi_librespydus_core_rust_future_free_i64(future) },
+        // lift function
+        { FfiConverterLong.lift(it) },
+        // Error FFI converter
+        SpydusException.ErrorHandler,
+    )
+    }
+
+    
+    /**
      * Ready-for-pickup and pending reservations, fetched concurrently (server.ts:305-322).
      * A missing link → an empty list for that half.
      */
@@ -2454,6 +2555,35 @@ open class SpydusClient: Disposable, AutoCloseable, SpydusClientInterface
         { future -> UniffiLib.ffi_librespydus_core_rust_future_free_rust_buffer(future) },
         // lift function
         { FfiConverterTypeReserveOptions.lift(it) },
+        // Error FFI converter
+        SpydusException.ErrorHandler,
+    )
+    }
+
+    
+    /**
+     * Save a record to the reader's active Pick list: a results card's `workIrn` (a work, or an
+     * edition on saved-search lists) or a record's `bibIrn`. Returns how many records the list
+     * now holds. MUTATING — call only when the reader taps save. Saving one already on the list
+     * changes nothing.
+     */
+    @Throws(SpydusException::class)
+    @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
+    override suspend fun `savePick`(`irn`: kotlin.String, `session`: kotlin.String) : kotlin.Long {
+        return uniffiRustCallAsync(
+        callWithHandle { uniffiHandle ->
+            UniffiLib.uniffi_librespydus_core_fn_method_spydusclient_save_pick(
+                uniffiHandle,
+                
+        FfiConverterString.lower(`irn`),
+        FfiConverterString.lower(`session`),
+            )
+        },
+        { future, callback, continuation -> UniffiLib.ffi_librespydus_core_rust_future_poll_i64(future, callback, continuation) },
+        { future, continuation -> UniffiLib.ffi_librespydus_core_rust_future_complete_i64(future, continuation) },
+        { future -> UniffiLib.ffi_librespydus_core_rust_future_free_i64(future) },
+        // lift function
+        { FfiConverterLong.lift(it) },
         // Error FFI converter
         SpydusException.ErrorHandler,
     )
@@ -4700,7 +4830,9 @@ data class SearchRecord (
     var `rank`: kotlin.Long?
     , 
     /**
-     * Work IRN (the SVL checkbox value); identifies the grouped work.
+     * Work IRN (the SVL checkbox value); identifies the grouped work. It is also the IRN
+     * `save_pick` saves: an edition-level card's (saved-search lists) is its edition's bib IRN,
+     * and a Pick list card's is the IRN that was saved (its `RSVL` checkbox).
      */
     var `workIrn`: kotlin.String?
     , 

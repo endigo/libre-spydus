@@ -407,6 +407,46 @@ impl SpydusClient {
         })
     }
 
+    /// The reader's active Pick list ("My Picks" on the website): `url` `None` for its first page,
+    /// or a `nextPageUrl` / `prevPageUrl` of it. Its records are results cards — a work saved from
+    /// search results, or an edition (one format with an empty `code`) saved from a saved-search
+    /// list — whose `workIrn` is the IRN to pass to `remove_pick`. An empty list is `noResults`;
+    /// a session that has ended is `NotLoggedIn`. Not cached: it changes with every save.
+    pub async fn picks(&self, session: String, url: Option<String>) -> Result<SearchResults, SpydusError> {
+        let session = signed_in(&session)?;
+        let (http, url) = match url {
+            Some(url) => (self.guarded(&url)?, url),
+            None => {
+                let http = self.http()?;
+                (http, format!("{}{}", http.origin(), config::PICK_LIST_PATH))
+            }
+        };
+        timing::fetch_and_parse("pick list", http.fetch_pick_list(&url, session), |html| {
+            parse_search_results(html, http.origin(), None)
+        })
+        .await
+    }
+
+    /// Save a record to the reader's active Pick list: a results card's `workIrn` (a work, or an
+    /// edition on saved-search lists) or a record's `bibIrn`. Returns how many records the list
+    /// now holds. MUTATING — call only when the reader taps save. Saving one already on the list
+    /// changes nothing.
+    pub async fn save_pick(&self, irn: String, session: String) -> Result<i64, SpydusError> {
+        let session = signed_in(&session)?;
+        let http = self.http()?;
+        timing::fetch_and_parse("save pick", http.toggle_pick(js_trim(&irn), true, session), parse::picks::parse_pick_reply)
+            .await?
+    }
+
+    /// Remove a record (its IRN, as for `save_pick`) from the reader's active Pick list. Returns
+    /// how many records the list still holds. MUTATING — call only when the reader taps remove.
+    pub async fn remove_pick(&self, irn: String, session: String) -> Result<i64, SpydusError> {
+        let session = signed_in(&session)?;
+        let http = self.http()?;
+        timing::fetch_and_parse("remove pick", http.toggle_pick(js_trim(&irn), false, session), parse::picks::parse_pick_reply)
+            .await?
+    }
+
     /// The reservation request form for a format's `reserveUrl` (server.ts:186-198). Read-only:
     /// no hold is placed. A logged-out session yields `message: "Please sign in again."`.
     pub async fn reserve_options(
@@ -594,6 +634,7 @@ mod tests {
         assert!(matches!(c.edit_options(url(), s()).await, Err(SpydusError::OriginForbidden)));
         let edited = c.edit_reservation(url(), s(), EditOverrides::default()).await;
         assert!(matches!(edited, Err(SpydusError::OriginForbidden)));
+        assert!(matches!(c.picks(s(), Some(url())).await, Err(SpydusError::OriginForbidden)));
     }
 
     #[tokio::test]
@@ -614,6 +655,9 @@ mod tests {
         assert!(matches!(c.edit_options(url(), blank()).await, Err(SpydusError::NotLoggedIn)));
         let edited = c.edit_reservation(url(), blank(), EditOverrides::default()).await;
         assert!(matches!(edited, Err(SpydusError::NotLoggedIn)));
+        assert!(matches!(c.picks(blank(), None).await, Err(SpydusError::NotLoggedIn)));
+        assert!(matches!(c.save_pick("19244197".into(), blank()).await, Err(SpydusError::NotLoggedIn)));
+        assert!(matches!(c.remove_pick("19244197".into(), blank()).await, Err(SpydusError::NotLoggedIn)));
     }
 
     #[tokio::test]
@@ -624,6 +668,11 @@ mod tests {
         assert!(matches!(no_user, Err(SpydusError::CredentialsRejected)));
         let no_pin = c.login("user".into(), String::new()).await;
         assert!(matches!(no_pin, Err(SpydusError::CredentialsRejected)));
+        // Only a record's digits go into the Pick list link.
+        for irn in ["", " ", "12&RSVL=3", "abc"] {
+            assert!(matches!(c.save_pick(irn.into(), "SESSION".into()).await, Err(SpydusError::Parse { .. })), "{irn:?}");
+        }
+        assert!(matches!(c.remove_pick("1 2".into(), "SESSION".into()).await, Err(SpydusError::Parse { .. })));
     }
 
     #[tokio::test]
