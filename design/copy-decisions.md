@@ -205,7 +205,21 @@ migrations mark each line `// copy-exempt: <reason>`:
   files (galleries, debug hooks and actions, demo backend and data, timing log, launch options)
   are skipped by the checker itself.
 
-## Text the core produces (core/src). Proposed fixes, not made here
+## Coordinator decisions on the open questions (after C1)
+
+- Android hints as `{label}. {hint}` in `contentDescription`: accepted.
+- "your library" as the one fallback name, "Not needed after", "Books on loan": accepted.
+- The contract's mixed terms are unified (added to the §7.1 glossary): **edit** a reservation
+  (`yourBooks.swipeHint` / `touchAndHoldHint`: "…to edit or cancel it."), **phone**
+  (`profile.verified`: "Verified on this phone"), **confirm** you’re human (`verification.title`:
+  "Confirm you’re human"; `onboarding.noteUK`: "Asks you to confirm you’re human"), the library’s
+  **website** (`errors.unexpected`: "The library’s website returned something unexpected.").
+- Error banners keep their full stop; toasts don't.
+- Core text: done in `core/src/messages.rs`. The parsers keep the middleware's wording (the goldens
+  check it); `SpydusClient` hands the apps the proposed wording below for every core-made reserve,
+  cancel and edit message. `SpydusError` Display strings stay developer detail.
+
+## Text the core produces (core/src). Proposed fixes (now applied at the client, see above)
 
 | Where | Now | Breaks | Proposed |
 |---|---|---|---|

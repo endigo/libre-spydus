@@ -99,7 +99,7 @@ enum Copy {
         }
         static let signInAgain = "Please sign in again."
         static let credentialsRejected = "Card number or PIN not recognised."
-        static let unexpected = "The library site returned something unexpected."
+        static let unexpected = "The library’s website returned something unexpected."
         /// "{library} can’t be used from the app right now. Try its website instead."
         static func libraryUnavailable(library: String) -> String {
             "\(library) can’t be used from the app right now. Try its website instead."
@@ -473,9 +473,9 @@ enum Copy {
             "Placed \(date)"
         }
         /// Footnote under the reservations where cards swipe (iOS 18+, Android). Hidden from screen readers: they get the actions on each card.
-        static let swipeHint = "Swipe left on a reservation to change or cancel it."
+        static let swipeHint = "Swipe left on a reservation to edit or cancel it."
         /// The same footnote on iOS 17, where cards don't swipe (long-press menu only).
-        static let touchAndHoldHint = "Touch and hold a reservation to change or cancel it."
+        static let touchAndHoldHint = "Touch and hold a reservation to edit or cancel it."
         /// Long-press menu item and screen-reader action (Edit / common.cancel are the swipe tiles).
         static let editReservation = "Edit reservation"
         /// Menu item, screen-reader action and the confirmation's destructive button (iOS said 'Cancel Reservation').
@@ -655,7 +655,7 @@ enum Copy {
         static let notSignedInTitle = "You’re not signed in"
         static let notSignedInMessage = "Sign in with your library card to see your loans and reservations."
         static let humanVerification = "Human verification"
-        static let verified = "Verified on this device"
+        static let verified = "Verified on this phone"
         /// "{library} asked you to confirm you’re human. The app sends the library’s verification cookie with its requests."
         static func verifiedMessage(library: String) -> String {
             "\(library) asked you to confirm you’re human. The app sends the library’s verification cookie with its requests."
@@ -750,7 +750,7 @@ enum Copy {
         static let regionSG = "Singapore"
         static let regionOther = "Other"
         /// Row notes (§6).
-        static let noteUK = "Asks you to verify you’re human"
+        static let noteUK = "Asks you to confirm you’re human"
         static let noteSG = "May be unreachable outside school networks"
     }
 
@@ -768,7 +768,7 @@ enum Copy {
     }
 
     enum Verification {
-        static let title = "Verify you’re human"
+        static let title = "Confirm you’re human"
         /// "{library} asks you to confirm you’re human. Complete the check below."
         /// §6 verification sheet copy.
         static func message(library: String) -> String {

@@ -80,7 +80,7 @@
     "verification": "{library} asks you to confirm you’re human.",
     "signInAgain": "Please sign in again.",
     "credentialsRejected": "Card number or PIN not recognised.",
-    "unexpected": "The library site returned something unexpected.",
+    "unexpected": "The library’s website returned something unexpected.",
     "libraryUnavailable": "{library} can’t be used from the app right now. Try its website instead.",
     "details": "Details",
     "_notes": {
@@ -331,8 +331,8 @@
     "queuePlaceLabel": "number {place} in the queue",
     "queuePlaceTextLabel": "{place} in the queue",
     "placed": "Placed {date}",
-    "swipeHint": "Swipe left on a reservation to change or cancel it.",
-    "touchAndHoldHint": "Touch and hold a reservation to change or cancel it.",
+    "swipeHint": "Swipe left on a reservation to edit or cancel it.",
+    "touchAndHoldHint": "Touch and hold a reservation to edit or cancel it.",
     "editReservation": "Edit reservation",
     "cancelReservation": "Cancel reservation",
     "showActions": "Show reservation actions",
@@ -476,7 +476,7 @@
     "notSignedInTitle": "You’re not signed in",
     "notSignedInMessage": "Sign in with your library card to see your loans and reservations.",
     "humanVerification": "Human verification",
-    "verified": "Verified on this device",
+    "verified": "Verified on this phone",
     "verifiedMessage": "{library} asked you to confirm you’re human. The app sends the library’s verification cookie with its requests.",
     "clearVerification": "Clear verification",
     "clearVerificationTitle": "Clear verification?",
@@ -552,7 +552,7 @@
     "regionUK": "United Kingdom",
     "regionSG": "Singapore",
     "regionOther": "Other",
-    "noteUK": "Asks you to verify you’re human",
+    "noteUK": "Asks you to confirm you’re human",
     "noteSG": "May be unreachable outside school networks",
     "_notes": {
       "changeTitle": "The picker's title when opened from Profile (profile.changeLibrary is the row).",
@@ -578,7 +578,7 @@
   },
 
   "verification": {
-    "title": "Verify you’re human",
+    "title": "Confirm you’re human",
     "message": "{library} asks you to confirm you’re human. Complete the check below.",
     "closesByItself": "This closes by itself once the library lets you in.",
     "opening": "Opening {library}…",

@@ -398,7 +398,7 @@ loading / empty / error(+Retry) states.
 ## 6. Screens (adapted to real data — no ratings, no reviews)
 
 **Library picker (I2/A2).** First launch: search field + list grouped by region (AU, NZ, US, UK,
-SG, Other) with logo, name, country. UK rows note "Asks you to verify you're human"; SG rows note
+SG, Other) with logo, name, country. UK rows note "Asks you to confirm you’re human"; SG rows note
 "May be unreachable outside school networks". Selecting → Home. Reachable later from Profile.
 
 **Home (I3/A3).** Navy. Top: library logo (small, left) and greeting **"Hello {first name}!"**
@@ -437,7 +437,7 @@ by <date>"). Reservation actions are hidden by default: swipe a card left to rev
 **Edit** (accent; sheet: pickup choice, delay until, not required after → `editReservation`)
 and **Cancel** (danger; confirm dialog → `cancelReservation`) tiles — a full swipe only opens
 the card, one card open at a time; long-press and screen-reader actions offer the same two;
-a footnote hints "Swipe left on a reservation to change or cancel it." (I6/A4). Ready-for-pickup
+a footnote hints "Swipe left on a reservation to edit or cancel it." (I6/A4). Ready-for-pickup
 reservations first, highlighted. Pull to refresh. Signed out → sign-in prompt.
 
 **My Picks (I5/A2; §5.11 when signed in).** Local list/grid of saved books (cover cards), tap → detail, swipe/long-press
@@ -497,6 +497,10 @@ the same rules. Debug-only screens (component galleries, demo hints) are exempt.
 | The card | **library card**, **Card number**, **PIN**; Home button and sheet **My card** | barcode card, login ID |
 | Account | **Sign in**, **Sign out**, **Signed in** | Log in, Log out, Login |
 | The library | "library" in sentences; its name as the directory gives it; **Change library** | branch (except for a branch) |
+| Changing a reservation | **Edit** ("Edit reservation", "to edit or cancel it") | change (as the action) |
+| The reader's device | **phone** ("Saved on this phone", "Verified on this phone") | device |
+| The library's human check | "**confirm** you’re human" (title "Confirm you’re human"); the feature is "verification" | verify you’re human |
+| The library's web pages | the library’s **website** | site, web page |
 | Errors | button **Retry**; "Can’t reach {library}. Check your connection."; "Something went wrong" | Try again (as a button), Oops |
 
 **Style:** sentence case everywhere (buttons, titles, alerts, toasts, menus), except the names

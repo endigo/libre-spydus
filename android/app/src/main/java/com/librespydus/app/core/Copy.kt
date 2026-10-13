@@ -94,7 +94,7 @@ object Copy {
             "${library} asks you to confirm you’re human."
         const val signInAgain = "Please sign in again."
         const val credentialsRejected = "Card number or PIN not recognised."
-        const val unexpected = "The library site returned something unexpected."
+        const val unexpected = "The library’s website returned something unexpected."
         /** "{library} can’t be used from the app right now. Try its website instead." */
         fun libraryUnavailable(library: String): String =
             "${library} can’t be used from the app right now. Try its website instead."
@@ -421,9 +421,9 @@ object Copy {
         fun placed(date: String): String =
             "Placed ${date}"
         /** Footnote under the reservations where cards swipe (iOS 18+, Android). Hidden from screen readers: they get the actions on each card. */
-        const val swipeHint = "Swipe left on a reservation to change or cancel it."
+        const val swipeHint = "Swipe left on a reservation to edit or cancel it."
         /** The same footnote on iOS 17, where cards don't swipe (long-press menu only). */
-        const val touchAndHoldHint = "Touch and hold a reservation to change or cancel it."
+        const val touchAndHoldHint = "Touch and hold a reservation to edit or cancel it."
         /** Long-press menu item and screen-reader action (Edit / common.cancel are the swipe tiles). */
         const val editReservation = "Edit reservation"
         /** Menu item, screen-reader action and the confirmation's destructive button (iOS said 'Cancel Reservation'). */
@@ -582,7 +582,7 @@ object Copy {
         const val notSignedInTitle = "You’re not signed in"
         const val notSignedInMessage = "Sign in with your library card to see your loans and reservations."
         const val humanVerification = "Human verification"
-        const val verified = "Verified on this device"
+        const val verified = "Verified on this phone"
         /** "{library} asked you to confirm you’re human. The app sends the library’s verification cookie with its requests." */
         fun verifiedMessage(library: String): String =
             "${library} asked you to confirm you’re human. The app sends the library’s verification cookie with its requests."
@@ -668,7 +668,7 @@ object Copy {
         const val regionSG = "Singapore"
         const val regionOther = "Other"
         /** Row notes (§6). */
-        const val noteUK = "Asks you to verify you’re human"
+        const val noteUK = "Asks you to confirm you’re human"
         const val noteSG = "May be unreachable outside school networks"
     }
 
@@ -685,7 +685,7 @@ object Copy {
     }
 
     object Verification {
-        const val title = "Verify you’re human"
+        const val title = "Confirm you’re human"
         /** "{library} asks you to confirm you’re human. Complete the check below." */
         /** §6 verification sheet copy. */
         fun message(library: String): String =

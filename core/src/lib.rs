@@ -19,6 +19,7 @@ pub mod crypto;
 pub mod directory;
 pub mod error;
 pub mod fetch;
+mod messages;
 pub mod parse;
 pub mod timing;
 pub mod types;
@@ -455,7 +456,9 @@ impl SpydusClient {
         session: String,
     ) -> Result<ReserveOptions, SpydusError> {
         let session = signed_in(&session)?;
-        self.guarded(&url)?.reserve_options(&url, session).await
+        let mut options = self.guarded(&url)?.reserve_options(&url, session).await?;
+        options.message = messages::for_reader(options.message);
+        Ok(options)
     }
 
     /// Place a reservation (server.ts:201-220). MUTATING — call only on explicit user
@@ -472,7 +475,7 @@ impl SpydusClient {
         let result = self.guarded(&url)?.place_reservation(&url, session, xdays, pickup).await?;
         // A changed hold invalidates the cached account for this session.
         self.caches().accounts.remove(&account_key(session));
-        Ok(result)
+        Ok(ReserveResult { message: messages::for_reader(result.message), ..result })
     }
 
     /// Cancel a reservation via a reservation row's "Cancel" action href (`…/C/5/RSVCENQ?SVL=…`)
@@ -485,7 +488,7 @@ impl SpydusClient {
         let session = signed_in(&session)?;
         let result = self.guarded(&url)?.cancel_reservation(&url, session).await?;
         self.caches().accounts.remove(&account_key(session));
-        Ok(result)
+        Ok(ReserveResult { message: messages::for_reader(result.message), ..result })
     }
 
     /// The edit-reservation form (pickup choices + current dates) for a reservation row's
@@ -496,7 +499,9 @@ impl SpydusClient {
         session: String,
     ) -> Result<EditOptions, SpydusError> {
         let session = signed_in(&session)?;
-        self.guarded(&url)?.edit_reservation_options(&url, session).await
+        let mut options = self.guarded(&url)?.edit_reservation_options(&url, session).await?;
+        options.message = messages::for_reader(options.message);
+        Ok(options)
     }
 
     /// Change a reservation's pickup location / dates (server.ts:261-288). MUTATING — call only
@@ -511,7 +516,7 @@ impl SpydusClient {
         let session = signed_in(&session)?;
         let result = self.guarded(&url)?.edit_reservation(&url, session, &overrides).await?;
         self.caches().accounts.remove(&account_key(session));
-        Ok(result)
+        Ok(ReserveResult { message: messages::for_reader(result.message), ..result })
     }
 }
 
