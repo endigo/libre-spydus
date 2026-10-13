@@ -141,7 +141,10 @@ Data notes (verified on real pages):
 AvailabilitySummary{available?, copies?, reserved?, label}` · `parseDueDate(text) -> SimpleDate?` ·
 `homeGenres() -> [Genre{key,label,query}]` · `homeShelves() -> [Shelf{key,title,query,sort}]` ·
 `patronItemRecordUrl(item) -> String?` · `accountHolding(snapshot, bibIrns) -> AccountHolding{kind,
-item}?` (`HoldingKind`: loan, reservationReady, reservationPending).
+item}?` (`HoldingKind`: loan, reservationReady, reservationPending) · (I9/A7, §5.8)
+`patronItemKey(item) -> String` · `readyAlerts(snapshot, alertedKeys) -> ReadyAlerts{newItems,
+alertedKeys}` · `dueReminders(snapshot, today: SimpleDate, daysBefore) -> [DueReminder{key, due,
+remindOn, items}]`.
 Newest = `SORTS=MAIN.CREATED_DATE.DESC]MAIN.CREATED_TIME.DESC` (the OPAC's own new-items RSS order).
 
 ## 5. App architecture (same shape on both platforms)
@@ -205,6 +208,11 @@ iOS launch arguments / Android intent extras:
 Example: `xcrun simctl launch <udid> com.librespydus -LSLibraryOrigin https://canning.spydus.com -LSDemo YES -LSRoute borrowed`;
 `adb -s emulator-5554 shell am start -n com.librespydus.app/.MainActivity --es ls_origin https://canning.spydus.com --ez ls_demo true --es ls_route borrowed`.
 
+- (I9/A7) `-LSMorningCheckNow YES` / `--ez ls_morning_check_now true` — run the morning check
+  (§5.8) right after launch instead of waiting for 07:45. `-LSDemoNewReady YES` /
+  `--ez ls_demo_new_ready true` (with demo) — the demo account gains one more ready reservation on
+  its next refresh, so a "Ready to collect" alert can be shown.
+
 **Timing log (DEBUG only).** At launch the app installs a core `TimingSink` that prints one
 `⏱ core <operation>: library <ms> · parse <ms> (<size>)` line per page the core loads
 (`from cache` for a hit, `failed after <ms>` for an error). `CoreBackend` adds one
@@ -212,6 +220,54 @@ Example: `xcrun simctl launch <udid> com.librespydus -LSLibraryOrigin https://ca
 and waiting for the caller's thread). iOS: `ios/LibreSpydus/Core/TimingLog.swift`, printed to
 stdout. Read it in Xcode's console, or on a device with
 `xcrun devicectl device process launch --console --device <udid> com.librespydus`.
+
+### 5.8 Alerts: ready to collect, due-date reminders (I9 iOS / A7 Android)
+Local notifications only. Civica's own pushes go to the official app and can't reach LibreSpydus;
+Canning sends its notices at about 07:20–07:45 local time, so LibreSpydus checks once a morning.
+- **Settings.** Profile gets a "Notifications" section while signed in, with two switches, both
+  off by default and app-wide (they apply to the selected library): **"Ready to collect"**
+  ("Checked each morning and when you open the app") and **"Due-date reminders"** ("2 days before
+  books are due, at 7:45"). Turning one on asks for notification permission (iOS
+  `requestAuthorization([.alert, .sound])`; Android 13+ `POST_NOTIFICATIONS`). Denied → the switch
+  stays off and a line "Notifications are turned off for LibreSpydus." with an **Open Settings**
+  button shows under the section.
+- **Turning "Ready to collect" on** remembers what's already waiting: call
+  `readyAlerts(savedSnapshot, [])` and save only its `alertedKeys` (no notification).
+- **Alerted keys** per library (keyed by sha256(origin) like the account cache; IRNs, not
+  secret): iOS `UserDefaults`, Android `SharedPreferences`. Deleted on sign-out and session expiry,
+  and when the switch is turned off.
+- **Processing a fresh snapshot** (`AlertCenter` / `Alerts`, one place): run after every
+  successful `accountSnapshot` — foreground refreshes and the morning check alike, never for demo
+  data unless demo mode is on (demo processes the in-memory snapshot the same way).
+  1. Ready on: `readyAlerts(snapshot, savedKeys)` → one notification per `newItems` entry, then
+     save `alertedKeys`.
+  2. Due on: `dueReminders(snapshot, today, 2)` with `today` = the device's local date. iOS
+     replaces all pending `due:` requests for this library with calendar triggers at 07:45 on
+     each `remindOn` (skipping one whose 07:45 has already passed). Android posts, during the
+     morning check only, the reminders whose `remindOn` is today (at most once per `key` per day).
+- **Content** (both apps identical):
+  - Ready: title **"Ready to collect"**, body **"<Title> · <Branch>"**, where the branch is what
+    Your Books shows for that row (pickup branch from Status), the body is just the title when the
+    branch is unknown, and the title falls back to "A reservation". ID `ready:<originHash>:<key>`.
+    Tap → Your Books, Reservations, Ready segment.
+  - Due: title **"Due Thursday 16 Oct"** (local weekday, day, short month; **"Due today"** when
+    due today, **"Due tomorrow"** when due tomorrow); body: one loan "<Title>", two "<A> and <B>",
+    more "<A> and N more". ID `due:<originHash>:<YYYY-MM-DD>`. Tap → Your Books, Loans.
+  - Android channels: `ready` "Ready to collect", `due` "Due-date reminders" (default importance).
+- **Morning check** (next 07:45 local; scheduled while signed in with any switch on, cancelled
+  otherwise): fetch `accountSnapshot`, save it like a foreground refresh (so the app opens with
+  fresh data), process it, schedule the next one. A failure is silent; Android still posts that
+  day's due reminders from the saved snapshot. NotLoggedIn clears the session as in the app.
+  - iOS: `BGAppRefreshTask` `com.librespydus.morning-check` (Info.plist
+    `BGTaskSchedulerPermittedIdentifiers`, `UIBackgroundModes` `fetch`), handled with SwiftUI
+    `.backgroundTask(.appRefresh(…))`; `earliestBeginDate` = next 07:45, submitted at launch,
+    when the app moves to the background, when a switch changes and after each run. iOS picks
+    the actual time (often soon after 07:45 for a phone used in the morning; it can be later, or
+    skipped in Low Power Mode or after the app is swiped away). Foreground notifications show as
+    banners (`willPresent` → `.banner, .list, .sound`).
+  - Android: WorkManager unique one-time work `morning-check` (REPLACE) with the delay to the
+    next 07:45, re-enqueued at the end of each run; no network constraint (it falls back to the
+    saved snapshot).
 
 ### 5.7 User-facing errors
 `Network` → "Can't reach {library}. Check your connection." · `HumanVerificationRequired` →

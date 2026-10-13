@@ -1,7 +1,7 @@
 //! `app` helpers: format classification (calibrated on every format in the goldens and on the
 //! codes/labels seen on live libraries), availability labels (on the availability goldens and
-//! the live `counts` shapes), due dates, the home screen's genres and shelves, and loans and
-//! reservations on the book page.
+//! the live `counts` shapes), due dates, the home screen's genres and shelves, loans and
+//! reservations on the book page, and alerts (ready to collect, due-date reminders).
 
 mod common;
 
@@ -11,8 +11,9 @@ use std::path::Path;
 
 use librespydus_core::app::{
     ACCOUNT_SNAPSHOT_VERSION, AccountHolding, AvailabilitySummary, HoldingKind, SimpleDate,
-    account_holding, availability_summary, decode_account_snapshot, encode_account_snapshot,
-    home_genres, home_shelves, is_digital_format, parse_due_date, patron_item_record_url,
+    account_holding, availability_summary, decode_account_snapshot, due_reminders,
+    encode_account_snapshot, home_genres, home_shelves, is_digital_format, parse_due_date,
+    patron_item_key, patron_item_record_url, ready_alerts,
 };
 use librespydus_core::types::{
     AccountSnapshot, Availability, PatronItem, PatronList, RecordFormat, Reservations, SearchSort,
@@ -452,4 +453,127 @@ fn account_holding_needs_a_matching_bib_irn() {
     let mut snapshot = holdings_snapshot();
     snapshot.loans.items[0].bib_irn = None;
     assert_eq!(account_holding(snapshot, vec![String::new()]), None);
+}
+
+// ---- alerts ----
+
+fn row(irn: Option<&str>, bib_irn: Option<&str>, title: &str, fields: &[(&str, &str)]) -> PatronItem {
+    PatronItem {
+        irn: irn.map(Into::into),
+        bib_irn: bib_irn.map(Into::into),
+        title: Some(title.into()),
+        fields: fields.iter().map(|(k, v)| ((*k).to_owned(), (*v).to_owned())).collect(),
+        ..PatronItem::default()
+    }
+}
+
+fn account(loans: Vec<PatronItem>, ready: Vec<PatronItem>) -> AccountSnapshot {
+    AccountSnapshot {
+        version: ACCOUNT_SNAPSHOT_VERSION,
+        account_name: None,
+        loans: PatronList { total: None, items: loans },
+        reservations: Reservations {
+            ready: PatronList { total: None, items: ready },
+            pending: PatronList { total: None, items: vec![row(Some("9"), None, "Queued", &[])] },
+        },
+        fetched_at_ms: 0,
+    }
+}
+
+fn titles(items: &[PatronItem]) -> Vec<&str> {
+    items.iter().filter_map(|i| i.title.as_deref()).collect()
+}
+
+#[test]
+fn patron_item_keys_prefer_the_irn() {
+    assert_eq!(patron_item_key(&row(Some(" 29000004 "), Some("8753080"), "A", &[])), "29000004");
+    assert_eq!(patron_item_key(&row(None, Some("8753080"), "A", &[])), "bib:8753080");
+    assert_eq!(patron_item_key(&row(Some(""), None, "A", &[])), "title:A");
+    assert_eq!(patron_item_key(&PatronItem::default()), "");
+}
+
+#[test]
+fn ready_alerts_announce_each_ready_reservation_once() {
+    let midnight = row(Some("1"), Some("8753080"), "The midnight library", &[]);
+    let gift = row(Some("2"), Some("7000001"), "The gift", &[]);
+
+    // Turning the alerts on: what's already waiting is remembered, not announced.
+    let first = ready_alerts(account(vec![], vec![midnight.clone()]), vec![]);
+    assert_eq!(titles(&first.new_items), ["The midnight library"]);
+    assert_eq!(first.alerted_keys, ["1"]);
+
+    // The next morning another one is ready: only it is new. Pending ones never alert.
+    let next = ready_alerts(account(vec![], vec![midnight.clone(), gift.clone()]), first.alerted_keys);
+    assert_eq!(titles(&next.new_items), ["The gift"]);
+    assert_eq!(next.alerted_keys, ["1", "2"]);
+
+    // Nothing changed: nothing to say.
+    let same = ready_alerts(account(vec![], vec![midnight.clone(), gift.clone()]), next.alerted_keys);
+    assert!(same.new_items.is_empty());
+
+    // Collected, then reserved again and ready again later: announced again.
+    let collected = ready_alerts(account(vec![], vec![gift.clone()]), same.alerted_keys);
+    assert!(collected.new_items.is_empty());
+    assert_eq!(collected.alerted_keys, ["2"]);
+    let again = ready_alerts(account(vec![], vec![gift, midnight]), collected.alerted_keys);
+    assert_eq!(titles(&again.new_items), ["The midnight library"]);
+}
+
+#[test]
+fn ready_alerts_skip_rows_without_a_key_and_duplicates() {
+    let blank = PatronItem::default();
+    let a = row(Some("1"), None, "A", &[]);
+    let alerts = ready_alerts(account(vec![], vec![blank, a.clone(), a]), vec![]);
+    assert_eq!(titles(&alerts.new_items), ["A"]);
+    assert_eq!(alerts.alerted_keys, ["1"]);
+}
+
+fn day(year: i32, month: u8, day: u8) -> SimpleDate {
+    SimpleDate { year, month, day }
+}
+
+#[test]
+fn due_reminders_group_loans_by_due_date() {
+    let loans = vec![
+        row(Some("1"), None, "Later", &[("Due", "30 Oct 2026")]),
+        row(Some("2"), None, "Soon A", &[("Due", "16 Oct 2026")]),
+        row(Some("3"), None, "Overdue", &[("Due", "12 Oct 2026")]),
+        row(Some("4"), None, "Soon B", &[("Due", "16/10/2026")]),
+        row(Some("5"), None, "No date", &[("Due", "soon")]),
+        row(Some("6"), None, "No field", &[]),
+    ];
+    let reminders = due_reminders(account(loans, vec![]), day(2026, 10, 13), 2);
+    assert_eq!(reminders.len(), 2);
+    assert_eq!(reminders[0].key, "due:2026-10-16");
+    assert_eq!(reminders[0].due, day(2026, 10, 16));
+    assert_eq!(reminders[0].remind_on, day(2026, 10, 14));
+    assert_eq!(titles(&reminders[0].items), ["Soon A", "Soon B"]);
+    assert_eq!(reminders[1].key, "due:2026-10-30");
+    assert_eq!(reminders[1].remind_on, day(2026, 10, 28));
+}
+
+#[test]
+fn due_reminders_never_fall_before_today() {
+    let loans = vec![
+        row(Some("1"), None, "Today", &[("Due", "13 Oct 2026")]),
+        row(Some("2"), None, "Tomorrow", &[("Due", "14 Oct 2026")]),
+    ];
+    let reminders = due_reminders(account(loans, vec![]), day(2026, 10, 13), 2);
+    assert_eq!(reminders.iter().map(|r| r.remind_on).collect::<Vec<_>>(), [day(2026, 10, 13); 2]);
+    assert_eq!(due_reminders(account(vec![], vec![]), day(2026, 10, 13), 2), []);
+}
+
+#[test]
+fn due_reminders_cross_months_years_and_leap_days() {
+    let on = |due: &str, days| {
+        let loans = vec![row(Some("1"), None, "A", &[("Due", due)])];
+        due_reminders(account(loans, vec![]), day(2000, 1, 1), days)[0].remind_on
+    };
+    assert_eq!(on("2 Nov 2026", 2), day(2026, 10, 31));
+    assert_eq!(on("1 Jan 2027", 2), day(2026, 12, 30));
+    assert_eq!(on("1 Mar 2028", 1), day(2028, 2, 29));
+    assert_eq!(on("1 Mar 2100", 1), day(2100, 2, 28));
+    assert_eq!(on("1 Mar 2000", 1), day(2000, 2, 29));
+    assert_eq!(on("15 Oct 2026", 0), day(2026, 10, 15));
+    assert_eq!(on("15 Oct 2026", 400), day(2025, 9, 10));
 }

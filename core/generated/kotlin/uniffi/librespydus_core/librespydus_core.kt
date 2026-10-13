@@ -714,6 +714,8 @@ internal object IntegrityCheckingUniffiLib {
     ): Int
     external fun uniffi_librespydus_core_checksum_func_decode_account_snapshot(
     ): Int
+    external fun uniffi_librespydus_core_checksum_func_due_reminders(
+    ): Int
     external fun uniffi_librespydus_core_checksum_func_encode_account_snapshot(
     ): Int
     external fun uniffi_librespydus_core_checksum_func_home_genres(
@@ -724,7 +726,11 @@ internal object IntegrityCheckingUniffiLib {
     ): Int
     external fun uniffi_librespydus_core_checksum_func_parse_due_date(
     ): Int
+    external fun uniffi_librespydus_core_checksum_func_patron_item_key(
+    ): Int
     external fun uniffi_librespydus_core_checksum_func_patron_item_record_url(
+    ): Int
+    external fun uniffi_librespydus_core_checksum_func_ready_alerts(
     ): Int
     external fun uniffi_librespydus_core_checksum_func_set_timing_sink(
     ): Int
@@ -849,6 +855,8 @@ internal object UniffiLib {
     ): RustBuffer.ByValue
     external fun uniffi_librespydus_core_fn_func_decode_account_snapshot(`json`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
+    external fun uniffi_librespydus_core_fn_func_due_reminders(`snapshot`: RustBuffer.ByValue,`today`: RustBuffer.ByValue,`daysBefore`: Int,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
     external fun uniffi_librespydus_core_fn_func_encode_account_snapshot(`snapshot`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     external fun uniffi_librespydus_core_fn_func_home_genres(uniffi_out_err: UniffiRustCallStatus, 
@@ -859,7 +867,11 @@ internal object UniffiLib {
     ): Byte
     external fun uniffi_librespydus_core_fn_func_parse_due_date(`text`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
+    external fun uniffi_librespydus_core_fn_func_patron_item_key(`item`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
     external fun uniffi_librespydus_core_fn_func_patron_item_record_url(`item`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    external fun uniffi_librespydus_core_fn_func_ready_alerts(`snapshot`: RustBuffer.ByValue,`alertedKeys`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     external fun uniffi_librespydus_core_fn_func_set_timing_sink(`sink`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
@@ -997,6 +1009,9 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
     if ((lib.uniffi_librespydus_core_checksum_func_decode_account_snapshot() and 0xFFFF) != 24188) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
+    if ((lib.uniffi_librespydus_core_checksum_func_due_reminders() and 0xFFFF) != 12535) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
     if ((lib.uniffi_librespydus_core_checksum_func_encode_account_snapshot() and 0xFFFF) != 34026) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
@@ -1012,7 +1027,13 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
     if ((lib.uniffi_librespydus_core_checksum_func_parse_due_date() and 0xFFFF) != 38620) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
+    if ((lib.uniffi_librespydus_core_checksum_func_patron_item_key() and 0xFFFF) != 18928) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
     if ((lib.uniffi_librespydus_core_checksum_func_patron_item_record_url() and 0xFFFF) != 26917) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_librespydus_core_checksum_func_ready_alerts() and 0xFFFF) != 57947) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if ((lib.uniffi_librespydus_core_checksum_func_set_timing_sink() and 0xFFFF) != 27295) {
@@ -3093,6 +3114,66 @@ public object FfiConverterTypeDetailValue: FfiConverterRustBuffer<DetailValue> {
 
 
 /**
+ * One due-date reminder: every loan due on `due`, announced on `remind_on`.
+ */
+data class DueReminder (
+    /**
+     * `due:YYYY-MM-DD`: stable while the loans keep that due date (a notification identifier).
+     */
+    var `key`: kotlin.String
+    , 
+    var `due`: SimpleDate
+    , 
+    /**
+     * `days_before` days before `due`, or `today` when that has passed. Never after `due`.
+     */
+    var `remindOn`: SimpleDate
+    , 
+    /**
+     * The loans due that day, in list order.
+     */
+    var `items`: List<PatronItem>
+    
+){
+    
+
+    
+
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeDueReminder: FfiConverterRustBuffer<DueReminder> {
+    override fun read(buf: ByteBuffer): DueReminder {
+        return DueReminder(
+            FfiConverterString.read(buf),
+            FfiConverterTypeSimpleDate.read(buf),
+            FfiConverterTypeSimpleDate.read(buf),
+            FfiConverterSequenceTypePatronItem.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: DueReminder) = (
+            FfiConverterString.allocationSize(value.`key`) +
+            FfiConverterTypeSimpleDate.allocationSize(value.`due`) +
+            FfiConverterTypeSimpleDate.allocationSize(value.`remindOn`) +
+            FfiConverterSequenceTypePatronItem.allocationSize(value.`items`)
+    )
+
+    override fun write(value: DueReminder, buf: ByteBuffer) {
+            FfiConverterString.write(value.`key`, buf)
+            FfiConverterTypeSimpleDate.write(value.`due`, buf)
+            FfiConverterTypeSimpleDate.write(value.`remindOn`, buf)
+            FfiConverterSequenceTypePatronItem.write(value.`items`, buf)
+    }
+}
+
+
+
+/**
  * What the app shows before editing a reservation.
  */
 data class EditOptions (
@@ -3592,6 +3673,55 @@ public object FfiConverterTypePickupChoice: FfiConverterRustBuffer<PickupChoice>
     override fun write(value: PickupChoice, buf: ByteBuffer) {
             FfiConverterString.write(value.`code`, buf)
             FfiConverterString.write(value.`name`, buf)
+    }
+}
+
+
+
+/**
+ * What to alert about from a fresh account snapshot (`ready_alerts`).
+ */
+data class ReadyAlerts (
+    /**
+     * Ready-to-collect reservations not alerted before, in list order: one notification each.
+     */
+    var `newItems`: List<PatronItem>
+    , 
+    /**
+     * Save these as the alerted keys for next time. They are the keys of every reservation
+     * ready now, replacing the saved set, so one that stops being ready (collected or expired)
+     * and later becomes ready again is alerted again.
+     */
+    var `alertedKeys`: List<kotlin.String>
+    
+){
+    
+
+    
+
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeReadyAlerts: FfiConverterRustBuffer<ReadyAlerts> {
+    override fun read(buf: ByteBuffer): ReadyAlerts {
+        return ReadyAlerts(
+            FfiConverterSequenceTypePatronItem.read(buf),
+            FfiConverterSequenceString.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: ReadyAlerts) = (
+            FfiConverterSequenceTypePatronItem.allocationSize(value.`newItems`) +
+            FfiConverterSequenceString.allocationSize(value.`alertedKeys`)
+    )
+
+    override fun write(value: ReadyAlerts, buf: ByteBuffer) {
+            FfiConverterSequenceTypePatronItem.write(value.`newItems`, buf)
+            FfiConverterSequenceString.write(value.`alertedKeys`, buf)
     }
 }
 
@@ -4906,6 +5036,34 @@ public object FfiConverterSequenceTypeDetailValue: FfiConverterRustBuffer<List<D
 /**
  * @suppress
  */
+public object FfiConverterSequenceTypeDueReminder: FfiConverterRustBuffer<List<DueReminder>> {
+    override fun read(buf: ByteBuffer): List<DueReminder> {
+        val len = buf.getInt()
+        return List<DueReminder>(len) {
+            FfiConverterTypeDueReminder.read(buf)
+        }
+    }
+
+    override fun allocationSize(value: List<DueReminder>): ULong {
+        val sizeForLength = 4UL
+        val sizeForItems = value.map { FfiConverterTypeDueReminder.allocationSize(it) }.sum()
+        return sizeForLength + sizeForItems
+    }
+
+    override fun write(value: List<DueReminder>, buf: ByteBuffer) {
+        buf.putInt(value.size)
+        value.iterator().forEach {
+            FfiConverterTypeDueReminder.write(it, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
 public object FfiConverterSequenceTypeExpiryChoice: FfiConverterRustBuffer<List<ExpiryChoice>> {
     override fun read(buf: ByteBuffer): List<ExpiryChoice> {
         val len = buf.getInt()
@@ -5363,6 +5521,25 @@ public object FfiConverterMapStringString: FfiConverterRustBuffer<Map<kotlin.Str
     
 
         /**
+         * One reminder per due date for the loans in `snapshot`, sorted by date: due on or after
+         * `today` (the device's local date), reminded `days_before` days ahead. Overdue loans and due
+         * dates `parse_due_date` can't read are left out. The apps show each at the morning alert time
+         * on `remind_on`, and recompute them after every refresh: a renewal moves the due date.
+         */ fun `dueReminders`(`snapshot`: AccountSnapshot, `today`: SimpleDate, `daysBefore`: kotlin.UInt): List<DueReminder> {
+            return FfiConverterSequenceTypeDueReminder.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_librespydus_core_fn_func_due_reminders(
+    
+        
+        FfiConverterTypeAccountSnapshot.lower(`snapshot`),
+        FfiConverterTypeSimpleDate.lower(`today`),
+        FfiConverterUInt.lower(`daysBefore`),_status)
+}
+    )
+    }
+    
+
+        /**
          * The JSON the apps save on the device (camelCase, like every other record).
          */ fun `encodeAccountSnapshot`(`snapshot`: AccountSnapshot): kotlin.String {
             return FfiConverterString.lift(
@@ -5446,6 +5623,21 @@ public object FfiConverterMapStringString: FfiConverterRustBuffer<Map<kotlin.Str
     
 
         /**
+         * A loan or reservation's identity across refreshes: its IRN (the SVL value), else `bib:` and
+         * the bib IRN, else `title:` and the title, else empty.
+         */ fun `patronItemKey`(`item`: PatronItem): kotlin.String {
+            return FfiConverterString.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_librespydus_core_fn_func_patron_item_key(
+    
+        
+        FfiConverterTypePatronItem.lower(`item`),_status)
+}
+    )
+    }
+    
+
+        /**
          * A URL that loads `item`'s bib record with `SpydusClient::record`, without a session.
          *
          * Loan and reservation rows link to `…/BIBENQ/{setId}?SETLVL=&QRY=IRN({bibIrn})&NAVLVL=SET`,
@@ -5460,6 +5652,24 @@ public object FfiConverterMapStringString: FfiConverterRustBuffer<Map<kotlin.Str
     
         
         FfiConverterTypePatronItem.lower(`item`),_status)
+}
+    )
+    }
+    
+
+        /**
+         * The reservations in `snapshot.reservations.ready` to alert about: those whose
+         * `patron_item_key` isn't in `alerted_keys` (what the previous call returned, kept per library).
+         * When the patron turns the alerts on, call it once with no keys and save only `alerted_keys`,
+         * so what was already waiting isn't announced as new.
+         */ fun `readyAlerts`(`snapshot`: AccountSnapshot, `alertedKeys`: List<kotlin.String>): ReadyAlerts {
+            return FfiConverterTypeReadyAlerts.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_librespydus_core_fn_func_ready_alerts(
+    
+        
+        FfiConverterTypeAccountSnapshot.lower(`snapshot`),
+        FfiConverterSequenceString.lower(`alertedKeys`),_status)
 }
     )
     }

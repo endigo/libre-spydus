@@ -1,6 +1,7 @@
 //! Pure helpers both native apps share, so iOS and Android show the same thing for the same
 //! data: whether a format is digital, a short availability line, loan due dates, the home
-//! screen's genre tiles and shelves, and how a loan or reservation links to its book. No I/O. Every function is UniFFI-exported; tests are in
+//! screen's genre tiles and shelves, how a loan or reservation links to its book, and what to
+//! alert about (ready to collect, due-date reminders). No I/O. Every function is UniFFI-exported; tests are in
 //! `tests/app.rs`. The calibration behind each rule (surveys of live libraries, 2026-10-12) is in
 //! `docs/rust-core-port.md` §11.
 
@@ -385,4 +386,120 @@ pub fn account_holding(snapshot: AccountSnapshot, bib_irns: Vec<String>) -> Opti
     ]
     .into_iter()
     .find_map(|(kind, items)| items.into_iter().find(|item| matches(item)).map(|item| AccountHolding { kind, item }))
+}
+
+// ---- alerts: ready to collect, due-date reminders ---------------------------------------------
+
+/// What to alert about from a fresh account snapshot (`ready_alerts`).
+#[derive(uniffi::Record, Debug, Clone, PartialEq)]
+pub struct ReadyAlerts {
+    /// Ready-to-collect reservations not alerted before, in list order: one notification each.
+    pub new_items: Vec<PatronItem>,
+    /// Save these as the alerted keys for next time. They are the keys of every reservation
+    /// ready now, replacing the saved set, so one that stops being ready (collected or expired)
+    /// and later becomes ready again is alerted again.
+    pub alerted_keys: Vec<String>,
+}
+
+/// A loan or reservation's identity across refreshes: its IRN (the SVL value), else `bib:` and
+/// the bib IRN, else `title:` and the title, else empty.
+#[uniffi::export]
+pub fn patron_item_key(item: &PatronItem) -> String {
+    let some = |s: &Option<String>| s.as_deref().map(str::trim).filter(|s| !s.is_empty()).map(str::to_owned);
+    some(&item.irn)
+        .or_else(|| some(&item.bib_irn).map(|irn| format!("bib:{irn}")))
+        .or_else(|| some(&item.title).map(|title| format!("title:{title}")))
+        .unwrap_or_default()
+}
+
+/// The reservations in `snapshot.reservations.ready` to alert about: those whose
+/// `patron_item_key` isn't in `alerted_keys` (what the previous call returned, kept per library).
+/// When the patron turns the alerts on, call it once with no keys and save only `alerted_keys`,
+/// so what was already waiting isn't announced as new.
+#[uniffi::export]
+pub fn ready_alerts(snapshot: AccountSnapshot, alerted_keys: Vec<String>) -> ReadyAlerts {
+    let mut new_items = Vec::new();
+    let mut keys = Vec::new();
+    for item in snapshot.reservations.ready.items {
+        let key = patron_item_key(&item);
+        if key.is_empty() || keys.contains(&key) {
+            continue;
+        }
+        if !alerted_keys.contains(&key) {
+            new_items.push(item);
+        }
+        keys.push(key);
+    }
+    ReadyAlerts { new_items, alerted_keys: keys }
+}
+
+/// One due-date reminder: every loan due on `due`, announced on `remind_on`.
+#[derive(uniffi::Record, Debug, Clone, PartialEq)]
+pub struct DueReminder {
+    /// `due:YYYY-MM-DD`: stable while the loans keep that due date (a notification identifier).
+    pub key: String,
+    pub due: SimpleDate,
+    /// `days_before` days before `due`, or `today` when that has passed. Never after `due`.
+    pub remind_on: SimpleDate,
+    /// The loans due that day, in list order.
+    pub items: Vec<PatronItem>,
+}
+
+/// One reminder per due date for the loans in `snapshot`, sorted by date: due on or after
+/// `today` (the device's local date), reminded `days_before` days ahead. Overdue loans and due
+/// dates `parse_due_date` can't read are left out. The apps show each at the morning alert time
+/// on `remind_on`, and recompute them after every refresh: a renewal moves the due date.
+#[uniffi::export]
+pub fn due_reminders(snapshot: AccountSnapshot, today: SimpleDate, days_before: u32) -> Vec<DueReminder> {
+    let today_n = day_number(today);
+    let mut reminders: Vec<DueReminder> = Vec::new();
+    for item in snapshot.loans.items {
+        let Some(due) = item.fields.get("Due").and_then(|text| parse_due_date(text.clone())) else {
+            continue;
+        };
+        let due_n = day_number(due);
+        if due_n < today_n {
+            continue;
+        }
+        match reminders.iter_mut().find(|r| r.due == due) {
+            Some(reminder) => reminder.items.push(item),
+            None => reminders.push(DueReminder {
+                key: format!("due:{:04}-{:02}-{:02}", due.year, due.month, due.day),
+                due,
+                remind_on: date_of_day_number((due_n - i64::from(days_before)).max(today_n)),
+                items: vec![item],
+            }),
+        }
+    }
+    reminders.sort_by_key(|r| day_number(r.due));
+    reminders
+}
+
+/// Days since 1970-01-01 (proleptic Gregorian; Howard Hinnant's `days_from_civil`).
+fn day_number(date: SimpleDate) -> i64 {
+    let (m, d) = (i64::from(date.month), i64::from(date.day));
+    let y = i64::from(date.year) - i64::from(m <= 2);
+    let era = y.div_euclid(400);
+    let yoe = y - era * 400;
+    let doy = (153 * (m + if m > 2 { -3 } else { 9 }) + 2) / 5 + d - 1;
+    let doe = yoe * 365 + yoe / 4 - yoe / 100 + doy;
+    era * 146_097 + doe - 719_468
+}
+
+/// The inverse of `day_number` (`civil_from_days`).
+fn date_of_day_number(n: i64) -> SimpleDate {
+    let z = n + 719_468;
+    let era = z.div_euclid(146_097);
+    let doe = z - era * 146_097;
+    let yoe = (doe - doe / 1460 + doe / 36_524 - doe / 146_096) / 365;
+    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
+    let mp = (5 * doy + 2) / 153;
+    let day = doy - (153 * mp + 2) / 5 + 1;
+    let month = if mp < 10 { mp + 3 } else { mp - 9 };
+    let year = yoe + era * 400 + i64::from(month <= 2);
+    SimpleDate {
+        year: i32::try_from(year).unwrap_or(i32::MAX),
+        month: u8::try_from(month).unwrap_or(1),
+        day: u8::try_from(day).unwrap_or(1),
+    }
 }

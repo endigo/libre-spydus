@@ -114,6 +114,14 @@ rule is in [`docs/rust-core-port.md` §11](../docs/rust-core-port.md).
 | `patronItemRecordUrl(item)` → `String?` | The URL that loads a loan's or reservation's bib record with `record(url)` **without a session**: `…/BIBENQ?SETLVL=&IRN={bibIrn}`. The row's own `bibUrl` (`…/BIBENQ/{setId}?QRY=IRN(…)`) uses a set from the patron's OPAC session, so `record(bibUrl)` comes back empty ("Session must be logged in"). Falls back to `bibUrl` without a numeric `bibIrn` or a BIBENQ link. |
 | `accountHolding(snapshot, bibIrns)` → `AccountHolding{kind, item}?` | The loan or reservation in an `AccountSnapshot` whose `bibIrn` is one of `bibIrns`, for a book page to show "On loan" / "Reserved" instead of Reserve. `kind` is `.loan`, `.reservationReady` or `.reservationPending`; a loan wins over a ready reservation, which wins over a pending one. Pass the IRNs known for the format shown: `Availability.bibRecordIrn`, else `RecordDetail.bibIrn` and the opened row's `bibIrn`. Editions are separate bibs, so a book loan doesn't match the large print. |
 
+Alerts (`docs/native-apps.md` §5.8):
+
+| function | returns |
+|---|---|
+| `patronItemKey(item)` → `String` | A loan's or reservation's identity across refreshes: its IRN, else `bib:<bibIrn>`, else `title:<title>`, else empty. |
+| `readyAlerts(snapshot, alertedKeys)` → `ReadyAlerts{newItems, alertedKeys}` | The ready-to-collect reservations whose key isn't in `alertedKeys` (one notification each), and the keys to save for next time: every reservation ready now, so one that is collected and later ready again is alerted again. When alerts are turned on, call it with no keys and save only `alertedKeys`. |
+| `dueReminders(snapshot, today, daysBefore)` → `[DueReminder{key, due, remindOn, items}]` | One reminder per due date (`key` = `due:YYYY-MM-DD`), sorted by date, for loans due on or after `today`, reminded `daysBefore` days ahead or `today` if that has passed. Overdue loans and unreadable due dates are left out. |
+
 Saving the account on the device: `encodeAccountSnapshot(snapshot)` → JSON `String` and
 `decodeAccountSnapshot(json)` → `AccountSnapshot` (throws `Parse` for malformed JSON or a snapshot
 written with another `ACCOUNT_SNAPSHOT_VERSION`, currently 1 — drop it and fetch a new one).

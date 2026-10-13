@@ -410,6 +410,11 @@ RustBuffer uniffi_librespydus_core_fn_func_availability_summary(RustBuffer avail
 RustBuffer uniffi_librespydus_core_fn_func_decode_account_snapshot(RustBuffer json, RustCallStatus *_Nonnull out_status
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_FN_FUNC_DUE_REMINDERS
+#define UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_FN_FUNC_DUE_REMINDERS
+RustBuffer uniffi_librespydus_core_fn_func_due_reminders(RustBuffer snapshot, RustBuffer today, uint32_t days_before, RustCallStatus *_Nonnull out_status
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_FN_FUNC_ENCODE_ACCOUNT_SNAPSHOT
 #define UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_FN_FUNC_ENCODE_ACCOUNT_SNAPSHOT
 RustBuffer uniffi_librespydus_core_fn_func_encode_account_snapshot(RustBuffer snapshot, RustCallStatus *_Nonnull out_status
@@ -437,9 +442,19 @@ int8_t uniffi_librespydus_core_fn_func_is_digital_format(RustBuffer format, Rust
 RustBuffer uniffi_librespydus_core_fn_func_parse_due_date(RustBuffer text, RustCallStatus *_Nonnull out_status
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_FN_FUNC_PATRON_ITEM_KEY
+#define UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_FN_FUNC_PATRON_ITEM_KEY
+RustBuffer uniffi_librespydus_core_fn_func_patron_item_key(RustBuffer item, RustCallStatus *_Nonnull out_status
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_FN_FUNC_PATRON_ITEM_RECORD_URL
 #define UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_FN_FUNC_PATRON_ITEM_RECORD_URL
 RustBuffer uniffi_librespydus_core_fn_func_patron_item_record_url(RustBuffer item, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_FN_FUNC_READY_ALERTS
+#define UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_FN_FUNC_READY_ALERTS
+RustBuffer uniffi_librespydus_core_fn_func_ready_alerts(RustBuffer snapshot, RustBuffer alerted_keys, RustCallStatus *_Nonnull out_status
 );
 #endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_FN_FUNC_SET_TIMING_SINK
@@ -737,6 +752,12 @@ uint16_t uniffi_librespydus_core_checksum_func_decode_account_snapshot(void
     
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_CHECKSUM_FUNC_DUE_REMINDERS
+#define UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_CHECKSUM_FUNC_DUE_REMINDERS
+uint16_t uniffi_librespydus_core_checksum_func_due_reminders(void
+    
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_CHECKSUM_FUNC_ENCODE_ACCOUNT_SNAPSHOT
 #define UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_CHECKSUM_FUNC_ENCODE_ACCOUNT_SNAPSHOT
 uint16_t uniffi_librespydus_core_checksum_func_encode_account_snapshot(void
@@ -767,9 +788,21 @@ uint16_t uniffi_librespydus_core_checksum_func_parse_due_date(void
     
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_CHECKSUM_FUNC_PATRON_ITEM_KEY
+#define UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_CHECKSUM_FUNC_PATRON_ITEM_KEY
+uint16_t uniffi_librespydus_core_checksum_func_patron_item_key(void
+    
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_CHECKSUM_FUNC_PATRON_ITEM_RECORD_URL
 #define UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_CHECKSUM_FUNC_PATRON_ITEM_RECORD_URL
 uint16_t uniffi_librespydus_core_checksum_func_patron_item_record_url(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_CHECKSUM_FUNC_READY_ALERTS
+#define UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_CHECKSUM_FUNC_READY_ALERTS
+uint16_t uniffi_librespydus_core_checksum_func_ready_alerts(void
     
 );
 #endif

@@ -1971,6 +1971,89 @@ public func FfiConverterTypeDetailValue_lower(_ value: DetailValue) -> RustBuffe
 
 
 /**
+ * One due-date reminder: every loan due on `due`, announced on `remind_on`.
+ */
+public struct DueReminder: Equatable, Hashable {
+    /**
+     * `due:YYYY-MM-DD`: stable while the loans keep that due date (a notification identifier).
+     */
+    public var key: String
+    public var due: SimpleDate
+    /**
+     * `days_before` days before `due`, or `today` when that has passed. Never after `due`.
+     */
+    public var remindOn: SimpleDate
+    /**
+     * The loans due that day, in list order.
+     */
+    public var items: [PatronItem]
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(
+        /**
+         * `due:YYYY-MM-DD`: stable while the loans keep that due date (a notification identifier).
+         */key: String, due: SimpleDate, 
+        /**
+         * `days_before` days before `due`, or `today` when that has passed. Never after `due`.
+         */remindOn: SimpleDate, 
+        /**
+         * The loans due that day, in list order.
+         */items: [PatronItem]) {
+        self.key = key
+        self.due = due
+        self.remindOn = remindOn
+        self.items = items
+    }
+
+    
+
+    
+}
+
+#if compiler(>=6)
+extension DueReminder: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeDueReminder: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> DueReminder {
+        return
+            try DueReminder(
+                key: FfiConverterString.read(from: &buf), 
+                due: FfiConverterTypeSimpleDate.read(from: &buf), 
+                remindOn: FfiConverterTypeSimpleDate.read(from: &buf), 
+                items: FfiConverterSequenceTypePatronItem.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: DueReminder, into buf: inout [UInt8]) {
+        FfiConverterString.write(value.key, into: &buf)
+        FfiConverterTypeSimpleDate.write(value.due, into: &buf)
+        FfiConverterTypeSimpleDate.write(value.remindOn, into: &buf)
+        FfiConverterSequenceTypePatronItem.write(value.items, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeDueReminder_lift(_ buf: RustBuffer) throws -> DueReminder {
+    return try FfiConverterTypeDueReminder.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeDueReminder_lower(_ value: DueReminder) -> RustBuffer {
+    return FfiConverterTypeDueReminder.lower(value)
+}
+
+
+/**
  * What the app shows before editing a reservation.
  */
 public struct EditOptions: Equatable, Hashable {
@@ -2628,6 +2711,79 @@ public func FfiConverterTypePickupChoice_lift(_ buf: RustBuffer) throws -> Picku
 #endif
 public func FfiConverterTypePickupChoice_lower(_ value: PickupChoice) -> RustBuffer {
     return FfiConverterTypePickupChoice.lower(value)
+}
+
+
+/**
+ * What to alert about from a fresh account snapshot (`ready_alerts`).
+ */
+public struct ReadyAlerts: Equatable, Hashable {
+    /**
+     * Ready-to-collect reservations not alerted before, in list order: one notification each.
+     */
+    public var newItems: [PatronItem]
+    /**
+     * Save these as the alerted keys for next time. They are the keys of every reservation
+     * ready now, replacing the saved set, so one that stops being ready (collected or expired)
+     * and later becomes ready again is alerted again.
+     */
+    public var alertedKeys: [String]
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(
+        /**
+         * Ready-to-collect reservations not alerted before, in list order: one notification each.
+         */newItems: [PatronItem], 
+        /**
+         * Save these as the alerted keys for next time. They are the keys of every reservation
+         * ready now, replacing the saved set, so one that stops being ready (collected or expired)
+         * and later becomes ready again is alerted again.
+         */alertedKeys: [String]) {
+        self.newItems = newItems
+        self.alertedKeys = alertedKeys
+    }
+
+    
+
+    
+}
+
+#if compiler(>=6)
+extension ReadyAlerts: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeReadyAlerts: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> ReadyAlerts {
+        return
+            try ReadyAlerts(
+                newItems: FfiConverterSequenceTypePatronItem.read(from: &buf), 
+                alertedKeys: FfiConverterSequenceString.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: ReadyAlerts, into buf: inout [UInt8]) {
+        FfiConverterSequenceTypePatronItem.write(value.newItems, into: &buf)
+        FfiConverterSequenceString.write(value.alertedKeys, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeReadyAlerts_lift(_ buf: RustBuffer) throws -> ReadyAlerts {
+    return try FfiConverterTypeReadyAlerts.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeReadyAlerts_lower(_ value: ReadyAlerts) -> RustBuffer {
+    return FfiConverterTypeReadyAlerts.lower(value)
 }
 
 
@@ -4228,6 +4384,31 @@ fileprivate struct FfiConverterSequenceTypeDetailValue: FfiConverterRustBuffer {
 #if swift(>=5.8)
 @_documentation(visibility: private)
 #endif
+fileprivate struct FfiConverterSequenceTypeDueReminder: FfiConverterRustBuffer {
+    typealias SwiftType = [DueReminder]
+
+    public static func write(_ value: [DueReminder], into buf: inout [UInt8]) {
+        let len = Int32(value.count)
+        writeInt(&buf, len)
+        for item in value {
+            FfiConverterTypeDueReminder.write(item, into: &buf)
+        }
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> [DueReminder] {
+        let len: Int32 = try readInt(&buf)
+        var seq = [DueReminder]()
+        seq.reserveCapacity(Int(len))
+        for _ in 0 ..< len {
+            seq.append(try FfiConverterTypeDueReminder.read(from: &buf))
+        }
+        return seq
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 fileprivate struct FfiConverterSequenceTypeExpiryChoice: FfiConverterRustBuffer {
     typealias SwiftType = [ExpiryChoice]
 
@@ -4657,6 +4838,22 @@ public func decodeAccountSnapshot(json: String)throws  -> AccountSnapshot  {
 })
 }
 /**
+ * One reminder per due date for the loans in `snapshot`, sorted by date: due on or after
+ * `today` (the device's local date), reminded `days_before` days ahead. Overdue loans and due
+ * dates `parse_due_date` can't read are left out. The apps show each at the morning alert time
+ * on `remind_on`, and recompute them after every refresh: a renewal moves the due date.
+ */
+public func dueReminders(snapshot: AccountSnapshot, today: SimpleDate, daysBefore: UInt32) -> [DueReminder]  {
+    return try!  FfiConverterSequenceTypeDueReminder.lift(try! rustCall() {
+        uniffiCallStatus in
+    uniffi_librespydus_core_fn_func_due_reminders(
+        FfiConverterTypeAccountSnapshot_lower(snapshot),
+        FfiConverterTypeSimpleDate_lower(today),
+        FfiConverterUInt32.lower(daysBefore),uniffiCallStatus
+    )
+})
+}
+/**
  * The JSON the apps save on the device (camelCase, like every other record).
  */
 public func encodeAccountSnapshot(snapshot: AccountSnapshot) -> String  {
@@ -4725,6 +4922,18 @@ public func parseDueDate(text: String) -> SimpleDate?  {
 })
 }
 /**
+ * A loan or reservation's identity across refreshes: its IRN (the SVL value), else `bib:` and
+ * the bib IRN, else `title:` and the title, else empty.
+ */
+public func patronItemKey(item: PatronItem) -> String  {
+    return try!  FfiConverterString.lift(try! rustCall() {
+        uniffiCallStatus in
+    uniffi_librespydus_core_fn_func_patron_item_key(
+        FfiConverterTypePatronItem_lower(item),uniffiCallStatus
+    )
+})
+}
+/**
  * A URL that loads `item`'s bib record with `SpydusClient::record`, without a session.
  *
  * Loan and reservation rows link to `…/BIBENQ/{setId}?SETLVL=&QRY=IRN({bibIrn})&NAVLVL=SET`,
@@ -4738,6 +4947,21 @@ public func patronItemRecordUrl(item: PatronItem) -> String?  {
         uniffiCallStatus in
     uniffi_librespydus_core_fn_func_patron_item_record_url(
         FfiConverterTypePatronItem_lower(item),uniffiCallStatus
+    )
+})
+}
+/**
+ * The reservations in `snapshot.reservations.ready` to alert about: those whose
+ * `patron_item_key` isn't in `alerted_keys` (what the previous call returned, kept per library).
+ * When the patron turns the alerts on, call it once with no keys and save only `alerted_keys`,
+ * so what was already waiting isn't announced as new.
+ */
+public func readyAlerts(snapshot: AccountSnapshot, alertedKeys: [String]) -> ReadyAlerts  {
+    return try!  FfiConverterTypeReadyAlerts_lift(try! rustCall() {
+        uniffiCallStatus in
+    uniffi_librespydus_core_fn_func_ready_alerts(
+        FfiConverterTypeAccountSnapshot_lower(snapshot),
+        FfiConverterSequenceString.lower(alertedKeys),uniffiCallStatus
     )
 })
 }
@@ -4783,6 +5007,9 @@ private let initializationResult: InitializationResult = {
     if (uniffi_librespydus_core_checksum_func_decode_account_snapshot() != 24188) {
         return InitializationResult.apiChecksumMismatch
     }
+    if (uniffi_librespydus_core_checksum_func_due_reminders() != 12535) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_librespydus_core_checksum_func_encode_account_snapshot() != 34026) {
         return InitializationResult.apiChecksumMismatch
     }
@@ -4798,7 +5025,13 @@ private let initializationResult: InitializationResult = {
     if (uniffi_librespydus_core_checksum_func_parse_due_date() != 38620) {
         return InitializationResult.apiChecksumMismatch
     }
+    if (uniffi_librespydus_core_checksum_func_patron_item_key() != 18928) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_librespydus_core_checksum_func_patron_item_record_url() != 26917) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_librespydus_core_checksum_func_ready_alerts() != 57947) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_librespydus_core_checksum_func_set_timing_sink() != 27295) {
