@@ -202,7 +202,7 @@ test and screenshot every account screen.
 ### 5.5 Navigation
 Five tabs: **Home · Your Books · Search · My Picks · Profile**, all ordinary tab-bar items (the
 inspiration's raised centre Search button was dropped at the user's request). Each tab has its own stack. Shared routes: `detail(BookRef)` → Book detail (I4/A3) and
-`results(query, sort, title)` → Search results list (I3/A3, used by Home "View all" and genre
+`results(query, sort, title)` → Search results list (I3/A3, used by Home "View All" and genre
 tiles). `BookRef` constructors from `SearchRecord`, `PatronItem`, `RelatedItem`, favourite.
 
 ### 5.6 Debug launch hooks (DEBUG only)
