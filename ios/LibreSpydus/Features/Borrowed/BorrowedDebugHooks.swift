@@ -10,7 +10,10 @@ import SwiftUI
 ///   `cancel` (the confirmation for the first ready reservation), `cancel-confirmed` (cancels it
 ///   and shows the result), `edit` (the edit sheet for the first editable pending reservation),
 ///   `edit-saved` (that sheet picks another branch and saves), `swipe` (the first ready
-///   reservation's swipe actions showing), `swipe-cancel` (its confirmation over the open card).
+///   reservation's swipe actions showing), `swipe-cancel` (its confirmation over the open card);
+///   for loans (§5.12) `swipe-renew` (the first loan's Renew showing), `renew` (its confirmation),
+///   `renew-confirmed` (renews it: "Renewing…", then the result) and `renew-refused` (renews the
+///   demo loan the library refuses).
 ///
 /// Mutating steps only ever reach `DemoBackend`, never a real library.
 enum BorrowedDebugHooks {
@@ -33,6 +36,10 @@ extension BorrowedDebugHooks {
         case editSaved = "edit-saved"
         case swipe
         case swipeCancel = "swipe-cancel"
+        case swipeRenew = "swipe-renew"
+        case renew
+        case renewConfirmed = "renew-confirmed"
+        case renewRefused = "renew-refused"
     }
 
     static var segment: BorrowedViewModel.Segment? {
@@ -52,7 +59,9 @@ extension BorrowedDebugHooks {
         guard model.isDemo, model.backend.isDemo, !didRun else { return }
         didRun = true
         if let segment { viewModel.segment = segment }
-        guard let script, let sections = viewModel.lists(model)?.reservations else { return }
+        guard let script, let lists = viewModel.lists(model) else { return }
+        let sections = lists.reservations
+        let renewable = lists.loans.first { $0.renewHref != nil }
         let ready = sections.ready.first { $0.cancelHref != nil }
         let editable = sections.pending.first { $0.editHref != nil }
         switch script {
@@ -70,6 +79,22 @@ extension BorrowedDebugHooks {
             if script == .swipeCancel {
                 try? await Task.sleep(for: .milliseconds(600))
                 viewModel.requestCancel(ready)
+            }
+        case .swipeRenew:
+            guard let renewable else { return }
+            viewModel.segment = .loans
+            try? await Task.sleep(for: .milliseconds(400))
+            viewModel.swipedRowID = renewable.id
+        case .renew:
+            viewModel.segment = .loans
+            if let renewable { viewModel.requestRenew(renewable) }
+        case .renewConfirmed:
+            viewModel.segment = .loans
+            if let renewable { await viewModel.renew(renewable, model: model) }
+        case .renewRefused:
+            viewModel.segment = .loans
+            if let refused = lists.loans.first(where: { $0.item.irn == DemoBackend.unrenewableLoanIrn }) {
+                await viewModel.renew(refused, model: model)
             }
         }
     }

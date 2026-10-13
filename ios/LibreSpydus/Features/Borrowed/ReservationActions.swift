@@ -1,8 +1,20 @@
 import SwiftUI
 
+/// An action behind a Your Books card's swipe (`SwipeActionCard`), also in its long-press menu and
+/// VoiceOver actions.
+protocol SwipeTileAction: Identifiable, Hashable where ID == String {
+    /// The swipe tile's label.
+    var title: String { get }
+    /// The long-press menu and VoiceOver.
+    var menuTitle: String { get }
+    var systemImage: String { get }
+    var role: ButtonRole? { get }
+    var tint: Color { get }
+}
+
 /// What a reservation card offers behind its swipe, in its long-press menu and as VoiceOver
 /// actions: Edit (the sheet) and Cancel (confirmed first), each only when the library gave its link.
-enum ReservationAction: String, CaseIterable, Identifiable {
+enum ReservationAction: String, CaseIterable, SwipeTileAction {
     case edit
     case cancel
 
@@ -102,15 +114,21 @@ enum SwipeReveal {
         abs(motion.width) > abs(motion.height) && (isOpen || motion.width < 0)
     }
 
-    /// The swipe needs iOS 18 (see `ReservationSwipeCard`).
+    /// The swipe needs iOS 18 (see `SwipeActionCard`).
     static var isSupported: Bool {
         if #available(iOS 18, *) { true } else { false }
     }
 
-    /// The hint under the reservations, for where the actions are on this device.
-    static func hint(swipes: Bool = isSupported) -> (text: String, systemImage: String) {
-        swipes ? (Copy.YourBooks.swipeHint, "hand.draw")
-            : (Copy.YourBooks.touchAndHoldHint, "hand.tap")
+    /// The hint under a list (the reservations' Edit / Cancel, the loans' Renew), for where the
+    /// actions are on this device.
+    static func hint(for segment: BorrowedViewModel.Segment = .reservations,
+                     swipes: Bool = isSupported) -> (text: String, systemImage: String) {
+        switch (segment, swipes) {
+        case (.reservations, true): (Copy.YourBooks.swipeHint, "hand.draw")
+        case (.reservations, false): (Copy.YourBooks.touchAndHoldHint, "hand.tap")
+        case (.loans, true): (Copy.YourBooks.loanSwipeHint, "hand.draw")
+        case (.loans, false): (Copy.YourBooks.loanTouchAndHoldHint, "hand.tap")
+        }
     }
 
     /// UIScrollView's edge resistance: `distance` past the end moves the card ever less, never

@@ -150,13 +150,17 @@ xcrun simctl launch --terminate-running-process "$UDID" com.librespydus -LSReset
     `related.json` golden, each pointed at its real Canning bib (`bibIrn` + the session-set
     `bibUrl`; the Baby-sitters club row is the real "graphic novels. 7" edition);
   - `demo-loans.json` holds five loans whose "Due" date is generated from `dueInDays` relative to
-    today (−2, 2, 5, 12, 19), linked to their bibs the same way.
+    today (−2, 2, 5, 12, 19), linked to their bibs the same way, each with a "Renew loan" action
+    shaped like Canning's (`…/CCOPT/78500000/0/N/3/LOANRENQ?SVL=<loan IRN>`).
 - **Sign-in:** `login("demo", "demo")` succeeds and anything else is `CredentialsRejected`. The
   session lives in memory only, never in the Keychain.
 - **Mutations** succeed after 0.6 s and update the in-memory lists: cancel removes the row,
   reserve adds a pending row (titled from the search that produced the reserve URL and linked to
   the reserved edition's bib, so the book page then says "Reserved"), and edit changes the pickup
-  location. Reserving the same title twice gives `ok: false`.
+  location. Reserving the same title twice gives `ok: false`. A renewal takes 2 s (the core reads
+  the loans list before and after) and moves the loan's due date 21 days later, except "Whistler"
+  (`DemoBackend.unrenewableLoanIrn`), which is refused with "This item cannot be renewed as it is
+  reserved by another borrower." and keeps its date.
 - **`accountSnapshot`** takes 1.5 s, so the refreshing state is visible, and reflects those
   changes. The account is never saved on the device in demo mode (see `-LSPersistDemoAccount`).
 - **My Picks** is an in-memory list seeded with "The Midnight Library" (a work: Book and Large
@@ -266,6 +270,19 @@ each conflict was settled is in `design/copy-decisions.md`.
   favourite key. A ref from a `PatronItem` loads `patronItemRecordUrl(item:)` (the row's own
   `bibUrl` needs the patron's OPAC session) and keeps the row's bib IRN in its id `bib:<IRN>`
   (`bibIrn`).
+- **Renew a loan** (docs/native-apps.md §5.12): a loan with a "Renew loan" action
+  (`PatronItem.renewHref`, the first action whose label matches `/renew/i`) gets **Renew** behind
+  its swipe (`SwipeActionCard`, the reservations' card, generic over `SwipeTileAction`), in its
+  long-press menu and as a VoiceOver action ("Renew loan"); the footnote under the Loans list is
+  "Swipe left on a loan to renew it." ("Touch and hold…" on iOS 17, which has no swipe). Renew asks
+  first ("Renew this loan?", Renew / Not now). `BorrowedViewModel.renew` then runs
+  `LibraryBackend.renewLoan` through `AccountStore.performChange`, one renewal at a time per loan:
+  the card shows a spinner with its actions gone, and a toast above the tab bar
+  (`RenewToastOverlay`, the shared `Toast`) says "Renewing…", then "Renewed · Due 3 Nov" (the card
+  takes the new date at once), the library's reason when it didn't renew, or "Couldn’t renew this
+  loan" when the call failed; a lost session takes the usual sign-in path instead. Either result
+  fetches the account again, so the saved snapshot, Home's "Your loans" and the due-date reminders
+  follow. Test fakes get a `renewLoan` that never renews.
 - **Book page "Already yours"** (docs/native-apps.md §6): `BookDetailModel.holding(in:)` runs
   `accountHolding` on the saved account with the shown edition's bib IRNs (the selected format's
   `Availability.bibRecordIrn`, else the record's and the opened row's). A holding replaces Reserve
@@ -396,7 +413,8 @@ the core's `SearchSort`); `SearchResults.isNoResults` → the core's `noResults`
 `CoreBackend.cardBarcodeSymbology` → `client.cardBarcodeSymbology()`; `CoreBackend.featured` /
 `collection` / `holdings` → `client.featured()`, `client.collection(url:)`, `client.holdings(url:)`;
 `CoreBackend.picks` / `savePick` / `removePick` → `client.picks(session:url:)`,
-`client.savePick(irn:session:)`, `client.removePick(irn:session:)` (never run against a real
-library by a worker: demo mode only, docs/native-apps.md §2). Use `availabilitySummary(availability:)` for availability
+`client.savePick(irn:session:)`, `client.removePick(irn:session:)`, and `CoreBackend.renewLoan` →
+`client.renewLoan(url:session:)` (never run against a real library by a worker: demo mode only,
+docs/native-apps.md §2). Use `availabilitySummary(availability:)` for availability
 labels and `homeShelves()` / `homeGenres()` for Home. "Reserve" depends on a format's
 `reserveUrl` only — some libraries (Brazoria County) accept holds on ebooks.

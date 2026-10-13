@@ -40,31 +40,16 @@ private struct PicksToast: View {
     let notice: PicksNotice
 
     var body: some View {
-        HStack(spacing: Theme.Spacing.s) {
-            switch notice.tone {
-            case .progress:
-                ProgressView()
-                    .controlSize(.small)
-                    .tint(Theme.Colors.textSecondary)
-            case .success:
-                Image(systemName: "bookmark.fill").foregroundStyle(Theme.Colors.primary)
-            case .info:
-                Image(systemName: "info.circle.fill").foregroundStyle(Theme.Colors.accent)
-            case .error:
-                Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(Theme.Colors.warning)
-            }
-            Text(notice.message)
-                .themeFont(.bodyStrong)
-                .foregroundStyle(Theme.Colors.textPrimary)
-                .lineLimit(2)
-                .fixedSize(horizontal: false, vertical: true)
+        Toast(message: notice.message, icon: icon)
+    }
+
+    private var icon: Toast.Icon {
+        switch notice.tone {
+        case .progress: .progress
+        case .success: .symbol("bookmark.fill", Theme.Colors.primary)
+        case .info: .symbol("info.circle.fill", Theme.Colors.accent)
+        case .error: .symbol("exclamationmark.triangle.fill", Theme.Colors.warning)
         }
-        .padding(.horizontal, Theme.Spacing.l)
-        .padding(.vertical, Theme.Spacing.m)
-        .background(Capsule().fill(Theme.Colors.surfaceElevated))
-        .overlay(Capsule().strokeBorder(Theme.Colors.textMuted.opacity(0.25), lineWidth: 1))
-        .shadow(color: .black.opacity(0.35), radius: 12, y: 4)
-        .accessibilityElement(children: .combine)
     }
 }
 

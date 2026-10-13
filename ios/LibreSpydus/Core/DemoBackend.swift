@@ -11,7 +11,9 @@ import LibreSpydusCore
 /// touches the network.
 /// `login("demo", "demo")` succeeds, anything else is `CredentialsRejected`. Mutations succeed
 /// after `mutationDelay` and update the in-memory lists: cancel removes the row, reserve adds a
-/// pending row, edit changes the pickup location. `accountSnapshot` takes `snapshotDelay`, so the
+/// pending row, edit changes the pickup location. A renewal (§5.12) takes `renewDelay`, like the
+/// core reading the loans list before and after, and moves the loan's due date `renewalDays` later,
+/// except for `unrenewableLoanIrn`, which the "library" refuses. `accountSnapshot` takes `snapshotDelay`, so the
 /// refreshing state is visible, and reflects those changes. With `addsReadyOnNextRefresh` (DEBUG
 /// `-LSDemoNewReady`) one more reservation is ready from the second `accountSnapshot` on, so a
 /// "Ready to collect" alert can be shown (docs/native-apps.md §5.8).
@@ -38,6 +40,7 @@ actor DemoBackend: LibraryBackend {
 
     private let publicBackend: any LibraryBackend
     private let mutationDelay: Duration
+    private let renewDelay: Duration
     private let snapshotDelay: Duration
     /// `-LSDemoRefreshFails YES`: every `accountSnapshot` fails, to show a failed refresh.
     private let failsAccountSnapshot: Bool
@@ -63,13 +66,22 @@ actor DemoBackend: LibraryBackend {
     /// Records per Pick list page, as the library's `NRECS=20`.
     static let picksPageSize = 20
 
+    /// The demo loan the library won't renew: "Whistler", due in 2 days, which another borrower
+    /// has reserved.
+    static let unrenewableLoanIrn = "18000002"
+    /// The library's reason for not renewing it, in its own words.
+    static let renewRefusal = "This item cannot be renewed as it is reserved by another borrower."
+    /// How much later a renewed demo loan is due.
+    static let renewalDays = 21
+
     init(publicBackend: any LibraryBackend, fixtures: DemoFixtures, mutationDelay: Duration = .milliseconds(600),
-         snapshotDelay: Duration = .milliseconds(1500), failsAccountSnapshot: Bool = false,
-         addsReadyOnNextRefresh: Bool = false) {
+         renewDelay: Duration = .seconds(2), snapshotDelay: Duration = .milliseconds(1500),
+         failsAccountSnapshot: Bool = false, addsReadyOnNextRefresh: Bool = false) {
         self.publicBackend = publicBackend
         self.origin = publicBackend.origin
         self.fixtures = fixtures
         self.mutationDelay = mutationDelay
+        self.renewDelay = renewDelay
         self.snapshotDelay = snapshotDelay
         self.failsAccountSnapshot = failsAccountSnapshot
         self.addsReadyOnNextRefresh = addsReadyOnNextRefresh
@@ -273,6 +285,28 @@ actor DemoBackend: LibraryBackend {
             return ReserveResult(ok: false, message: "This reservation can’t be edited right now.")
         }
         return ReserveResult(ok: true, message: "Reservation updated")
+    }
+
+    /// Moves the loan's due date `renewalDays` later, unless it's `unrenewableLoanIrn` (refused with
+    /// the library's reason, the date unchanged). A link that's no longer on the list renews nothing,
+    /// as the core reports it.
+    func renewLoan(url: String, session: String) async throws -> RenewResult {
+        try check(session)
+        try await Task.sleep(for: renewDelay)
+        guard let index = fixtures.loans.firstIndex(where: { $0.hasAction(href: url) }) else {
+            return RenewResult(ok: false, message: "This loan isn’t on your loans list any more.", due: nil)
+        }
+        let due = fixtures.loans[index].fields["Due"]
+        guard fixtures.loans[index].irn != Self.unrenewableLoanIrn else {
+            return RenewResult(ok: false, message: Self.renewRefusal, due: due)
+        }
+        guard let current = due.flatMap({ DueDate.parse($0) }),
+              let renewed = Calendar.library.date(byAdding: .day, value: Self.renewalDays, to: current) else {
+            return RenewResult(ok: false, message: "The library didn’t renew this loan.", due: due)
+        }
+        let renewedText = DueDate.format(renewed)
+        fixtures.loans[index].fields["Due"] = renewedText
+        return RenewResult(ok: true, message: nil, due: renewedText)
     }
 
     // MARK: My Picks → in memory
