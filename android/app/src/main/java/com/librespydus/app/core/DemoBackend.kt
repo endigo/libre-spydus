@@ -86,6 +86,9 @@ class DemoBackend(
     override suspend fun record(url: String) = catalogue.record(url) ?: public.record(url)
     override suspend fun related(url: String) = public.related(url)
 
+    /** A public GET of the library's mobile config, like the other public reads (§5.9). */
+    override suspend fun cardBarcodeSymbology() = public.cardBarcodeSymbology()
+
     override suspend fun login(username: String, password: String): String {
         delay(mutationDelay)
         if (username.trim() == DEMO_USERNAME && password == DEMO_PASSWORD) return SESSION
@@ -243,6 +246,9 @@ class DemoBackend(
         const val SESSION = "demo-session"
         const val DEMO_USERNAME = "demo"
         const val DEMO_PASSWORD = "demo"
+
+        /** The demo account's library card number (§5.9), kept in memory only. */
+        const val CARD_NUMBER = "DEMO0012345"
 
         /** The reservation `ls_demo_new_ready` makes ready (Baby-sitters club, "In transit"). */
         const val NEW_READY_IRN = "19000002"

@@ -5,6 +5,7 @@ import kotlinx.coroutines.withContext
 import uniffi.librespydus_core.AccountLinks
 import uniffi.librespydus_core.AccountSnapshot
 import uniffi.librespydus_core.Availability
+import uniffi.librespydus_core.BarcodeSymbology
 import uniffi.librespydus_core.EditOptions
 import uniffi.librespydus_core.EditOverrides
 import uniffi.librespydus_core.PatronList
@@ -54,6 +55,12 @@ interface LibraryBackend {
     suspend fun cancelReservation(url: String, session: String): ReserveResult
     suspend fun editOptions(url: String, session: String): EditOptions
     suspend fun editReservation(url: String, session: String, overrides: EditOverrides): ReserveResult
+
+    /**
+     * The symbology the library's card scanners read (§5.9 My card): the `barcodeType` of its
+     * public mobile config, Code 128 when it has none. Never throws (the core falls back to Code 128).
+     */
+    suspend fun cardBarcodeSymbology(): BarcodeSymbology = BarcodeSymbology.CODE128
 }
 
 /**
@@ -92,6 +99,8 @@ class CoreBackend(private val client: SpydusClient) : LibraryBackend {
 
     override suspend fun editReservation(url: String, session: String, overrides: EditOverrides) =
         io { client.editReservation(url, session, overrides) }
+
+    override suspend fun cardBarcodeSymbology() = io { client.cardBarcodeSymbology() }
 
     private suspend inline fun <T> io(crossinline block: suspend () -> T): T =
         withContext(Dispatchers.IO) { block() }

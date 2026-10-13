@@ -105,6 +105,8 @@ Intent extras read by `MainActivity` (`core/LaunchOptions.kt`, docs §5.6):
 | `--ez ls_demo_refresh_fails true` | with `ls_demo`: every demo account refresh fails like an unreachable library ("Couldn't refresh — showing saved data" over a saved demo account) |
 | `--ez ls_morning_check_now true` | run the 07:45 morning check (docs §5.8) through WorkManager now, once the launch's own account refresh has settled |
 | `--ez ls_demo_new_ready true` | with `ls_demo`: the "In transit" reservation (Baby-sitters club) becomes ready at Riverton Library from the demo account's second refresh on, so a "Ready to collect" alert can be shown |
+| `--ez ls_open_card true` | with `ls_demo`: Home opens My card once (`feature/mycard/MyCardDebugHooks.kt`) |
+| `--es ls_demo_card <number>` | with `ls_demo`: the demo card number instead of `DEMO0012345`; `none` → no number (the card asks for one). Quote non-ASCII values: `"--es ls_demo_card 'CL114Ä'"` |
 
 ```sh
 adb -s emulator-5554 shell am start -n com.librespydus.app/.MainActivity \
@@ -194,6 +196,31 @@ adb -s emulator-5556 shell am broadcast -a androidx.work.diagnostics.REQUEST_DIA
 adb -s emulator-5556 logcat -s MorningCheck Alerts WM-DiagnosticsWrkr
 ```
 
+## My card (docs §5.9)
+
+Home shows a "My card" capsule right of the greeting while signed in; it opens a sheet with the
+library card as a barcode for the desk or self-checkout (`feature/mycard/`).
+
+- **The number** isn't the sign-in ID (that may be a username): the patron enters it on the card
+  (field "Library card number"), and can edit it. `AppState.cardNumber` = the number saved on the
+  device, else the account's own (`accountCardNumber`, a stub returning null until the core reads
+  Personal details). Saved trimmed in the secure store under `card.<origin>`; deleted on sign-out,
+  kept when the session expires. Demo mode: `DEMO0012345`, in memory only.
+- **Symbology:** `LibraryBackend.cardBarcodeSymbology()` (the library's mobile config
+  `barcodeType`: Canning Code 128, Cumberland Code 39; demo mode asks the real library, a public
+  GET). `CardSymbologies` remembers the last answer per library, so only the first open shows a
+  spinner. The core's `cardBarcode` gives the modules (Code 128 fallback; null for non-ASCII →
+  "This number can't be shown as a barcode.").
+- **Drawing:** `BarcodeView` (Compose `Canvas`) gives every module the same whole number of device
+  pixels, `floor(width / (modules + 20))`, at least 1, bars centred with ≥ 10 white modules each
+  side, on a white card in any theme. Screen brightness is full while the sheet is up (activity
+  window `screenBrightness`), restored when it closes or the app leaves the foreground.
+
+```sh
+adb -s emulator-5556 shell am start -S -n com.librespydus.app/.MainActivity \
+  --es ls_origin https://cumberlandlibraries.spydus.com --ez ls_demo true --ez ls_open_card true
+```
+
 ## Code map (`app/src/main/java/com/librespydus/app/`)
 
 | path | owner | what |
@@ -216,6 +243,7 @@ adb -s emulator-5556 logcat -s MorningCheck Alerts WM-DiagnosticsWrkr
 | `ui/nav/` | A1 | `LibreSpydusRoot` (splash, onboarding, tabs, AppState-driven sheets), one `NavHost` per tab, `AppNavigator`, `LocalAppState` |
 | `feature/onboarding/`, `feature/profile/`, `feature/borrowed/`, `feature/favourites/` | A2 | `LibraryPickerScreen`, `LoginSheet`, `VerificationScreen`, `ProfileScreen` (+ A7 `NotificationsSection`), `BorrowedScreen`, `FavouritesScreen` |
 | `feature/home/`, `feature/search/`, `feature/detail/` | A3 | `HomeScreen`, `SearchScreen`, `SearchResultsScreen`, `BookDetailScreen` |
+| `feature/mycard/` | A8 | My card (§5.9): `MyCardButton` (Home header), `MyCardSheet` (card, entry form, `BarcodeView`, brightness), `MyCardLogic` (content, `BarcodeLayout`, `CardSymbologies`, `BrightnessBoost`) |
 
 ### Notes for screen authors (waves 2–3)
 
