@@ -16,16 +16,16 @@ struct LoginView: View {
             VStack(alignment: .leading, spacing: Theme.Spacing.l) {
                 libraryHeader
                 VStack(alignment: .leading, spacing: Theme.Spacing.m) {
-                    labelled("Library card number") {
-                        TextField(text: $form.cardNumber) { placeholder("Card number") }
+                    labelled(Copy.Login.cardLabel) {
+                        TextField(text: $form.cardNumber) { placeholder(Copy.Login.cardPlaceholder) }
                             .textContentType(.username)
                             .keyboardType(.asciiCapable)
                             .submitLabel(.next)
                             .focused($focus, equals: .cardNumber)
                             .onSubmit { focus = .pin }
                     }
-                    labelled("PIN / password") {
-                        SecureField(text: $form.pin) { placeholder("PIN or password") }
+                    labelled(Copy.Login.pinLabel) {
+                        SecureField(text: $form.pin) { placeholder(Copy.Login.pinPlaceholder) }
                             .textContentType(.password)
                             .submitLabel(.go)
                             .focused($focus, equals: .pin)
@@ -41,12 +41,12 @@ struct LoginView: View {
                         .transition(.opacity)
                 }
 
-                PrimaryPillButton(title: form.isSigningIn ? "Signing in…" : "Sign in", isLoading: form.isSigningIn,
+                PrimaryPillButton(title: form.isSigningIn ? Copy.Account.signingIn : Copy.Account.signIn, isLoading: form.isSigningIn,
                                   fillsWidth: true, action: submit)
                     .disabled(!form.canSubmit && !form.isSigningIn)
                     .padding(.top, Theme.Spacing.xs)
 
-                Text("LibreSpydus signs in directly with \(model.libraryName) and doesn't store your PIN.")
+                Text(Copy.Login.privacyNote(library: model.libraryName))
                     .themeFont(.caption)
                     .foregroundStyle(Theme.Colors.textMuted)
                     .fixedSize(horizontal: false, vertical: true)
@@ -90,7 +90,7 @@ struct LoginView: View {
                     .contentShape(Circle())
             }
             .buttonStyle(.plain)
-            .accessibilityLabel("Close")
+            .accessibilityLabel(Copy.Common.close)
         }
         .padding(.horizontal, Theme.Spacing.m)
         .padding(.top, Theme.Spacing.s)
@@ -102,7 +102,7 @@ struct LoginView: View {
                 LibraryLogo(library, size: 64)
             }
             VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
-                Text("Sign in")
+                Text(Copy.Login.title)
                     .themeFont(.greeting)
                     .foregroundStyle(Theme.Colors.textPrimary)
                     .accessibilityAddTraits(.isHeader)

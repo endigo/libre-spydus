@@ -26,17 +26,17 @@ struct ProfileView: View {
         }
         .screenBackground()
         .toolbar(.hidden, for: .navigationBar)
-        .confirmationDialog("Sign out of \(model.libraryName)?", isPresented: $confirmingSignOut,
+        .confirmationDialog(Copy.Profile.signOutTitle(library: model.libraryName), isPresented: $confirmingSignOut,
                             titleVisibility: .visible) {
-            Button("Sign out", role: .destructive) { model.signOut() }
+            Button(Copy.Account.signOut, role: .destructive) { model.signOut() }
         } message: {
-            Text("You can sign in again at any time.")
+            Text(Copy.Profile.signOutMessage)
         }
-        .confirmationDialog("Clear verification?", isPresented: $confirmingClearVerification,
+        .confirmationDialog(Copy.Profile.clearVerificationTitle, isPresented: $confirmingClearVerification,
                             titleVisibility: .visible) {
-            Button("Clear verification", role: .destructive) { clearVerification() }
+            Button(Copy.Profile.clearVerification, role: .destructive) { clearVerification() }
         } message: {
-            Text("\(model.libraryName) will ask you to confirm you're human again.")
+            Text(Copy.Profile.clearVerificationMessage(library: model.libraryName).capitalisedFirst)
         }
     }
 
@@ -44,7 +44,7 @@ struct ProfileView: View {
 
     private var content: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.xl) {
-            Text("Profile")
+            Text(Copy.Profile.title)
                 .themeFont(.greeting)
                 .foregroundStyle(Theme.Colors.textPrimary)
                 .accessibilityAddTraits(.isHeader)
@@ -55,9 +55,9 @@ struct ProfileView: View {
                 if model.isSignedIn { NotificationsSection() }
                 if model.isVerified { verificationSection }
             } else {
-                EmptyStateView(systemImage: "building.columns", title: "No library selected",
-                               message: "Choose your library to search its catalogue and sign in.",
-                               actionTitle: "Choose library") { model.libraryPickerPresented = true }
+                EmptyStateView(systemImage: "building.columns", title: Copy.Profile.noLibraryTitle,
+                               message: Copy.Profile.noLibraryMessage,
+                               actionTitle: Copy.Profile.chooseLibrary) { model.libraryPickerPresented = true }
             }
             aboutSection
             #if DEBUG
@@ -94,7 +94,7 @@ struct ProfileView: View {
             }
             .accessibilityElement(children: .combine)
             ProfileDivider()
-            ProfileRowButton(title: "Change library", systemImage: "arrow.left.arrow.right") {
+            ProfileRowButton(title: Copy.Profile.changeLibrary, systemImage: "arrow.left.arrow.right") {
                 model.libraryPickerPresented = true
             }
         }
@@ -104,7 +104,7 @@ struct ProfileView: View {
 
     private var accountSection: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.m) {
-            ProfileSectionHeader(title: "Account")
+            ProfileSectionHeader(title: Copy.Profile.account)
             ProfileCard {
                 if model.isSignedIn {
                     signedInContent
@@ -132,16 +132,16 @@ struct ProfileView: View {
                 } else if model.account.snapshot == nil, model.account.isRefreshing {
                     HStack(spacing: Theme.Spacing.s) {
                         ProgressView().tint(Theme.Colors.textSecondary)
-                        Text("Loading your account…")
+                        Text(Copy.Profile.loadingAccount)
                             .themeFont(.body)
                             .foregroundStyle(Theme.Colors.textSecondary)
                     }
                 } else {
-                    Text("Signed in")
+                    Text(Copy.Account.signedIn)
                         .themeFont(.bodyStrong)
                         .foregroundStyle(Theme.Colors.textPrimary)
                 }
-                Text("Signed in to \(model.libraryName)")
+                Text(Copy.Profile.signedInTo(library: model.libraryName))
                     .themeFont(.caption)
                     .foregroundStyle(Theme.Colors.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -152,18 +152,18 @@ struct ProfileView: View {
         // A library page without a name isn't an error: Profile then just says "Signed in".
         if model.account.snapshot == nil, model.account.lastRefreshError != nil, !model.account.isRefreshing {
             HStack(spacing: Theme.Spacing.s) {
-                Text("Couldn't load your account details.")
+                Text(Copy.Profile.accountFailed)
                     .themeFont(.caption)
                     .foregroundStyle(Theme.Colors.warning)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                Button("Retry") { Task { await model.refreshAccount(force: true) } }
+                Button(Copy.Common.retry) { Task { await model.refreshAccount(force: true) } }
                     .themeFont(.bodyStrong)
                     .foregroundStyle(Theme.Colors.primary)
                     .buttonStyle(.borderless)
             }
         }
         ProfileDivider()
-        ProfileRowButton(title: "Sign out", systemImage: "rectangle.portrait.and.arrow.right", tint: Theme.Colors.danger) {
+        ProfileRowButton(title: Copy.Account.signOut, systemImage: "rectangle.portrait.and.arrow.right", tint: Theme.Colors.danger) {
             confirmingSignOut = true
         }
     }
@@ -176,10 +176,10 @@ struct ProfileView: View {
                 .foregroundStyle(Theme.Colors.textMuted)
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
-                Text("You're not signed in")
+                Text(Copy.Profile.notSignedInTitle)
                     .themeFont(.bodyStrong)
                     .foregroundStyle(Theme.Colors.textPrimary)
-                Text("Sign in with your library card to see your loans and reservations.")
+                Text(Copy.Profile.notSignedInMessage)
                     .themeFont(.caption)
                     .foregroundStyle(Theme.Colors.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -187,7 +187,7 @@ struct ProfileView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .accessibilityElement(children: .combine)
-        PrimaryPillButton(title: "Sign in", systemImage: "person.badge.key", fillsWidth: true) {
+        PrimaryPillButton(title: Copy.Account.signIn, systemImage: "person.badge.key", fillsWidth: true) {
             model.loginNeeded = true
         }
         .padding(.top, Theme.Spacing.xs)
@@ -205,7 +205,7 @@ struct ProfileView: View {
 
     private var verificationSection: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.m) {
-            ProfileSectionHeader(title: "Human verification")
+            ProfileSectionHeader(title: Copy.Profile.humanVerification)
             ProfileCard {
                 HStack(alignment: .top, spacing: Theme.Spacing.l) {
                     Image(systemName: "checkmark.shield.fill")
@@ -213,10 +213,10 @@ struct ProfileView: View {
                         .foregroundStyle(Theme.Colors.success)
                         .accessibilityHidden(true)
                     VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
-                        Text("Verified on this device")
+                        Text(Copy.Profile.verified)
                             .themeFont(.bodyStrong)
                             .foregroundStyle(Theme.Colors.textPrimary)
-                        Text("\(model.libraryName) asked you to confirm you're human. The app sends the library's verification cookie with its requests.")
+                        Text(Copy.Profile.verifiedMessage(library: model.libraryName).capitalisedFirst)
                             .themeFont(.caption)
                             .foregroundStyle(Theme.Colors.textSecondary)
                             .fixedSize(horizontal: false, vertical: true)
@@ -225,7 +225,7 @@ struct ProfileView: View {
                 }
                 .accessibilityElement(children: .combine)
                 ProfileDivider()
-                ProfileRowButton(title: "Clear verification", systemImage: "xmark.shield") {
+                ProfileRowButton(title: Copy.Profile.clearVerification, systemImage: "xmark.shield") {
                     confirmingClearVerification = true
                 }
             }
@@ -242,10 +242,10 @@ struct ProfileView: View {
 
     private var aboutSection: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.m) {
-            ProfileSectionHeader(title: "About")
+            ProfileSectionHeader(title: Copy.Profile.about)
             ProfileCard {
                 HStack {
-                    Text("LibreSpydus")
+                    Text(Copy.Profile.appName)
                         .themeFont(.bodyStrong)
                         .foregroundStyle(Theme.Colors.textPrimary)
                     Spacer()
@@ -255,7 +255,7 @@ struct ProfileView: View {
                 }
                 .accessibilityElement(children: .combine)
                 ProfileDivider()
-                Text("LibreSpydus is not affiliated with Civica or your library.")
+                Text(Copy.Profile.notAffiliated)
                     .themeFont(.caption)
                     .foregroundStyle(Theme.Colors.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -268,7 +268,7 @@ struct ProfileView: View {
         let info = Bundle.main.infoDictionary ?? [:]
         let version = info["CFBundleShortVersionString"] as? String ?? "?"
         let build = info["CFBundleVersion"] as? String ?? "?"
-        return "Version \(version) (\(build))"
+        return Copy.Profile.version(version: version, build: build)
     }
 
     // MARK: Developer (DEBUG)

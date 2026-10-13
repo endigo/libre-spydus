@@ -2,7 +2,8 @@ import LibreSpydusCore
 import SwiftUI
 
 /// The edit sheet's form state and the `EditOverrides` it sends. Mirrors the reservation form:
-/// pickup branch, "Delay until" (SDTE) and "Not required after" (XDTE). A date is sent only when
+/// pickup branch, "Delay until" (SDTE) and "Not needed after" (XDTE, the library's "Not required
+/// after"). A date is sent only when
 /// it changed; switching off a date the form had sets the matching clear flag.
 struct EditDraft: Equatable {
     struct DateField: Equatable {
@@ -112,12 +113,12 @@ struct EditReservationSheet: View {
             content
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(Theme.Colors.background.ignoresSafeArea())
-                .navigationTitle("Edit reservation")
+                .navigationTitle(Copy.EditReservation.title)
                 .navigationBarTitleDisplayMode(.inline)
                 .navyNavigationBar()
                 .toolbar {
                     ToolbarItem(placement: .cancellationAction) {
-                        Button("Close") { finish(.closed) }
+                        Button(Copy.Common.close) { finish(.closed) }
                             .disabled(isSaving)
                     }
                 }
@@ -130,15 +131,15 @@ struct EditReservationSheet: View {
     private var content: some View {
         switch options {
         case .idle, .loading:
-            LoadingView(message: "Loading reservation…")
+            LoadingView(message: Copy.EditReservation.loading)
         case .failed(let error):
             ErrorStateView(error: error) { Task { await loadOptions() } }
         case .loaded(let options):
             if options.canEdit, draft != nil {
                 form(options)
             } else {
-                EmptyStateView(systemImage: "calendar.badge.exclamationmark", title: "Can't edit this reservation",
-                               message: options.message.nonEmpty ?? "This reservation can't be edited right now.")
+                EmptyStateView(systemImage: "calendar.badge.exclamationmark", title: Copy.EditReservation.cantEditTitle,
+                               message: options.message.nonEmpty ?? Copy.EditReservation.cantEditMessage)
             }
         }
     }
@@ -161,15 +162,15 @@ struct EditReservationSheet: View {
                 Section {
                     pickupPicker(options.pickupChoices)
                 } header: {
-                    sectionTitle("Pickup location")
+                    sectionTitle(Copy.EditReservation.collectFrom)
                 }
             }
-            dateSection(title: "Delay until", field: draftBinding(\.delay), earliest: today,
-                        footer: "The library won't fill the reservation before this date.")
-            dateSection(title: "Not required after", field: draftBinding(\.expiry), earliest: earliestExpiry,
-                        footer: "The reservation lapses if it isn't ready by this date.")
+            dateSection(title: Copy.EditReservation.delayUntil, field: draftBinding(\.delay), earliest: today,
+                        footer: Copy.EditReservation.delayFooter)
+            dateSection(title: Copy.EditReservation.notNeededAfter, field: draftBinding(\.expiry), earliest: earliestExpiry,
+                        footer: Copy.EditReservation.notNeededFooter)
             Section {
-                PrimaryPillButton(title: "Save changes", isLoading: isSaving, fillsWidth: true) {
+                PrimaryPillButton(title: Copy.EditReservation.saveChanges, isLoading: isSaving, fillsWidth: true) {
                     Task { await save() }
                 }
                 .disabled(!(draft?.hasChanges(calendar: calendar) ?? false))
@@ -208,7 +209,7 @@ struct EditReservationSheet: View {
     @ViewBuilder
     private func pickupPicker(_ choices: [PickupChoice]) -> some View {
         let selection = Binding<String?>(get: { draft?.pickup }, set: { draft?.pickup = $0 })
-        let picker = Picker("Pickup location", selection: selection) {
+        let picker = Picker(Copy.EditReservation.collectFrom, selection: selection) {
             ForEach(choices, id: \.code) { choice in
                 Text(ReservationRow.displayName(choice.name) ?? choice.name)
                     .tag(Optional(choice.code))
@@ -232,14 +233,14 @@ struct EditReservationSheet: View {
                 .foregroundStyle(Theme.Colors.textPrimary)
                 .listRowBackground(Theme.Colors.surface)
             if field.wrappedValue.isOn {
-                DatePicker("Date", selection: field.date, in: min(earliest, field.wrappedValue.date)...,
+                DatePicker(Copy.EditReservation.date, selection: field.date, in: min(earliest, field.wrappedValue.date)...,
                            displayedComponents: .date)
                     .foregroundStyle(Theme.Colors.textSecondary)
                     .listRowBackground(Theme.Colors.surface)
-                    .accessibilityLabel("\(title) date")
+                    .accessibilityLabel(Copy.EditReservation.dateLabel(field: title))
             }
         } footer: {
-            Text(field.wrappedValue.isCleared ? "Cleared when you save. \(footer)" : footer)
+            Text(field.wrappedValue.isCleared ? Copy.EditReservation.clearedFooter(footer: footer) : footer)
                 .themeFont(.caption)
                 .foregroundStyle(Theme.Colors.textMuted)
         }
@@ -261,7 +262,7 @@ struct EditReservationSheet: View {
 
     private var today: Date { calendar.startOfDay(for: .now) }
 
-    /// "Not required after" can't be before "Delay until".
+    /// "Not needed after" can't be before "Delay until".
     private var earliestExpiry: Date {
         guard let delay = draft?.delay, delay.isOn else { return today }
         return max(today, delay.date)
@@ -313,7 +314,7 @@ struct EditReservationSheet: View {
             if result.ok {
                 finish(.saved(result))
             } else {
-                problem = result.message.nonEmpty ?? "The library didn't accept the change."
+                problem = result.message.nonEmpty ?? Copy.EditReservation.changeFailed
                 AccessibilityNotification.Announcement(problem ?? "").post()
             }
         } catch {

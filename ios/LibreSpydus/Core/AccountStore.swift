@@ -21,7 +21,7 @@ final class AccountStore {
     private(set) var snapshot: AccountSnapshot?
     private(set) var isRefreshing = false
     /// Why the last refresh failed; nil after a success. With a `snapshot` the screens keep
-    /// showing it ("Couldn't refresh — showing saved data").
+    /// showing it ("Couldn’t refresh · Showing the saved list").
     private(set) var lastRefreshError: UserFacingError?
 
     /// Routes a failed fetch (`AppModel.report`): returns what to show, nil for a cancellation.

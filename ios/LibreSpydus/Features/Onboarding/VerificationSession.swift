@@ -63,7 +63,7 @@ final class VerificationSession {
         // A new navigation replacing this one (reload, the challenge's own redirect) isn't a failure.
         if nsError.domain == NSURLErrorDomain, nsError.code == NSURLErrorCancelled { return }
         if nsError.domain == "WebKitErrorDomain", nsError.code == 102 { return } // frame load interrupted
-        loadError = UserFacingError(kind: .network, message: "Can't reach \(libraryName). Check your connection.",
+        loadError = UserFacingError(kind: .network, message: Copy.Errors.network(library: libraryName),
                                     detail: nsError.localizedDescription)
     }
 

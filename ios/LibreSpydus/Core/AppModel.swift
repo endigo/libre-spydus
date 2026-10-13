@@ -47,7 +47,7 @@ final class AppModel {
     // MARK: Local data
 
     let favourites: FavouritesStore
-    /// My Picks (§5.11): the Pick list on the library account, which Favourites shows (and the
+    /// My Picks (§5.11): the Pick list on the library account, which the My Picks tab shows (and the
     /// bookmark saves to) while signed in.
     let picks: PicksStore
     /// After an interactive sign-in: offer once to add this library's local favourites to My Picks
@@ -125,8 +125,8 @@ final class AppModel {
 
     // MARK: Derived
 
-    /// The library's display name ("your library" before one is chosen).
-    var libraryName: String { library?.name ?? "your library" }
+    /// The library's display name (`Copy.Common.yourLibrary` before one is chosen).
+    var libraryName: String { library?.name ?? Copy.Common.yourLibrary }
     var isVerified: Bool { verificationCookie != nil }
     var needsOnboarding: Bool { library == nil }
 
@@ -522,10 +522,11 @@ extension LibraryInfo {
     /// Canning, the core's default library: its entry in Civica's directory (logo included), so
     /// the app shows it correctly before or without a directory fetch.
     static let canning = LibraryInfo(
+        // copy-exempt: Canning's entry in Civica's directory (data, as the directory gives it)
         id: "24fdee8d-ae0f-41b3-b97e-c96059bd06f4", name: "City of Canning",
         origin: "https://canning.spydus.com",
         logoUrl: "https://canning.spydus.com/api/maintenance/1.0/imagebrowser/image?blobName=d226b0c4-06d6-44b7-ba98-e42f06b9fd15.png",
-        country: "Australia", region: "AU", isTest: false
+        country: "Australia", region: "AU", isTest: false // copy-exempt: directory data (Canning's country)
     )
 
     /// A stand-in built from the origin alone, until the directory entry is known.
@@ -536,10 +537,10 @@ extension LibraryInfo {
         let region: String
         let country: String?
         switch true {
-        case host.hasSuffix(".uk"): (region, country) = ("UK", "United Kingdom")
-        case host.hasSuffix(".nz"): (region, country) = ("NZ", "New Zealand")
-        case host.hasSuffix(".sg"): (region, country) = ("SG", "Singapore")
-        case host.hasSuffix(".au"): (region, country) = ("AU", "Australia")
+        case host.hasSuffix(".uk"): (region, country) = ("UK", Copy.Onboarding.regionUK)
+        case host.hasSuffix(".nz"): (region, country) = ("NZ", Copy.Onboarding.regionNZ)
+        case host.hasSuffix(".sg"): (region, country) = ("SG", Copy.Onboarding.regionSG)
+        case host.hasSuffix(".au"): (region, country) = ("AU", Copy.Onboarding.regionAU)
         default: (region, country) = ("OTHER", nil)
         }
         return LibraryInfo(id: "placeholder:\(origin)", name: label.prefix(1).uppercased() + label.dropFirst(),

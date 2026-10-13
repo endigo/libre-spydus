@@ -114,14 +114,16 @@ struct BorrowedReservationTests {
     @Test func cardWording() throws {
         let ready = ReservationRow(item: item("Ready", fields: ["Status": "Awaiting pickup",
                                                                 "Pickup location": "WILLETTON & DISTRICT"]), kind: .ready)
-        #expect(ready.statusLabel == "Ready for pickup")
-        #expect(ready.meta == "Pick up at Willetton & District")
+        #expect(ready.statusLabel == "Ready to collect")
+        #expect(ready.meta == "Collect from Willetton & District")
 
         let placed = try #require(DueDate.parse("02 Oct 2026", calendar: .libraryDates))
         let pending = ReservationRow(item: item("Pending", fields: ["Status": "Pending", "Rank": "4", "Placed": "02 Oct 2026",
                                                                     "Pickup location": "RIVERTON LIBRARY"]), kind: .pending)
         #expect(pending.statusLabel == "Pending")
-        #expect(pending.meta == "#4 in queue · Placed \(Formatting.shortDate(placed))\nPick up at Riverton Library")
+        #expect(pending.meta == "#4 in queue · Placed \(Formatting.shortDate(placed))\nCollect from Riverton Library")
+        // Screen readers hear the queue place in words (§7.1), the lines as one sentence.
+        #expect(pending.spokenMeta == "number 4 in the queue · Placed \(Formatting.shortDate(placed)), Collect from Riverton Library")
 
         let bare = ReservationRow(item: item("Bare", fields: ["Status": "In transit"]), kind: .pending)
         #expect(bare.statusLabel == "In transit")
@@ -287,7 +289,7 @@ struct BorrowedViewModelTests {
         _ = await (first, second)
 
         #expect(backend.cancelCalls == 1)
-        #expect(viewModel.notice?.message == "Reservation cancelled.")
+        #expect(viewModel.notice?.message == "Reservation cancelled")
         #expect(viewModel.notice?.isError == false)
         // Gone at once, then fetched again in the background.
         #expect(viewModel.lists(model)?.reservations.ready.isEmpty == true)
@@ -315,7 +317,7 @@ struct BorrowedViewModelTests {
         } accepted: { $0.ok }
         await viewModel.finishEdit(.saved(result), row: row, model: model)
         #expect(viewModel.editing == nil)
-        #expect(viewModel.notice?.message == "Reservation updated.")
+        #expect(viewModel.notice?.message == "Reservation updated")
         await model.account.refresh()
         #expect(viewModel.lists(model)?.reservations.row(id: row.id)?.pickup == "Cannington Library")
     }

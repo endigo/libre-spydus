@@ -2,14 +2,14 @@ import SwiftUI
 
 /// The muted line under Your Books' segments: when the saved account was fetched ("Updated 12 min
 /// ago") with a small spinner while a fresh one loads, or, after a failed refresh,
-/// "Couldn't refresh — showing saved data" and Retry.
+/// "Couldn’t refresh · Showing the saved list" and Retry.
 struct AccountStatusLine: View {
     let updatedAt: Date
     let isRefreshing: Bool
     let failed: Bool
     let retry: () -> Void
 
-    static let failedText = "Couldn't refresh — showing saved data"
+    static let failedText = Copy.YourBooks.refreshFailed
 
     var body: some View {
         Group {
@@ -40,7 +40,7 @@ struct AccountStatusLine: View {
                 }
             }
             .accessibilityElement(children: .ignore)
-            .accessibilityLabel(isRefreshing ? "\(text). Refreshing" : text)
+            .accessibilityLabel(isRefreshing ? Copy.A11y.refreshing(status: text) : text)
         }
     }
 
@@ -54,11 +54,11 @@ struct AccountStatusLine: View {
             }
             .labelStyle(CompactLabelStyle())
             Spacer(minLength: Theme.Spacing.s)
-            Button("Retry", action: retry)
+            Button(Copy.Common.retry, action: retry)
                 .themeFont(.bodyStrong)
                 .foregroundStyle(Theme.Colors.primary)
                 .buttonStyle(.borderless)
-                .accessibilityHint("Fetches your loans and reservations again")
+                .accessibilityHint(Copy.YourBooks.refreshHint)
         }
     }
 }

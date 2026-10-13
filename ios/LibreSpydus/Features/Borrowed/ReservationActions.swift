@@ -11,16 +11,16 @@ enum ReservationAction: String, CaseIterable, Identifiable {
     /// The swipe tile's label.
     var title: String {
         switch self {
-        case .edit: "Edit"
-        case .cancel: "Cancel"
+        case .edit: Copy.Common.edit
+        case .cancel: Copy.Common.cancel
         }
     }
 
     /// The long-press menu and VoiceOver.
     var menuTitle: String {
         switch self {
-        case .edit: "Edit reservation"
-        case .cancel: "Cancel reservation"
+        case .edit: Copy.YourBooks.editReservation
+        case .cancel: Copy.YourBooks.cancelReservation
         }
     }
 
@@ -109,8 +109,8 @@ enum SwipeReveal {
 
     /// The hint under the reservations, for where the actions are on this device.
     static func hint(swipes: Bool = isSupported) -> (text: String, systemImage: String) {
-        swipes ? ("Swipe left on a reservation to change or cancel it.", "hand.draw")
-            : ("Touch and hold a reservation to change or cancel it.", "hand.tap")
+        swipes ? (Copy.YourBooks.swipeHint, "hand.draw")
+            : (Copy.YourBooks.touchAndHoldHint, "hand.tap")
     }
 
     /// UIScrollView's edge resistance: `distance` past the end moves the card ever less, never

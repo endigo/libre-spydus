@@ -29,7 +29,7 @@ struct SearchResultsView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu {
-                        Picker("Sort", selection: $activeSort) {
+                        Picker(Copy.Search.sort, selection: $activeSort) {
                             ForEach(SearchSortOption.allCases) { option in
                                 Text(option.label).tag(option)
                             }
@@ -37,7 +37,7 @@ struct SearchResultsView: View {
                     } label: {
                         Image(systemName: "arrow.up.arrow.down")
                     }
-                    .accessibilityLabel("Sort results")
+                    .accessibilityLabel(Copy.Search.sortResults)
                     .accessibilityValue(activeSort.label)
                 }
             }

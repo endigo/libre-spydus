@@ -46,12 +46,12 @@ struct CollectionView: View {
             ErrorStateView(error: error) { attempt += 1 }
         case .noSections:
             EmptyStateView(systemImage: "globe", title: model.title,
-                           message: "This collection is on the library's website.",
-                           actionTitle: "Open website") { openWebsite() }
+                           message: Copy.Featured.websiteOnly,
+                           actionTitle: Copy.Common.openWebsite) { openWebsite() }
         case .shelves where model.isEmpty:
-            EmptyStateView(systemImage: FeaturedIcon.systemImage(for: model.link.icon), title: "Nothing here right now",
-                           message: "Check back soon, or open the collection on the library's website.",
-                           actionTitle: "Open website") { openWebsite() }
+            EmptyStateView(systemImage: FeaturedIcon.systemImage(for: model.link.icon), title: Copy.Featured.emptyTitle,
+                           message: Copy.Featured.emptyMessage,
+                           actionTitle: Copy.Common.openWebsite) { openWebsite() }
         case .shelves:
             shelves
         }
@@ -172,6 +172,6 @@ private struct CollectionSkeleton: View {
         }
         .scrollDisabled(true)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Loading")
+        .accessibilityLabel(Copy.Common.loading)
     }
 }

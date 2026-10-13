@@ -2,7 +2,7 @@ import LibreSpydusCore
 import Observation
 import SwiftUI
 
-/// The reserve flow for one format (docs/native-apps.md §6): `reserveOptions` → pickup location,
+/// The reserve flow for one format (docs/native-apps.md §6): `reserveOptions` → Collect from,
 /// availability, expiry choice → Confirm → `placeReservation` → result banner.
 ///
 /// Workers exercise it in demo mode only (§2): never against a real library.
@@ -33,7 +33,7 @@ struct ReserveSheet: View {
                 if ok == true { app.accountDidChange() }
             }
             .screenBackground()
-            .navigationTitle("Reserve")
+            .navigationTitle(Copy.Reserve.title)
             .navigationBarTitleDisplayMode(.inline)
             .navyNavigationBar()
             .toolbar {
@@ -45,7 +45,7 @@ struct ReserveSheet: View {
                     }
                     .tint(Theme.Colors.textPrimary)
                     .disabled(model.isSubmitting)
-                    .accessibilityLabel("Close")
+                    .accessibilityLabel(Copy.Common.close)
                 }
             }
         }
@@ -95,7 +95,7 @@ struct ReserveSheet: View {
     private var content: some View {
         switch model.options {
         case .idle, .loading:
-            LoadingView(message: "Checking reservation options…")
+            LoadingView(message: Copy.Reserve.checkingOptions)
                 .frame(minHeight: 160)
         case .failed(let error):
             ErrorStateView(error: error) { reload() }
@@ -103,7 +103,7 @@ struct ReserveSheet: View {
             if options.canReserve {
                 form(options)
             } else {
-                Banner(message: options.message.nonEmpty ?? "This title can't be reserved right now.", tone: .info)
+                Banner(message: options.message.nonEmpty ?? Copy.Reserve.cantReserve, tone: .info)
             }
         }
     }
@@ -120,9 +120,9 @@ struct ReserveSheet: View {
                     Banner(message: error.message, tone: .error)
                 }
                 if !options.canReserve || model.isComplete || model.result?.ok == false {
-                    PrimaryPillButton(title: model.isComplete ? "Done" : "Close", fillsWidth: true) { dismiss() }
+                    PrimaryPillButton(title: model.isComplete ? Copy.Common.done : Copy.Common.close, fillsWidth: true) { dismiss() }
                 } else {
-                    PrimaryPillButton(title: "Confirm reservation", isLoading: model.isSubmitting, fillsWidth: true) {
+                    PrimaryPillButton(title: Copy.Reserve.confirm, isLoading: model.isSubmitting, fillsWidth: true) {
                         Task {
                             await model.confirm(url: request.format.reserveUrl, backend: app.backend, session: app.session,
                                                 libraryName: app.libraryName, needsRootSheet: onNeedsRootSheet)
@@ -142,11 +142,11 @@ struct ReserveSheet: View {
     private func form(_ options: ReserveOptions) -> some View {
         @Bindable var model = model
         VStack(spacing: 0) {
-            infoRow("Pick up at", value: options.pickupLocation.nonEmpty.map(Self.titleCased) ?? "Your usual library",
+            infoRow(Copy.Reserve.collectFrom, value: options.pickupLocation.nonEmpty.map(Self.titleCased) ?? Copy.Reserve.usualBranch,
                     systemImage: "mappin.and.ellipse")
             if let available = options.availableSummary.nonEmpty {
                 divider
-                infoRow("Availability", value: available, systemImage: "books.vertical")
+                infoRow(Copy.Reserve.availability, value: available, systemImage: "books.vertical")
             }
             if !options.expiryChoices.isEmpty {
                 divider
@@ -155,11 +155,11 @@ struct ReserveSheet: View {
                         .foregroundStyle(Theme.Colors.textSecondary)
                         .frame(width: 24)
                         .accessibilityHidden(true)
-                    Text("Not needed after")
+                    Text(Copy.Reserve.notNeededAfter)
                         .themeFont(.body)
                         .foregroundStyle(Theme.Colors.textSecondary)
                     Spacer(minLength: Theme.Spacing.s)
-                    Picker("Not needed after", selection: $model.selectedDays) {
+                    Picker(Copy.Reserve.notNeededAfter, selection: $model.selectedDays) {
                         ForEach(options.expiryChoices, id: \.days) { choice in
                             Text(choice.label).tag(Optional(choice.days))
                         }
@@ -208,7 +208,7 @@ struct ReserveSheet: View {
     }
 
     static func message(for result: ReserveResult) -> String {
-        result.message.nonEmpty ?? (result.ok ? "Reservation placed." : "The library couldn't place this reservation.")
+        result.message.nonEmpty ?? (result.ok ? Copy.Reserve.placed : Copy.Reserve.placeFailed)
     }
 
     /// "RIVERTON LIBRARY" → "Riverton Library"; mixed-case names are left alone.
@@ -236,7 +236,7 @@ final class ReserveModel {
     func loadOptions(url: String?, backend: any LibraryBackend, session: String?, libraryName: String,
                      needsRootSheet: (any Error) -> Void) async {
         guard let url = url.nonEmpty else {
-            options = .failed(UserFacingError(kind: .unexpected, message: "This format can't be reserved from the app."))
+            options = .failed(UserFacingError(kind: .unexpected, message: Copy.Reserve.notFromApp))
             return
         }
         guard let session else {

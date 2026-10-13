@@ -13,7 +13,7 @@ struct ResultsPageView: View {
 
     var body: some View {
         SearchResultsList(results: results, query: title, retry: { attempt += 1 },
-                          noResultsTitle: "Nothing in “\(title)” right now")
+                          noResultsTitle: Copy.Search.listEmptyTitle(title: title))
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .screenBackground()
             .navigationTitle(title)

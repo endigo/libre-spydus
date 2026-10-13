@@ -228,7 +228,7 @@ actor DemoBackend: LibraryBackend {
             actions: reservationActions(irn: irn)
         )
         fixtures.pending.insert(item, at: 0)
-        return ReserveResult(ok: true, message: "Reservation placed.")
+        return ReserveResult(ok: true, message: "Reservation placed")
     }
 
     func cancelReservation(url: String, session: String) async throws -> ReserveResult {
@@ -238,9 +238,9 @@ actor DemoBackend: LibraryBackend {
         fixtures.ready.removeAll { $0.hasAction(href: url) }
         fixtures.pending.removeAll { $0.hasAction(href: url) }
         guard fixtures.ready.count + fixtures.pending.count < before else {
-            return ReserveResult(ok: false, message: "This reservation can't be cancelled.")
+            return ReserveResult(ok: false, message: "This reservation can’t be cancelled right now.")
         }
-        return ReserveResult(ok: true, message: "Reservation cancelled.")
+        return ReserveResult(ok: true, message: "Reservation cancelled")
     }
 
     func editOptions(url: String, session: String) async throws -> EditOptions {
@@ -270,9 +270,9 @@ actor DemoBackend: LibraryBackend {
             if let pickupName { fixtures.pending[index].fields["Pickup location"] = pickupName }
         }
         guard found else {
-            return ReserveResult(ok: false, message: "This reservation can't be edited.")
+            return ReserveResult(ok: false, message: "This reservation can’t be edited right now.")
         }
-        return ReserveResult(ok: true, message: "Reservation updated.")
+        return ReserveResult(ok: true, message: "Reservation updated")
     }
 
     // MARK: My Picks → in memory

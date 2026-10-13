@@ -54,7 +54,7 @@ struct LoanRow: Identifiable, Equatable {
     var meta: String? {
         if let due { return Self.dueLine(due) }
         guard let dueText else { return nil }
-        return dueText.range(of: "due", options: .caseInsensitive) == nil ? "Due \(dueText)" : dueText
+        return dueText.range(of: "due", options: .caseInsensitive) == nil ? Copy.Loans.dueOn(date: dueText) : dueText
     }
 
     var isUrgent: Bool { due?.isUrgent ?? false }
@@ -64,11 +64,10 @@ struct LoanRow: Identifiable, Equatable {
     static func dueLine(_ due: DueStatus) -> String {
         let date = Formatting.shortDate(due.dueDate)
         switch due.daysLeft {
-        case ..<(-1): return "Due \(date) · \(-due.daysLeft) days overdue"
-        case -1: return "Due \(date) · 1 day overdue"
-        case 0: return "Due today · \(date)"
-        case 1: return "Due tomorrow · \(date)"
-        default: return "Due \(date) · \(due.daysLeft) days left"
+        case ..<0: return Copy.Loans.lineDays(date: date, days: Copy.Loans.daysOverdue(count: -due.daysLeft))
+        case 0: return Copy.Loans.lineToday(date: date)
+        case 1: return Copy.Loans.lineTomorrow(date: date)
+        default: return Copy.Loans.lineDays(date: date, days: Copy.Loans.daysLeft(count: due.daysLeft))
         }
     }
 
@@ -94,7 +93,7 @@ struct LoanRow: Identifiable, Equatable {
 
 // MARK: - Reservations
 
-/// One reservation card, ready for pickup or pending.
+/// One reservation card, ready to collect or pending.
 struct ReservationRow: Identifiable, Equatable {
     enum Kind: Equatable { case ready, pending }
 
@@ -135,27 +134,49 @@ struct ReservationRow: Identifiable, Equatable {
 
     var isReady: Bool { kind == .ready }
 
-    /// The status chip: "Ready for pickup", or the library's own pending status.
+    /// The status chip: "Ready to collect", or the library's own pending status.
     var statusLabel: String {
-        isReady ? "Ready for pickup" : (status ?? "Pending")
+        isReady ? Copy.YourBooks.readyToCollect : (status ?? Copy.YourBooks.pending)
     }
 
-    /// Ready: "Pick up at Riverton Library". Pending: "#4 in queue · Placed 2 Oct" and the
-    /// pickup branch on a second line.
+    /// Ready: "Collect from Riverton Library by 17 Oct". Pending: "#4 in queue · Placed 2 Oct"
+    /// and "Collect from Riverton Library" on a second line.
     var meta: String? {
-        let pickupLine = pickup.map { "Pick up at \($0)" }
+        metaLines(spoken: false).map { $0.joined(separator: "\n") }
+    }
+
+    /// `meta` for the card's screen-reader label: its lines joined with ", " and the queue place
+    /// said in full ("number 4 in the queue").
+    var spokenMeta: String? {
+        metaLines(spoken: true).map { $0.joined(separator: ", ") }
+    }
+
+    private func metaLines(spoken: Bool) -> [String]? {
         if isReady {
-            guard let pickupBy else { return pickupLine }
-            let by = "by \(DueDate.parse(pickupBy, calendar: .libraryDates).map(Formatting.shortDate) ?? pickupBy)"
-            return pickupLine.map { "\($0) \(by)" } ?? "Pick up \(by)"
+            let by = pickupBy.map { DueDate.parse($0, calendar: .libraryDates).map { Formatting.shortDate($0) } ?? $0 }
+            switch (pickup, by) {
+            case let (branch?, date?): return [Copy.YourBooks.collectFromBy(branch: branch, date: date)]
+            case let (branch?, nil): return [Copy.YourBooks.collectFrom(branch: branch)]
+            case let (nil, date?): return [Copy.YourBooks.collectBy(date: date)]
+            case (nil, nil): return nil
+            }
         }
         var first: [String] = []
-        if let rank { first.append(Int(rank) != nil ? "#\(rank) in queue" : "Rank \(rank)") }
-        if let placed {
-            first.append("Placed \(DueDate.parse(placed, calendar: .libraryDates).map(Formatting.shortDate) ?? placed)")
+        if let rank {
+            let place = switch (Int(rank) != nil, spoken) {
+            case (true, false): Copy.YourBooks.queuePlace(place: rank)
+            case (true, true): Copy.YourBooks.queuePlaceLabel(place: rank)
+            case (false, false): Copy.YourBooks.queuePlaceText(place: rank)
+            case (false, true): Copy.YourBooks.queuePlaceTextLabel(place: rank)
+            }
+            first.append(place)
         }
-        let lines = [first.isEmpty ? nil : first.joined(separator: " · "), pickupLine].compactMap(\.self)
-        return lines.isEmpty ? nil : lines.joined(separator: "\n")
+        if let placed {
+            first.append(Copy.YourBooks.placed(date: DueDate.parse(placed, calendar: .libraryDates).map { Formatting.shortDate($0) } ?? placed))
+        }
+        let lines = [first.isEmpty ? nil : first.joined(separator: Copy.Common.separator),
+                     pickup.map { Copy.YourBooks.collectFrom(branch: $0) }].compactMap(\.self)
+        return lines.isEmpty ? nil : lines
     }
 
     /// "RIVERTON LIBRARY" → "Riverton Library"; mixed case is kept.
@@ -194,7 +215,7 @@ struct StatusText: Equatable {
     }
 }
 
-/// Reservations split for display: ready for pickup first, then pending.
+/// Reservations split for display: ready to collect first, then pending.
 struct ReservationSections: Equatable {
     var ready: [ReservationRow]
     var pending: [ReservationRow]

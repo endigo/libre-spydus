@@ -1,8 +1,8 @@
 import SwiftUI
 
-/// Favourites while signed in (docs/native-apps.md §5.11): "My Picks", the Pick list on the library
-/// account (`AppModel.picks`), in rows exactly like search results (cover, title, author, year,
-/// format chips; none for an edition-level item). Tap → book page. Swipe left to remove (also in
+/// My Picks while signed in (docs/native-apps.md §5.11): the Pick list on the library account
+/// (`AppModel.picks`), in rows exactly like search results (cover, title, author, year, format
+/// chips; none for an edition-level item). Tap → book page. Swipe left to remove (also in
 /// the long-press menu and as a VoiceOver action): the row leaves at once and comes back if the
 /// library refuses. Pull to refresh; pages past the first load as the list scrolls.
 struct MyPicksView: View {
@@ -40,11 +40,11 @@ struct MyPicksView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
-            Text(PicksText.title)
+            Text(FavouritesView.Content.myPicks.title)
                 .themeFont(.greeting)
                 .foregroundStyle(Theme.Colors.textPrimary)
                 .accessibilityAddTraits(.isHeader)
-            Text(PicksText.subtitle)
+            Text(FavouritesView.Content.myPicks.subtitle)
                 .themeFont(.caption)
                 .foregroundStyle(Theme.Colors.textSecondary)
         }
@@ -60,7 +60,7 @@ struct MyPicksView: View {
                 .padding(.horizontal, -Theme.Spacing.l)
                 .plainRow(Self.rowInsets)
         case .empty:
-            EmptyStateView(systemImage: "bookmark", title: PicksText.emptyTitle, message: PicksText.emptyMessage)
+            EmptyStateView(systemImage: "bookmark", title: Copy.Picks.emptyTitle, message: Copy.Picks.emptyAccountMessage)
                 .frame(minHeight: 420)
                 .plainRow(Self.rowInsets)
         case .failed(let error):
@@ -97,17 +97,17 @@ struct MyPicksView: View {
             Button(role: .destructive) {
                 remove(item)
             } label: {
-                Label("Remove", systemImage: "bookmark.slash")
+                Label(Copy.Common.remove, systemImage: "bookmark.slash")
             }
             .tint(Theme.Colors.danger)
         }
         .contextMenu {
-            Button("Open", systemImage: "book") { model.push(.detail(item.ref), on: .favourites) }
-            Button(PicksText.remove, systemImage: "bookmark.slash", role: .destructive) { remove(item) }
+            Button(Copy.Common.open, systemImage: "book") { model.push(.detail(item.ref), on: .favourites) }
+            Button(Copy.Picks.remove, systemImage: "bookmark.slash", role: .destructive) { remove(item) }
         } preview: {
             CoverImage(url: item.ref.coverUrl, title: item.ref.title, author: item.ref.author, width: 200, shadow: false)
         }
-        .accessibilityAction(named: PicksText.remove) { remove(item) }
+        .accessibilityAction(named: Copy.Picks.remove) { remove(item) }
     }
 
     @ViewBuilder
@@ -122,12 +122,12 @@ struct MyPicksView: View {
                     Button {
                         Task { await picks.retryLoadMore() }
                     } label: {
-                        Label("Retry", systemImage: "arrow.clockwise")
+                        Label(Copy.Common.retry, systemImage: "arrow.clockwise")
                             .themeFont(.bodyStrong)
                             .foregroundStyle(Theme.Colors.primary)
                     }
                     .buttonStyle(.borderless)
-                    .accessibilityLabel("Retry loading more picks")
+                    .accessibilityHint(Copy.Picks.retryLoadingMoreHint)
                 }
             }
             .frame(maxWidth: .infinity)
@@ -139,7 +139,7 @@ struct MyPicksView: View {
                 .tint(Theme.Colors.textSecondary)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, Theme.Spacing.l)
-                .accessibilityLabel("Loading more picks")
+                .accessibilityLabel(Copy.Picks.loadingMore)
                 .task(id: picks.nextPageUrl) { await picks.loadMore() }
                 .plainRow(Self.rowInsets)
         }

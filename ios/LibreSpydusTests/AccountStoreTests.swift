@@ -326,6 +326,10 @@ struct AccountUpdatedWordingTests {
         #expect(plain(updated(date(2026, 10, 11, 16, 20), now: now)) == "Updated yesterday at 4:20 pm")
         // Just after midnight, an update from late last night is "yesterday", not minutes ago.
         #expect(plain(updated(date(2026, 10, 11, 22, 30), now: date(2026, 10, 12, 0, 10))) == "Updated yesterday at 10:30 pm")
+        // Within a week, the weekday (as Android says it); older, the date.
+        #expect(plain(updated(date(2026, 10, 8, 16, 20), now: now)) == "Updated Thursday at 4:20 pm")
+        #expect(plain(updated(date(2026, 10, 6, 16, 20), now: now)) == "Updated Tuesday at 4:20 pm")
+        #expect(plain(updated(date(2026, 10, 5, 16, 20), now: now)) == "Updated 5 Oct at 4:20 pm")
         #expect(plain(updated(date(2026, 10, 3, 16, 20), now: now)) == "Updated 3 Oct at 4:20 pm")
         #expect(plain(updated(date(2025, 12, 30, 9, 0), now: now)).hasPrefix("Updated 30 Dec 2025 at 9:00"))
     }

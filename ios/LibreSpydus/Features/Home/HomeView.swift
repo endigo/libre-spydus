@@ -3,7 +3,7 @@ import SwiftUI
 
 /// Home: library logo (→ Profile), greeting with "My card" while signed in (→ the card sheet,
 /// §5.9), search field (→ Search tab), "New arrivals", "Popular genres", the library's own
-/// "Featured" collections (§5.10, only when it has some) and "Your borrowed books". New arrivals
+/// "Featured" collections (§5.10, only when it has some) and "Your loans". New arrivals
 /// loads with its own skeleton and error, Featured on its own without either;
 /// the loans come from the saved account, shown at once and fetched again in the background when
 /// out of date. Pull to refresh; reloads on library, verification and sign-in changes.
@@ -106,8 +106,8 @@ struct HomeView: View {
                 LibraryLogo(name: model.libraryName, logoUrl: model.library?.logoUrl, size: 44)
             }
             .buttonStyle(PressScaleStyle())
-            .accessibilityLabel("\(model.libraryName) profile")
-            .accessibilityHint("Opens Profile")
+            .accessibilityLabel(Copy.Home.profileButton(library: model.libraryName))
+            .accessibilityHint(Copy.Home.profileButtonHint)
             HStack(alignment: .center, spacing: Theme.Spacing.m) {
                 VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
                     Text(HomeGreeting.title(accountName: model.accountName))
@@ -131,7 +131,7 @@ struct HomeView: View {
 
     private var arrivalsSection: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.m) {
-            SectionHeader(title: home.arrivalsShelf?.title ?? "New arrivals",
+            SectionHeader(title: home.arrivalsShelf?.title ?? Copy.Home.newArrivals,
                           action: home.arrivalsRoute.map { route in { model.push(route, on: .home) } })
                 .padding(.horizontal, Theme.Spacing.l)
             switch home.arrivals {
@@ -140,8 +140,8 @@ struct HomeView: View {
             case .failed(let error):
                 SectionErrorCard(error: error) { Task { await home.retryArrivals(model) } }
             case .loaded(let books) where books.isEmpty:
-                SectionMessageCard(systemImage: "sparkles", title: "Nothing new right now",
-                                   message: "Check back soon for the latest additions.")
+                SectionMessageCard(systemImage: "sparkles", title: Copy.Home.nothingNewTitle,
+                                   message: Copy.Home.nothingNewMessage)
             case .loaded(let books):
                 CoverShelf(items: books.map { ShelfEntry(ref: $0, caption: $0.title) })
             }
@@ -152,7 +152,7 @@ struct HomeView: View {
 
     private var genresSection: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.m) {
-            SectionHeader(title: "Popular genres")
+            SectionHeader(title: Copy.Home.popularGenres)
                 .padding(.horizontal, Theme.Spacing.l)
             ScrollView(.horizontal) {
                 HStack(alignment: .top, spacing: Theme.Spacing.s) {
@@ -161,7 +161,7 @@ struct HomeView: View {
                                   color: Theme.Colors.genre[index % Theme.Colors.genre.count]) {
                             model.push(HomeViewModel.route(for: genre), on: .home)
                         }
-                        .accessibilityHint("Shows \(genre.label) books")
+                        .accessibilityHint(Copy.Home.genreHint(genre: genre.label))
                     }
                 }
                 .padding(.horizontal, Theme.Spacing.l)
@@ -171,11 +171,11 @@ struct HomeView: View {
         }
     }
 
-    // MARK: Your borrowed books
+    // MARK: Your loans
 
     private var loansSection: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.m) {
-            SectionHeader(title: "Your borrowed books",
+            SectionHeader(title: Copy.Home.yourLoans,
                           action: model.isSignedIn ? { model.select(.borrowed) } : nil)
                 .padding(.horizontal, Theme.Spacing.l)
             if !model.isSignedIn {
@@ -187,8 +187,8 @@ struct HomeView: View {
                 case .failed(let error):
                     SectionErrorCard(error: error) { Task { await home.retryLoans(model) } }
                 case .loaded(let loans) where loans.isEmpty:
-                    SectionMessageCard(systemImage: "books.vertical", title: "No loans right now",
-                                       message: "Books you borrow will show up here with their due dates.")
+                    SectionMessageCard(systemImage: "books.vertical", title: Copy.Home.noLoansTitle,
+                                       message: Copy.Home.noLoansMessage)
                 case .loaded(let loans):
                     CoverShelf(items: loans.map { loan in
                         ShelfEntry(ref: loan.ref, caption: loan.caption, captionColor: color(for: loan.tone),
@@ -210,7 +210,7 @@ struct HomeView: View {
     #if DEBUG
     /// Evidence hooks: `-LSHomeOpen arrivals` / `-LSHomeOpen genre:<key>` /
     /// `-LSHomeOpen featured:<title>` opens that list (or collection) as if tapped;
-    /// `-LSHomeScrollTo loans|featured` scrolls down to "Your borrowed books" / "Featured";
+    /// `-LSHomeScrollTo loans|featured` scrolls down to "Your loans" / "Featured";
     /// `-LSMyCard open|edit` opens the card sheet (on its entry form), after `-LSDemoCardNumber`
     /// (`MyCardDebugHooks`).
     private func applyDebugHooks(_ proxy: ScrollViewProxy) async {

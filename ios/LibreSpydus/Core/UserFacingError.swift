@@ -28,7 +28,7 @@ struct UserFacingError: Error, Equatable, Sendable {
     }
 
     init(_ error: any Error, libraryName: String) {
-        let library = libraryName.isEmpty ? "the library" : libraryName
+        let library = libraryName.isEmpty ? Copy.Common.yourLibrary : libraryName
         if let error = error as? UserFacingError {
             self = error
             return
@@ -36,42 +36,43 @@ struct UserFacingError: Error, Equatable, Sendable {
         if let error = error as? SpydusError {
             switch error {
             case .Network(let message):
-                self.init(kind: .network, message: "Can't reach \(library). Check your connection.", detail: message)
+                self.init(kind: .network, message: Copy.Errors.network(library: library), detail: message)
             case .HumanVerificationRequired(let message):
                 self.init(kind: .verificationRequired,
-                          message: "\(library) asks you to confirm you're human.", detail: message)
+                          message: Copy.Errors.verification(library: library).capitalisedFirst, detail: message)
             case .NotLoggedIn(let message):
-                self.init(kind: .notLoggedIn, message: "Please sign in again.", detail: message)
+                self.init(kind: .notLoggedIn, message: Copy.Errors.signInAgain, detail: message)
             case .CredentialsRejected(let message):
-                self.init(kind: .credentialsRejected, message: "Card number or PIN not recognised.", detail: message)
+                self.init(kind: .credentialsRejected, message: Copy.Errors.credentialsRejected, detail: message)
             case .OriginForbidden(let message), .Upstream(let message), .Parse(let message):
                 self.init(kind: .unexpected, message: Self.unexpectedMessage, detail: message)
             }
             return
         }
         if let error = error as? URLError {
-            self.init(kind: .network, message: "Can't reach \(library). Check your connection.",
+            self.init(kind: .network, message: Copy.Errors.network(library: library),
                       detail: error.localizedDescription)
             return
         }
         self.init(kind: .unexpected, message: Self.unexpectedMessage, detail: String(describing: error))
     }
 
-    static let unexpectedMessage = "The library site returned something unexpected."
+    static let unexpectedMessage = Copy.Errors.unexpected
 
     static func verificationUnavailable(libraryName: String) -> UserFacingError {
-        UserFacingError(kind: .verificationUnavailable,
-                        message: "\(libraryName) can't be used from the app right now. Try its website instead.")
+        let library = libraryName.isEmpty ? Copy.Common.yourLibrary : libraryName
+        return UserFacingError(kind: .verificationUnavailable,
+                               message: Copy.Errors.libraryUnavailable(library: library).capitalisedFirst)
     }
 
     var title: String {
         switch kind {
-        case .network: "Can't connect"
-        case .verificationRequired: "Verification needed"
-        case .verificationUnavailable: "Library unavailable"
-        case .notLoggedIn: "Signed out"
-        case .credentialsRejected: "Sign-in failed"
-        case .unexpected: "Something went wrong"
+        case .network: Copy.Errors.cantConnectTitle
+        case .verificationRequired: Copy.Errors.verificationNeededTitle
+        case .verificationUnavailable: Copy.Errors.libraryUnavailableTitle
+        case .notLoggedIn: Copy.Errors.signedOutTitle
+        case .credentialsRejected: Copy.Errors.signInFailedTitle
+        case .unexpected: Copy.Errors.unexpectedTitle
         }
     }
 

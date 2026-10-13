@@ -20,7 +20,7 @@ struct DetailSheetContent: View {
         LazyVStack(alignment: .leading, spacing: Theme.Spacing.xl) {
             switch model.record {
             case .idle, .loading:
-                SheetLoadingView(message: "Loading details…")
+                SheetLoadingView(message: Copy.Detail.loadingDetails)
             case .failed(let error):
                 SheetErrorView(error: error, retry: retry)
             case .loaded(let record):
@@ -39,7 +39,7 @@ struct DetailSheetContent: View {
         let showsCopies = model.copiesSource != nil && model.copies.value?.isEmpty != true
         if let summary {
             VStack(alignment: .leading, spacing: Theme.Spacing.s) {
-                SectionHeader(title: "Synopsis", onSheet: true)
+                SectionHeader(title: Copy.Detail.synopsis, onSheet: true)
                 ExpandableText(text: summary)
             }
         }
@@ -65,7 +65,7 @@ struct DetailSheetContent: View {
             }
         }
         if summary == nil, subjects.isEmpty, !showsCopies, facts.isEmpty, !model.hasRelatedPanels {
-            Text("The library has no more details for this title.")
+            Text(Copy.Detail.noMoreDetails)
                 .themeFont(.body)
                 .foregroundStyle(Theme.Colors.onSheetSecondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -99,13 +99,13 @@ struct ExpandableText: View {
                         .accessibilityHidden(true)
                 }
             if expanded || fullHeight > clampedHeight + 1 {
-                Button(expanded ? "Less" : "More") {
+                Button(expanded ? Copy.Detail.less : Copy.Detail.more) {
                     withAnimation(.easeInOut(duration: 0.2)) { expanded.toggle() }
                 }
                 .themeFont(.bodyStrong)
                 .foregroundStyle(Theme.Colors.primary)
                 .buttonStyle(.borderless)
-                .accessibilityLabel(expanded ? "Show less of the synopsis" : "Show more of the synopsis")
+                .accessibilityHint(expanded ? Copy.Detail.lessHint : Copy.Detail.moreHint)
             }
         }
         .themeFont(.body)
@@ -128,11 +128,11 @@ private struct SubjectChips: View {
                 }
                 .buttonStyle(PressScaleStyle())
                 .accessibilityLabel(subject.label)
-                .accessibilityHint("Search the catalogue for this subject")
+                .accessibilityHint(Copy.Detail.subjectHint)
             }
         }
         .accessibilityElement(children: .contain)
-        .accessibilityLabel("Subjects")
+        .accessibilityLabel(Copy.Detail.subjects)
     }
 }
 
@@ -144,7 +144,7 @@ private struct DetailFactsList: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.s) {
-            SectionHeader(title: "Details", onSheet: true)
+            SectionHeader(title: Copy.Detail.details, onSheet: true)
             VStack(spacing: 0) {
                 ForEach(Array(facts.enumerated()), id: \.offset) { index, fact in
                     row(fact)
@@ -189,14 +189,14 @@ private struct CopiesList: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.s) {
-            SectionHeader(title: "Copies", onSheet: true)
+            SectionHeader(title: Copy.Detail.copies, onSheet: true)
             switch state {
             case .idle, .loading:
                 HStack(spacing: Theme.Spacing.s) {
                     ProgressView()
                         .controlSize(.small)
                         .tint(Theme.Colors.onSheetSecondary)
-                    Text("Loading copies…")
+                    Text(Copy.Detail.loadingCopies)
                 }
                 .themeFont(.caption)
                 .foregroundStyle(Theme.Colors.onSheetSecondary)
@@ -204,13 +204,13 @@ private struct CopiesList: View {
                 .accessibilityElement(children: .combine)
             case .failed(let error):
                 HStack(spacing: Theme.Spacing.s) {
-                    Text("Couldn't load copies")
+                    Text(Copy.Detail.copiesFailed)
                         .foregroundStyle(Theme.Colors.onSheetSecondary)
                     if error.canRetry {
-                        Button("Retry", action: retry)
+                        Button(Copy.Common.retry, action: retry)
                             .foregroundStyle(Theme.Colors.primary)
                             .buttonStyle(.borderless)
-                            .accessibilityLabel("Retry loading copies")
+                            .accessibilityHint(Copy.Detail.retryCopiesHint)
                     }
                 }
                 .themeFont(.caption)
@@ -254,7 +254,7 @@ private struct CopyRowView: View {
                 Text(callNumber)
                     .themeFont(.caption)
                     .foregroundStyle(Theme.Colors.onSheetSecondary)
-                    .accessibilityLabel("Call number \(callNumber)")
+                    .accessibilityLabel(Copy.Detail.callNumber(number: callNumber))
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -304,7 +304,7 @@ private struct RelatedCarousel: View {
             }
             .scrollIndicators(.hidden)
             .padding(.horizontal, -Theme.Spacing.xl)
-            .accessibilityLabel(state.isLoading ? "Loading \(panel.title.lowercased())" : panel.title)
+            .accessibilityLabel(state.isLoading ? Copy.Detail.loadingPanel(panel: panel.title.lowercased()) : panel.title)
         }
     }
 
@@ -354,11 +354,11 @@ struct SheetErrorView: View {
                 .foregroundStyle(Theme.Colors.onSheetSecondary)
                 .multilineTextAlignment(.center)
             if let retry, error.canRetry {
-                PrimaryPillButton(title: "Retry", systemImage: "arrow.clockwise", action: retry)
+                PrimaryPillButton(title: Copy.Common.retry, systemImage: "arrow.clockwise", action: retry)
                     .padding(.top, Theme.Spacing.s)
             }
             if let detail = error.detail {
-                DisclosureGroup("Details", isExpanded: $showsDetail) {
+                DisclosureGroup(Copy.Errors.details, isExpanded: $showsDetail) {
                     Text(detail)
                         .themeFont(.caption)
                         .foregroundStyle(Theme.Colors.onSheetSecondary)

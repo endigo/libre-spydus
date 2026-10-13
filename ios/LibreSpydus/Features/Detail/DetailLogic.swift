@@ -132,7 +132,7 @@ struct CopyRow: Hashable, Sendable {
     }
 
     init(_ holding: Holding) {
-        self.init(location: holding.location.nonEmpty.map(Self.titleCased) ?? holding.collection.nonEmpty ?? "Copy",
+        self.init(location: holding.location.nonEmpty.map(Self.titleCased) ?? holding.collection.nonEmpty ?? Copy.Detail.copy,
                   status: holding.status.nonEmpty, available: holding.available,
                   description: holding.description.nonEmpty, callNumber: holding.callNumber.nonEmpty)
     }
@@ -175,7 +175,7 @@ struct AvailabilityLine: Equatable, Sendable {
     init(summary: AvailabilitySummary?, format: FormatRef) {
         let hasCounts = summary.map { $0.available != nil || $0.copies != nil || $0.reserved != nil } ?? false
         if format.isDigital, !hasCounts {
-            self.init(text: "Available online", tone: .digital)
+            self.init(text: Copy.Detail.availableOnline, tone: .digital)
         } else if let summary {
             let tone: Tone = if let available = summary.available, available > 0 {
                 .available
@@ -186,7 +186,7 @@ struct AvailabilityLine: Equatable, Sendable {
             }
             self.init(text: summary.label, tone: tone)
         } else {
-            self.init(text: "Ask the library about availability", tone: .muted)
+            self.init(text: Copy.Detail.askLibrary, tone: .muted)
         }
     }
 
@@ -255,7 +255,7 @@ enum DetailSubjects {
             .filter { !$0.isEmpty }
             .map { part in part.count > 3 && part == part.uppercased() && part != part.lowercased() ? part.capitalized : part }
         guard !parts.isEmpty else { return nil }
-        let label = parts.joined(separator: " · ")
+        let label = parts.joined(separator: Copy.Common.separator)
         let query = parts.joined(separator: " ")
             .unicodeScalars.map { CharacterSet.alphanumerics.contains($0) || $0 == "-" || $0 == "'" ? Character($0) : " " }
             .reduce(into: "") { $0.append($1) }
@@ -297,8 +297,9 @@ enum DetailFacts {
         return facts
     }
 
+    /// The library's own row labels, matched lower-cased; never shown.
     private static let hidden: Set<String> = [
-        "main title", "title", "work", "bookmark link", "bookmark", "brn", "go to", "permalink",
+        "main title", "title", "work", "bookmark link", "bookmark", "brn", "go to", "permalink", // copy-exempt: library labels matched against the record
     ]
     private static let bylineLabels: Set<String> = ["author", "creator", "authors", "creators"]
 }
@@ -313,10 +314,10 @@ enum RelatedPanel: String, CaseIterable, Hashable, Sendable {
 
     var title: String {
         switch self {
-        case .similar: "Similar books"
-        case .author: "More by this author"
-        case .series: "In this series"
-        case .versions: "Other editions"
+        case .similar: Copy.Detail.similarBooks
+        case .author: Copy.Detail.moreByAuthor
+        case .series: Copy.Detail.inThisSeries
+        case .versions: Copy.Detail.otherEditions
         }
     }
 
@@ -486,7 +487,7 @@ enum FormatRefinder {
     }
 
     private static func displayTitle(ref: BookRef, record: RecordDetail?) -> String {
-        if ref.title != "Untitled", let title = Optional(ref.title).nonEmpty { return title }
+        if ref.title != Copy.Common.untitled, let title = Optional(ref.title).nonEmpty { return title }
         return record?.title ?? ""
     }
 

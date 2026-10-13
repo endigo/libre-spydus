@@ -47,7 +47,7 @@ struct ComponentsGallery: View {
                         }
                         group("BookRowCard", id: "rows") {
                             BookRowCard(sample, meta: "Due 14 Oct · 2 days left", metaColor: Theme.Colors.danger)
-                            BookRowCard(noCover, meta: "Ready for pickup · Riverton", chips: sample.formats.map { Chip(format: $0) },
+                            BookRowCard(noCover, meta: "Ready to collect · Riverton", chips: sample.formats.map { Chip(format: $0) },
                                         actions: [.init(title: "Cancel", perform: {}), .init(title: "Edit", perform: {})],
                                         highlighted: true)
                         }
@@ -60,7 +60,7 @@ struct ComponentsGallery: View {
                                 Chip(text: "Reserved", tone: .warning)
                                 Chip(text: "Overdue", tone: .danger)
                             }
-                            Banner(message: "Reservation placed.", tone: .success)
+                            Banner(message: "Reservation placed", tone: .success)
                             Banner(message: "You already have a reservation for this title.", tone: .error)
                         }
                         group("PrimaryPillButton · CircleIconButton", id: "buttons") {

@@ -153,7 +153,7 @@ struct OnboardingVerificationSessionTests {
         #expect(!session.isLoading)
         session.didFailLoading(URLError(.notConnectedToInternet))
         #expect(session.loadError?.kind == .network)
-        #expect(session.loadError?.message == "Can't reach Aberdeen City Libraries. Check your connection.")
+        #expect(session.loadError?.message == "Can’t reach Aberdeen City Libraries. Check your connection.")
         session.didStartLoading()
         #expect(session.loadError == nil)
     }

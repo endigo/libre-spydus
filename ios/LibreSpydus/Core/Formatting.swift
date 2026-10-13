@@ -17,7 +17,7 @@ enum Formatting {
 
     /// "By Matt Haig", or nil without an author.
     static func byline(_ rawAuthor: String?) -> String? {
-        authorName(rawAuthor).map { "By \($0)" }
+        authorName(rawAuthor).map { Copy.Detail.byline(author: $0) }
     }
 
     /// "Test Borrower" → "Test"; "Borrower, Test" → "Test".
@@ -32,37 +32,43 @@ enum Formatting {
 
     /// Home greeting: "Hello Test!" signed in, else "Hello!".
     static func greeting(accountName: String?) -> String {
-        firstName(accountName).map { "Hello \($0)!" } ?? "Hello!"
+        firstName(accountName).map { Copy.Home.greeting(name: $0) } ?? Copy.Home.greetingSignedOut
     }
 
     /// "1 result" / "1,234 results".
     static func resultCount(_ total: Int64?) -> String? {
         guard let total else { return nil }
-        let number = total.formatted(.number.locale(Locale.current))
-        return total == 1 ? "1 result" : "\(number) results"
+        return Copy.Search.results(count: Int(clamping: total))
     }
 
-    /// "27 Oct".
-    static func shortDate(_ date: Date) -> String {
-        date.formatted(.dateTime.day().month(.abbreviated))
+    /// "27 Oct"; "27 Oct 2027" when it isn't this year (docs/native-apps.md §7.1).
+    static func shortDate(_ date: Date, now: Date = .now, calendar: Calendar = .current) -> String {
+        let sameYear = calendar.component(.year, from: date) == calendar.component(.year, from: now)
+        let style = Date.FormatStyle(calendar: calendar, timeZone: calendar.timeZone).day().month(.abbreviated)
+        return date.formatted(sameYear ? style : style.year())
     }
 
     /// When the saved account was fetched, relative to `now`: "Updated just now",
     /// "Updated 12 min ago", "Updated today at 9:05 am", "Updated yesterday at 4:20 pm",
-    /// "Updated 3 Oct at 4:20 pm" (time and date in the device's locale).
+    /// "Updated Monday at 4:20 pm" (within a week), "Updated 3 Oct at 4:20 pm" (time and date in
+    /// the device's locale; the year only when it isn't this year).
     static func updated(_ date: Date, now: Date = .now, calendar: Calendar = .current, locale: Locale = .current) -> String {
         let seconds = now.timeIntervalSince(date)
-        if seconds < 60 { return "Updated just now" }
-        if seconds < 60 * 60 { return "Updated \(Int(seconds / 60)) min ago" }
+        if seconds < 60 { return Copy.YourBooks.updatedJustNow }
+        if seconds < 60 * 60 { return Copy.YourBooks.updatedMinutesAgo(count: Int(seconds / 60)) }
         let style = Date.FormatStyle(locale: locale, calendar: calendar, timeZone: calendar.timeZone)
         let time = date.formatted(style.hour().minute())
-        if calendar.isDate(date, inSameDayAs: now) { return "Updated today at \(time)" }
-        if let yesterday = calendar.date(byAdding: .day, value: -1, to: now), calendar.isDate(date, inSameDayAs: yesterday) {
-            return "Updated yesterday at \(time)"
+        let days = calendar.dateComponents([.day], from: calendar.startOfDay(for: date),
+                                           to: calendar.startOfDay(for: now)).day ?? Int.max
+        switch days {
+        case 0: return Copy.YourBooks.updatedToday(time: time)
+        case 1: return Copy.YourBooks.updatedYesterday(time: time)
+        case 2..<7: return Copy.YourBooks.updatedOn(day: date.formatted(style.weekday(.wide)), time: time)
+        default:
+            let sameYear = calendar.component(.year, from: date) == calendar.component(.year, from: now)
+            let day = date.formatted(sameYear ? style.day().month(.abbreviated) : style.day().month(.abbreviated).year())
+            return Copy.YourBooks.updatedOn(day: day, time: time)
         }
-        let sameYear = calendar.component(.year, from: date) == calendar.component(.year, from: now)
-        let day = date.formatted(sameYear ? style.day().month(.abbreviated) : style.day().month(.abbreviated).year())
-        return "Updated \(day) at \(time)"
     }
 
     private static func isGivenName(_ part: String) -> Bool {
@@ -73,6 +79,12 @@ enum Formatting {
         ]
         return !roles.contains(part.lowercased())
     }
+}
+
+extension String {
+    /// The first letter capitalised, for a sentence that starts with a library's name, which may be
+    /// `Copy.Common.yourLibrary` ("your library asks you…" → "Your library asks you…").
+    var capitalisedFirst: String { prefix(1).uppercased() + dropFirst() }
 }
 
 extension Calendar {
@@ -129,17 +141,15 @@ struct DueStatus: Equatable, Sendable {
     /// "3 days left", "1 day left", "Due today", "2 days overdue".
     var daysText: String {
         switch daysLeft {
-        case ..<(-1): "\(-daysLeft) days overdue"
-        case -1: "1 day overdue"
-        case 0: "Due today"
-        case 1: "1 day left"
-        default: "\(daysLeft) days left"
+        case ..<0: Copy.Loans.daysOverdue(count: -daysLeft)
+        case 0: Copy.Loans.dueToday
+        default: Copy.Loans.daysLeft(count: daysLeft)
         }
     }
 
     /// "Due 27 Oct".
-    var dueText: String { "Due \(Formatting.shortDate(dueDate))" }
+    var dueText: String { Copy.Loans.dueOn(date: Formatting.shortDate(dueDate)) }
 
     /// Borrowed card meta line: "Due 27 Oct · 3 days left".
-    var metaLine: String { "\(dueText) · \(daysText)" }
+    var metaLine: String { Copy.Loans.lineDays(date: Formatting.shortDate(dueDate), days: daysText) }
 }

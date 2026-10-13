@@ -105,7 +105,7 @@ struct BookRef: Codable, Hashable, Identifiable, Sendable {
     }
 
     private static func title(_ title: String?) -> String {
-        title.nonEmpty ?? "Untitled"
+        title.nonEmpty ?? Copy.Common.untitled
     }
 }
 

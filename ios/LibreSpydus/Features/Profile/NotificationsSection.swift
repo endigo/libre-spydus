@@ -12,15 +12,15 @@ struct NotificationsSection: View {
     var body: some View {
         let alerts = model.alerts
         VStack(alignment: .leading, spacing: Theme.Spacing.m) {
-            ProfileSectionHeader(title: "Notifications")
+            ProfileSectionHeader(title: Copy.Notifications.section)
             ProfileCard {
-                AlertSwitchRow(title: "Ready to collect", subtitle: "Checked each morning and when you open the app",
+                AlertSwitchRow(title: Copy.Notifications.readyTitle, subtitle: Copy.Notifications.readySubtitle,
                                systemImage: "tray.and.arrow.down",
                                isOn: switchBinding(alerts.readyEnabled || alerts.asking == .ready) { on in
                                    await model.setReadyAlerts(on)
                                })
                 ProfileDivider()
-                AlertSwitchRow(title: "Due-date reminders", subtitle: "2 days before books are due, at 7:45",
+                AlertSwitchRow(title: Copy.Notifications.dueTitle, subtitle: Copy.Notifications.dueSubtitle,
                                systemImage: "calendar.badge.clock",
                                isOn: switchBinding(alerts.dueEnabled || alerts.asking == .due) { on in
                                    await model.setDueAlerts(on)
@@ -29,12 +29,12 @@ struct NotificationsSection: View {
             .disabled(alerts.asking != nil)
             if alerts.permissionDenied {
                 HStack(alignment: .firstTextBaseline, spacing: Theme.Spacing.s) {
-                    Text("Notifications are turned off for LibreSpydus.")
+                    Text(Copy.Notifications.blocked)
                         .themeFont(.caption)
                         .foregroundStyle(Theme.Colors.warning)
                         .fixedSize(horizontal: false, vertical: true)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                    Button("Open Settings") { openSettings() }
+                    Button(Copy.Notifications.openSettings) { openSettings() }
                         .themeFont(.bodyStrong)
                         .foregroundStyle(Theme.Colors.primary)
                         .buttonStyle(.borderless)

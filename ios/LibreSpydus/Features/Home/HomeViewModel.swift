@@ -55,7 +55,7 @@ final class HomeViewModel {
         await model.refreshAccount(force: true)
     }
 
-    /// "Your borrowed books" from the saved account: `.idle` signed out, `.loading` until the
+    /// "Your loans" from the saved account: `.idle` signed out, `.loading` until the
     /// first snapshot (or while retrying one that failed), else its loans in due order.
     func loans(_ model: AppModel) -> Loadable<[LoanShelfItem]> {
         guard model.isSignedIn else { return .idle }
@@ -123,7 +123,7 @@ final class HomeViewModel {
 enum HomeGreeting {
     /// "Hello Jane!", or "Hello!" when there's no usable first name (signed out, still loading).
     static func title(accountName: String?) -> String {
-        firstName(from: accountName).map { "Hello \($0)!" } ?? "Hello!"
+        firstName(from: accountName).map { Copy.Home.greeting(name: $0) } ?? Copy.Home.greetingSignedOut
     }
 
     /// The given name from an account name as libraries write it: "Smith, Jane" (surname first)
@@ -183,7 +183,7 @@ struct LoanShelfItem: Identifiable, Hashable, Sendable {
         guard let status = DueStatus(dueText: dueText, today: today, calendar: calendar) else {
             dueDate = nil
             tone = .normal
-            caption = dueText.map { "Due \($0)" }
+            caption = dueText.map { Copy.Loans.dueOn(date: $0) }
             return
         }
         dueDate = status.dueDate

@@ -45,20 +45,20 @@ struct SearchView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.m) {
-            Text("Search")
+            Text(Copy.Search.title)
                 .themeFont(.title)
                 .foregroundStyle(Theme.Colors.textPrimary)
                 .accessibilityAddTraits(.isHeader)
             SearchField(text: $text, onSubmit: submit)
                 .focused($fieldFocused)
             if showsResults {
-                Picker("Sort", selection: $sort) {
+                Picker(Copy.Search.sort, selection: $sort) {
                     ForEach(SearchSortOption.allCases) { option in
                         Text(option.label).tag(option)
                     }
                 }
                 .pickerStyle(.segmented)
-                .accessibilityLabel("Sort results")
+                .accessibilityLabel(Copy.Search.sortResults)
             }
         }
         .padding(.horizontal, Theme.Spacing.l)
@@ -121,12 +121,12 @@ private struct RecentSearchesView: View {
     var body: some View {
         if recents.items.isEmpty {
             EmptyStateView(systemImage: "books.vertical",
-                           title: "Search \(libraryName)",
-                           message: "Find books, eBooks, audiobooks and more by title, author or subject.")
+                           title: Copy.Search.introTitle(library: libraryName),
+                           message: Copy.Search.introMessage)
         } else {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
-                    SectionHeader(title: "Recent searches", actionTitle: "Clear") { recents.clear() }
+                    SectionHeader(title: Copy.Search.recentSearches, actionTitle: Copy.Common.clear) { recents.clear() }
                         .padding(.bottom, Theme.Spacing.s)
                     ForEach(recents.items, id: \.self) { query in
                         Button {
@@ -151,9 +151,10 @@ private struct RecentSearchesView: View {
                             .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
-                        .accessibilityLabel("Search again for \(query)")
+                        // The label is the query as shown, so Voice Control can match it.
+                        .accessibilityHint(Copy.Search.recentSearchHint)
                         .contextMenu {
-                            Button("Remove", systemImage: "trash", role: .destructive) { recents.remove(query) }
+                            Button(Copy.Common.remove, systemImage: "trash", role: .destructive) { recents.remove(query) }
                         }
                         Divider().overlay(Theme.Colors.divider)
                     }

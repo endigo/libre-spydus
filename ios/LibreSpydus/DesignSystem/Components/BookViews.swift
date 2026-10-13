@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// A shelf item: cover with a one- or two-line caption under it (Home carousels, Favourites grid,
+/// A shelf item: cover with a one- or two-line caption under it (Home carousels, My Picks grid,
 /// detail "Similar books"). `caption` replaces the title line, e.g. "3 days left".
 struct ShelfCover: View {
     let title: String
@@ -55,7 +55,7 @@ struct BookRowCard: View {
     let title: String
     var author: String?
     var coverUrl: String?
-    /// "Due 27 Oct · 3 days left", "Ready for pickup · Riverton", "2021".
+    /// "Due 27 Oct · 3 days left", "Ready to collect · Riverton", "2021".
     var meta: String?
     var metaColor: Color = Theme.Colors.textSecondary
     var chips: [Chip] = []

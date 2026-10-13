@@ -88,13 +88,13 @@ final class LibraryPickerModel {
 
     /// The directory isn't a library, so the §5.7 messages name it instead.
     static func userFacingError(_ error: any Error) -> UserFacingError {
-        var userError = UserFacingError(error, libraryName: "the library directory")
+        var userError = UserFacingError(error, libraryName: "")
         switch userError.kind {
         case .network:
-            userError.message = "Can't reach the library directory. Check your connection."
+            userError.message = Copy.Onboarding.directoryNetwork
         case .unexpected, .verificationRequired, .verificationUnavailable, .notLoggedIn, .credentialsRejected:
             userError.kind = .unexpected
-            userError.message = "The library directory returned something unexpected."
+            userError.message = Copy.Onboarding.directoryUnexpected
         }
         return userError
     }

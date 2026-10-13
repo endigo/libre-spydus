@@ -21,20 +21,20 @@ enum LibraryDirectory {
         /// Section header.
         var title: String {
             switch self {
-            case .au: "Australia"
-            case .nz: "New Zealand"
-            case .us: "United States"
-            case .uk: "United Kingdom"
-            case .sg: "Singapore"
-            case .other: "Other"
+            case .au: Copy.Onboarding.regionAU
+            case .nz: Copy.Onboarding.regionNZ
+            case .us: Copy.Onboarding.regionUS
+            case .uk: Copy.Onboarding.regionUK
+            case .sg: Copy.Onboarding.regionSG
+            case .other: Copy.Onboarding.regionOther
             }
         }
 
         /// What a row in this region should warn about (core/README.md "Current regional support").
         var caveat: String? {
             switch self {
-            case .uk: "Asks you to verify you're human"
-            case .sg: "May be unreachable outside school networks"
+            case .uk: Copy.Onboarding.noteUK
+            case .sg: Copy.Onboarding.noteSG
             case .au, .nz, .us, .other: nil
             }
         }

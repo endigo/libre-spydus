@@ -78,7 +78,7 @@ struct OnboardingLibraryDirectoryTests {
     }
 
     @Test func regionCaveats() {
-        #expect(LibraryDirectory.Region.uk.caveat == "Asks you to verify you're human")
+        #expect(LibraryDirectory.Region.uk.caveat == "Asks you to confirm you’re human")
         #expect(LibraryDirectory.Region.sg.caveat == "May be unreachable outside school networks")
         for region in [LibraryDirectory.Region.au, .nz, .us, .other] {
             #expect(region.caveat == nil)

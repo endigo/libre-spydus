@@ -13,15 +13,15 @@ enum AlertContent {
 
     // MARK: Ready to collect
 
-    static let readyTitle = "Ready to collect"
+    static let readyTitle = Copy.Alerts.readyTitle
 
     /// "<Title> · <Branch>", the branch as Your Books shows it for the row (`ReservationRow.pickup`:
     /// the pickup location, else the branch in Canning's status text, title-cased when shouted);
     /// just the title when the branch is unknown; "A reservation" without a title.
     static func readyBody(_ item: PatronItem) -> String {
-        let title = item.title.nonEmpty ?? "A reservation"
+        let title = item.title.nonEmpty ?? Copy.Alerts.untitledReservation
         guard let branch = ReservationRow(item: item, kind: .ready).pickup else { return title }
-        return "\(title) · \(branch)"
+        return Copy.Alerts.readyBody(title: title, branch: branch)
     }
 
     // MARK: Due-date reminders
@@ -30,31 +30,33 @@ enum AlertContent {
     /// reminder shows on the due date, "Due tomorrow" the day before.
     static func dueTitle(due: SimpleDate, shownOn day: SimpleDate) -> String {
         let calendar = gregorian
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.calendar = calendar
+        formatter.timeZone = calendar.timeZone
         guard let dueDate = date(due, calendar: calendar), let shown = date(day, calendar: calendar) else {
-            return "Due \(due.day)/\(due.month)"
+            // Not a calendar date: its day and month, in the same "16 Oct" style.
+            let month = formatter.shortMonthSymbols[(Int(due.month) + 11) % 12]
+            return Copy.Loans.dueOn(date: "\(due.day) \(month)")
         }
         switch calendar.dateComponents([.day], from: shown, to: dueDate).day {
-        case 0: return "Due today"
-        case 1: return "Due tomorrow"
+        case 0: return Copy.Loans.dueToday
+        case 1: return Copy.Loans.dueTomorrow
         default:
-            let formatter = DateFormatter()
-            formatter.locale = Locale(identifier: "en_US_POSIX")
-            formatter.calendar = calendar
-            formatter.timeZone = calendar.timeZone
             formatter.dateFormat = "EEEE d MMM"
-            return "Due \(formatter.string(from: dueDate))"
+            return Copy.Loans.dueOn(date: formatter.string(from: dueDate))
         }
     }
 
     /// One loan: its title; two: "<A> and <B>"; more: "<A> and N more". A loan without a title
     /// is "A loan".
     static func dueBody(_ items: [PatronItem]) -> String {
-        let titles = items.map { $0.title.nonEmpty ?? "A loan" }
+        let titles = items.map { $0.title.nonEmpty ?? Copy.Alerts.untitledLoan }
         switch titles.count {
         case 0: return ""
         case 1: return titles[0]
-        case 2: return "\(titles[0]) and \(titles[1])"
-        default: return "\(titles[0]) and \(titles.count - 1) more"
+        case 2: return Copy.Alerts.dueTwo(first: titles[0], second: titles[1])
+        default: return Copy.Alerts.dueMore(count: titles.count - 1, first: titles[0])
         }
     }
 

@@ -17,7 +17,7 @@ struct LibraryPickerView: View {
         let onboarding = isOnboarding ?? model.needsOnboarding
         VStack(spacing: 0) {
             header(onboarding: onboarding)
-            SearchField(text: $picker.query, placeholder: "Search by library or country")
+            SearchField(text: $picker.query, placeholder: Copy.Onboarding.searchPlaceholder)
                 .focused($searchFocused)
                 .padding(.horizontal, Theme.Spacing.l)
                 .padding(.bottom, Theme.Spacing.m)
@@ -45,11 +45,11 @@ struct LibraryPickerView: View {
                     .font(.system(size: 30, weight: .semibold))
                     .foregroundStyle(Theme.Colors.primary)
                     .accessibilityHidden(true)
-                Text("Choose your library")
+                Text(Copy.Onboarding.title)
                     .themeFont(.greeting)
                     .foregroundStyle(Theme.Colors.textPrimary)
                     .accessibilityAddTraits(.isHeader)
-                Text("LibreSpydus works with libraries that use Spydus. You can change this later in Profile.")
+                Text(Copy.Onboarding.intro)
                     .themeFont(.body)
                     .foregroundStyle(Theme.Colors.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -60,12 +60,12 @@ struct LibraryPickerView: View {
             .padding(.bottom, Theme.Spacing.l)
         } else {
             HStack {
-                Text("Change library")
+                Text(Copy.Onboarding.changeTitle)
                     .themeFont(.title)
                     .foregroundStyle(Theme.Colors.textPrimary)
                     .accessibilityAddTraits(.isHeader)
                 Spacer()
-                Button("Close") { dismiss() }
+                Button(Copy.Common.close) { dismiss() }
                     .themeFont(.bodyStrong)
                     .foregroundStyle(Theme.Colors.primary)
             }
@@ -80,15 +80,15 @@ struct LibraryPickerView: View {
     @ViewBuilder
     private var content: some View {
         if picker.isLoading {
-            LoadingView(message: "Loading libraries…")
+            LoadingView(message: Copy.Onboarding.loading)
         } else if let error = picker.loadError, picker.libraries.isEmpty {
             ErrorStateView(error: error) {
                 Task { await picker.retry() }
             }
         } else if picker.libraries.isEmpty {
-            EmptyStateView(systemImage: "building.columns", title: "No libraries listed",
-                           message: "Civica's directory came back empty. Try again later.",
-                           actionTitle: "Retry") {
+            EmptyStateView(systemImage: "building.columns", title: Copy.Onboarding.emptyTitle,
+                           message: Copy.Onboarding.emptyMessage,
+                           actionTitle: Copy.Common.retry) {
                 Task { await picker.retry() }
             }
         } else {
@@ -102,12 +102,12 @@ struct LibraryPickerView: View {
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: Theme.Spacing.s, pinnedViews: .sectionHeaders) {
                     if let refreshError = picker.refreshError {
-                        Banner(message: refreshError.message + " Showing the saved list.", tone: .error)
+                        Banner(message: Copy.Onboarding.savedList(error: refreshError.message), tone: .error)
                             .padding(.bottom, Theme.Spacing.s)
                     }
                     if sections.isEmpty {
-                        EmptyStateView(systemImage: "magnifyingglass", title: "No libraries match “\(picker.query)”",
-                                       message: "Try a library name or a country.")
+                        EmptyStateView(systemImage: "magnifyingglass", title: Copy.Onboarding.noMatchesTitle(query: picker.query),
+                                       message: Copy.Onboarding.noMatchesMessage)
                             .padding(.top, Theme.Spacing.xxl)
                     }
                     ForEach(sections) { section in
@@ -149,7 +149,7 @@ struct LibraryPickerView: View {
             Text("\(section.libraries.count)")
                 .themeFont(.caption)
                 .foregroundStyle(Theme.Colors.textMuted)
-                .accessibilityLabel("\(section.libraries.count) libraries")
+                .accessibilityLabel(Copy.Onboarding.libraries(count: section.libraries.count))
         }
         .padding(.top, Theme.Spacing.m)
         .padding(.bottom, Theme.Spacing.xs)
@@ -220,6 +220,7 @@ private struct LibraryRow: View {
         .buttonStyle(PressScaleStyle())
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(isCurrent ? [.isButton, .isSelected] : .isButton)
-        .accessibilityHint(isCurrent ? "Current library" : "Select this library")
+        .accessibilityValue(isCurrent ? Copy.Onboarding.currentLibrary : "")
+        .accessibilityHint(isCurrent ? "" : Copy.Onboarding.selectHint)
     }
 }
