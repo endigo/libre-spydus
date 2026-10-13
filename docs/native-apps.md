@@ -183,7 +183,7 @@ own file); demo mode never saves it; a successful reserve / cancel / edit trigge
 iOS: `Application Support/AccountCache/<sha256(origin)>.json`, complete-until-first-unlock,
 excluded from backup. Android: `noBackupFilesDir`, AES-GCM with an Android Keystore key.
 
-### 5.3 Favourites (local; signed in → My Picks, §5.11)
+### 5.3 My Picks on the phone (signed out; signed in → the account's, §5.11)
 Per-origin list of `BookRef` (Codable/serializable): `id` (stable key: bib IRN / BRN / work IRN,
 else URL), `title`, `author`, `coverUrl`, `url` (bookmarkUrl preferred), `isbn`, `year`,
 `formats` (code,label,reserveUrl,availabilityUrl), `savedAt`. Toggle, contains, list (newest first),
@@ -200,7 +200,7 @@ demo lists (cancel removes the row, reserve adds a pending row). This is how wor
 test and screenshot every account screen.
 
 ### 5.5 Navigation
-Five tabs: **Home · Your Books · Search · Favourites · Profile**, all ordinary tab-bar items (the
+Five tabs: **Home · Your Books · Search · My Picks · Profile**, all ordinary tab-bar items (the
 inspiration's raised centre Search button was dropped at the user's request). Each tab has its own stack. Shared routes: `detail(BookRef)` → Book detail (I4/A3) and
 `results(query, sort, title)` → Search results list (I3/A3, used by Home "View all" and genre
 tiles). `BookRef` constructors from `SearchRecord`, `PatronItem`, `RelatedItem`, favourite.
@@ -319,7 +319,7 @@ Coming Soon, eLibrary, First Nations, Languages Other Than English, Library of T
 More to Celebrate). Public data, cached in the core.
 - **Home:** `client.featured()` loads with Home (independent of the other shelves); a section
   **"Featured"** — a horizontal row of tiles (rounded `surface` card, the icon on a tinted circle,
-  the title under it, two lines max) — between "Popular genres" and "Your borrowed books". Hidden
+  the title under it, two lines max) — between "Popular genres" and "Your loans". Hidden
   when the list is empty or fails (no error on Home; most libraries have no such list). Icons map
   the library's Font Awesome name: `book`→book, `balloons`→party/celebration, `computer`→computer,
   `circle`→circle, `globe`→globe/language, `game-board`→puzzle piece/board game,
@@ -345,9 +345,9 @@ More to Celebrate). Public data, cached in the core.
   `available`), the description in secondary text when present, the call number in caption text.
   Items without an author show none (Library of Things).
 
-### 5.11 My Picks: Favourites on the library account (I12 iOS / A10 Android)
+### 5.11 My Picks on the library account (I12 iOS / A10 Android)
 The website's "Pick list" ("My Picks"): saved titles kept on the reader's library account, so they
-follow them to the website and other devices. **Signed in, Favourites is My Picks; signed out it is
+follow them to the website and other devices. **Signed in, the My Picks tab shows the account's list; signed out it is
 the local list of §5.3**, unchanged. Core (`core/README.md`, "My Picks"): `picks(session, url?)` →
 `SearchResults` (`url` nil = first page, else its `nextPageUrl`), `savePick(irn, session)` /
 `removePick(irn, session)` → the list's new size (`Int64`). Both are MUTATING: only on the reader's
@@ -358,7 +358,7 @@ tap. Not cached in the core.
   Otherwise (a loan, reservation or related item: `brn:` / `url:` keys) the book page's loaded
   `RecordDetail.bibIrn`. No IRN yet (the record is still loading) → the bookmark waits (disabled).
 - **Picked state:** the app keeps the set of IRNs on the list (`workIrn` of every record on every
-  page, at most 10 pages), loaded after sign-in / launch while signed in, reloaded when Favourites
+  page, at most 10 pages), loaded after sign-in / launch while signed in, reloaded when My Picks
   refreshes, and updated by each save/remove. A book is picked when its IRN is in the set. (A work
   saved from search results and the same book opened from a loan are different IRNs; that's the
   website's behaviour too.)
@@ -367,8 +367,8 @@ tap. Not cached in the core.
   Picks." (`NotLoggedIn` → the usual session-expired path, §5.2). Success shows a short
   confirmation: "Saved to My Picks" / "Removed from My Picks". Accessibility label "Save to My
   Picks" / "Remove from My Picks".
-- **Favourites tab** when signed in: title **"My Picks"**, subtitle "Saved on your library
-  account". Rows exactly like search results (cover, title, author, year, format chips; an
+- **My Picks tab** when signed in: title **"My Picks"**, subtitle "Saved on your library
+  account" (signed out: the same title, subtitle "Saved on this phone"). Rows exactly like search results (cover, title, author, year, format chips; an
   edition-level item has no chip), tap → the book page, `nextPageUrl` paging, pull to refresh.
   Remove: swipe-to-delete (iOS) / the row's bookmark icon or long-press menu (Android) →
   `removePick`, the row leaves at once (back on failure, with the error above). Empty
@@ -376,12 +376,12 @@ tap. Not cached in the core.
   account." Loading / error(+Retry) as elsewhere; `NotLoggedIn` → session expired.
 - **Copy local favourites, once:** after an interactive sign-in (not a restored session), when the
   library's local favourites aren't empty and this library hasn't been asked before: an alert
-  "Add your saved books to My Picks?" — "{n} books saved on this phone can be added to your
-  library account." — **Add** / **Not now**. Either answer is remembered per library (never asked
+  "Add this phone’s picks to your library account?" — "{n} books saved on this phone can be added
+  to My Picks on your library account." — **Add** / **Not now**. Either answer is remembered per library (never asked
   again). Add: `savePick` each one with an IRN (one at a time, oldest first); a ref without one
   (`brn:` / `url:`) loads `record(url)` first for `bibIrn`, else is skipped. Then "Added {k} books
   to My Picks" (+ " · {m} couldn't be added" when some failed or had no IRN) and reload the set.
-  The local list is kept (it's what Favourites shows when signed out).
+  The local list is kept (it's what My Picks shows when signed out).
 - **Demo mode:** `DemoBackend` keeps an in-memory pick list seeded with two of its search records
   (one edition-level from its Featured data if it has one), with real `noResults` when emptied,
   and counts from save/remove — so every flow above works signed in to the demo account.
@@ -405,10 +405,10 @@ SG, Other) with logo, name, country. UK rows note "Asks you to verify you're hum
 (signed out: "Hello!" + library name). Search field "Search by title, author, etc." → focuses the
 Search tab. Sections (each with "View All"): **"New arrivals"** (first `homeShelves()` shelf,
 horizontal cover cards, tap → detail), **"Popular genres"** (`homeGenres()` rounded colour tiles
-with a platform icon per `key`, tap → results), **"Your borrowed books"** (signed in: current
+with a platform icon per `key`, tap → results), **"Your loans"** (signed in: current
 loans as covers with "N days left"/"Due {date}", overdue in danger colour; signed out: a sign-in
 card). No bell icon. Signed in: a **"My card"** button in the header (§5.9). A **"Featured"**
-row of the library's own collections between "Popular genres" and "Your borrowed books" (§5.10).
+row of the library's own collections between "Popular genres" and "Your loans" (§5.10).
 
 **Search (I3/A3).** Search field (autofocus from Home), sort toggle Relevance / Newest, result rows
 (cover, title, author, year, format chips; digital formats tinted `digital`), infinite scroll via
@@ -422,7 +422,7 @@ physical formats with `reserveUrl` only; signed out → login first) and a blue 
 button (favourite toggle, filled when saved). Bottom: white sheet with **Synopsis** (`summary`),
 subject chips (from `details` rows like Subjects/Genre/Audience, max ~6), a compact details list
 (publisher, ISBN, series, …), and carousels **"Similar books"**, **"More by this author"**,
-**"In this series"** from `related` panels (hide empty ones). Reserve sheet: pickup location,
+**"In this series"** from `related` panels (hide empty ones). Reserve sheet: Collect from (branch),
 available summary, expiry picker (`expiryChoices`), Confirm → `placeReservation` → result banner.
 **Already yours (I8/A6):** when the saved account (§5.2a) has the shown format's bib on loan or
 reserved (`accountHolding`), the Reserve pill is replaced by a status pill — "On loan · Due 14 Oct",
@@ -440,7 +440,7 @@ the card, one card open at a time; long-press and screen-reader actions offer th
 a footnote hints "Swipe left on a reservation to change or cancel it." (I6/A4). Ready-for-pickup
 reservations first, highlighted. Pull to refresh. Signed out → sign-in prompt.
 
-**Favourites (I5/A2).** Local list/grid of saved books (cover cards), tap → detail, swipe/long-press
+**My Picks (I5/A2; §5.11 when signed in).** Local list/grid of saved books (cover cards), tap → detail, swipe/long-press
 to remove, empty state.
 
 **Profile (I2/A2).** Library card (logo, name, origin, region), account name when signed in,
@@ -471,6 +471,43 @@ Shared components (I1/A1): `CoverImage` (async + placeholder), `ShelfCover` (cov
 `BookRowCard`, `SectionHeader(title, "View All")`, `SearchField`, `PrimaryPillButton`,
 `CircleIconButton`, `GenreTile`, `Chip`, `LoadingView`, `EmptyStateView`, `ErrorStateView(retry)`,
 `PlaceholderScreen`, the custom tab bar.
+
+### 7.1 Copy: one wording, both apps, every screen
+Every piece of text a reader sees or hears (titles, buttons, labels, chips, empty and error states,
+toasts, alerts, notifications, accessibility labels and hints) comes from **`design/copy.json`**,
+the single source of truth, through the generated `Copy` (`ios/LibreSpydus/Core/Copy.swift`,
+`android/app/src/main/java/com/librespydus/app/core/Copy.kt`; never edit those by hand — edit
+the JSON and run `design/scripts/gen_copy.py`). `design/scripts/check_copy.py` fails on a
+user-facing literal in app code. Strings quoted elsewhere in this document are illustrative; the
+JSON wins. Text the core produces (availability summaries, alert titles and bodies, dates) follows
+the same rules. Debug-only screens (component galleries, demo hints) are exempt.
+
+**Glossary — one term per thing:**
+
+| Thing | Say | Never say |
+|---|---|---|
+| The saved-books list (on the account when signed in, on the phone when signed out) | **My Picks** — tab, screen title, bookmark, toasts. Subtitle "Saved on your library account" / "Saved on this phone" | Favourites, favourite, bookmarks |
+| Saving one | "Save to My Picks" / "Remove from My Picks"; toasts "Saved to My Picks" / "Removed from My Picks" | Add to favourites, Bookmark |
+| Loans and reservations (the tab) | **Your Books**; its lists **Loans** and **Reservations** | Borrowed, My books |
+| Home's loans shelf | **Your loans** | Your borrowed books |
+| A borrowed copy | On loan · Due {date} · {n} days left · {n} days overdue · Due today · Due tomorrow | Overdue by {n} days, borrowed |
+| Asking for a copy | **Reserve** (button), **reservation** (noun), **Reserved** (state) | hold, request, borrow |
+| Where it's collected | **Collect from {branch}** (field and status); **Ready to collect** (+ " at {branch}") | pickup, pick up, Ready for pickup |
+| Queue place | "#{n} in queue" (screen readers: "number {n} in the queue") | rank |
+| The card | **library card**, **Card number**, **PIN**; Home button and sheet **My card** | barcode card, login ID |
+| Account | **Sign in**, **Sign out**, **Signed in** | Log in, Log out, Login |
+| The library | "library" in sentences; its name as the directory gives it; **Change library** | branch (except for a branch) |
+| Errors | button **Retry**; "Can’t reach {library}. Check your connection."; "Something went wrong" | Try again (as a button), Oops |
+
+**Style:** sentence case everywhere (buttons, titles, alerts, toasts, menus), except the names
+above (My Picks, Your Books, My card) and "View All". Curly apostrophes and quotes (’ “ ”), the
+ellipsis character (…) for work in progress, " · " between parts. A full stop ends body sentences
+and error paragraphs, never titles, buttons, labels, chips or toasts. Plurals use one/other forms
+("1 book", "2 books"). Dates "15 Oct", with the weekday when it helps ("Thursday 15 Oct"), the year
+only when it isn't this year. Accessibility labels are the visible text or a short noun phrase;
+hints start with a third-person verb ("Opens Profile", "Shows this collection"). The two apps may
+differ only where the gesture differs (iOS "Swipe left…", Android "Touch and hold…"): those
+strings are platform variants of one key in the JSON.
 
 ## 8. Build, run & evidence
 
