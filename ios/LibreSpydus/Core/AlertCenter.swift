@@ -25,7 +25,8 @@ final class AlertCenter {
     nonisolated static let namespace = "alerts."
     nonisolated static let demoNamespace = "alerts.demo."
 
-    enum Kind: Equatable, Sendable {
+    /// A notification's kind; its raw value is the one in the notification's payload.
+    enum Kind: String, Equatable, Sendable {
         case ready
         case due
     }
@@ -93,7 +94,7 @@ final class AlertCenter {
             guard !dueEnabled, await allow(.due) else { return }
             dueEnabled = true
             defaults.set(true, forKey: dueEnabledKey)
-            if let origin, let saved { await scheduleDueReminders(for: saved, originHash: AlertContent.originHash(origin)) }
+            if let origin, let saved { await scheduleDueReminders(for: saved, origin: origin) }
         } else {
             dueEnabled = false
             defaults.set(false, forKey: dueEnabledKey)
@@ -126,34 +127,28 @@ final class AlertCenter {
             let newItems = saved == nil ? [] : result.newItems
             if saved == nil { AlertLog.print("ready: remembered \(result.alertedKeys.count) waiting, nothing announced") }
             for item in newItems {
-                await system.notifications.add(AlertNotification(
-                    id: AlertContent.readyID(originHash: hash, key: patronItemKey(item: item)),
-                    title: AlertContent.readyTitle, body: AlertContent.readyBody(item)))
+                await system.notifications.add(AlertContent.readyNotification(item, origin: origin))
             }
         }
         if dueEnabled {
-            await scheduleDueReminders(for: snapshot, originHash: hash)
+            await scheduleDueReminders(for: snapshot, origin: origin)
         }
     }
 
     /// Replaces the library's pending `due:` notifications with one per `dueReminders` entry, at
     /// 07:45 on its `remindOn`; one whose 07:45 has already passed is left out.
-    private func scheduleDueReminders(for snapshot: AccountSnapshot, originHash hash: String) async {
+    private func scheduleDueReminders(for snapshot: AccountSnapshot, origin: String) async {
         let calendar = system.calendar()
         let now = system.now()
         let reminders = dueReminders(snapshot: snapshot, today: AlertContent.simpleDate(now, calendar: calendar),
                                      daysBefore: AlertContent.dueDaysBefore)
-        let prefix = "due:\(hash):"
+        let prefix = "due:\(AlertContent.originHash(origin)):"
         let old = await system.notifications.pendingIDs().filter { $0.hasPrefix(prefix) }
         await system.notifications.remove(pending: old, delivered: [])
         for reminder in reminders {
             guard let at = AlertContent.alertDate(on: reminder.remindOn, calendar: calendar, time: system.alertTime),
                   at > now else { continue }
-            await system.notifications.add(AlertNotification(
-                id: AlertContent.dueID(originHash: hash, due: reminder.due),
-                title: AlertContent.dueTitle(due: reminder.due, shownOn: reminder.remindOn),
-                body: AlertContent.dueBody(reminder.items),
-                at: AlertContent.triggerComponents(on: reminder.remindOn, time: system.alertTime)))
+            await system.notifications.add(AlertContent.dueNotification(reminder, origin: origin, time: system.alertTime))
         }
     }
 

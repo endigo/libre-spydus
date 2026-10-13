@@ -112,6 +112,7 @@ Pass them as launch arguments (docs/native-apps.md §5.6):
 | `-LSMorningCheckNow YES` | run the alerts' morning check once the launch refresh has settled, instead of waiting for 07:45 (see "Alerts") |
 | `-LSDemoNewReady YES` | with `-LSDemo YES`: "Hollow bones" (pending, Riverton) is ready to collect from the demo account's second refresh on, so a "Ready to collect" alert can be shown |
 | `-LSAlertTime HH:mm` | due reminders show, and the morning check is scheduled, at this time instead of 07:45, to watch a reminder arrive |
+| `-LSDemoAlert ready\|due\|due-several` | with `-LSDemo YES`: once the account has loaded, one alert from the demo account shows 8 s later (asking for notification permission first): "Ready to collect" for the first ready reservation, the first reminder naming one loan, or a reminder naming every loan due from today on. Built like the real ones, payload included, so a tap can be tried from a banner or Notification Centre |
 | `-LSMyCard open` / `-LSMyCard edit` | while signed in: Home opens the "My card" sheet (`edit`: on its entry form, filled in) |
 | `-LSDemoCardNumber <number>` | with `-LSDemo YES`: the demo card number instead of `DEMO0012345`; `none` leaves no number, so the sheet asks for one |
 | `-LSHomeOpen <list>` | Home opens a list as if tapped: `arrivals`, `genre:<key>`, or `featured:<title>` (a Featured tile, e.g. `featured:Library of Things`, once the row has loaded) |
@@ -306,11 +307,20 @@ each conflict was settled is in `design/copy-decisions.md`.
   requests are replaced by `UNCalendarNotificationTrigger`s at 07:45 on each `remindOn` (one whose
   07:45 has passed is skipped), "Due Thursday 15 Oct" / "Due today" / "Due tomorrow" and "<A> and
   N more". Sign-out and session expiry delete that library's keys and its pending and delivered
-  notifications; a library change keeps them. A tap opens Your Books on Reservations (ready) or
-  Loans (due) through `AlertNotificationRouter`, the notification centre's delegate, which also
-  shows banners while the app is open. The copy and timing are in `AlertContent`; the notification
-  centre and `BGTaskScheduler` sit behind `NotificationScheduling` / `MorningCheckScheduling`, so
-  the tests use fakes (`AlertCenterTests`, `AlertContentTests`).
+  notifications; a library change keeps them. Each notification carries an `AlertPayload` in its
+  `userInfo` (`kind` "ready" / "due", `origin`, `keys`: the `patronItemKey`s it names). A tap
+  (`AlertNotificationRouter`, the notification centre's delegate, which also shows banners while
+  the app is open) reads it back as an `AlertTap` and `AppModel.openAlert` opens Your Books on
+  Reservations (ready) or Loans (due) with the book page of the one item it names pushed on top:
+  `AlertContent.book(for:in:)` finds the row Your Books shows for that key in the saved account
+  and uses the row's own `BookRef`, as tapping the row does, so Back lands on the list. Just the
+  list when a reminder names several loans, the item is no longer in the account, the alert is
+  another library's, or it has no keys (posted by an older build: a ready alert's key is read
+  from its ID, a due reminder has none). The model reads the saved account in `init`, before the
+  router is installed, so a tap that launches the app opens the book too. The copy and timing are
+  in `AlertContent`; the notification centre and `BGTaskScheduler` sit behind
+  `NotificationScheduling` / `MorningCheckScheduling`, so the tests use fakes (`AlertCenterTests`,
+  `AlertContentTests`, `AlertTapTests`).
 - **My card** (docs/native-apps.md §5.9): Home's "My card" capsule (signed in) opens
   `MyCardSheet`, the library card as a barcode on a white card. `AppModel.cardNumber` is the number
   entered on the sheet (`setCardNumber`, Keychain service `com.librespydus.card`, account = origin;
@@ -399,7 +409,9 @@ each conflict was settled is in `design/copy-decisions.md`.
   relaunch with `-LSLibraryOrigin https://canning.spydus.com -LSDemo YES -LSDemoNewReady YES
   -LSMorningCheckNow YES` for "Ready to collect · Hollow bones · Riverton Library", or with
   `-LSAlertTime <a minute from now>` for "Due Thursday 15 Oct · Whistler" (the demo loan due in
-  2 days).
+  2 days). Quicker, without the switches: `-LSDemoAlert ready|due|due-several` (one alert 8 s after
+  the account loads; go to the Home Screen meanwhile to see it as a banner there). On iOS 27 a tap
+  on a Notification Centre entry first shows **Open** beside it.
 
 ### Core helpers in use
 

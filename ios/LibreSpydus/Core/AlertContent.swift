@@ -60,6 +60,25 @@ enum AlertContent {
         }
     }
 
+    // MARK: Notifications
+
+    /// The "Ready to collect" notification for `item`, a newly ready reservation of `origin`'s
+    /// account; shown at once.
+    static func readyNotification(_ item: PatronItem, origin: String) -> AlertNotification {
+        let key = patronItemKey(item: item)
+        return AlertNotification(id: readyID(originHash: originHash(origin), key: key), title: readyTitle,
+                                 body: readyBody(item), payload: AlertPayload(kind: .ready, origin: origin, keys: [key]))
+    }
+
+    /// The due-date reminder for `reminder`'s loans of `origin`'s account, at `time` on its
+    /// `remindOn`. It names every loan due that day.
+    static func dueNotification(_ reminder: DueReminder, origin: String, time: DateComponents = alertTime) -> AlertNotification {
+        AlertNotification(id: dueID(originHash: originHash(origin), due: reminder.due),
+                          title: dueTitle(due: reminder.due, shownOn: reminder.remindOn), body: dueBody(reminder.items),
+                          at: triggerComponents(on: reminder.remindOn, time: time),
+                          payload: AlertPayload(kind: .due, origin: origin, keys: reminder.items.map { patronItemKey(item: $0) }))
+    }
+
     // MARK: Identifiers
 
     /// sha256(origin) in hex, as the account cache names its files: says nothing about the library.
@@ -82,12 +101,21 @@ enum AlertContent {
         id.hasPrefix("ready:\(hash):") || id.hasPrefix("due:\(hash):")
     }
 
-    /// Where a tap on the notification `id` goes: Ready → Reservations (ready ones are listed
-    /// first), Due → Loans.
-    static func segment(forNotificationID id: String) -> BorrowedViewModel.Segment? {
-        if id.hasPrefix("ready:") { return .reservations }
-        if id.hasPrefix("due:") { return .loans }
-        return nil
+    // MARK: Tap
+
+    /// The book page a tap on an alert opens over its Your Books list: the one reservation or loan
+    /// it names, found by `patronItemKey` among the rows Your Books shows for `snapshot` and opened
+    /// with that row's own `BookRef`, as tapping the row does. Nil (just the list) when it names
+    /// several loans or none, or the item is no longer in the account (collected, returned).
+    static func book(for tap: AlertTap, in snapshot: AccountSnapshot) -> BookRef? {
+        guard tap.keys.count == 1, let key = tap.keys.first, !key.isEmpty else { return nil }
+        switch tap.kind {
+        case .ready:
+            let sections = ReservationSections(snapshot.reservations)
+            return (sections.ready + sections.pending).first { patronItemKey(item: $0.item) == key }?.ref
+        case .due:
+            return LoanRow.rows(from: snapshot.loans.items).first { patronItemKey(item: $0.item) == key }?.ref
+        }
     }
 
     // MARK: Time
