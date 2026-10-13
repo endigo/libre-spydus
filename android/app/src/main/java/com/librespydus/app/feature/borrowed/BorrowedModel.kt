@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.librespydus.app.core.AppState
 import com.librespydus.app.core.BorrowedSegment
+import com.librespydus.app.core.Copy
 import com.librespydus.app.core.Formatting
 import com.librespydus.app.core.LibraryBackend
 import com.librespydus.app.core.UserFacingError
@@ -60,11 +61,11 @@ sealed interface AccountStatus {
     /** "Updated 12 min ago" ([Formatting.updatedText]), with a spinner while [refreshing]. */
     data class Updated(val fetchedAtMs: Long, val refreshing: Boolean) : AccountStatus
 
-    /** The last refresh failed: "Couldn't refresh — showing saved data" + Retry. */
+    /** The last refresh failed: "Couldn’t refresh · Showing the saved list" + Retry. */
     data class RefreshFailed(val error: UserFacingError) : AccountStatus
 
     companion object {
-        const val REFRESH_FAILED = "Couldn't refresh — showing saved data"
+        const val REFRESH_FAILED = Copy.YourBooks.refreshFailed
 
         fun of(snapshot: AccountSnapshot, refreshing: Boolean, error: UserFacingError?): AccountStatus =
             if (error != null && !refreshing) RefreshFailed(error) else Updated(snapshot.fetchedAtMs, refreshing)
@@ -93,8 +94,8 @@ sealed interface EditOutcome {
  */
 class BorrowedModel(private val appState: AppState) {
     enum class Segment(val title: String) {
-        LOANS("Loans"),
-        RESERVATIONS("Reservations"),
+        LOANS(Copy.YourBooks.loans),
+        RESERVATIONS(Copy.YourBooks.reservations),
         ;
 
         companion object {
@@ -176,7 +177,7 @@ class BorrowedModel(private val appState: AppState) {
             if (mutationKey() != key) return
             _notice.value = Notice(
                 result.message?.trim()?.takeIf { it.isNotEmpty() }
-                    ?: if (result.ok) "Reservation cancelled." else "The library didn't cancel this reservation.",
+                    ?: if (result.ok) Copy.YourBooks.cancelled else Copy.YourBooks.cancelFailed,
                 isError = !result.ok,
             )
             if (result.ok) {
@@ -216,7 +217,7 @@ class BorrowedModel(private val appState: AppState) {
             is EditOutcome.Saved -> {
                 val result = outcome.result
                 _notice.value = Notice(
-                    result.message?.trim()?.takeIf { it.isNotEmpty() } ?: "Reservation updated.",
+                    result.message?.trim()?.takeIf { it.isNotEmpty() } ?: Copy.YourBooks.updated,
                     isError = !result.ok,
                 )
                 if (result.ok) appState.accountDidChange()

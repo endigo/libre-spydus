@@ -27,14 +27,14 @@ class StatusTextTest {
     @Test fun pendingRowShowsPendingAndTheBranch() {
         val row = ReservationRow.of(item("Requested pickup location: RIVERTON LIBRARY", mapOf("Rank" to "5")), ReservationRow.Kind.PENDING)
         assertEquals("Pending", row.statusLabel)
-        assertTrue(row.meta!!.contains("Pick up at Riverton Library"))
+        assertTrue(row.meta!!.contains("Collect from Riverton Library"))
         assertTrue(row.meta!!.contains("#5 in queue"))
     }
 
     @Test fun readyRowShowsCollectByDate() {
-        val row = ReservationRow.of(item("Please pickup from: RIVERTON LIBRARY by 17 Oct 2026"), ReservationRow.Kind.READY)
-        assertEquals("Ready for pickup", row.statusLabel)
-        assertEquals("Pick up at Riverton Library by 17 Oct", row.meta)
+        val row = ReservationRow.of(item("Please pickup from: RIVERTON LIBRARY by 17 Oct 2026"), ReservationRow.Kind.READY, java.time.LocalDate.of(2026, 10, 12))
+        assertEquals("Ready to collect", row.statusLabel)
+        assertEquals("Collect from Riverton Library by 17 Oct", row.meta)
     }
 
     private fun item(status: String, extra: Map<String, String> = emptyMap()) = PatronItem(

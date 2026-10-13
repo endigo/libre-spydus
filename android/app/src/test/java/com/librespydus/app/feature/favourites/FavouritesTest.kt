@@ -63,10 +63,4 @@ class FavouritesTest {
         assertEquals(177.dp, FavouritesLayout.columnWidth(402.dp))
         assertEquals(80.dp, FavouritesLayout.columnWidth(0.dp))
     }
-
-    @Test
-    fun headerCountsTheLibrarysBooks() {
-        assertEquals("7 saved for City of Canning", FavouritesLayout.subtitle(7, "City of Canning"))
-        assertEquals("Saved on this device for City of Canning", FavouritesLayout.subtitle(0, "City of Canning"))
-    }
 }

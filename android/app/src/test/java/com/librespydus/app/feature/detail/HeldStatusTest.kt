@@ -51,6 +51,10 @@ class HeldStatusTest {
         assertEquals(BorrowedSegment.LOANS, loan.segment)
         // Due today is not overdue yet; other date styles read the same way.
         assertEquals("On loan · Due 12 Oct", status(HoldingKind.LOAN, mapOf("Due" to "12/10/2026")).text)
+        // Next year's date keeps its year (§7.1).
+        val nextYear = status(HoldingKind.LOAN, mapOf("Due" to "5 Jan 2027"))
+        assertEquals("On loan · Due 5 Jan 2027", nextYear.text)
+        assertEquals("On loan, due 5 January 2027", nextYear.accessibilityLabel)
     }
 
     @Test
@@ -90,7 +94,7 @@ class HeldStatusTest {
     fun aPendingReservationNamesTheBranchElseTheQueue() {
         val withBranch = status(HoldingKind.RESERVATION_PENDING, mapOf("Status" to "Waiting", "Rank" to "2", "Pickup location" to "Riverton Library"))
         assertEquals("Reserved · Riverton Library", withBranch.text)
-        assertEquals("Reserved, pick up at Riverton Library", withBranch.accessibilityLabel)
+        assertEquals("Reserved, collect from Riverton Library", withBranch.accessibilityLabel)
         assertEquals(HeldStatus.Tone.RESERVED, withBranch.tone)
         assertEquals(BorrowedSegment.RESERVATIONS, withBranch.segment)
         assertEquals(
@@ -102,8 +106,8 @@ class HeldStatusTest {
         assertEquals("Reserved · #2 in queue", queued.text)
         assertEquals("Reserved, number 2 in the queue", queued.accessibilityLabel)
         val ranked = status(HoldingKind.RESERVATION_PENDING, mapOf("Rank" to "2 of 5"))
-        assertEquals("Reserved · Rank 2 of 5", ranked.text)
-        assertEquals("Reserved, rank 2 of 5", ranked.accessibilityLabel)
+        assertEquals("Reserved · 2 of 5 in queue", ranked.text)
+        assertEquals("Reserved, 2 of 5 in the queue", ranked.accessibilityLabel)
 
         val plain = status(HoldingKind.RESERVATION_PENDING, mapOf("Status" to "In transit"))
         assertEquals("Reserved", plain.text)

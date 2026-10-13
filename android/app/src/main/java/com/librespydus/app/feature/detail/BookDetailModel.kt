@@ -3,6 +3,7 @@ package com.librespydus.app.feature.detail
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.librespydus.app.core.BookRef
+import com.librespydus.app.core.Copy
 import com.librespydus.app.core.FormatRef
 import com.librespydus.app.core.LibraryBackend
 import com.librespydus.app.core.ResultsSort
@@ -52,7 +53,7 @@ sealed interface HeaderAvailability {
     data object AvailabilityFailed : HeaderAvailability
     data object LookupFailed : HeaderAvailability
 
-    /** No formats matched: "Check availability on the library website". */
+    /** No formats matched: "Check availability on the library’s website". */
     data object CheckWebsite : HeaderAvailability
     data object None : HeaderAvailability
 }
@@ -187,8 +188,8 @@ data class DetailState(
         get() = record.valueOrNull?.related?.let { links -> RelatedPanel.entries.any { it.url(links) != null } } ?: false
 
     companion object {
-        const val FINDING = "Finding formats…"
-        const val CHECKING = "Checking availability…"
+        const val FINDING = Copy.Detail.findingFormats
+        const val CHECKING = Copy.Detail.checkingAvailability
     }
 }
 
@@ -240,7 +241,7 @@ class BookDetailModel(
     suspend fun loadRecord(backend: LibraryBackend, report: BrowseReporter) {
         val urls = DetailRecordSource.candidateUrls(opened, _state.value.selectedFormat)
         if (urls.isEmpty()) {
-            val error = UserFacingError(UserFacingError.Kind.UNEXPECTED, "This book has no link to the library's record.")
+            val error = UserFacingError(UserFacingError.Kind.UNEXPECTED, Copy.Detail.noRecordLink)
             _state.update { it.copy(record = BrowseLoadable.Failed(error)) }
             return
         }
@@ -480,5 +481,5 @@ class BookDetailModel(
     }
 }
 
-/** Every candidate URL gave an empty record (shown as "The library site returned something unexpected."). */
+/** Every candidate URL gave an empty record (shown as "The library’s website returned something unexpected."). */
 class EmptyRecordException(url: String) : Exception("The library returned an empty record for $url")

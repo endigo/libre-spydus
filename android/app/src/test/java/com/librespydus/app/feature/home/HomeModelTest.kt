@@ -91,6 +91,9 @@ class LoanShelfItemTest {
         val far = item("20 Nov 2026")
         assertEquals("Due ${DateTimeFormatter.ofPattern("d MMM", Locale.getDefault()).format(far.dueDate)}", far.caption)
         assertEquals(LoanShelfItem.Tone.NORMAL, far.tone)
+        // …with the year only when it isn't this one (§7.1).
+        val nextYear = item("20 Jan 2027")
+        assertEquals("Due ${DateTimeFormatter.ofPattern("d MMM yyyy", Locale.getDefault()).format(nextYear.dueDate)}", nextYear.caption)
         // Other date styles the library uses.
         assertEquals("3 days left", item("27/10/2026").caption)
         // Unreadable dates are shown as the library wrote them; no date, no caption.
@@ -153,7 +156,7 @@ class HomeModelTest {
             Reservations(PatronList(0, emptyList()), PatronList(0, emptyList())),
             fetchedAtMs = 0,
         )
-        val offline = UserFacingError(UserFacingError.Kind.NETWORK, "Can't reach Canning. Check your connection.")
+        val offline = UserFacingError(UserFacingError.Kind.NETWORK, "Can’t reach Canning. Check your connection.")
         assertEquals(listOf("Due today"), HomeLoans.state(snapshot, refreshing = false, error = null).valueOrNull?.map { it.caption })
         // A failed refresh keeps the saved covers.
         assertEquals(listOf("Whistler"), HomeLoans.state(snapshot, refreshing = false, error = offline).valueOrNull?.map { it.ref.title })

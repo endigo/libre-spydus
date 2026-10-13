@@ -79,7 +79,7 @@ class BorrowedModelTest {
 
         assertEquals(1, backend.cancelCalls.get())
         assertNull(model.confirmingCancel.value)
-        assertEquals("Reservation cancelled.", model.notice.value?.message)
+        assertEquals("Reservation cancelled", model.notice.value?.message)
         assertEquals(false, model.notice.value?.isError)
         // Gone at once, before the refresh that confirms it.
         assertTrue(model.reservations()!!.ready.isEmpty())
@@ -97,7 +97,7 @@ class BorrowedModelTest {
         // Not in the demo lists: DemoBackend answers ok = false.
         val stale = row.copy(cancelHref = "https://canning.spydus.com/gone")
         model.cancel(stale)
-        assertEquals("This reservation can't be cancelled.", model.notice.value?.message)
+        assertEquals("This reservation can’t be cancelled right now.", model.notice.value?.message)
         assertEquals(true, model.notice.value?.isError)
         assertNotNull(model.reservations()!!.row(row.id))
         advanceUntilIdle()
@@ -110,7 +110,7 @@ class BorrowedModelTest {
         backend.failCancel = SpydusException.Network("network error: connect timed out after 10s")
         val row = model.reservations()!!.ready.first()
         model.cancel(row)
-        assertEquals("Can't reach City of Canning. Check your connection.", model.notice.value?.message)
+        assertEquals("Can’t reach City of Canning. Check your connection.", model.notice.value?.message)
         assertEquals(true, model.notice.value?.isError)
         assertFalse(model.isBusy(row))
         assertNotNull(model.reservations()!!.row(row.id))
@@ -126,7 +126,7 @@ class BorrowedModelTest {
         val result = backend.editReservation(row.editHref!!, DemoBackend.SESSION, EditOverrides("25379", null, null, false, false))
         model.finishEdit(EditOutcome.Saved(result), row)
         assertNull(model.editing.value)
-        assertEquals("Reservation updated.", model.notice.value?.message)
+        assertEquals("Reservation updated", model.notice.value?.message)
         advanceUntilIdle()
         assertEquals(2, backend.snapshotCalls.get())
         assertEquals("Willetton & District", model.reservations()?.row(row.id)?.pickup)
@@ -239,7 +239,7 @@ class BorrowedContentTest {
         assertEquals(4, content.loans.valueOrNull?.size)
         assertEquals(3, content.reservations.valueOrNull?.count)
         assertEquals(AccountStatus.RefreshFailed(offline), content.status)
-        assertEquals("Couldn't refresh — showing saved data", AccountStatus.REFRESH_FAILED)
+        assertEquals("Couldn’t refresh · Showing the saved list", AccountStatus.REFRESH_FAILED)
     }
 
     @Test

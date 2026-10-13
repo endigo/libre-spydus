@@ -57,6 +57,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.librespydus.app.core.AppState
 import com.librespydus.app.core.BookRef
+import com.librespydus.app.core.Copy
 import com.librespydus.app.core.DemoBackend
 import com.librespydus.app.core.Formatting
 import com.librespydus.app.feature.borrowed.BorrowedDebugHooks
@@ -77,14 +78,10 @@ import kotlinx.coroutines.launch
 object FavouritesLayout {
     /** Two columns across the screen's gutters (16dp each side and between). */
     fun columnWidth(width: Dp): Dp = maxOf(80.dp, Dp(((width - LsSpacing.l * 3) / 2).value.toInt().toFloat()))
-
-    /** "7 saved for Canning" / "Saved on this device for Canning". */
-    fun subtitle(count: Int, libraryName: String): String =
-        if (count > 0) "$count saved for $libraryName" else "Saved on this device for $libraryName"
 }
 
 /**
- * The Favourites tab: signed in, the reader's Pick list on the library account ([MyPicksScreen],
+ * The My Picks tab: signed in, the reader's Pick list on the library account ([MyPicksScreen],
  * §5.11); signed out, this phone's own favourites ([LocalFavouritesScreen], §5.3).
  */
 @Composable
@@ -108,13 +105,11 @@ fun FavouritesScreen(appState: AppState, navigator: AppNavigator, modifier: Modi
 @Composable
 private fun LocalFavouritesScreen(appState: AppState, navigator: AppNavigator, modifier: Modifier = Modifier) {
     val favourites by appState.currentFavourites.collectAsStateWithLifecycle()
-    val library by appState.library.collectAsStateWithLifecycle()
     val activity = LocalActivity.current
     val scope = rememberCoroutineScope()
     val view = LocalView.current
     val gridState = rememberLazyGridState()
     var editing by rememberSaveable { mutableStateOf(FavouritesDebugHooks.startsEditing(activity)) }
-    val libraryName = library?.name ?: "your library"
 
     LaunchedEffect(favourites.isEmpty()) { if (favourites.isEmpty()) editing = false }
     LaunchedEffect(favourites.size) {
@@ -128,7 +123,7 @@ private fun LocalFavouritesScreen(appState: AppState, navigator: AppNavigator, m
     fun remove(book: BookRef) {
         scope.launch { appState.removeFavourite(book.id) }
         @Suppress("DEPRECATION")
-        view.announceForAccessibility("Removed ${book.title} from Favourites")
+        view.announceForAccessibility(Copy.Picks.removedTitle(book.title))
     }
 
     BoxWithConstraints(
@@ -154,7 +149,6 @@ private fun LocalFavouritesScreen(appState: AppState, navigator: AppNavigator, m
             item(key = "header", span = { GridItemSpan(maxLineSpan) }) {
                 Header(
                     count = favourites.size,
-                    libraryName = libraryName,
                     editing = editing,
                     onToggleEditing = { editing = !editing },
                 )
@@ -162,10 +156,10 @@ private fun LocalFavouritesScreen(appState: AppState, navigator: AppNavigator, m
             if (favourites.isEmpty()) {
                 item(key = "empty", span = { GridItemSpan(maxLineSpan) }) {
                     EmptyStateView(
-                        title = "No favourites yet",
-                        message = "Tap the bookmark on any book to save it here.",
+                        title = Copy.Picks.emptyTitle,
+                        message = FavouritesMode.LOCAL.emptyMessage,
                         icon = LsIcons.Bookmark,
-                        actionLabel = "Find a book",
+                        actionLabel = Copy.Picks.findABook,
                         onAction = { appState.openSearch() },
                         modifier = Modifier.fillMaxWidth().heightIn(min = 420.dp),
                     )
@@ -187,21 +181,24 @@ private fun LocalFavouritesScreen(appState: AppState, navigator: AppNavigator, m
 }
 
 @Composable
-private fun Header(count: Int, libraryName: String, editing: Boolean, onToggleEditing: () -> Unit) {
+private fun Header(count: Int, editing: Boolean, onToggleEditing: () -> Unit) {
     Row(Modifier.fillMaxWidth().padding(top = LsSpacing.l), verticalAlignment = Alignment.Top) {
         Column(Modifier.weight(1f)) {
-            Text("Favourites", style = LsType.greeting, color = LsColors.textPrimary, modifier = Modifier.semantics { heading() })
-            Text(FavouritesLayout.subtitle(count, libraryName), style = LsType.caption, color = LsColors.textSecondary)
+            Text(FavouritesMode.LOCAL.title, style = LsType.greeting, color = LsColors.textPrimary, modifier = Modifier.semantics { heading() })
+            Text(FavouritesMode.LOCAL.subtitle, style = LsType.caption, color = LsColors.textSecondary)
         }
         if (count > 0) {
+            val label = if (editing) Copy.Common.done else Copy.Common.edit
+            val hint = if (editing) Copy.Picks.doneEditingHint else Copy.Picks.editHint
             Text(
-                if (editing) "Done" else "Edit",
+                label,
                 style = LsType.bodyStrong,
                 color = LsColors.primary,
                 modifier = Modifier
                     .padding(top = LsSpacing.xs)
                     .clip(RoundedCornerShape(LsRadius.pill))
-                    .clickable(role = Role.Button, onClickLabel = if (editing) "Done editing favourites" else "Edit favourites", onClick = onToggleEditing)
+                    .clickable(role = Role.Button, onClick = onToggleEditing)
+                    .semantics { contentDescription = Copy.A11y.labelAndHint(label, hint) }
                     .padding(horizontal = LsSpacing.s, vertical = LsSpacing.s),
             )
         }
@@ -227,8 +224,8 @@ private fun FavouriteCell(
                 .combinedClickable(
                     enabled = !editing,
                     role = Role.Button,
-                    onClickLabel = "Open",
-                    onLongClickLabel = "More options",
+                    onClickLabel = Copy.Common.open,
+                    onLongClickLabel = Copy.Common.moreOptions,
                     onLongClick = {
                         haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                         menu = true
@@ -236,7 +233,7 @@ private fun FavouriteCell(
                     onClick = onOpen,
                 )
                 .semantics {
-                    customActions = listOf(CustomAccessibilityAction("Remove from Favourites") { onRemove(); true })
+                    customActions = listOf(CustomAccessibilityAction(Copy.Picks.remove) { onRemove(); true })
                 },
         ) {
             ShelfCover(
@@ -255,7 +252,7 @@ private fun FavouriteCell(
                     .size(44.dp)
                     .clip(CircleShape)
                     .clickable(role = Role.Button, onClick = onRemove)
-                    .semantics { contentDescription = "Remove ${book.title} from Favourites" },
+                    .semantics { contentDescription = Copy.Picks.removeTitle(book.title) },
                 contentAlignment = Alignment.Center,
             ) {
                 Box(
@@ -276,7 +273,7 @@ private fun FavouriteCell(
             containerColor = LsColors.surfaceElevated,
         ) {
             DropdownMenuItem(
-                text = { Text("Open", color = LsColors.textPrimary) },
+                text = { Text(Copy.Common.open, color = LsColors.textPrimary) },
                 leadingIcon = { Icon(LsIcons.Book, contentDescription = null, tint = LsColors.textSecondary) },
                 onClick = {
                     menu = false
@@ -284,7 +281,7 @@ private fun FavouriteCell(
                 },
             )
             DropdownMenuItem(
-                text = { Text("Remove from Favourites", color = LsColors.danger) },
+                text = { Text(Copy.Picks.remove, color = LsColors.danger) },
                 leadingIcon = { Icon(AccountIcons.BookmarkRemove, contentDescription = null, tint = LsColors.danger) },
                 onClick = {
                     menu = false

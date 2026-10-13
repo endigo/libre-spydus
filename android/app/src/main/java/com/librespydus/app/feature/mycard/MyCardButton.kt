@@ -23,6 +23,7 @@ import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.unit.dp
 import com.librespydus.app.R
+import com.librespydus.app.core.Copy
 import com.librespydus.app.ui.theme.LsColors
 import com.librespydus.app.ui.theme.LsRadius
 import com.librespydus.app.ui.theme.LsSpacing
@@ -40,7 +41,7 @@ fun MyCardButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
             .background(LsColors.surfaceElevated)
             .clickable(role = Role.Button, onClick = onClick)
             .clearAndSetSemantics {
-                contentDescription = "My card"
+                contentDescription = Copy.A11y.labelAndHint(Copy.MyCard.button, Copy.MyCard.buttonHint)
                 role = Role.Button
                 onClick { onClick(); true }
             }
@@ -49,6 +50,6 @@ fun MyCardButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
         horizontalArrangement = Arrangement.spacedBy(LsSpacing.s),
     ) {
         Icon(painterResource(R.drawable.ic_barcode), contentDescription = null, tint = LsColors.primary, modifier = Modifier.size(20.dp))
-        Text("My card", style = LsType.bodyStrong, color = LsColors.textPrimary, maxLines = 1)
+        Text(Copy.MyCard.button, style = LsType.bodyStrong, color = LsColors.textPrimary, maxLines = 1)
     }
 }

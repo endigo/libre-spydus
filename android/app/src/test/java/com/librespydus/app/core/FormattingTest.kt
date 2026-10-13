@@ -1,7 +1,9 @@
 package com.librespydus.app.core
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.LocalDate
 import java.time.ZoneId
@@ -36,11 +38,10 @@ class FormattingTest {
         assertEquals(LocalDate.of(2026, 10, 27), Formatting.parseDueDate("27 Oct 2026"))
         assertEquals(LocalDate.of(2026, 10, 27), Formatting.parseDueDate("27/10/2026"))
         assertNull(Formatting.parseDueDate("soon"))
-        assertEquals("Due 27 Oct · 15 days left", Formatting.dueLine("27 Oct 2026", today))
-        assertEquals("Due 13 Oct · 1 day left", Formatting.dueLine("13 Oct 2026", today))
-        assertEquals("Due today", Formatting.dueLine("12 Oct 2026", today))
-        assertEquals("Due 10 Oct · Overdue by 2 days", Formatting.dueLine("10 Oct 2026", today))
-        assertEquals("Due whenever", Formatting.dueLine("whenever", today))
+        assertEquals(15L, Formatting.daysUntil(LocalDate.of(2026, 10, 27), today))
+        assertEquals(-2L, Formatting.daysUntil(LocalDate.of(2026, 10, 10), today))
+        assertTrue(Formatting.isDueSoon("15 Oct 2026", today))
+        assertFalse(Formatting.isDueSoon("16 Oct 2026", today))
     }
 
     @Test
@@ -63,8 +64,10 @@ class FormattingTest {
         assertEquals("Updated yesterday at 23:50", text(at(11, 23, 50)))
         assertEquals("Updated Friday at 16:20", text(at(9, 16, 20)))
         assertEquals("Updated Tuesday at 08:00", text(at(6, 8, 0)))
-        assertEquals("Updated 5 Oct 2026 at 16:20", text(at(5, 16, 20)))
-        assertEquals("Updated 1 Sept 2026 at 16:20".replace("Sept", shortSeptember()), text(at(1, 16, 20, month = 9)))
+        // Older: the date, with the year only when it isn't this year (§7.1).
+        assertEquals("Updated 5 Oct at 16:20", text(at(5, 16, 20)))
+        assertEquals("Updated 1 Sept at 16:20".replace("Sept", shortSeptember()), text(at(1, 16, 20, month = 9)))
+        assertEquals("Updated 20 Dec 2025 at 16:20", Formatting.updatedText(ZonedDateTime.of(2025, 12, 20, 16, 20, 0, 0, zone).toInstant().toEpochMilli(), now, zone, Locale.UK))
     }
 
     @Test

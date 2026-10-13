@@ -52,6 +52,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.librespydus.app.core.BookRef
+import com.librespydus.app.core.Copy
 import com.librespydus.app.core.Formatting
 import com.librespydus.app.ui.components.Chip
 import com.librespydus.app.ui.components.CoverImage
@@ -64,7 +65,6 @@ import com.librespydus.app.ui.theme.LsRadius
 import com.librespydus.app.ui.theme.LsSpacing
 import com.librespydus.app.ui.theme.LsTabBar
 import com.librespydus.app.ui.theme.LsType
-import java.text.NumberFormat
 
 /** Bottom padding under scrolling content on a tab, above the tab bar. */
 val BrowseBottomClearance: Dp = LsSpacing.xxl
@@ -84,8 +84,8 @@ fun SearchResultsList(
     onOpen: (BookRef) -> Unit,
     modifier: Modifier = Modifier,
     listState: LazyListState = rememberLazyListState(),
-    noResultsTitle: String = "No results for “$query”",
-    noResultsMessage: String? = "Check the spelling, or try fewer or different words.",
+    noResultsTitle: String = Copy.Search.noResultsTitle(query),
+    noResultsMessage: String? = Copy.Search.noResultsMessage,
 ) {
     when (val phase = state.phase) {
         SearchResultsModel.Phase.Idle, SearchResultsModel.Phase.Loading -> SearchSkeletonList(modifier)
@@ -147,13 +147,13 @@ private fun ResultsFooter(state: SearchResultsModel.State, onLoadMore: () -> Uni
                         Modifier
                             .clip(RoundedCornerShape(LsRadius.pill))
                             .clickable(role = Role.Button, onClick = onRetryLoadMore)
-                            .semantics(mergeDescendants = true) { contentDescription = "Retry loading more results" }
+                            .semantics(mergeDescendants = true) { contentDescription = Copy.A11y.labelAndHint(Copy.Common.retry, Copy.Search.retryLoadingMoreHint) }
                             .padding(horizontal = LsSpacing.m, vertical = LsSpacing.xs),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Icon(LsIcons.Refresh, contentDescription = null, tint = LsColors.primary, modifier = Modifier.size(18.dp))
                         Spacer(Modifier.width(LsSpacing.xs))
-                        Text("Retry", style = LsType.bodyStrong, color = LsColors.primary)
+                        Text(Copy.Common.retry, style = LsType.bodyStrong, color = LsColors.primary)
                     }
                 }
             }
@@ -164,10 +164,10 @@ private fun ResultsFooter(state: SearchResultsModel.State, onLoadMore: () -> Uni
                     strokeWidth = 2.dp,
                     modifier = Modifier
                         .size(24.dp)
-                        .semantics { contentDescription = "Loading more results" },
+                        .semantics { contentDescription = Copy.Search.loadingMore },
                 )
             }
-            state.items.isNotEmpty() -> Text("End of results", style = LsType.caption, color = LsColors.textMuted)
+            state.items.isNotEmpty() -> Text(Copy.Search.endOfResults, style = LsType.caption, color = LsColors.textMuted)
         }
     }
 }
@@ -175,7 +175,7 @@ private fun ResultsFooter(state: SearchResultsModel.State, onLoadMore: () -> Uni
 /** "1 result" / "1,234 results"; null without a total. */
 fun resultCount(total: Long?): String? {
     total ?: return null
-    return if (total == 1L) "1 result" else "${NumberFormat.getIntegerInstance().format(total)} results"
+    return Copy.Search.results(total.coerceAtMost(Int.MAX_VALUE.toLong()).toInt())
 }
 
 /**
@@ -209,7 +209,7 @@ fun SearchResultRow(
                 contentDescription = description
                 role = Role.Button
                 onClick { onClick(); true }
-                if (onLongClick != null) onLongClick(label = "More options") { onLongClick(); true }
+                if (onLongClick != null) onLongClick(label = Copy.Common.moreOptions) { onLongClick(); true }
                 if (actions.isNotEmpty()) customActions = actions
             },
     ) {
@@ -239,7 +239,7 @@ fun SearchResultRow(
                         verticalArrangement = Arrangement.spacedBy(LsSpacing.s),
                     ) {
                         chips.forEach { Chip(it.label, tint = if (it.isDigital) LsColors.digital else null) }
-                        if (item.formats.size > MAX_CHIPS) Chip("+${item.formats.size - MAX_CHIPS}")
+                        if (item.formats.size > MAX_CHIPS) Chip(Copy.Search.moreFormats(item.formats.size - MAX_CHIPS))
                     }
                 }
                 item.ref.year?.let { Text(it, style = LsType.caption, color = LsColors.textMuted, modifier = Modifier.padding(top = LsSpacing.xs)) }
@@ -279,7 +279,7 @@ fun SearchSkeletonList(modifier: Modifier = Modifier, rows: Int = 5) {
             .fillMaxSize()
             .padding(horizontal = LsSpacing.l)
             .padding(top = LsSpacing.s)
-            .clearAndSetSemantics { contentDescription = "Loading results" },
+            .clearAndSetSemantics { contentDescription = Copy.Search.loadingResults },
         verticalArrangement = Arrangement.spacedBy(LsSpacing.m),
     ) {
         repeat(rows) {

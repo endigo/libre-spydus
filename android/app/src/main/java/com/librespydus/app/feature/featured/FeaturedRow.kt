@@ -31,6 +31,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.librespydus.app.ui.components.SectionHeader
 import com.librespydus.app.ui.nav.AppNavigator
+import com.librespydus.app.core.Copy
 import com.librespydus.app.ui.theme.LsColors
 import com.librespydus.app.ui.theme.LsRadius
 import com.librespydus.app.ui.theme.LsSpacing
@@ -46,7 +47,7 @@ import uniffi.librespydus_core.FeaturedLink
 fun FeaturedSection(links: List<FeaturedLink>, navigator: AppNavigator, modifier: Modifier = Modifier) {
     if (links.isEmpty()) return
     Column(modifier, verticalArrangement = Arrangement.spacedBy(LsSpacing.m)) {
-        SectionHeader("Featured", modifier = Modifier.padding(horizontal = LsSpacing.l))
+        SectionHeader(Copy.Featured.title, modifier = Modifier.padding(horizontal = LsSpacing.l))
         LazyRow(
             contentPadding = PaddingValues(horizontal = LsSpacing.l),
             horizontalArrangement = Arrangement.spacedBy(LsSpacing.m),
@@ -68,7 +69,7 @@ fun FeaturedTile(link: FeaturedLink, color: Color, onClick: () -> Unit, modifier
     val shape = RoundedCornerShape(LsRadius.card)
     // The title, then the library's tooltip or what the tap does.
     val hint = link.description?.takeIf { it.isNotBlank() && it != link.title }
-        ?: if (link.kind == FeaturedKind.WEB) "Opens the library's website" else "Shows this collection"
+        ?: if (link.kind == FeaturedKind.WEB) Copy.Featured.websiteHint else Copy.Featured.collectionHint
     Column(
         modifier
             .width(TileWidth)
@@ -76,7 +77,7 @@ fun FeaturedTile(link: FeaturedLink, color: Color, onClick: () -> Unit, modifier
             .background(LsColors.surface)
             .clickable(role = Role.Button, onClick = onClick)
             .clearAndSetSemantics {
-                contentDescription = "${link.title}. $hint"
+                contentDescription = Copy.A11y.labelAndHint(link.title, hint)
                 role = Role.Button
                 onClick { onClick(); true }
             }

@@ -31,6 +31,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.librespydus.app.core.AppState
+import com.librespydus.app.core.Copy
 import com.librespydus.app.core.Tab
 import com.librespydus.app.feature.featured.FeaturedSection
 import com.librespydus.app.feature.featured.HomeFeaturedModel
@@ -54,7 +55,7 @@ import kotlinx.coroutines.launch
 /**
  * Home (§6): library logo (→ Profile), greeting with "My card" (§5.9, signed in), search field
  * (→ Search tab), "New arrivals", "Popular genres", "Featured" (§5.10, only for libraries with a
- * Featured list) and "Your borrowed books". New arrivals and Featured load on their own (reload on
+ * Featured list) and "Your loans". New arrivals and Featured load on their own (reload on
  * library and verification changes); the loans shelf and greeting come
  * from the account store's snapshot (§5.2a), shown at once and refreshed in the background when it
  * is over two minutes old. Each shelf has its own skeleton and error; pull to refresh reloads both.
@@ -85,7 +86,7 @@ fun HomeScreen(appState: AppState, navigator: AppNavigator, modifier: Modifier =
         LoadingView(modifier.background(LsColors.background))
         return
     }
-    val libraryName = library?.name ?: "your library"
+    val libraryName = library?.name ?: Copy.Common.yourLibrary
     val signedIn = session != null
     val key = HomeReloadKey(currentBackend.origin, verification)
     val context = HomeLoadContext(currentBackend, key, report)
@@ -159,7 +160,7 @@ fun HomeScreen(appState: AppState, navigator: AppNavigator, modifier: Modifier =
             Column(verticalArrangement = Arrangement.spacedBy(LsSpacing.m)) {
                 val route = model.arrivalsRoute
                 SectionHeader(
-                    title = model.arrivalsShelf?.title ?: "New arrivals",
+                    title = model.arrivalsShelf?.title ?: Copy.Home.newArrivals,
                     onAction = route?.let { r -> { navigator.openResults(r.query, r.sort, r.title) } },
                     modifier = Modifier.padding(horizontal = LsSpacing.l),
                 )
@@ -169,7 +170,7 @@ fun HomeScreen(appState: AppState, navigator: AppNavigator, modifier: Modifier =
                         model.viewModelScope.launch { model.retryArrivals(context) }
                     }
                     is BrowseLoadable.Loaded -> if (state.value.isEmpty()) {
-                        HomeSectionMessageCard(BrowseIcons.AutoAwesome, "Nothing new right now", "Check back soon for the latest additions.")
+                        HomeSectionMessageCard(BrowseIcons.AutoAwesome, Copy.Home.nothingNewTitle, Copy.Home.nothingNewMessage)
                     } else {
                         HomeCoverShelf(state.value.map { HomeShelfEntry(it, caption = it.title) }, navigator::openBook)
                     }
@@ -178,7 +179,7 @@ fun HomeScreen(appState: AppState, navigator: AppNavigator, modifier: Modifier =
 
             // Popular genres
             Column(verticalArrangement = Arrangement.spacedBy(LsSpacing.m)) {
-                SectionHeader("Popular genres", modifier = Modifier.padding(horizontal = LsSpacing.l))
+                SectionHeader(Copy.Home.popularGenres, modifier = Modifier.padding(horizontal = LsSpacing.l))
                 LazyRow(
                     contentPadding = PaddingValues(horizontal = LsSpacing.l),
                     horizontalArrangement = Arrangement.spacedBy(LsSpacing.s),
@@ -188,6 +189,7 @@ fun HomeScreen(appState: AppState, navigator: AppNavigator, modifier: Modifier =
                             label = genre.label,
                             icon = HomeGenreIcon.forKey(genre.key).vector(),
                             color = LsColors.genre[index % LsColors.genre.size],
+                            accessibilityHint = Copy.Home.genreHint(genre.label),
                             onClick = {
                                 val route = HomeModel.route(genre)
                                 navigator.openResults(route.query, route.sort, route.title)
@@ -200,10 +202,10 @@ fun HomeScreen(appState: AppState, navigator: AppNavigator, modifier: Modifier =
             // Featured: the library's own collections (§5.10); nothing at all when it has none.
             FeaturedSection(featured, navigator)
 
-            // Your borrowed books
+            // Your loans
             Column(verticalArrangement = Arrangement.spacedBy(LsSpacing.m)) {
                 SectionHeader(
-                    "Your borrowed books",
+                    Copy.Home.yourLoans,
                     onAction = if (signedIn) ({ navigator.switchTab(Tab.BORROWED) }) else null,
                     modifier = Modifier.padding(horizontal = LsSpacing.l),
                 )
@@ -214,7 +216,7 @@ fun HomeScreen(appState: AppState, navigator: AppNavigator, modifier: Modifier =
                         BrowseLoadable.Idle, BrowseLoadable.Loading -> HomeShelfSkeleton()
                         is BrowseLoadable.Failed -> HomeSectionErrorCard(state.error) { appState.account.refresh(force = true) }
                         is BrowseLoadable.Loaded -> if (state.value.isEmpty()) {
-                            HomeSectionMessageCard(BrowseIcons.MenuBook, "No loans right now", "Books you borrow will show up here with their due dates.")
+                            HomeSectionMessageCard(BrowseIcons.MenuBook, Copy.Home.noLoansTitle, Copy.Home.noLoansMessage)
                         } else {
                             HomeCoverShelf(
                                 state.value.map { loan ->

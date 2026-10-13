@@ -55,6 +55,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.librespydus.app.core.AppState
 import com.librespydus.app.core.BookRef
 import com.librespydus.app.core.BorrowedSegment
+import com.librespydus.app.core.Copy
 import com.librespydus.app.core.CoreHelpers
 import com.librespydus.app.core.FormatRef
 import com.librespydus.app.core.Formatting
@@ -158,7 +159,7 @@ fun BookDetailScreen(book: BookRef, appState: AppState, navigator: AppNavigator,
         }
     }
 
-    // Signed in, the bookmark is My Picks on the library account (§5.11); signed out, this phone's favourites.
+    // Signed in, the bookmark is My Picks on the library account (§5.11); signed out, My Picks on this phone.
     val pickIrn = PickIrn.of(state.ref, state.record.valueOrNull)
     val bookmark = if (session != null) DetailBookmark.myPicks(pickIrn, pickIrns) else DetailBookmark.local(favourites.any { it.id == state.ref.id })
     fun toggleBookmark() {
@@ -190,7 +191,7 @@ fun BookDetailScreen(book: BookRef, appState: AppState, navigator: AppNavigator,
                 .padding(horizontal = LsSpacing.l, vertical = LsSpacing.s),
         ) {
             CircleIconButton(
-                LsIcons.ArrowBack, "Back", navigator::back,
+                LsIcons.ArrowBack, Copy.Common.back, navigator::back,
                 size = 44.dp, iconSize = 24.dp, background = LsColors.surface, contentColor = LsColors.textPrimary, shadow = false,
             )
         }
@@ -315,7 +316,7 @@ private fun DetailHeader(
         }
         if (state.showsFormatChips) {
             FlowRow(
-                Modifier.semantics { contentDescription = "Formats" },
+                Modifier.semantics { contentDescription = Copy.Detail.formats },
                 horizontalArrangement = Arrangement.spacedBy(LsSpacing.s),
                 verticalArrangement = Arrangement.spacedBy(LsSpacing.s),
             ) {
@@ -326,7 +327,11 @@ private fun DetailHeader(
                         selected = selected,
                         tint = if (CoreHelpers.isDigitalFormat(format)) LsColors.digital else null,
                         onClick = { onSelectFormat(index) },
-                        modifier = Modifier.semantics { this.selected = selected },
+                        // The format, then what a tap does: "Large print. Shows availability for this format".
+                        modifier = Modifier.semantics {
+                            this.selected = selected
+                            contentDescription = Copy.A11y.labelAndHint(format.displayLabel, Copy.Detail.formatHint)
+                        },
                     )
                 }
             }
@@ -354,7 +359,7 @@ private fun AvailabilityRow(availability: HeaderAvailability, onRetryAvailabilit
                 AvailabilityLine.Tone.MUTED -> BrowseIcons.HelpOutline to LsColors.textSecondary
             }
             Row(
-                Modifier.semantics(mergeDescendants = true) { contentDescription = "Availability: ${line.text}" },
+                Modifier.semantics(mergeDescendants = true) { contentDescription = Copy.Detail.availability(line.text) },
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(LsSpacing.s),
             ) {
@@ -362,31 +367,32 @@ private fun AvailabilityRow(availability: HeaderAvailability, onRetryAvailabilit
                 Text(line.text, style = LsType.bodyStrong, color = color)
             }
         }
-        HeaderAvailability.AvailabilityFailed -> RetryLine("Couldn't check availability", onRetryAvailability)
-        HeaderAvailability.LookupFailed -> RetryLine("Couldn't look up availability", onRetryLookup)
+        HeaderAvailability.AvailabilityFailed -> RetryLine(Copy.Detail.availabilityFailed, Copy.Detail.retryAvailabilityHint, onRetryAvailability)
+        HeaderAvailability.LookupFailed -> RetryLine(Copy.Detail.lookupFailed, Copy.Detail.retryLookupHint, onRetryLookup)
         HeaderAvailability.CheckWebsite -> Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(LsSpacing.s),
         ) {
             Icon(LsIcons.Globe, contentDescription = null, tint = LsColors.textSecondary, modifier = Modifier.size(16.dp))
-            Text("Check availability on the library website", style = LsType.caption, color = LsColors.textSecondary)
+            Text(Copy.Detail.checkWebsite, style = LsType.caption, color = LsColors.textSecondary)
         }
         HeaderAvailability.None -> Unit
     }
 }
 
 @Composable
-private fun RetryLine(text: String, onRetry: () -> Unit) {
+private fun RetryLine(text: String, hint: String, onRetry: () -> Unit) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Text(text, style = LsType.caption, color = LsColors.textSecondary)
         Spacer(Modifier.width(LsSpacing.xs))
         Text(
-            "Retry",
+            Copy.Common.retry,
             style = LsType.caption.copy(fontWeight = LsType.bodyStrong.fontWeight),
             color = LsColors.primary,
             modifier = Modifier
                 .clip(RoundedCornerShape(LsRadius.pill))
-                .clickable(role = Role.Button, onClickLabel = "Retry: $text", onClick = onRetry)
+                .clickable(role = Role.Button, onClick = onRetry)
+                .semantics { contentDescription = Copy.A11y.labelAndHint(Copy.Common.retry, hint) }
                 .padding(horizontal = LsSpacing.s, vertical = LsSpacing.xs),
         )
     }
@@ -394,7 +400,8 @@ private fun RetryLine(text: String, onRetry: () -> Unit) {
 
 /**
  * "Reserve" (physical/reservable formats), or the [HeldStatusPill] in its place when the patron
- * already has the format, and the blue bookmark (My Picks signed in, favourites signed out).
+ * already has the format, and the blue bookmark (My Picks on the library account signed in, on this
+ * phone signed out).
  */
 @Composable
 private fun DetailActions(
@@ -420,10 +427,14 @@ private fun DetailActions(
             HeldStatusPill(held, onClick = { onOpenHeld(held.segment) }, modifier = Modifier.weight(1f))
         } else if (reservable != null) {
             // An edition-level item's format has no label (§5.10).
-            val what = reservable.displayLabel.trim().lowercase().ifEmpty { null }?.let { "the $it" } ?: "this item"
+            val format = reservable.displayLabel.trim().lowercase().ifEmpty { null }
+            val hint = when {
+                signedIn -> format?.let(Copy.Detail::reserveFormatHint) ?: Copy.Detail.reserveItemHint
+                else -> format?.let(Copy.Detail::signInToReserveFormatHint) ?: Copy.Detail.signInToReserveItemHint
+            }
             val alpha by animateFloatAsState(if (awaitingHolding) 0f else 1f, label = "reserve")
             PrimaryPillButton(
-                text = "Reserve",
+                text = Copy.Detail.reserve,
                 onClick = { if (!awaitingHolding) onBorrow(reservable) },
                 modifier = Modifier
                     .weight(1f)
@@ -432,7 +443,7 @@ private fun DetailActions(
                         if (awaitingHolding) {
                             Modifier.clearAndSetSemantics { }
                         } else {
-                            Modifier.semantics { contentDescription = if (signedIn) "Reserve $what" else "Sign in to reserve $what" }
+                            Modifier.semantics { contentDescription = Copy.A11y.labelAndHint(Copy.Detail.reserve, hint) }
                         },
                     ),
             )
@@ -476,11 +487,11 @@ private fun HeldStatusPill(status: HeldStatus, onClick: () -> Unit, modifier: Mo
             .background(LsColors.surfaceElevated)
             .border(1.dp, tint.copy(alpha = 0.35f), shape)
             .clickable(onClick = onClick)
-            // One element: "On loan, due 14 October", a button that opens Your Books.
+            // One element: "On loan, due 14 October. Opens Your Books", a button.
             .clearAndSetSemantics {
-                contentDescription = status.accessibilityLabel
+                contentDescription = Copy.A11y.labelAndHint(status.accessibilityLabel, HeldStatus.HINT)
                 role = Role.Button
-                onClick(label = HeldStatus.ACTION) { onClick(); true }
+                onClick { onClick(); true }
             }
             .padding(horizontal = LsSpacing.l),
         verticalAlignment = Alignment.CenterVertically,

@@ -53,6 +53,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.heading
@@ -65,6 +67,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.librespydus.app.core.AppState
+import com.librespydus.app.core.Copy
 import com.librespydus.app.core.Formatting
 import com.librespydus.app.feature.onboarding.AccountBanner
 import com.librespydus.app.feature.onboarding.AccountBannerTone
@@ -88,8 +91,8 @@ import java.util.Date
 
 /**
  * "Your Books" (docs/native-apps.md §6 Borrowed): Loans | Reservations. Loans are sorted by due
- * date with the danger colour when due within 3 days or overdue; reservations show "Ready for
- * pickup" first, then pending. A reservation's Edit (sheet) and Cancel (confirmed) sit behind a
+ * date with the danger colour when due within 3 days or overdue; reservations show "Ready to
+ * collect" first, then pending. A reservation's Edit (sheet) and Cancel (confirmed) sit behind a
  * swipe toward the leading edge, in its long-press menu and in its TalkBack actions.
  *
  * Both lists come from the account store's snapshot (§5.2a): the saved one shows at once with
@@ -120,7 +123,7 @@ fun BorrowedScreen(appState: AppState, navigator: AppNavigator, modifier: Modifi
     val confirming by model.confirmingCancel.collectAsStateWithLifecycle()
     val editing by model.editing.collectAsStateWithLifecycle()
     val refreshing by vm.refreshing.collectAsStateWithLifecycle()
-    val libraryName = library?.name ?: "your library"
+    val libraryName = library?.name ?: Copy.Common.yourLibrary
     val listState = rememberLazyListState()
     // The swiped-open reservation card (one at a time): closed by a scroll, a tap or a segment switch.
     val swipe = remember { ReservationSwipeController() }
@@ -183,7 +186,7 @@ fun BorrowedScreen(appState: AppState, navigator: AppNavigator, modifier: Modifi
         ) {
             item(key = "title") {
                 Text(
-                    "Your Books",
+                    Copy.YourBooks.title,
                     style = LsType.greeting,
                     color = LsColors.textPrimary,
                     modifier = Modifier
@@ -194,10 +197,10 @@ fun BorrowedScreen(appState: AppState, navigator: AppNavigator, modifier: Modifi
             if (session == null) {
                 item(key = "signed-out") {
                     EmptyStateView(
-                        title = "Sign in to see your books",
-                        message = "Your loans and reservations at $libraryName appear here.",
+                        title = Copy.YourBooks.signedOutTitle,
+                        message = Copy.YourBooks.signedOutMessage(libraryName),
                         icon = AccountIcons.AccountCircle,
-                        actionLabel = "Sign in",
+                        actionLabel = Copy.Account.signIn,
                         onAction = appState::requestLogin,
                         modifier = Modifier.fillMaxWidth().heightIn(min = STATE_HEIGHT + 80.dp),
                     )
@@ -210,8 +213,8 @@ fun BorrowedScreen(appState: AppState, navigator: AppNavigator, modifier: Modifi
                 Column(verticalArrangement = Arrangement.spacedBy(LsSpacing.s)) {
                     SegmentedToggle(
                         options = listOf(
-                            loanCount?.let { "Loans ($it)" } ?: "Loans",
-                            reservationCount?.let { "Reservations ($it)" } ?: "Reservations",
+                            loanCount?.let(Copy.YourBooks::loansCount) ?: Copy.YourBooks.loans,
+                            reservationCount?.let(Copy.YourBooks::reservationsCount) ?: Copy.YourBooks.reservations,
                         ),
                         selectedIndex = segment.ordinal,
                         onSelect = { model.select(BorrowedModel.Segment.entries[it]) },
@@ -228,7 +231,10 @@ fun BorrowedScreen(appState: AppState, navigator: AppNavigator, modifier: Modifi
                         onClick = { model.dismissNotice(shown.id) },
                         modifier = Modifier
                             .animateItem()
-                            .semantics { liveRegion = LiveRegionMode.Polite },
+                            .semantics {
+                                liveRegion = LiveRegionMode.Polite
+                                contentDescription = Copy.A11y.labelAndHint(shown.message, Copy.A11y.dismissHint)
+                            },
                     )
                 }
             }
@@ -250,13 +256,13 @@ fun BorrowedScreen(appState: AppState, navigator: AppNavigator, modifier: Modifi
     confirming?.let { row ->
         AlertDialog(
             onDismissRequest = { model.askToCancel(null) },
-            title = { Text("Cancel this reservation?") },
+            title = { Text(Copy.YourBooks.cancelTitle) },
             text = { Text(CancelConfirm.message(row)) },
             confirmButton = {
-                TextButton(onClick = { vm.launch { cancel(row) } }) { Text("Cancel reservation", color = LsColors.danger) }
+                TextButton(onClick = { vm.launch { cancel(row) } }) { Text(Copy.YourBooks.cancelReservation, color = LsColors.danger) }
             },
             dismissButton = {
-                TextButton(onClick = { model.askToCancel(null) }) { Text("Keep reservation", color = LsColors.textPrimary) }
+                TextButton(onClick = { model.askToCancel(null) }) { Text(Copy.YourBooks.keepReservation, color = LsColors.textPrimary) }
             },
             containerColor = LsColors.surfaceElevated,
             titleContentColor = LsColors.textPrimary,
@@ -278,7 +284,7 @@ private val STATE_HEIGHT = 380.dp
 
 /**
  * The muted line under the segments: "Updated 12 min ago" (ticking, in the device's time format)
- * with a small spinner while a refresh runs, or "Couldn't refresh — showing saved data" + Retry.
+ * with a small spinner while a refresh runs, or "Couldn’t refresh · Showing the saved list" + Retry.
  */
 @Composable
 private fun AccountStatusLine(status: AccountStatus, onRetry: () -> Unit) {
@@ -304,10 +310,14 @@ private fun AccountStatusLine(status: AccountStatus, onRetry: () -> Unit) {
                     CircularProgressIndicator(color = LsColors.textMuted, strokeWidth = 1.5.dp, modifier = Modifier.size(12.dp))
                     Spacer(Modifier.width(LsSpacing.s))
                 }
+                val updated = Formatting.updatedText(status.fetchedAtMs, now, time = { timeFormat.format(Date.from(it.toInstant())) })
                 Text(
-                    Formatting.updatedText(status.fetchedAtMs, now, time = { timeFormat.format(Date.from(it.toInstant())) }),
+                    updated,
                     style = LsType.caption,
                     color = LsColors.textMuted,
+                    modifier = Modifier.clearAndSetSemantics {
+                        contentDescription = if (status.refreshing) Copy.A11y.refreshing(updated) else updated
+                    },
                 )
             }
             is AccountStatus.RefreshFailed -> {
@@ -321,12 +331,13 @@ private fun AccountStatusLine(status: AccountStatus, onRetry: () -> Unit) {
                 )
                 if (status.error.isRetryable) {
                     Text(
-                        "Retry",
+                        Copy.Common.retry,
                         style = LsType.caption.copy(fontWeight = FontWeight.SemiBold),
                         color = LsColors.primary,
                         modifier = Modifier
                             .clip(RoundedCornerShape(LsRadius.pill))
                             .clickable(role = Role.Button, onClick = onRetry)
+                            .semantics { contentDescription = Copy.A11y.labelAndHint(Copy.Common.retry, Copy.YourBooks.refreshHint) }
                             .padding(horizontal = LsSpacing.s, vertical = LsSpacing.xs),
                     )
                 }
@@ -351,24 +362,24 @@ private fun LazyListScope.loansContent(
     onOpen: (LoanRow) -> Unit,
 ) {
     when (loans) {
-        BorrowedLoad.Idle, BorrowedLoad.Loading -> stateItem("loans-loading") { LoadingView(message = "Loading your loans…") }
+        BorrowedLoad.Idle, BorrowedLoad.Loading -> stateItem("loans-loading") { LoadingView(message = Copy.YourBooks.loadingLoans) }
         is BorrowedLoad.Failed -> stateItem("loans-error") { ErrorStateView(loans.error, onRetry = onRetry) }
         is BorrowedLoad.Loaded -> if (loans.value.isEmpty()) {
             stateItem("loans-empty") {
                 EmptyStateView(
-                    title = "No loans right now",
-                    message = "Books you borrow from $libraryName show up here with their due dates.",
+                    title = Copy.YourBooks.noLoansTitle,
+                    message = Copy.YourBooks.noLoansMessage(libraryName),
                     icon = com.librespydus.app.ui.theme.LsIcons.Book,
                 )
             }
         } else {
             items(loans.value, key = { "loan-${it.id}" }) { row -> LoanCard(row, onClick = { onOpen(row) }) }
-            item(key = "renewals") { Footnote(AccountIcons.Sync, "Renewals coming soon") }
+            item(key = "renewals") { Footnote(AccountIcons.Sync, Copy.YourBooks.renewalsSoon) }
         }
     }
 }
 
-/** A muted line under a list ("Renewals coming soon", the swipe hint). */
+/** A muted line under a list (renewals coming soon, the swipe hint). */
 @Composable
 private fun Footnote(icon: ImageVector, text: String) {
     Row(
@@ -391,7 +402,7 @@ private fun LoanCard(row: LoanRow, onClick: () -> Unit) {
         byLine = Formatting.byLine(row.ref.author),
         meta = row.meta,
         metaColor = if (row.isUrgent) LsColors.danger else LsColors.textSecondary,
-        badge = if (overdue) "Overdue" else null,
+        badge = if (overdue) Copy.Loans.overdue else null,
         badgeColor = LsColors.danger,
         onClick = onClick,
     )
@@ -407,28 +418,28 @@ private fun LazyListScope.reservationsContent(
     onEdit: (ReservationRow) -> Unit,
 ) {
     when (reservations) {
-        BorrowedLoad.Idle, BorrowedLoad.Loading -> stateItem("reservations-loading") { LoadingView(message = "Loading your reservations…") }
+        BorrowedLoad.Idle, BorrowedLoad.Loading -> stateItem("reservations-loading") { LoadingView(message = Copy.YourBooks.loadingReservations) }
         is BorrowedLoad.Failed -> stateItem("reservations-error") { ErrorStateView(reservations.error, onRetry = onRetry) }
         is BorrowedLoad.Loaded -> {
             val sections = reservations.value
             if (sections.isEmpty) {
                 stateItem("reservations-empty") {
                     EmptyStateView(
-                        title = "No reservations",
-                        message = "Tap Reserve on any book and follow it here until it's ready to collect.",
+                        title = Copy.YourBooks.noReservationsTitle,
+                        message = Copy.YourBooks.noReservationsMessage,
                         icon = com.librespydus.app.ui.theme.LsIcons.Bookmark,
                     )
                 }
                 return
             }
             if (sections.ready.isNotEmpty()) {
-                item(key = "ready-header") { SectionHeader("Ready for pickup", Modifier.padding(top = LsSpacing.xs)) }
+                item(key = "ready-header") { SectionHeader(Copy.YourBooks.readyToCollect, Modifier.padding(top = LsSpacing.xs)) }
                 items(sections.ready, key = { "reservation-${it.id}" }) { row ->
                     ReservationCard(row, row.id in busy, swipe, onOpen, onCancel, onEdit)
                 }
             }
             if (sections.pending.isNotEmpty()) {
-                item(key = "pending-header") { SectionHeader("Pending", Modifier.padding(top = LsSpacing.xs)) }
+                item(key = "pending-header") { SectionHeader(Copy.YourBooks.pending, Modifier.padding(top = LsSpacing.xs)) }
                 items(sections.pending, key = { "reservation-${it.id}" }) { row ->
                     ReservationCard(row, row.id in busy, swipe, onOpen, onCancel, onEdit)
                 }
@@ -440,7 +451,7 @@ private fun LazyListScope.reservationsContent(
     }
 }
 
-internal const val SWIPE_HINT = "Swipe left on a reservation to change or cancel it."
+internal const val SWIPE_HINT = Copy.YourBooks.swipeHint
 
 /** Where `BookRowCard`'s surface starts below the cover rising above it (its `rise`). */
 private val CARD_RISE = 14.dp
@@ -481,14 +492,22 @@ private fun ReservationCard(
         enabled = !busy,
         surfaceTop = CARD_RISE,
     ) {
-        // One TalkBack node for the whole card (it merges the card's text), with the actions on it.
+        // One TalkBack node for the whole card, read in its own words (the queue place as "number 4 in
+        // the queue", "Updating" while a cancel or edit runs), with the actions on it.
+        val label = listOfNotNull(
+            row.statusLabel,
+            row.ref.title,
+            Formatting.byLine(row.ref.author),
+            row.spokenMeta,
+            Copy.A11y.updating.takeIf { busy },
+        ).joinToString(", ")
         Box(
             Modifier
                 .combinedClickable(
                     interactionSource = presses,
                     indication = null,
                     enabled = !busy,
-                    onLongClickLabel = if (actions.isEmpty()) null else "Show reservation actions",
+                    onLongClickLabel = if (actions.isEmpty()) null else Copy.YourBooks.showActions,
                     onLongClick = if (actions.isEmpty()) null else ({
                         swipe.close()
                         menuShown = true
@@ -496,7 +515,9 @@ private fun ReservationCard(
                     // A tap while a card is swiped open only closes it.
                     onClick = { if (!swipe.dismiss()) onOpen(row) },
                 )
-                .semantics {
+                // Clears the card's own text (and the cover's label) under it; the click actions stay.
+                .clearAndSetSemantics {
+                    contentDescription = label
                     if (!busy) {
                         customActions = actions.map { action -> CustomAccessibilityAction(action.fullTitle) { run(action); true } }
                     }

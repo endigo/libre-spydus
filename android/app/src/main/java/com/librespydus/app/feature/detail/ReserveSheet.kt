@@ -44,6 +44,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.librespydus.app.core.Copy
 import com.librespydus.app.core.CoreHelpers
 import com.librespydus.app.core.Formatting
 import com.librespydus.app.feature.search.BrowseIcons
@@ -106,14 +107,14 @@ fun ReserveSheet(
                     .padding(horizontal = LsSpacing.l),
             ) {
                 CircleIconButton(
-                    LsIcons.Close, "Close", { if (!state.isSubmitting) close() },
+                    LsIcons.Close, Copy.Common.close, { if (!state.isSubmitting) close() },
                     size = 44.dp, iconSize = 22.dp, background = LsColors.surface, contentColor = LsColors.textPrimary, shadow = false,
                     modifier = Modifier
                         .align(Alignment.CenterStart)
                         .alpha(if (state.isSubmitting) 0.5f else 1f),
                 )
                 Text(
-                    "Reserve",
+                    Copy.Reserve.title,
                     style = LsType.section,
                     color = LsColors.textPrimary,
                     modifier = Modifier
@@ -131,7 +132,7 @@ fun ReserveSheet(
                 BookSummary(request)
                 when (val options = state.options) {
                     BrowseLoadable.Idle, BrowseLoadable.Loading -> Box(Modifier.fillMaxWidth().heightIn(min = 160.dp)) {
-                        LoadingView(message = "Checking reservation options…")
+                        LoadingView(message = Copy.Reserve.checkingOptions)
                     }
                     is BrowseLoadable.Failed -> ErrorStateView(
                         error = options.error,
@@ -141,7 +142,7 @@ fun ReserveSheet(
                     is BrowseLoadable.Loaded -> if (options.value.canReserve) {
                         ReserveForm(options.value, state, model::selectDays)
                     } else {
-                        Banner(options.value.message.trimmedOrNull() ?: "This title can't be reserved right now.", BannerTone.INFO)
+                        Banner(options.value.message.trimmedOrNull() ?: Copy.Reserve.cantReserve, BannerTone.INFO)
                     }
                 }
             }
@@ -157,9 +158,9 @@ fun ReserveSheet(
                     state.result?.let { Banner(ReserveModel.message(it), if (it.ok) BannerTone.SUCCESS else BannerTone.ERROR) }
                     state.submitError?.let { Banner(it.message, BannerTone.ERROR) }
                     if (!options.canReserve || state.isComplete || state.result?.ok == false) {
-                        PrimaryPillButton(if (state.isComplete) "Done" else "Close", onClick = close, modifier = Modifier.fillMaxWidth())
+                        PrimaryPillButton(if (state.isComplete) Copy.Common.done else Copy.Common.close, onClick = close, modifier = Modifier.fillMaxWidth())
                     } else {
-                        PrimaryPillButton("Confirm reservation", onClick = onConfirm, loading = state.isSubmitting, modifier = Modifier.fillMaxWidth())
+                        PrimaryPillButton(Copy.Reserve.confirm, onClick = onConfirm, loading = state.isSubmitting, modifier = Modifier.fillMaxWidth())
                     }
                 }
             }
@@ -200,10 +201,10 @@ private fun ReserveForm(options: ReserveOptions, state: ReserveModel.State, onSe
             .background(LsColors.surface)
             .padding(horizontal = LsSpacing.l),
     ) {
-        InfoRow("Pick up at", options.pickupLocation.trimmedOrNull()?.let(ReserveModel::titleCased) ?: "Your usual library", BrowseIcons.LocationOn)
+        InfoRow(Copy.Reserve.collectFrom, options.pickupLocation.trimmedOrNull()?.let(ReserveModel::titleCased) ?: Copy.Reserve.usualBranch, BrowseIcons.LocationOn)
         options.availableSummary.trimmedOrNull()?.let {
             FormDivider()
-            InfoRow("Availability", it, BrowseIcons.LibraryBooks)
+            InfoRow(Copy.Reserve.availability, it, BrowseIcons.LibraryBooks)
         }
         if (options.expiryChoices.isNotEmpty()) {
             FormDivider()
@@ -218,12 +219,12 @@ private fun ReserveForm(options: ReserveOptions, state: ReserveModel.State, onSe
                 horizontalArrangement = Arrangement.spacedBy(LsSpacing.m),
             ) {
                 Icon(BrowseIcons.CalendarMonth, contentDescription = null, tint = LsColors.textSecondary, modifier = Modifier.size(22.dp))
-                Text("Not needed after", style = LsType.body, color = LsColors.textSecondary, modifier = Modifier.weight(1f))
+                Text(Copy.Reserve.notNeededAfter, style = LsType.body, color = LsColors.textSecondary, modifier = Modifier.weight(1f))
                 Box {
                     Row(
                         Modifier
                             .clip(RoundedCornerShape(LsRadius.pill))
-                            .clickable(enabled = enabled, role = Role.DropdownList, onClickLabel = "Choose when it's no longer needed") { open = true }
+                            .clickable(enabled = enabled, role = Role.DropdownList, onClickLabel = Copy.Reserve.chooseNotNeededAfter) { open = true }
                             .alpha(if (enabled) 1f else 0.5f)
                             .padding(horizontal = LsSpacing.s, vertical = LsSpacing.xs),
                         verticalAlignment = Alignment.CenterVertically,
@@ -236,7 +237,7 @@ private fun ReserveForm(options: ReserveOptions, state: ReserveModel.State, onSe
                             DropdownMenuItem(
                                 text = { Text(choice.label, style = LsType.body, color = LsColors.textPrimary) },
                                 trailingIcon = if (choice.days == selected.days) {
-                                    { Icon(LsIcons.Check, contentDescription = "Selected", tint = LsColors.primary) }
+                                    { Icon(LsIcons.Check, contentDescription = Copy.Common.selected, tint = LsColors.primary) }
                                 } else {
                                     null
                                 },

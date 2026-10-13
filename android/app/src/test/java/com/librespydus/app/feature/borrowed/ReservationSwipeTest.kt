@@ -33,7 +33,7 @@ class ReservationSwipeTest {
         assertEquals("Edit reservation", ReservationAction.EDIT.fullTitle)
         assertEquals("Cancel", ReservationAction.CANCEL.title)
         assertEquals("Cancel reservation", ReservationAction.CANCEL.fullTitle)
-        assertEquals("Swipe left on a reservation to change or cancel it.", SWIPE_HINT)
+        assertEquals("Swipe left on a reservation to edit or cancel it.", SWIPE_HINT)
     }
 
     @Test

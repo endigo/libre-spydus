@@ -49,6 +49,7 @@ import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import com.librespydus.app.core.AppState
+import com.librespydus.app.core.Copy
 import com.librespydus.app.core.CoreHelpers
 import com.librespydus.app.ui.components.CircleIconButton
 import com.librespydus.app.ui.components.ErrorStateView
@@ -80,7 +81,7 @@ fun VerificationScreen(appState: AppState, onDismiss: () -> Unit, modifier: Modi
     val library by appState.library.collectAsStateWithLifecycle()
     val backend by appState.backend.collectAsStateWithLifecycle()
     val origin = backend?.origin ?: library?.origin ?: return
-    val libraryName = library?.name ?: "Your library"
+    val libraryName = library?.name ?: Copy.Common.yourLibrary
     // Fixed when the sheet opens: completing a check bumps the count and closes the sheet. Profile →
     // "Clear verification" drops the stored token, which offers the check again.
     val unavailable = remember(origin) {
@@ -122,14 +123,14 @@ private fun VerificationHeader(libraryName: String, unavailable: Boolean) {
         verticalArrangement = Arrangement.spacedBy(LsSpacing.s),
     ) {
         Text(
-            if (unavailable) "Library unavailable" else "Verify you're human",
+            if (unavailable) Copy.Errors.libraryUnavailableTitle else Copy.Verification.title,
             style = LsType.title,
             color = LsColors.textPrimary,
             modifier = Modifier.semantics { heading() },
         )
         Text(
-            if (unavailable) "$libraryName can't be used from the app right now. Try its website instead."
-            else "$libraryName asks you to confirm you're human. Complete the check below.",
+            if (unavailable) Copy.Errors.libraryUnavailable(libraryName).sentenceStart()
+            else Copy.Verification.message(libraryName).sentenceStart(),
             style = LsType.body,
             color = LsColors.textSecondary,
         )
@@ -137,7 +138,7 @@ private fun VerificationHeader(libraryName: String, unavailable: Boolean) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(AccountIcons.VerifiedUser, contentDescription = null, tint = LsColors.textMuted, modifier = Modifier.size(14.dp))
                 Spacer(Modifier.width(LsSpacing.xs))
-                Text("This closes by itself once the library lets you in.", style = LsType.caption, color = LsColors.textMuted)
+                Text(Copy.Verification.closesByItself, style = LsType.caption, color = LsColors.textMuted)
             }
         }
     }
@@ -152,7 +153,7 @@ private fun TopActions(onCancel: () -> Unit, onReload: (() -> Unit)?) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
-            "Cancel",
+            Copy.Common.cancel,
             style = LsType.bodyStrong,
             color = LsColors.primary,
             modifier = Modifier
@@ -163,7 +164,7 @@ private fun TopActions(onCancel: () -> Unit, onReload: (() -> Unit)?) {
         Spacer(Modifier.weight(1f))
         if (onReload != null) {
             CircleIconButton(
-                LsIcons.Refresh, "Reload page", onReload,
+                LsIcons.Refresh, Copy.Verification.reload, onReload,
                 size = 44.dp, iconSize = 22.dp, background = Color.Transparent, contentColor = LsColors.textSecondary, shadow = false,
             )
         }
@@ -181,7 +182,7 @@ private fun UnavailableContent(libraryName: String, origin: String, onDismiss: (
         verticalArrangement = Arrangement.spacedBy(LsSpacing.m),
     ) {
         PrimaryPillButton(
-            "Open the website",
+            Copy.Common.openWebsite,
             onClick = {
                 try {
                     context.startActivity(Intent(Intent.ACTION_VIEW, "$origin/".toUri()))
@@ -191,9 +192,9 @@ private fun UnavailableContent(libraryName: String, origin: String, onDismiss: (
             },
             modifier = Modifier.fillMaxWidth(),
         )
-        SecondaryPillButton("Close", onClick = onDismiss, modifier = Modifier.fillMaxWidth())
+        SecondaryPillButton(Copy.Common.close, onClick = onDismiss, modifier = Modifier.fillMaxWidth())
         Text(
-            "$libraryName keeps asking to confirm you're human after the check. Its own website still works in your browser.",
+            Copy.Verification.keepsAsking(libraryName).sentenceStart(),
             style = LsType.caption,
             color = LsColors.textMuted,
         )
@@ -265,11 +266,11 @@ private fun VerificationWebContent(appState: AppState, session: VerificationSess
                 modifier = Modifier.background(LsColors.background),
             )
             session.isLoading && session.showingChallenge == null ->
-                LoadingView(message = "Opening ${session.libraryName}…", modifier = Modifier.background(LsColors.background))
+                LoadingView(message = Copy.Verification.opening(session.libraryName), modifier = Modifier.background(LsColors.background))
             session.finishedWithoutCheck -> Box(Modifier.fillMaxSize().padding(LsSpacing.l), contentAlignment = Alignment.BottomCenter) {
                 Box(Modifier.clip(RoundedCornerShape(LsRadius.field)).background(LsColors.background)) {
                     AccountBanner(
-                        "${session.libraryName} didn't ask for a check this time. Close this and try again.",
+                        Copy.Verification.noCheck(session.libraryName).sentenceStart(),
                         tone = AccountBannerTone.INFO,
                     )
                 }
@@ -277,6 +278,9 @@ private fun VerificationWebContent(appState: AppState, session: VerificationSess
         }
     }
 }
+
+/** "your library asks…" → "Your library asks…": the stand-in name can start a sentence. */
+private fun String.sentenceStart(): String = replaceFirstChar { it.uppercaseChar() }
 
 /** Reads main-frame page events and WAF response headers only. */
 private class VerificationWebClient(

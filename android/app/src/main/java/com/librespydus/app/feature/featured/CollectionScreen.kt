@@ -22,6 +22,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.librespydus.app.core.AppState
+import com.librespydus.app.core.Copy
 import com.librespydus.app.core.LibraryBackend
 import com.librespydus.app.core.Route
 import com.librespydus.app.feature.home.HomeCoverShelf
@@ -85,18 +86,18 @@ fun CollectionScreen(route: Route.Collection, appState: AppState, navigator: App
             is BrowseLoadable.Loaded -> if (state.hasNoSections) {
                 EmptyStateView(
                     title = page.value.title?.takeIf { it.isNotBlank() } ?: route.title,
-                    message = WEBSITE_ONLY,
+                    message = Copy.Featured.websiteOnly,
                     icon = LsIcons.Globe,
-                    actionLabel = "Open website",
+                    actionLabel = Copy.Common.openWebsite,
                     onAction = { InAppBrowser.open(context, route.url) },
                     modifier = Modifier.weight(1f).padding(bottom = BrowseBottomClearance),
                 )
             } else if (state.allSectionsEmpty) {
                 EmptyStateView(
-                    title = "Nothing here right now",
-                    message = "Check back soon, or open the collection on the library's website.",
+                    title = Copy.Featured.emptyTitle,
+                    message = Copy.Featured.emptyMessage,
                     icon = BrowseIcons.AutoAwesome,
-                    actionLabel = "Open website",
+                    actionLabel = Copy.Common.openWebsite,
                     onAction = { InAppBrowser.open(context, route.url) },
                     modifier = Modifier.weight(1f).padding(bottom = BrowseBottomClearance),
                 )
@@ -106,9 +107,6 @@ fun CollectionScreen(route: Route.Collection, appState: AppState, navigator: App
         }
     }
 }
-
-/** The copy under a collection page without sections. */
-const val WEBSITE_ONLY = "This collection is on the library's website."
 
 @Composable
 private fun CollectionShelves(

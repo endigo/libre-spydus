@@ -64,6 +64,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.librespydus.app.core.AppState
+import com.librespydus.app.core.Copy
 import com.librespydus.app.feature.onboarding.LibraryLogo
 import com.librespydus.app.ui.components.CircleIconButton
 import com.librespydus.app.ui.components.PrimaryPillButton
@@ -76,9 +77,6 @@ import com.librespydus.app.ui.theme.LsType
 import kotlinx.coroutines.launch
 import uniffi.librespydus_core.CardBarcode
 import uniffi.librespydus_core.LibraryInfo
-
-/** The entry form's note under the field (docs/native-apps.md §5.9, as amended). */
-const val CARD_NUMBER_NOTE = "Enter the number on your library card or in your library account's Personal details (e.g. CL114D…)."
 
 /**
  * My card (§5.9): the library card as a barcode to scan at the desk or self-checkout, on a navy
@@ -134,7 +132,7 @@ private fun MyCardContent(appState: AppState, onClose: () -> Unit) {
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
-                "My card",
+                Copy.MyCard.title,
                 style = LsType.greeting,
                 color = LsColors.textPrimary,
                 modifier = Modifier
@@ -142,7 +140,7 @@ private fun MyCardContent(appState: AppState, onClose: () -> Unit) {
                     .semantics { heading() },
             )
             CircleIconButton(
-                LsIcons.Close, "Close", onClose,
+                LsIcons.Close, Copy.Common.close, onClose,
                 size = 36.dp, iconSize = 18.dp, background = LsColors.surface, contentColor = LsColors.textSecondary, shadow = false,
             )
         }
@@ -161,14 +159,14 @@ private fun MyCardContent(appState: AppState, onClose: () -> Unit) {
         } else {
             LibraryCardView(library, accountName, content, expires)
             Text(
-                "Show this at the library desk or self-checkout.",
+                Copy.MyCard.showAtDesk,
                 style = LsType.body,
                 color = LsColors.textSecondary,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth(),
             )
             SecondaryPillButton(
-                "Edit card number",
+                Copy.MyCard.editNumber,
                 onClick = { editing = true },
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -195,7 +193,7 @@ private fun LibraryCardView(library: LibraryInfo?, accountName: String?, content
             horizontalArrangement = Arrangement.spacedBy(LsSpacing.m),
         ) {
             if (library != null) LibraryLogo(library, size = 40.dp)
-            Text(library?.name ?: "Library card", style = LsType.bodyStrong, color = LsColors.onSheet, modifier = Modifier.weight(1f))
+            Text(library?.name ?: Copy.MyCard.libraryCard, style = LsType.bodyStrong, color = LsColors.onSheet, modifier = Modifier.weight(1f))
         }
         accountName?.trim()?.takeIf { it.isNotEmpty() }?.let { name ->
             Text(name, style = LsType.title, color = LsColors.onSheet, modifier = Modifier.padding(horizontal = LsSpacing.xl))
@@ -212,7 +210,7 @@ private fun LibraryCardView(library: LibraryInfo?, accountName: String?, content
                     Modifier
                         .fillMaxWidth()
                         .height(BARCODE_HEIGHT)
-                        .semantics { contentDescription = "Loading barcode" },
+                        .semantics { contentDescription = Copy.MyCard.loadingBarcode(content.number) },
                     contentAlignment = Alignment.Center,
                 ) {
                     CircularProgressIndicator(color = LsColors.onSheetSecondary, strokeWidth = 3.dp, modifier = Modifier.size(32.dp))
@@ -232,7 +230,7 @@ private fun LibraryCardView(library: LibraryInfo?, accountName: String?, content
                     modifier = Modifier.fillMaxWidth(),
                 )
                 Text(
-                    "This number can't be shown as a barcode.",
+                    Copy.MyCard.cannotEncode,
                     style = LsType.body,
                     color = LsColors.onSheetSecondary,
                     textAlign = TextAlign.Center,
@@ -262,7 +260,7 @@ private fun CardNumberText(text: String) {
 private fun ExpiryText(expires: String?) {
     val date = expires?.trim()?.takeIf { it.isNotEmpty() } ?: return
     Text(
-        "Expires $date",
+        Copy.MyCard.expires(date),
         style = LsType.caption,
         color = LsColors.onSheetSecondary,
         textAlign = TextAlign.Center,
@@ -299,7 +297,7 @@ private fun CardNumberForm(initial: String, onSave: (String) -> Unit, onCancel: 
 
     Column(verticalArrangement = Arrangement.spacedBy(LsSpacing.l)) {
         Column(verticalArrangement = Arrangement.spacedBy(LsSpacing.s)) {
-            Text("Library card number", style = LsType.caption, color = LsColors.textSecondary)
+            Text(Copy.MyCard.numberLabel, style = LsType.caption, color = LsColors.textSecondary)
             val shape = RoundedCornerShape(LsRadius.field)
             BasicTextField(
                 value = value,
@@ -317,7 +315,7 @@ private fun CardNumberForm(initial: String, onSave: (String) -> Unit, onCancel: 
                 modifier = Modifier
                     .fillMaxWidth()
                     .focusRequester(focus)
-                    .semantics { contentDescription = "Library card number" },
+                    .semantics { contentDescription = Copy.MyCard.numberLabel },
                 decorationBox = { inner ->
                     Box(
                         Modifier
@@ -328,15 +326,15 @@ private fun CardNumberForm(initial: String, onSave: (String) -> Unit, onCancel: 
                             .padding(horizontal = LsSpacing.l, vertical = LsSpacing.m),
                         contentAlignment = Alignment.CenterStart,
                     ) {
-                        if (value.text.isEmpty()) Text("Card number", style = LsType.body, color = LsColors.textMuted)
+                        if (value.text.isEmpty()) Text(Copy.MyCard.numberPlaceholder, style = LsType.body, color = LsColors.textMuted)
                         inner()
                     }
                 },
             )
-            Text(CARD_NUMBER_NOTE, style = LsType.caption, color = LsColors.textSecondary)
+            Text(Copy.MyCard.numberNote, style = LsType.caption, color = LsColors.textSecondary)
         }
-        PrimaryPillButton("Save", onClick = { onSave(value.text) }, enabled = canSave, modifier = Modifier.fillMaxWidth())
-        if (onCancel != null) SecondaryPillButton("Cancel", onClick = onCancel, modifier = Modifier.fillMaxWidth())
+        PrimaryPillButton(Copy.Common.save, onClick = { onSave(value.text) }, enabled = canSave, modifier = Modifier.fillMaxWidth())
+        if (onCancel != null) SecondaryPillButton(Copy.Common.cancel, onClick = onCancel, modifier = Modifier.fillMaxWidth())
     }
 }
 

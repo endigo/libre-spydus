@@ -129,7 +129,7 @@ class LibraryPickerModelTest {
         assertTrue(picker.loaded.value)
         val error = picker.loadError.value!!
         assertEquals(UserFacingError.Kind.NETWORK, error.kind)
-        assertEquals("Can't reach the library directory. Check your connection.", error.message)
+        assertEquals("Can’t reach the library directory. Check your connection.", error.message)
         assertEquals("connect timed out after 10s", error.detail)
         assertFalse(picker.isLoading)
 

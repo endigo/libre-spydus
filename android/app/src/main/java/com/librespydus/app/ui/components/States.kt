@@ -34,6 +34,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.librespydus.app.core.UserFacingError
+import com.librespydus.app.core.Copy
 import com.librespydus.app.ui.theme.LsColors
 import com.librespydus.app.ui.theme.LsIcons
 import com.librespydus.app.ui.theme.LsRadius
@@ -106,7 +107,7 @@ fun ErrorStateView(
     ) {
         if (onRetry != null) {
             Spacer(Modifier.height(LsSpacing.l))
-            SecondaryPillButton("Retry", onRetry, color = if (onSheet) LsColors.onSheet else LsColors.textPrimary)
+            SecondaryPillButton(Copy.Common.retry, onRetry, color = if (onSheet) LsColors.onSheet else LsColors.textPrimary)
         }
         val detail = error.detail
         if (!detail.isNullOrBlank()) {
@@ -119,7 +120,7 @@ fun ErrorStateView(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 val muted = if (onSheet) LsColors.onSheetSecondary else LsColors.textMuted
-                Text("Details", style = LsType.caption, color = muted)
+                Text(Copy.Errors.details, style = LsType.caption, color = muted)
                 Icon(LsIcons.ExpandMore, null, tint = muted, modifier = Modifier.size(18.dp).rotate(if (showDetail) 180f else 0f))
             }
             AnimatedVisibility(showDetail) {

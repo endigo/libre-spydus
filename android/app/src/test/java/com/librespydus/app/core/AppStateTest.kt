@@ -133,7 +133,7 @@ class AppStateTest {
         assertNull(f.secrets.get(AppState.sessionKey(canning.origin)))
 
         val network = f.state.report(SpydusException.Network("network error: connect timed out after 10s"))
-        assertEquals("Can't reach City of Canning. Check your connection.", network.message)
+        assertEquals("Can’t reach City of Canning. Check your connection.", network.message)
         assertEquals("network error: connect timed out after 10s", network.detail)
     }
 

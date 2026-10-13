@@ -2,6 +2,7 @@ package com.librespydus.app.feature.detail
 
 import com.librespydus.app.core.AvailabilitySummary
 import com.librespydus.app.core.BookRef
+import com.librespydus.app.core.Copy
 import com.librespydus.app.core.CoreHelpers
 import com.librespydus.app.core.FormatRef
 import com.librespydus.app.feature.featured.EditionLevel
@@ -132,7 +133,7 @@ data class AvailabilityLine(val text: String, val tone: Tone) {
             val digital = CoreHelpers.isDigitalFormat(format)
             val hasCounts = summary != null && (summary.available != null || summary.copies != null || summary.reserved != null)
             return when {
-                digital && !hasCounts -> AvailabilityLine("Available online", Tone.DIGITAL)
+                digital && !hasCounts -> AvailabilityLine(Copy.Detail.availableOnline, Tone.DIGITAL)
                 summary != null -> AvailabilityLine(
                     summary.label,
                     when {
@@ -141,7 +142,7 @@ data class AvailabilityLine(val text: String, val tone: Tone) {
                         else -> Tone.NORMAL
                     },
                 )
-                else -> AvailabilityLine("Ask the library about availability", Tone.MUTED)
+                else -> AvailabilityLine(Copy.Detail.askLibrary, Tone.MUTED)
             }
         }
     }
@@ -204,7 +205,7 @@ object DetailSubjects {
             .filter { it.isNotEmpty() }
             .map { part -> if (part.length > 3 && part == part.uppercase() && part != part.lowercase()) capitalizeWords(part) else part }
         if (parts.isEmpty()) return null
-        val label = parts.joinToString(" · ")
+        val label = parts.joinToString(Copy.Common.separator)
         val query = parts.joinToString(" ")
             .map { if (it.isLetterOrDigit() || it == '-' || it == '\'') it else ' ' }
             .joinToString("")
@@ -256,10 +257,10 @@ object DetailFacts {
 
 /** The related carousels, in display order. */
 enum class RelatedPanel(val title: String) {
-    SIMILAR("Similar books"),
-    AUTHOR("More by this author"),
-    SERIES("In this series"),
-    VERSIONS("Other editions"),
+    SIMILAR(Copy.Detail.similarBooks),
+    AUTHOR(Copy.Detail.moreByAuthor),
+    SERIES(Copy.Detail.inThisSeries),
+    VERSIONS(Copy.Detail.otherEditions),
     ;
 
     fun url(related: RecordRelated): String? = when (this) {

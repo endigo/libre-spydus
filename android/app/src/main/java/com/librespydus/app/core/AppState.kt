@@ -160,7 +160,7 @@ class AppState(
     /** Verifications completed for this library since it was selected (retry once, then give up). */
     val verificationAttempts: StateFlow<Int> = _verificationAttempts.asStateFlow()
 
-    /** A verification cookie is stored for the selected library (Profile "Verified on this device"). */
+    /** A verification cookie is stored for the selected library (Profile "Verified on this phone"). */
     val hasVerificationCookie: StateFlow<Boolean> = _hasVerificationCookie.asStateFlow()
 
     /** Sign-in requested (session expired, or a signed-out action); the root presents the login sheet. */

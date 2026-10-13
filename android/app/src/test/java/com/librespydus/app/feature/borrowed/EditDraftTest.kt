@@ -98,7 +98,8 @@ class EditDraftTest {
             assertEquals("2027-01-31", EditDraft.formValue(date("2027-01-31"), like = "2026-11-01"))
             assertEquals("31/01/2027", EditDraft.formValue(date("2027-01-31"), like = "01/11/2026"))
             assertEquals("Due tomorrow · 13 Oct", LoanRow.of(patronItem("Book", fields = mapOf("Due" to "13 Oct 2026")), today).meta)
-            assertEquals("13 Oct", BorrowedDates.short(date("2026-10-13")))
+            assertEquals("13 Oct", BorrowedDates.short(date("2026-10-13"), today))
+            assertEquals("5 Jan 2027", BorrowedDates.short(date("2027-01-05"), today))
         } finally {
             Locale.setDefault(saved)
         }

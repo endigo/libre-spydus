@@ -51,6 +51,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import com.librespydus.app.BuildConfig
 import com.librespydus.app.core.AppState
+import com.librespydus.app.core.Copy
 import com.librespydus.app.core.UserFacingError
 import com.librespydus.app.ui.components.CircleIconButton
 import com.librespydus.app.ui.components.PrimaryPillButton
@@ -121,7 +122,7 @@ fun LoginSheet(appState: AppState, onDismiss: () -> Unit, modifier: Modifier = M
     val scope = (activity as? ComponentActivity)?.lifecycleScope ?: compositionScope
     val focus = LocalFocusManager.current
     val pinFocus = remember { FocusRequester() }
-    val libraryName = library?.name ?: "your library"
+    val libraryName = library?.name ?: Copy.Common.yourLibrary
 
     fun submit() {
         if (!form.canSubmit) return
@@ -150,7 +151,7 @@ fun LoginSheet(appState: AppState, onDismiss: () -> Unit, modifier: Modifier = M
     ) {
         Row(Modifier.fillMaxWidth().padding(horizontal = LsSpacing.m), horizontalArrangement = Arrangement.End) {
             CircleIconButton(
-                LsIcons.Close, "Close", onDismiss,
+                LsIcons.Close, Copy.Common.close, onDismiss,
                 size = 36.dp, iconSize = 18.dp, background = LsColors.surface, contentColor = LsColors.textSecondary, shadow = false,
             )
         }
@@ -164,19 +165,19 @@ fun LoginSheet(appState: AppState, onDismiss: () -> Unit, modifier: Modifier = M
             Column(verticalArrangement = Arrangement.spacedBy(LsSpacing.m), modifier = Modifier.padding(bottom = LsSpacing.s)) {
                 library?.let { LibraryLogo(it, size = 64.dp) }
                 Column(verticalArrangement = Arrangement.spacedBy(LsSpacing.xs)) {
-                    Text("Sign in", style = LsType.greeting, color = LsColors.textPrimary, modifier = Modifier.semantics { heading() })
-                    Text(libraryName, style = LsType.section, color = LsColors.textSecondary)
+                    Text(Copy.Login.title, style = LsType.greeting, color = LsColors.textPrimary, modifier = Modifier.semantics { heading() })
+                    Text(libraryName.replaceFirstChar { it.uppercaseChar() }, style = LsType.section, color = LsColors.textSecondary)
                 }
             }
 
             LoginField(
-                label = "Library card number",
+                label = Copy.Login.cardLabel,
                 value = form.cardNumber,
                 onValueChange = {
                     form.cardNumber = it
                     form.clearError()
                 },
-                placeholder = "Card number",
+                placeholder = Copy.Login.cardPlaceholder,
                 contentType = ContentType.Username,
                 keyboardOptions = KeyboardOptions(
                     capitalization = KeyboardCapitalization.None,
@@ -188,13 +189,13 @@ fun LoginSheet(appState: AppState, onDismiss: () -> Unit, modifier: Modifier = M
                 enabled = !form.isSigningIn,
             )
             LoginField(
-                label = "PIN / password",
+                label = Copy.Login.pinLabel,
                 value = form.pin,
                 onValueChange = {
                     form.pin = it
                     form.clearError()
                 },
-                placeholder = "PIN or password",
+                placeholder = Copy.Login.pinPlaceholder,
                 contentType = ContentType.Password,
                 keyboardOptions = KeyboardOptions(
                     autoCorrectEnabled = false,
@@ -212,7 +213,7 @@ fun LoginSheet(appState: AppState, onDismiss: () -> Unit, modifier: Modifier = M
             }
 
             PrimaryPillButton(
-                text = if (form.isSigningIn) "Signing in…" else "Sign in",
+                text = if (form.isSigningIn) Copy.Account.signingIn else Copy.Account.signIn,
                 onClick = ::submit,
                 loading = form.isSigningIn,
                 enabled = form.canSubmit || form.isSigningIn,
@@ -222,7 +223,7 @@ fun LoginSheet(appState: AppState, onDismiss: () -> Unit, modifier: Modifier = M
             )
 
             Text(
-                "LibreSpydus signs in directly with $libraryName and doesn't store your PIN.",
+                Copy.Login.privacyNote(libraryName),
                 style = LsType.caption,
                 color = LsColors.textMuted,
             )

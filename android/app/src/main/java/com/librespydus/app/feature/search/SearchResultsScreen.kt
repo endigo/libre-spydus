@@ -28,6 +28,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.librespydus.app.core.AppState
+import com.librespydus.app.core.Copy
 import com.librespydus.app.core.ResultsSort
 import com.librespydus.app.core.Route
 import com.librespydus.app.ui.components.CircleIconButton
@@ -121,8 +122,8 @@ fun ListResultsScreen(route: Route.ListResults, appState: AppState, navigator: A
             onRetryLoadMore = { model.viewModelScope.launch { model.retryLoadMore() } },
             onOpen = navigator::openBook,
             modifier = Modifier.weight(1f),
-            noResultsTitle = "Nothing in “${route.title}” right now",
-            noResultsMessage = "Check back soon.",
+            noResultsTitle = Copy.Search.listEmptyTitle(route.title),
+            noResultsMessage = Copy.Search.listEmptyMessage,
         )
     }
 }
@@ -133,7 +134,7 @@ private fun SortMenu(selected: ResultsSort, onSelect: (ResultsSort) -> Unit) {
     Box {
         CircleIconButton(
             icon = BrowseIcons.SwapVert,
-            contentDescription = "Sort results",
+            contentDescription = Copy.Search.sortResults,
             onClick = { open = true },
             size = 44.dp,
             iconSize = 24.dp,
@@ -147,7 +148,7 @@ private fun SortMenu(selected: ResultsSort, onSelect: (ResultsSort) -> Unit) {
                 DropdownMenuItem(
                     text = { Text(sort.label, style = LsType.body, color = LsColors.textPrimary) },
                     trailingIcon = {
-                        if (sort == selected) Icon(LsIcons.Check, contentDescription = "Selected", tint = LsColors.primary)
+                        if (sort == selected) Icon(LsIcons.Check, contentDescription = Copy.Common.selected, tint = LsColors.primary)
                         else Spacer(Modifier.size(24.dp))
                     },
                     onClick = {

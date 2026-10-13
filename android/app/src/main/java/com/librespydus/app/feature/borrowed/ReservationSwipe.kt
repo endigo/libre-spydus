@@ -65,6 +65,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import com.librespydus.app.core.Copy
 import com.librespydus.app.ui.theme.LsColors
 import com.librespydus.app.ui.theme.LsIcons
 import com.librespydus.app.ui.theme.LsRadius
@@ -82,8 +83,8 @@ enum class ReservationAction(
     /** The long-press menu item and the TalkBack custom action. */
     val fullTitle: String,
 ) {
-    EDIT("Edit", "Edit reservation"),
-    CANCEL("Cancel", "Cancel reservation"),
+    EDIT(Copy.Common.edit, Copy.YourBooks.editReservation),
+    CANCEL(Copy.Common.cancel, Copy.YourBooks.cancelReservation),
     ;
 
     companion object {

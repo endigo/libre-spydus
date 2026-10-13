@@ -1,5 +1,6 @@
 package com.librespydus.app.feature.borrowed
 
+import com.librespydus.app.core.Copy
 import com.librespydus.app.feature.onboarding.demoData
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -60,7 +61,10 @@ class BorrowedLoanTest {
         assertEquals("Due 27 Oct · 15 days left", meta("27 Oct 2026"))
         assertEquals("Due 11 Oct · 1 day overdue", meta("11 Oct 2026"))
         assertEquals("Due 2 Oct · 10 days overdue", meta("2 Oct 2026"))
-        assertEquals("Due 1 Jan · 81 days left", meta("01/01/2027"))
+        assertEquals("Due 1 Jan 2027 · 81 days left", meta("01/01/2027"))
+        // A date the core can't read is shown as the library wrote it.
+        assertEquals("Due next week", meta("next week"))
+        assertEquals(Copy.Loans.lineDays("15 Oct", Copy.Loans.daysLeft(3)), meta("15 Oct 2026"))
     }
 
     @Test
@@ -99,6 +103,8 @@ class BorrowedLoanTest {
 }
 
 class BorrowedReservationTest {
+    private val today = LocalDate.of(2026, 10, 12)
+
     @Test
     fun actionHrefsMatchCancelAndEditLabels() {
         val reservation = patronItem(
@@ -149,8 +155,8 @@ class BorrowedReservationTest {
             patronItem("Ready", fields = mapOf("Status" to "Awaiting pickup", "Pickup location" to "WILLETTON & DISTRICT")),
             ReservationRow.Kind.READY,
         )
-        assertEquals("Ready for pickup", ready.statusLabel)
-        assertEquals("Pick up at Willetton & District", ready.meta)
+        assertEquals("Ready to collect", ready.statusLabel)
+        assertEquals("Collect from Willetton & District", ready.meta)
 
         val pending = ReservationRow.of(
             patronItem(
@@ -158,9 +164,15 @@ class BorrowedReservationTest {
                 fields = mapOf("Status" to "Pending", "Rank" to "4", "Placed" to "02 Oct 2026", "Pickup location" to "RIVERTON LIBRARY"),
             ),
             ReservationRow.Kind.PENDING,
+            today,
         )
         assertEquals("Pending", pending.statusLabel)
-        assertEquals("#4 in queue · Placed 2 Oct\nPick up at Riverton Library", pending.meta)
+        assertEquals("#4 in queue · Placed 2 Oct\nCollect from Riverton Library", pending.meta)
+        // Screen readers hear the queue place as words (§7.1).
+        assertEquals("number 4 in the queue, Placed 2 Oct, Collect from Riverton Library", pending.spokenMeta)
+        // A date in another year keeps its year (§7.1).
+        val lastYear = ReservationRow.of(patronItem("Old", fields = mapOf("Rank" to "2", "Placed" to "20 Dec 2025")), ReservationRow.Kind.PENDING, today)
+        assertEquals("#2 in queue · Placed 20 Dec 2025", lastYear.meta)
 
         val bare = ReservationRow.of(patronItem("Bare", fields = mapOf("Status" to "In transit")), ReservationRow.Kind.PENDING)
         assertEquals("In transit", bare.statusLabel)
@@ -168,7 +180,8 @@ class BorrowedReservationTest {
         assertNull(bare.meta)
         assertEquals("Pending", ReservationRow.of(patronItem("No status"), ReservationRow.Kind.PENDING).statusLabel)
         val oddRank = ReservationRow.of(patronItem("Odd", fields = mapOf("Rank" to "n/a", "Placed" to "soon")), ReservationRow.Kind.PENDING)
-        assertEquals("Rank n/a · Placed soon", oddRank.meta)
+        assertEquals("n/a in queue · Placed soon", oddRank.meta)
+        assertEquals("n/a in the queue, Placed soon", oddRank.spokenMeta)
     }
 
     @Test
@@ -189,11 +202,36 @@ class BorrowedReservationTest {
             patronItem("The midnight library", fields = mapOf("Pickup location" to "RIVERTON LIBRARY")),
             ReservationRow.Kind.READY,
         )
-        assertTrue(
-            CancelConfirm.message(ready).contains("“The midnight library” is waiting for you at Riverton Library"),
+        assertEquals(
+            "“The midnight library” is waiting for you at Riverton Library. Cancelling releases it to the next person.",
+            CancelConfirm.message(ready),
+        )
+        val noBranch = ReservationRow.of(patronItem("The midnight library"), ReservationRow.Kind.READY)
+        assertEquals(
+            "“The midnight library” is waiting for you. Cancelling releases it to the next person.",
+            CancelConfirm.message(noBranch),
         )
         val pending = ReservationRow.of(patronItem("Hollow bones"), ReservationRow.Kind.PENDING)
-        assertTrue(CancelConfirm.message(pending).contains("lose your place in the queue"))
+        assertEquals(
+            "“Hollow bones” will be removed from your reservations and you’ll lose your place in the queue.",
+            CancelConfirm.message(pending),
+        )
+    }
+
+    @Test
+    fun reservationWordingComesFromTheCatalogue() {
+        val ready = ReservationRow.of(patronItem("A", fields = mapOf("Pickup location" to "RIVERTON LIBRARY")), ReservationRow.Kind.READY)
+        assertEquals(Copy.YourBooks.readyToCollect, ready.statusLabel)
+        assertEquals(Copy.YourBooks.collectFrom("Riverton Library"), ready.meta)
+        assertEquals(Copy.YourBooks.cancelReadyMessage("A", "Riverton Library"), CancelConfirm.message(ready))
+
+        val pending = ReservationRow.of(patronItem("B", fields = mapOf("Rank" to "3", "Placed" to "02 Oct 2026")), ReservationRow.Kind.PENDING, today)
+        assertEquals(Copy.YourBooks.pending, pending.statusLabel)
+        assertEquals(Copy.YourBooks.queuePlace("3") + Copy.Common.separator + Copy.YourBooks.placed("2 Oct"), pending.meta)
+        assertEquals(Copy.YourBooks.cancelPendingMessage("B"), CancelConfirm.message(pending))
+        assertEquals("Cancel this reservation?", Copy.YourBooks.cancelTitle)
+        assertEquals("Cancel reservation", Copy.YourBooks.cancelReservation)
+        assertEquals("Keep reservation", Copy.YourBooks.keepReservation)
     }
 
     @Test

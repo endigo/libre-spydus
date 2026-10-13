@@ -51,6 +51,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.librespydus.app.core.AppState
+import com.librespydus.app.core.Copy
 import com.librespydus.app.core.Formatting
 import com.librespydus.app.core.UserFacingError
 import com.librespydus.app.feature.onboarding.AccountBanner
@@ -133,7 +134,7 @@ fun EditReservationSheet(
             val result = backend.editReservation(href, session, current.overrides())
             saving = false // lets the sheet hide (confirmValueChange)
             if (result.ok) finish(EditOutcome.Saved(result))
-            else problem = result.message?.trim()?.takeIf { it.isNotEmpty() } ?: "The library didn't accept the change."
+            else problem = result.message?.trim()?.takeIf { it.isNotEmpty() } ?: Copy.EditReservation.changeFailed
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
@@ -181,7 +182,7 @@ fun EditReservationSheet(
         ) {
             Box(Modifier.fillMaxWidth().padding(horizontal = LsSpacing.l, vertical = LsSpacing.xs)) {
                 Text(
-                    "Close",
+                    Copy.Common.close,
                     style = LsType.bodyStrong,
                     color = if (saving) LsColors.textMuted else LsColors.primary,
                     modifier = Modifier
@@ -191,7 +192,7 @@ fun EditReservationSheet(
                         .padding(horizontal = LsSpacing.s, vertical = LsSpacing.s),
                 )
                 Text(
-                    "Edit reservation",
+                    Copy.EditReservation.title,
                     style = LsType.section,
                     color = LsColors.textPrimary,
                     textAlign = TextAlign.Center,
@@ -199,7 +200,7 @@ fun EditReservationSheet(
                 )
             }
             when (val state = options) {
-                OptionsLoad.Loading -> LoadingView(message = "Loading reservation…", modifier = Modifier.heightIn(min = 320.dp))
+                OptionsLoad.Loading -> LoadingView(message = Copy.EditReservation.loading, modifier = Modifier.heightIn(min = 320.dp))
                 is OptionsLoad.Failed -> ErrorStateView(
                     state.error,
                     onRetry = { scope.launch { loadOptions() } },
@@ -219,9 +220,9 @@ fun EditReservationSheet(
                         )
                     } else {
                         EmptyStateView(
-                            title = "Can't edit this reservation",
+                            title = Copy.EditReservation.cantEditTitle,
                             message = state.options.message?.trim()?.takeIf { it.isNotEmpty() }
-                                ?: "This reservation can't be edited right now.",
+                                ?: Copy.EditReservation.cantEditMessage,
                             icon = AccountIcons.Event,
                             modifier = Modifier.heightIn(min = 320.dp),
                         )
@@ -263,24 +264,24 @@ private fun EditForm(
             )
         }
         DateRow(
-            title = "Delay until",
+            title = Copy.EditReservation.delayUntil,
             field = draft.delay,
             earliest = today,
-            footer = "The library won't fill the reservation before this date.",
+            footer = Copy.EditReservation.delayFooter,
             enabled = !saving,
             onChange = { onDraft(draft.copy(delay = it)) },
         )
         DateRow(
-            title = "Not required after",
+            title = Copy.EditReservation.notNeededAfter,
             field = draft.expiry,
-            // "Not required after" can't be before "Delay until".
+            // "Not needed after" can't be before "Delay until".
             earliest = if (draft.delay.isOn) maxOf(today, draft.delay.date) else today,
-            footer = "The reservation lapses if it isn't ready by this date.",
+            footer = Copy.EditReservation.notNeededFooter,
             enabled = !saving,
             onChange = { onDraft(draft.copy(expiry = it)) },
         )
         PrimaryPillButton(
-            "Save changes",
+            Copy.EditReservation.saveChanges,
             onClick = onSave,
             enabled = draft.hasChanges && !saving,
             loading = saving,
@@ -316,9 +317,9 @@ private fun BookHeader(row: ReservationRow) {
 @Composable
 private fun PickupDropdown(choices: List<PickupChoice>, selected: String?, enabled: Boolean, onSelect: (String) -> Unit) {
     var expanded by remember { mutableStateOf(false) }
-    val selectedName = choices.firstOrNull { it.code == selected }?.let(::branchName) ?: "Choose a branch"
+    val selectedName = choices.firstOrNull { it.code == selected }?.let(::branchName) ?: Copy.EditReservation.chooseBranch
     Column(verticalArrangement = Arrangement.spacedBy(LsSpacing.s)) {
-        Text("Pickup location", style = LsType.caption, color = LsColors.textSecondary)
+        Text(Copy.EditReservation.collectFrom, style = LsType.caption, color = LsColors.textSecondary)
         ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { if (enabled) expanded = it }) {
             Row(
                 Modifier
@@ -328,7 +329,7 @@ private fun PickupDropdown(choices: List<PickupChoice>, selected: String?, enabl
                     .clip(RoundedCornerShape(LsRadius.field))
                     .background(LsColors.surface)
                     .semantics {
-                        contentDescription = "Pickup location"
+                        contentDescription = Copy.EditReservation.collectFrom
                         stateDescription = selectedName
                     }
                     .padding(horizontal = LsSpacing.l),
@@ -348,7 +349,7 @@ private fun PickupDropdown(choices: List<PickupChoice>, selected: String?, enabl
                     DropdownMenuItem(
                         text = { Text(branchName(choice), style = LsType.body, color = LsColors.textPrimary) },
                         trailingIcon = if (choice.code == selected) {
-                            { Icon(LsIcons.Check, contentDescription = "Selected", tint = LsColors.primary) }
+                            { Icon(LsIcons.Check, contentDescription = Copy.Common.selected, tint = LsColors.primary) }
                         } else null,
                         onClick = {
                             onSelect(choice.code)
@@ -378,6 +379,8 @@ private fun DateRow(
     onChange: (EditDateField) -> Unit,
 ) {
     var picking by remember { mutableStateOf(false) }
+    // Mid-sentence in the screen-reader labels: "Change delay until date", "Clear not needed after".
+    val fieldName = title.lowercase()
     Column(verticalArrangement = Arrangement.spacedBy(LsSpacing.s)) {
         Row(
             Modifier
@@ -390,15 +393,19 @@ private fun DateRow(
         ) {
             Text(title, style = LsType.body, color = LsColors.textPrimary, modifier = Modifier.weight(1f))
             if (field.isOn) {
+                val date = editDate(field.date)
                 Text(
-                    EDIT_DATE.format(field.date),
+                    date,
                     style = LsType.bodyStrong,
                     color = LsColors.textPrimary,
                     modifier = Modifier
                         .clip(RoundedCornerShape(LsRadius.pill))
                         .background(LsColors.surfaceElevated)
-                        .clickable(enabled = enabled, role = Role.Button, onClickLabel = "Change $title date") { picking = true }
-                        .semantics { contentDescription = "$title: ${EDIT_DATE.format(field.date)}" }
+                        .clickable(enabled = enabled, role = Role.Button, onClickLabel = Copy.EditReservation.changeDate(fieldName)) { picking = true }
+                        .semantics {
+                            contentDescription = Copy.EditReservation.dateLabel(title)
+                            stateDescription = date
+                        }
                         .padding(horizontal = LsSpacing.m, vertical = LsSpacing.s),
                 )
                 Box(
@@ -406,25 +413,25 @@ private fun DateRow(
                         .size(44.dp)
                         .clip(RoundedCornerShape(LsRadius.pill))
                         .clickable(enabled = enabled, role = Role.Button) { onChange(field.copy(isOn = false)) }
-                        .semantics { contentDescription = "Clear $title" },
+                        .semantics { contentDescription = Copy.EditReservation.clearField(fieldName) },
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(LsIcons.Close, contentDescription = null, tint = LsColors.textSecondary, modifier = Modifier.size(20.dp))
                 }
             } else {
                 Text(
-                    "Set date",
+                    Copy.EditReservation.setDate,
                     style = LsType.bodyStrong,
                     color = LsColors.primary,
                     modifier = Modifier
                         .clip(RoundedCornerShape(LsRadius.pill))
-                        .clickable(enabled = enabled, role = Role.Button, onClickLabel = "Set $title date") { picking = true }
+                        .clickable(enabled = enabled, role = Role.Button, onClickLabel = Copy.EditReservation.setFieldDate(fieldName)) { picking = true }
                         .padding(horizontal = LsSpacing.m, vertical = LsSpacing.s),
                 )
             }
         }
         Text(
-            if (field.isCleared) "Cleared when you save. $footer" else footer,
+            if (field.isCleared) Copy.EditReservation.clearedFooter(footer) else footer,
             style = LsType.caption,
             color = LsColors.textMuted,
             modifier = Modifier.padding(horizontal = LsSpacing.s),
@@ -467,9 +474,9 @@ private fun DateRow(
                         picking = false
                     },
                     enabled = state.selectedDateMillis != null,
-                ) { Text("Done", color = LsColors.primary) }
+                ) { Text(Copy.Common.done, color = LsColors.primary) }
             },
-            dismissButton = { TextButton(onClick = { picking = false }) { Text("Cancel", color = LsColors.textPrimary) } },
+            dismissButton = { TextButton(onClick = { picking = false }) { Text(Copy.Common.cancel, color = LsColors.textPrimary) } },
             colors = colors,
         ) {
             DatePicker(state = state, colors = colors, title = {
@@ -479,8 +486,15 @@ private fun DateRow(
     }
 }
 
-/** "1 Nov 2026" (the library's dates are Gregorian whatever the device's calendar). */
-private val EDIT_DATE: DateTimeFormatter = DateTimeFormatter.ofPattern("d MMM uuuu", Locale.ENGLISH)
+/**
+ * "1 Nov", with the year only when it isn't this year ("3 Jan 2027"; §7.1). The library's dates are
+ * Gregorian whatever the device's calendar.
+ */
+private fun editDate(date: LocalDate, today: LocalDate = LocalDate.now()): String =
+    (if (date.year == today.year) EDIT_DATE else EDIT_DATE_YEAR).format(date)
+
+private val EDIT_DATE: DateTimeFormatter = DateTimeFormatter.ofPattern("d MMM", Locale.ENGLISH)
+private val EDIT_DATE_YEAR: DateTimeFormatter = DateTimeFormatter.ofPattern("d MMM uuuu", Locale.ENGLISH)
 
 /** The Material date picker works in UTC midnight millis. */
 private fun utcMillis(date: LocalDate): Long = date.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()

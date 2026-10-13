@@ -34,7 +34,7 @@ object Formatting {
     }
 
     /** "By Matt Haig", or null without an author. */
-    fun byLine(rawAuthor: String?): String? = displayAuthor(rawAuthor)?.let { "By $it" }
+    fun byLine(rawAuthor: String?): String? = displayAuthor(rawAuthor)?.let(Copy.Detail::byline)
 
     /** First name for the Home greeting: "Test Borrower" → "Test", "Borrower, Test" → "Test". */
     fun firstName(accountName: String?): String? {
@@ -56,34 +56,16 @@ object Formatting {
     /** Whole days from [today] to [due]; negative when overdue. */
     fun daysUntil(due: LocalDate, today: LocalDate = LocalDate.now()): Long = ChronoUnit.DAYS.between(today, due)
 
-    /** "3 days left", "1 day left", "Due today", "Overdue by 2 days". */
-    fun daysLeftLabel(days: Long): String = when {
-        days > 1 -> "$days days left"
-        days == 1L -> "1 day left"
-        days == 0L -> "Due today"
-        days == -1L -> "Overdue by 1 day"
-        else -> "Overdue by ${-days} days"
-    }
-
-    /** Loans meta line: "Due 27 Oct · 3 days left" (§6). Falls back to the raw text. */
-    fun dueLine(dueText: String?, today: LocalDate = LocalDate.now()): String? {
-        val due = parseDueDate(dueText) ?: return dueText?.let { "Due $it" }
-        val days = daysUntil(due, today)
-        if (days == 0L) return "Due today"
-        return "Due ${SHORT_DATE.format(due)} · ${daysLeftLabel(days)}"
-    }
-
     /** Danger colour threshold for loans (§6): ≤ 3 days left or overdue. */
     fun isDueSoon(dueText: String?, today: LocalDate = LocalDate.now()): Boolean =
         parseDueDate(dueText)?.let { daysUntil(it, today) <= 3 } ?: false
 
-    private val SHORT_DATE: DateTimeFormatter = DateTimeFormatter.ofPattern("d MMM", Locale.ENGLISH)
-
     /**
      * Your Books' "Updated …" line for an account fetched at [fetchedAtMs] (§5.2a): "Updated just
      * now", "Updated 12 min ago", then "Updated today at 4:20 pm", "Updated yesterday at 4:20 pm",
-     * "Updated Monday at 4:20 pm" (within a week) and "Updated 3 Oct 2026 at 4:20 pm", in
-     * [locale]'s date style and the [time] style (the screen passes the device's 12/24-hour one).
+     * "Updated Monday at 4:20 pm" (within a week) and "Updated 3 Oct at 4:20 pm" (the year only
+     * when it isn't this year), in [locale]'s day and month names and the [time] style (the screen
+     * passes the device's 12/24-hour one).
      */
     fun updatedText(
         fetchedAtMs: Long,
@@ -93,28 +75,31 @@ object Formatting {
         time: (ZonedDateTime) -> String = { DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).withLocale(locale).format(it) },
     ): String {
         val age = nowMs - fetchedAtMs
-        if (age < 60_000) return "Updated just now" // also a fetch "in the future" (clock moved back)
-        if (age < 3_600_000) return "Updated ${age / 60_000} min ago"
+        if (age < 60_000) return Copy.YourBooks.updatedJustNow // also a fetch "in the future" (clock moved back)
+        if (age < 3_600_000) return Copy.YourBooks.updatedMinutesAgo((age / 60_000).toInt())
         val fetched = Instant.ofEpochMilli(fetchedAtMs).atZone(zone)
-        val days = ChronoUnit.DAYS.between(fetched.toLocalDate(), Instant.ofEpochMilli(nowMs).atZone(zone).toLocalDate())
-        val day = when {
-            days == 0L -> "today"
-            days == 1L -> "yesterday"
-            days < 7 -> fetched.dayOfWeek.getDisplayName(TextStyle.FULL, locale)
-            else -> DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale).format(fetched)
+        val today = Instant.ofEpochMilli(nowMs).atZone(zone).toLocalDate()
+        val days = ChronoUnit.DAYS.between(fetched.toLocalDate(), today)
+        return when {
+            days == 0L -> Copy.YourBooks.updatedToday(time(fetched))
+            days == 1L -> Copy.YourBooks.updatedYesterday(time(fetched))
+            days < 7 -> Copy.YourBooks.updatedOn(fetched.dayOfWeek.getDisplayName(TextStyle.FULL, locale), time(fetched))
+            else -> {
+                val pattern = if (fetched.year == today.year) "d MMM" else "d MMM yyyy"
+                Copy.YourBooks.updatedOn(DateTimeFormatter.ofPattern(pattern, locale).format(fetched), time(fetched))
+            }
         }
-        return "Updated $day at ${time(fetched)}"
     }
 
     /** Library picker sections (§6), in display order. */
     val REGION_ORDER = listOf("AU", "NZ", "US", "UK", "SG", "OTHER")
 
     fun regionLabel(region: String): String = when (region.uppercase()) {
-        "AU" -> "Australia"
-        "NZ" -> "New Zealand"
-        "US" -> "United States"
-        "UK" -> "United Kingdom"
-        "SG" -> "Singapore"
-        else -> "Other"
+        "AU" -> Copy.Onboarding.regionAU
+        "NZ" -> Copy.Onboarding.regionNZ
+        "US" -> Copy.Onboarding.regionUS
+        "UK" -> Copy.Onboarding.regionUK
+        "SG" -> Copy.Onboarding.regionSG
+        else -> Copy.Onboarding.regionOther
     }
 }

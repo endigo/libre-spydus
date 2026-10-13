@@ -30,13 +30,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.librespydus.app.core.AppState
 import com.librespydus.app.core.PicksNotice
-import com.librespydus.app.core.PicksText
+import com.librespydus.app.core.Copy
 import com.librespydus.app.ui.components.tabBarContentPadding
 import com.librespydus.app.ui.theme.LsColors
 import com.librespydus.app.ui.theme.LsIcons
@@ -91,13 +92,13 @@ fun PicksOverlays(appState: AppState) {
     if (offerVisible && current != null) {
         AlertDialog(
             onDismissRequest = { appState.picks.answerOffer(add = false) },
-            title = { Text(PicksText.OFFER_TITLE) },
+            title = { Text(Copy.Picks.offerTitle) },
             text = { Text(current.message) },
             confirmButton = {
-                TextButton(onClick = { appState.picks.answerOffer(add = true) }) { Text(PicksText.OFFER_ADD, color = LsColors.primary) }
+                TextButton(onClick = { appState.picks.answerOffer(add = true) }) { Text(Copy.Common.add, color = LsColors.primary) }
             },
             dismissButton = {
-                TextButton(onClick = { appState.picks.answerOffer(add = false) }) { Text(PicksText.OFFER_NOT_NOW, color = LsColors.textPrimary) }
+                TextButton(onClick = { appState.picks.answerOffer(add = false) }) { Text(Copy.Common.notNow, color = LsColors.textPrimary) }
             },
             containerColor = LsColors.surfaceElevated,
             titleContentColor = LsColors.textPrimary,
@@ -115,8 +116,11 @@ private fun NoticePill(notice: PicksNotice, onDismiss: () -> Unit) {
             .shadow(8.dp, shape)
             .clip(shape)
             .background(LsColors.surfaceElevated)
-            .clickable(onClickLabel = "Dismiss", onClick = onDismiss)
-            .semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite }
+            .clickable(onClickLabel = Copy.Common.dismiss, onClick = onDismiss)
+            .semantics(mergeDescendants = true) {
+                liveRegion = LiveRegionMode.Polite
+                contentDescription = Copy.A11y.labelAndHint(notice.message, Copy.A11y.dismissHint)
+            }
             .padding(horizontal = LsSpacing.l, vertical = LsSpacing.m),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(LsSpacing.s),

@@ -5,11 +5,11 @@ import uniffi.librespydus_core.SearchSort
 
 /** The five tabs (§5.5); [SEARCH] is the raised centre button. Each tab keeps its own stack. */
 enum class Tab(val label: String) {
-    HOME("Home"),
-    BORROWED("Your Books"),
-    SEARCH("Search"),
-    FAVOURITES("Favourites"),
-    PROFILE("Profile"),
+    HOME(Copy.Tabs.home),
+    BORROWED(Copy.Tabs.yourBooks),
+    SEARCH(Copy.Tabs.search),
+    FAVOURITES(Copy.Tabs.myPicks),
+    PROFILE(Copy.Tabs.profile),
 }
 
 /** Your Books' two lists, for opening it on one (the book page's "On loan" / "Reserved" pill). */
@@ -21,8 +21,8 @@ enum class BorrowedSegment { LOANS, RESERVATIONS }
  */
 @Serializable
 enum class ResultsSort(val label: String) {
-    RELEVANCE("Relevance"),
-    NEWEST("Newest"),
+    RELEVANCE(Copy.Search.relevance),
+    NEWEST(Copy.Search.newest),
     ;
 
     fun toCore(): SearchSort = when (this) {

@@ -3,6 +3,7 @@ package com.librespydus.app.feature.onboarding
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.librespydus.app.core.Copy
 import com.librespydus.app.core.UserFacingError
 
 /**
@@ -167,7 +168,7 @@ class VerificationSession(val origin: String, val libraryName: String) {
         failedSinceStart = true
         loadError = UserFacingError(
             UserFacingError.Kind.NETWORK,
-            "Can't reach $libraryName. Check your connection.",
+            Copy.Errors.network(libraryName),
             description,
         )
     }

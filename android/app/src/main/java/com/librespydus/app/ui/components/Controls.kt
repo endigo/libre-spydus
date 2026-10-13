@@ -37,7 +37,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
@@ -46,6 +48,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.librespydus.app.core.Copy
 import com.librespydus.app.ui.theme.LsColors
 import com.librespydus.app.ui.theme.LsIcons
 import com.librespydus.app.ui.theme.LsRadius
@@ -57,7 +60,7 @@ import com.librespydus.app.ui.theme.LsType
 fun SectionHeader(
     title: String,
     modifier: Modifier = Modifier,
-    actionLabel: String = "View All",
+    actionLabel: String = Copy.Common.viewAll,
     onAction: (() -> Unit)? = null,
     color: Color = LsColors.textPrimary,
     actionColor: Color = LsColors.textSecondary,
@@ -72,6 +75,10 @@ fun SectionHeader(
                 modifier = Modifier
                     .clip(RoundedCornerShape(LsRadius.pill))
                     .clickable(role = Role.Button, onClick = onAction)
+                    .semantics {
+                        // "View All New arrivals": which section's list it opens.
+                        if (actionLabel == Copy.Common.viewAll) contentDescription = Copy.A11y.viewAllSection(title)
+                    }
                     .padding(horizontal = LsSpacing.s, vertical = LsSpacing.xs),
             )
         }
@@ -87,7 +94,7 @@ fun SearchField(
     value: String,
     onValueChange: (String) -> Unit,
     modifier: Modifier = Modifier,
-    placeholder: String = "Search by title, author, etc.",
+    placeholder: String = Copy.Search.placeholder,
     onSearch: ((String) -> Unit)? = null,
     onClick: (() -> Unit)? = null,
     focusRequester: FocusRequester? = null,
@@ -109,7 +116,7 @@ fun SearchField(
             if (value.isNotEmpty() && onClick == null) {
                 Icon(
                     LsIcons.Close,
-                    contentDescription = "Clear search",
+                    contentDescription = Copy.Search.clearSearch,
                     tint = LsColors.textSecondary,
                     modifier = Modifier
                         .size(28.dp)
@@ -121,7 +128,8 @@ fun SearchField(
         }
     }
     if (onClick != null) {
-        Box(container.clickable(role = Role.Button, onClick = onClick).semantics { contentDescription = placeholder }) {
+        // Home's field: a button that opens Search, so it's read as one ("Search. Opens Search").
+        Box(container.clickable(role = Role.Button, onClick = onClick).semantics { contentDescription = Copy.A11y.labelAndHint(Copy.Home.searchField, Copy.Home.searchFieldHint) }) {
             decoration { Text(value, style = LsType.body, color = LsColors.textPrimary, maxLines = 1) }
         }
     } else {
@@ -239,7 +247,7 @@ fun LsTopBar(
     ) {
         if (onBack != null) {
             CircleIconButton(
-                LsIcons.ArrowBack, "Back", onBack,
+                LsIcons.ArrowBack, Copy.Common.back, onBack,
                 size = 44.dp, iconSize = 24.dp, background = Color.Transparent, contentColor = contentColor, shadow = false,
             )
         } else {
@@ -268,13 +276,23 @@ fun GenreTile(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     size: Dp = 84.dp,
+    /** Read after the label ("Fiction. Shows Fiction books"). */
+    accessibilityHint: String? = null,
 ) {
     val shape = RoundedCornerShape(LsRadius.tile)
     Column(
         modifier
             .width(size)
             .clip(RoundedCornerShape(LsRadius.tile))
-            .clickable(role = Role.Button, onClick = onClick),
+            .clickable(role = Role.Button, onClick = onClick)
+            .then(
+                if (accessibilityHint == null) Modifier
+                else Modifier.clearAndSetSemantics {
+                    contentDescription = Copy.A11y.labelAndHint(label, accessibilityHint)
+                    role = Role.Button
+                    onClick { onClick(); true }
+                },
+            ),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(LsSpacing.s),
     ) {

@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
+import com.librespydus.app.core.Copy
 import com.librespydus.app.ui.theme.LsColors
 import com.librespydus.app.ui.theme.LsCover
 import com.librespydus.app.ui.theme.LsRadius
@@ -69,7 +70,7 @@ fun CoverImage(
                 else Modifier,
             )
             .clip(shape)
-            .semantics { contentDescription = "Cover of $title" },
+            .semantics { contentDescription = Copy.A11y.coverOf(title) },
     ) {
         if (!loaded) CoverPlaceholder(title, Modifier.matchParentSize())
         if (!url.isNullOrBlank()) {
@@ -123,7 +124,7 @@ private fun Color.compositeOverNavy(): Color {
 }
 
 /**
- * A cover with an optional caption beneath (Home shelves, "Your borrowed books" with
+ * A cover with an optional caption beneath (Home shelves, "Your loans" with
  * "3 days left", carousels). [showTitle] adds the title above the caption.
  */
 @Composable
