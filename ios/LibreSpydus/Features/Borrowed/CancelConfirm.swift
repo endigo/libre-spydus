@@ -7,13 +7,13 @@ extension View {
     func cancelReservationConfirmation(for row: ReservationRow, confirming: Binding<ReservationRow?>,
                                        onConfirm: @escaping (ReservationRow) -> Void) -> some View {
         confirmationDialog(
-            "Cancel this reservation?",
+            Copy.YourBooks.cancelTitle,
             isPresented: Binding(get: { confirming.wrappedValue?.id == row.id },
                                  set: { if !$0, confirming.wrappedValue?.id == row.id { confirming.wrappedValue = nil } }),
             titleVisibility: .visible
         ) {
-            Button("Cancel Reservation", role: .destructive) { onConfirm(row) }
-            Button("Keep Reservation", role: .cancel) {}
+            Button(Copy.YourBooks.cancelReservation, role: .destructive) { onConfirm(row) }
+            Button(Copy.YourBooks.keepReservation, role: .cancel) {}
         } message: {
             Text(CancelConfirm.message(for: row))
         }
@@ -23,9 +23,9 @@ extension View {
 enum CancelConfirm {
     static func message(for row: ReservationRow) -> String {
         if row.isReady {
-            let place = row.pickup.map { " at \($0)" } ?? ""
-            return "“\(row.ref.title)” is waiting for you\(place). Cancelling releases it to the next person."
+            guard let branch = row.pickup else { return Copy.YourBooks.cancelReadyMessageNoBranch(title: row.ref.title) }
+            return Copy.YourBooks.cancelReadyMessage(title: row.ref.title, branch: branch)
         }
-        return "“\(row.ref.title)” will be removed from your reservations and you'll lose your place in the queue."
+        return Copy.YourBooks.cancelPendingMessage(title: row.ref.title)
     }
 }

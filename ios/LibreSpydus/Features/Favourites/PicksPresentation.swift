@@ -1,8 +1,8 @@
 import SwiftUI
 
 /// My Picks' short confirmations (docs/native-apps.md §5.11) as a toast above the tab bar, on
-/// whatever screen is showing: "Saved to My Picks", "Removed from My Picks", "Couldn't update My
-/// Picks.", the copy's progress and its summary. Each shows for a few seconds (progress until the
+/// whatever screen is showing: "Saved to My Picks", "Removed from My Picks", "Couldn’t update My
+/// Picks", the copy's progress and its summary. Each shows for a few seconds (progress until the
 /// next one) and is announced to VoiceOver. RootView puts it over the tab stacks.
 struct PicksNoticeOverlay: View {
     @Environment(AppModel.self) private var model
@@ -69,8 +69,8 @@ private struct PicksToast: View {
 }
 
 extension View {
-    /// The copy-once offer after an interactive sign-in (§5.11): "Add your saved books to My Picks?"
-    /// with Add / Not now, once the sign-in sheet has gone (and no other sheet is up).
+    /// The copy-once offer after an interactive sign-in (§5.11): "Add this phone’s picks to your
+    /// library account?" with Add / Not now, once the sign-in sheet has gone (and no other sheet is up).
     func picksCopyOfferAlert() -> some View {
         modifier(PicksCopyOfferAlert())
     }
@@ -105,11 +105,11 @@ private struct PicksCopyOfferAlert: ViewModifier {
                 guard !Task.isCancelled, model.picksCopyOffer == offer, canPresent else { return }
                 shown = offer
             }
-            .alert(PicksText.offerTitle, isPresented: isPresented, presenting: shown) { _ in
-                Button("Not now", role: .cancel) { answer(add: false) }
-                Button("Add") { answer(add: true) }
+            .alert(Copy.Picks.offerTitle, isPresented: isPresented, presenting: shown) { _ in
+                Button(Copy.Common.notNow, role: .cancel) { answer(add: false) }
+                Button(Copy.Common.add) { answer(add: true) }
             } message: { offer in
-                Text(PicksText.offerMessage(count: offer.count))
+                Text(Copy.Picks.offerMessage(count: offer.count))
             }
     }
 

@@ -32,12 +32,12 @@ struct MyCardSheet: View {
             .scrollDismissesKeyboard(.interactively)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Theme.Colors.background.ignoresSafeArea())
-            .navigationTitle("My card")
+            .navigationTitle(Copy.MyCard.title)
             .navigationBarTitleDisplayMode(.inline)
             .navyNavigationBar()
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") { dismiss() }
+                    Button(Copy.Common.done) { dismiss() }
                 }
             }
         }
@@ -55,7 +55,7 @@ struct MyCardSheet: View {
             LibraryCardView(libraryName: model.libraryName, logoUrl: model.library?.logoUrl,
                             borrowerName: model.accountName, number: number, expires: model.cardExpires,
                             barcode: card.barcode(for: number))
-            Text("Show this at the library desk or self-checkout.")
+            Text(Copy.MyCard.showAtDesk)
                 .themeFont(.body)
                 .foregroundStyle(Theme.Colors.textSecondary)
                 .multilineTextAlignment(.center)
@@ -64,7 +64,7 @@ struct MyCardSheet: View {
                 card.edit(current: number)
                 fieldFocused = true
             } label: {
-                Label("Edit card number", systemImage: "pencil")
+                Label(Copy.MyCard.editNumber, systemImage: "pencil")
                     .themeFont(.bodyStrong)
                     .foregroundStyle(Theme.Colors.textPrimary)
                     .padding(.horizontal, Theme.Spacing.xl)
@@ -82,12 +82,12 @@ struct MyCardSheet: View {
         @Bindable var card = card
         return VStack(alignment: .leading, spacing: Theme.Spacing.l) {
             VStack(alignment: .leading, spacing: Theme.Spacing.s) {
-                Text("Library card number")
+                Text(Copy.MyCard.numberLabel)
                     .themeFont(.caption)
                     .foregroundStyle(Theme.Colors.textSecondary)
                     .accessibilityHidden(true)
                 TextField(text: $card.draft) {
-                    Text("Card number").foregroundStyle(Theme.Colors.textMuted)
+                    Text(Copy.MyCard.numberPlaceholder).foregroundStyle(Theme.Colors.textMuted)
                 }
                 .themeFont(.body)
                 .foregroundStyle(Theme.Colors.textPrimary)
@@ -97,19 +97,19 @@ struct MyCardSheet: View {
                 .submitLabel(.done)
                 .focused($fieldFocused)
                 .onSubmit(save)
-                .accessibilityLabel("Library card number")
+                .accessibilityLabel(Copy.MyCard.numberLabel)
                 .padding(.horizontal, Theme.Spacing.l)
                 .frame(minHeight: 52)
                 .background(RoundedRectangle(cornerRadius: Theme.Radius.field, style: .continuous).fill(Theme.Colors.field))
-                Text("Enter the number on your library card or in your library account's Personal details (e.g. CL114D…).")
+                Text(Copy.MyCard.numberNote)
                     .themeFont(.caption)
                     .foregroundStyle(Theme.Colors.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            PrimaryPillButton(title: "Save", fillsWidth: true, action: save)
+            PrimaryPillButton(title: Copy.Common.save, fillsWidth: true, action: save)
                 .disabled(!card.canSave)
             if card.isEditingExisting {
-                Button("Cancel") {
+                Button(Copy.Common.cancel) {
                     fieldFocused = false
                     card.cancelEditing()
                 }
@@ -153,7 +153,7 @@ private struct LibraryCardView: View {
                         .themeFont(.bodyStrong)
                         .foregroundStyle(Theme.Colors.onSheet)
                         .fixedSize(horizontal: false, vertical: true)
-                    Text("Library card")
+                    Text(Copy.MyCard.libraryCard)
                         .themeFont(.caption)
                         .foregroundStyle(Theme.Colors.onSheetSecondary)
                 }
@@ -193,7 +193,7 @@ private struct LibraryCardView: View {
                 expiryText
             }
             .accessibilityElement(children: .ignore)
-            .accessibilityLabel("Loading barcode for card \(number)")
+            .accessibilityLabel(Copy.MyCard.loadingBarcode(number: number))
         case .bars(let barcode):
             // Edge to edge: the card's white is part of the quiet zone, so the bars can be wider.
             VStack(spacing: Theme.Spacing.s) {
@@ -203,7 +203,7 @@ private struct LibraryCardView: View {
                 expiryText
             }
             .accessibilityElement(children: .ignore)
-            .accessibilityLabel("Barcode for card \(number)")
+            .accessibilityLabel(Copy.MyCard.barcode(number: number))
             .accessibilityAddTraits(.isImage)
         case .unencodable(let number):
             VStack(spacing: Theme.Spacing.s) {
@@ -214,7 +214,7 @@ private struct LibraryCardView: View {
                     .multilineTextAlignment(.center)
                     .minimumScaleFactor(0.5)
                     .lineLimit(2)
-                Text("This number can't be shown as a barcode.")
+                Text(Copy.MyCard.cannotEncode)
                     .themeFont(.caption)
                     .foregroundStyle(Theme.Colors.onSheetSecondary)
                     .multilineTextAlignment(.center)
@@ -228,7 +228,7 @@ private struct LibraryCardView: View {
     @ViewBuilder
     private var expiryText: some View {
         if let expires {
-            Text("Expires \(expires)")
+            Text(Copy.MyCard.expires(date: expires))
                 .themeFont(.caption)
                 .foregroundStyle(Theme.Colors.onSheetSecondary)
                 .frame(maxWidth: .infinity)

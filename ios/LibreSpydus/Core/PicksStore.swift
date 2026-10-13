@@ -3,7 +3,7 @@ import LibreSpydusCore
 import Observation
 
 /// My Picks (docs/native-apps.md §5.11): the reader's Pick list on the library account, which
-/// Favourites shows while signed in. `AppModel` owns one and points it at the current origin and
+/// the My Picks tab shows while signed in. `AppModel` owns one and points it at the current origin and
 /// session, like `AccountStore`; sign-out, an expired session and a library change clear it.
 ///
 /// - **The list and the picked set** come from the same pages: `refresh()` loads the first page,
@@ -44,7 +44,7 @@ final class PicksStore {
     private(set) var loadMoreError: UserFacingError?
     /// The IRNs on the list (`workIrn` of every record loaded), with changes in flight laid over.
     private(set) var irns: Set<String> = []
-    /// A book was saved that the list doesn't show yet: Favourites loads it again when it's next
+    /// A book was saved that the list doesn't show yet: the My Picks tab loads it again when it's next
     /// on screen.
     private(set) var isStale = false
     /// The latest confirmation or failure, shown briefly (`PicksNoticeOverlay`).
@@ -182,7 +182,7 @@ final class PicksStore {
             pending[irn] = nil
             committed[irn] = picked
             if picked, !items.contains(where: { PickIrn.of($0.ref) == irn }) { isStale = true }
-            notice = PicksNotice(message: picked ? PicksText.saved : PicksText.removed, tone: .success)
+            notice = PicksNotice(message: picked ? Copy.Picks.saved : Copy.Picks.removed, tone: .success)
             return true
         } catch {
             guard generation == self.generation else { return false }
@@ -192,7 +192,7 @@ final class PicksStore {
             let shown = report(error)
             // A lost session signed out (and cleared this store): the login sheet says it all.
             guard generation == self.generation, shown != nil else { return false }
-            notice = PicksNotice(message: PicksText.couldNotUpdate, tone: .error)
+            notice = PicksNotice(message: Copy.Picks.updateFailed, tone: .error)
             return false
         }
     }
@@ -223,7 +223,7 @@ final class PicksStore {
     func copy(_ refs: [BookRef]) async -> CopySummary? {
         guard let account, !refs.isEmpty else { return nil }
         let generation = self.generation
-        notice = PicksNotice(message: PicksText.copying(refs.count), tone: .progress)
+        notice = PicksNotice(message: Copy.Picks.adding(count: refs.count), tone: .progress)
         var summary = CopySummary(added: 0, failed: 0)
         for (index, ref) in refs.enumerated() {
             guard generation == self.generation else { break }
@@ -513,36 +513,11 @@ struct PicksCopyOffer: Identifiable, Hashable, Sendable {
     var id: String { origin }
 }
 
-/// My Picks' wording (docs/native-apps.md §5.11), the same on Android.
+/// My Picks' composed wording (docs/native-apps.md §5.11); every piece is from `Copy.Picks`.
 enum PicksText {
-    static let title = "My Picks"
-    static let subtitle = "Saved on your library account"
-    static let saved = "Saved to My Picks"
-    static let removed = "Removed from My Picks"
-    static let couldNotUpdate = "Couldn't update My Picks."
-    static let save = "Save to My Picks"
-    static let remove = "Remove from My Picks"
-    static let emptyTitle = "No picks yet"
-    static let emptyMessage = "Tap the bookmark on a book to save it to your library account."
-    static let offerTitle = "Add your saved books to My Picks?"
-
-    /// "3 books saved on this phone can be added to your library account."
-    static func offerMessage(count: Int) -> String {
-        "\(books(count)) saved on this phone can be added to your library account."
-    }
-
-    /// "Added 3 books to My Picks", plus " · 1 couldn't be added".
+    /// "Added 3 books to My Picks", plus " · 1 couldn’t be added".
     static func copied(added: Int, failed: Int) -> String {
-        let text = "Added \(books(added)) to My Picks"
-        return failed > 0 ? "\(text) · \(failed) couldn't be added" : text
-    }
-
-    static func copying(_ count: Int) -> String {
-        "Adding \(books(count)) to My Picks…"
-    }
-
-    /// "1 book", "3 books".
-    static func books(_ count: Int) -> String {
-        count == 1 ? "1 book" : "\(count) books"
+        let text = Copy.Picks.added(count: added)
+        return failed > 0 ? text + Copy.Common.separator + Copy.Picks.notAdded(count: failed) : text
     }
 }

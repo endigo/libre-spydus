@@ -44,7 +44,7 @@ struct ShelfSkeleton: View {
         .scrollDisabled(true)
         .scrollIndicators(.hidden)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Loading")
+        .accessibilityLabel(Copy.Common.loading)
     }
 }
 
@@ -71,7 +71,7 @@ struct SectionErrorCard: View {
             .accessibilityElement(children: .combine)
             Spacer(minLength: Theme.Spacing.s)
             if error.canRetry {
-                Button("Retry", action: retry)
+                Button(Copy.Common.retry, action: retry)
                     .themeFont(.bodyStrong)
                     .foregroundStyle(Theme.Colors.primary)
                     .buttonStyle(.borderless)
@@ -111,7 +111,7 @@ struct SectionMessageCard: View {
     }
 }
 
-/// Signed out, in place of "Your borrowed books".
+/// Signed out, in place of "Your loans".
 struct SignInCard: View {
     let libraryName: String
     let signIn: () -> Void
@@ -125,10 +125,10 @@ struct SignInCard: View {
                 .background(Circle().fill(Theme.Colors.accent))
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
-                Text("See your loans here")
+                Text(Copy.Home.signInCardTitle)
                     .themeFont(.bodyStrong)
                     .foregroundStyle(Theme.Colors.textPrimary)
-                Text("Sign in with your \(libraryName) card.")
+                Text(Copy.Home.signInCardMessage(library: libraryName))
                     .themeFont(.caption)
                     .foregroundStyle(Theme.Colors.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -136,7 +136,7 @@ struct SignInCard: View {
             .accessibilityElement(children: .combine)
             Spacer(minLength: Theme.Spacing.s)
             Button(action: signIn) {
-                Text("Sign in")
+                Text(Copy.Account.signIn)
                     .themeFont(.bodyStrong)
                     .foregroundStyle(Theme.Colors.onPrimary)
                     .padding(.horizontal, Theme.Spacing.l)

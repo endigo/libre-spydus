@@ -29,7 +29,7 @@ final class BookDetailModel {
         case line(AvailabilityLine)
         case availabilityFailed
         case lookupFailed
-        /// No formats matched: "Check availability on the library website".
+        /// No formats matched: "Check availability on the library’s website".
         case checkWebsite
         case none
     }
@@ -95,9 +95,9 @@ final class BookDetailModel {
     var headerAvailability: HeaderAvailability {
         switch formatLookup {
         case .pending:
-            return record.error == nil ? .loading("Finding formats…") : .none
+            return record.error == nil ? .loading(Copy.Detail.findingFormats) : .none
         case .searching:
-            return .loading("Finding formats…")
+            return .loading(Copy.Detail.findingFormats)
         case .notFound:
             return .checkWebsite
         case .failed:
@@ -110,7 +110,7 @@ final class BookDetailModel {
             return .line(AvailabilityLine(summary: nil, format: format))
         }
         switch availability[url] ?? .idle {
-        case .idle, .loading: return .loading("Checking availability…")
+        case .idle, .loading: return .loading(Copy.Detail.checkingAvailability)
         case .loaded(let loaded): return .line(AvailabilityLine(summary: loaded.summary, format: format))
         case .failed: return .availabilityFailed
         }
@@ -210,7 +210,7 @@ final class BookDetailModel {
     func loadRecord(backend: any LibraryBackend, report: Reporter) async {
         let urls = DetailRecordSource.candidateURLs(refURL: opened.url, bibIrn: opened.bibIrn, format: selectedFormat)
         guard !urls.isEmpty else {
-            record = .failed(UserFacingError(kind: .unexpected, message: "This book has no link to the library's record."))
+            record = .failed(UserFacingError(kind: .unexpected, message: Copy.Detail.noRecordLink))
             return
         }
         record = .loading
@@ -410,7 +410,7 @@ final class BookDetailModel {
         if let current = record.value, current.related != detail.related { related = [:] }
         record = .loaded(detail)
         var updated = ref.updated(with: detail)
-        if updated.title == "Untitled", let title = detail.title.nonEmpty { updated.title = title }
+        if updated.title == Copy.Common.untitled, let title = detail.title.nonEmpty { updated.title = title }
         if updated.author == nil {
             let row = detail.details.first { ["author", "creator"].contains($0.label.lowercased()) }
             updated.author = (row?.values.first?.text).nonEmpty

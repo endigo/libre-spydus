@@ -115,7 +115,7 @@ struct OnboardingLibraryPickerTests {
         await picker.load()
         let error = picker.loadError
         #expect(error?.kind == .network)
-        #expect(error?.message == "Can't reach the library directory. Check your connection.")
+        #expect(error?.message == "Can’t reach the library directory. Check your connection.")
         #expect(error?.detail == "connect timed out after 10s")
         #expect(!picker.isLoading)
 

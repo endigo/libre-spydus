@@ -13,11 +13,11 @@ enum AppTab: String, CaseIterable, Hashable, Identifiable, Sendable {
 
     var title: String {
         switch self {
-        case .home: "Home"
-        case .borrowed: "Your Books"
-        case .search: "Search"
-        case .favourites: "Favourites"
-        case .profile: "Profile"
+        case .home: Copy.Tabs.home
+        case .borrowed: Copy.Tabs.yourBooks
+        case .search: Copy.Tabs.search
+        case .favourites: Copy.Tabs.myPicks
+        case .profile: Copy.Tabs.profile
         }
     }
 

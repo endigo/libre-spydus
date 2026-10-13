@@ -96,8 +96,8 @@ enum SearchSortOption: String, CaseIterable, Codable, Hashable, Identifiable, Se
     var id: String { rawValue }
     var label: String {
         switch self {
-        case .relevance: "Relevance"
-        case .newest: "Newest"
+        case .relevance: Copy.Search.relevance
+        case .newest: Copy.Search.newest
         }
     }
 

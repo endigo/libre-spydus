@@ -30,7 +30,7 @@ struct CoverImage: View {
         .overlay(shape.strokeBorder(.white.opacity(0.06), lineWidth: 0.5))
         .themeShadow(shadow ? .card : Theme.Shadow(color: .clear, opacity: 0, radius: 0, y: 0))
         .accessibilityElement()
-        .accessibilityLabel("Cover of \(title)")
+        .accessibilityLabel(Copy.A11y.coverOf(title: title))
         .task(id: url) {
             loaded = nil
             guard let url else { return }

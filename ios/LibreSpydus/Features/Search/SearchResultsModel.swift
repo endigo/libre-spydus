@@ -170,6 +170,7 @@ final class SearchResultsModel {
     /// A page with no records that isn't the OPAC's "no records" page.
     nonisolated static let unrecognisedPage = UserFacingError(
         kind: .unexpected, message: UserFacingError.unexpectedMessage,
+        // copy-exempt: technical detail, shown only under the error's Details disclosure
         detail: "The results page wasn't recognised (no records and no \"did not find any records\" message)."
     )
 }

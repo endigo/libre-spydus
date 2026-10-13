@@ -1,8 +1,7 @@
 import SwiftUI
 
-/// The Favourites tab (docs/native-apps.md §5.11, §6): signed in, My Picks (the Pick list on the
-/// library account, `MyPicksView`); signed out, the books saved on this device
-/// (`LocalFavouritesView`).
+/// The My Picks tab (docs/native-apps.md §5.11, §6): signed in, the Pick list on the library
+/// account (`MyPicksView`); signed out, the books saved on this phone (`LocalFavouritesView`).
 struct FavouritesView: View {
     @Environment(AppModel.self) private var model
 
@@ -22,6 +21,15 @@ struct FavouritesView: View {
         init(_ model: AppModel) {
             self = model.isSignedIn ? .myPicks : .local
         }
+
+        /// "My Picks" either way (§7.1); the subtitle says where the books are saved.
+        var title: String { Copy.Picks.title }
+        var subtitle: String {
+            switch self {
+            case .myPicks: Copy.Picks.subtitleAccount
+            case .local: Copy.Picks.subtitlePhone
+            }
+        }
     }
 
     /// Two columns across the screen's gutters.
@@ -30,8 +38,8 @@ struct FavouritesView: View {
     }
 }
 
-/// Favourites while signed out (§5.3, §6): this library's saved books, newest first, as a two-column
-/// cover grid. Tap → detail; remove from the context menu or in Edit mode. Favourites are local
+/// My Picks while signed out (§5.3, §6): this library's books saved on this phone, newest first, as a
+/// two-column cover grid. Tap → detail; remove from the context menu or in Edit mode. They're local
 /// and per library, so switching library shows that library's list.
 struct LocalFavouritesView: View {
     @Environment(AppModel.self) private var model
@@ -73,21 +81,21 @@ struct LocalFavouritesView: View {
     private func header(count: Int) -> some View {
         HStack(alignment: .firstTextBaseline) {
             VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
-                Text("Favourites")
+                Text(FavouritesView.Content.local.title)
                     .themeFont(.greeting)
                     .foregroundStyle(Theme.Colors.textPrimary)
                     .accessibilityAddTraits(.isHeader)
-                Text(count > 0 ? "\(count) saved for \(model.libraryName)" : "Saved on this device for \(model.libraryName)")
+                Text(FavouritesView.Content.local.subtitle)
                     .themeFont(.caption)
                     .foregroundStyle(Theme.Colors.textSecondary)
             }
             Spacer()
             if count > 0 {
-                Button(isEditing ? "Done" : "Edit") { isEditing.toggle() }
+                Button(isEditing ? Copy.Common.done : Copy.Common.edit) { isEditing.toggle() }
                     .themeFont(.bodyStrong)
                     .foregroundStyle(Theme.Colors.primary)
                     .buttonStyle(.borderless)
-                    .accessibilityLabel(isEditing ? "Done editing favourites" : "Edit favourites")
+                    .accessibilityHint(isEditing ? Copy.Picks.doneEditingHint : Copy.Picks.editHint)
             }
         }
         .padding(.top, Theme.Spacing.l)
@@ -126,31 +134,31 @@ struct LocalFavouritesView: View {
                 }
                 .buttonStyle(PressScaleStyle())
                 .offset(x: 10, y: -10)
-                .accessibilityLabel("Remove \(ref.title) from Favourites")
+                .accessibilityLabel(Copy.Picks.removeTitle(title: ref.title))
                 .transition(.scale.combined(with: .opacity))
             }
         }
         .contextMenu {
-            Button("Open", systemImage: "book") { model.push(.detail(ref), on: .favourites) }
-            Button("Remove from Favourites", systemImage: "bookmark.slash", role: .destructive) { remove(ref) }
+            Button(Copy.Common.open, systemImage: "book") { model.push(.detail(ref), on: .favourites) }
+            Button(Copy.Picks.remove, systemImage: "bookmark.slash", role: .destructive) { remove(ref) }
         } preview: {
             CoverImage(url: ref.coverUrl, title: ref.title, author: ref.author, width: 200, shadow: false)
         }
         .accessibilityActions {
-            Button("Remove from Favourites") { remove(ref) }
+            Button(Copy.Picks.remove) { remove(ref) }
         }
     }
 
     private var empty: some View {
-        EmptyStateView(systemImage: "bookmark", title: "No favourites yet",
-                       message: "Tap the bookmark on any book to save it here.",
-                       actionTitle: "Find a book") { model.openSearch() }
+        EmptyStateView(systemImage: "bookmark", title: Copy.Picks.emptyTitle,
+                       message: Copy.Picks.emptyPhoneMessage,
+                       actionTitle: Copy.Picks.findABook) { model.openSearch() }
             .frame(minHeight: 420)
     }
 
     private func remove(_ ref: BookRef) {
         withAnimation { model.favourites.remove(id: ref.id) }
-        AccessibilityNotification.Announcement("Removed \(ref.title) from Favourites").post()
+        AccessibilityNotification.Announcement(Copy.Picks.removedTitle(title: ref.title)).post()
     }
 
     private static var startsEditing: Bool {

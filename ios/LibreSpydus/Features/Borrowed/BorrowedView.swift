@@ -1,14 +1,14 @@
 import SwiftUI
 
 /// "Your Books" (docs/native-apps.md §6 Borrowed): Loans | Reservations. Loans are sorted by due
-/// date with the danger colour when due within 3 days or overdue; reservations show "Ready for
-/// pickup" first, then pending. A reservation's Edit (sheet) and Cancel (confirmed) sit behind a
+/// date with the danger colour when due within 3 days or overdue; reservations show "Ready to
+/// collect" first, then pending. A reservation's Edit (sheet) and Cancel (confirmed) sit behind a
 /// swipe to the left, in its long-press menu and in its VoiceOver actions.
 ///
 /// Both lists come from the saved account (`AppModel.account`, §5.2a): shown at once, with
 /// "Updated 12 min ago" under the segments, and fetched again in the background when it's out of
 /// date on opening the tab, on pull to refresh and after a cancel or edit. A failed refresh keeps
-/// the saved lists ("Couldn't refresh — showing saved data").
+/// the saved lists ("Couldn’t refresh · Showing the saved list").
 struct BorrowedView: View {
     @Environment(AppModel.self) private var model
     @State private var viewModel = BorrowedViewModel()
@@ -18,7 +18,7 @@ struct BorrowedView: View {
         @Bindable var viewModel = viewModel
         ScrollView {
             VStack(alignment: .leading, spacing: Theme.Spacing.l) {
-                Text("Your Books")
+                Text(Copy.YourBooks.title)
                     .themeFont(.greeting)
                     .foregroundStyle(Theme.Colors.textPrimary)
                     .accessibilityAddTraits(.isHeader)
@@ -108,7 +108,7 @@ struct BorrowedView: View {
 
     private var segmentPicker: some View {
         @Bindable var viewModel = viewModel
-        return Picker("Show", selection: $viewModel.segment) {
+        return Picker(Copy.YourBooks.show, selection: $viewModel.segment) {
             ForEach(BorrowedViewModel.Segment.allCases) { segment in
                 Text(segmentTitle(segment)).tag(segment)
             }
@@ -117,11 +117,10 @@ struct BorrowedView: View {
     }
 
     private func segmentTitle(_ segment: BorrowedViewModel.Segment) -> String {
-        let count: Int? = switch segment {
-        case .loans: lists?.loans.count
-        case .reservations: lists?.reservations.count
+        switch segment {
+        case .loans: lists.map { Copy.YourBooks.loansCount(count: $0.loans.count) } ?? segment.title
+        case .reservations: lists.map { Copy.YourBooks.reservationsCount(count: $0.reservations.count) } ?? segment.title
         }
-        return count.map { "\(segment.title) (\($0))" } ?? segment.title
     }
 
     /// "Updated 12 min ago" (+ a spinner while refreshing), or the failed-refresh note; only once
@@ -149,7 +148,7 @@ struct BorrowedView: View {
     private func noticeBanner(_ notice: BorrowedViewModel.Notice) -> some View {
         Banner(message: notice.message, tone: notice.isError ? .error : .success)
             .onTapGesture { viewModel.notice = nil }
-            .accessibilityHint("Double-tap to dismiss")
+            .accessibilityHint(Copy.A11y.dismissHint)
             .accessibilityAction { viewModel.notice = nil }
             .transition(.move(edge: .top).combined(with: .opacity))
             .task(id: notice.id) {
@@ -165,21 +164,21 @@ struct BorrowedView: View {
         if let rows = lists?.loans {
             loansList(rows)
         } else {
-            placeholder(loading: "Loading your loans…")
+            placeholder(loading: Copy.YourBooks.loadingLoans)
         }
     }
 
     @ViewBuilder
     private func loansList(_ rows: [LoanRow]) -> some View {
         if rows.isEmpty {
-            EmptyStateView(systemImage: "books.vertical", title: "No loans right now",
-                           message: "Books you borrow from \(model.libraryName) show up here with their due dates.")
+            EmptyStateView(systemImage: "books.vertical", title: Copy.YourBooks.noLoansTitle,
+                           message: Copy.YourBooks.noLoansMessage(library: model.libraryName))
                 .frame(minHeight: Self.stateHeight)
         } else {
             ForEach(rows) { row in
                 loanCard(row)
             }
-            Label("Renewals coming soon", systemImage: "arrow.triangle.2.circlepath")
+            Label(Copy.YourBooks.renewalsSoon, systemImage: "arrow.triangle.2.circlepath")
                 .themeFont(.caption)
                 .foregroundStyle(Theme.Colors.textMuted)
                 .frame(maxWidth: .infinity)
@@ -191,12 +190,12 @@ struct BorrowedView: View {
         let overdue = row.due?.isOverdue == true
         return BookRowCard(row.ref, meta: row.meta,
                            metaColor: row.isUrgent ? Theme.Colors.danger : Theme.Colors.textSecondary,
-                           chips: overdue ? [Chip(text: "Overdue", tone: .danger, systemImage: "exclamationmark.circle")] : [])
+                           chips: overdue ? [Chip(text: Copy.Loans.overdue, tone: .danger, systemImage: "exclamationmark.circle")] : [])
             .contentShape(RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
             .onTapGesture { open(row.ref) }
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(accessibilityText([row.ref.title, Formatting.byline(row.ref.author),
-                                                   overdue ? "Overdue" : nil, row.meta]))
+                                                   overdue ? Copy.Loans.overdue : nil, row.meta]))
             .accessibilityAddTraits(.isButton)
             .accessibilityAction { open(row.ref) }
     }
@@ -208,26 +207,26 @@ struct BorrowedView: View {
         if let sections = lists?.reservations {
             reservationsList(sections)
         } else {
-            placeholder(loading: "Loading your reservations…")
+            placeholder(loading: Copy.YourBooks.loadingReservations)
         }
     }
 
     @ViewBuilder
     private func reservationsList(_ sections: ReservationSections) -> some View {
         if sections.isEmpty {
-            EmptyStateView(systemImage: "bookmark.circle", title: "No reservations",
-                           message: "Tap Reserve on any book and follow it here until it's ready to collect.")
+            EmptyStateView(systemImage: "bookmark.circle", title: Copy.YourBooks.noReservationsTitle,
+                           message: Copy.YourBooks.noReservationsMessage)
                 .frame(minHeight: Self.stateHeight)
         } else {
             if !sections.ready.isEmpty {
-                SectionHeader(title: "Ready for pickup")
+                SectionHeader(title: Copy.YourBooks.readyToCollect)
                     .padding(.top, Theme.Spacing.xs)
                 ForEach(sections.ready) { row in
                     reservationCard(row)
                 }
             }
             if !sections.pending.isEmpty {
-                SectionHeader(title: "Pending")
+                SectionHeader(title: Copy.YourBooks.pending)
                     .padding(.top, Theme.Spacing.xs)
                 ForEach(sections.pending) { row in
                     reservationCard(row)
@@ -280,8 +279,7 @@ struct BorrowedView: View {
         .allowsHitTesting(!busy)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(accessibilityText([row.ref.title, Formatting.byline(row.ref.author), row.statusLabel,
-                                               row.meta?.replacingOccurrences(of: "\n", with: ", "),
-                                               busy ? "Updating" : nil]))
+                                               row.spokenMeta, busy ? Copy.A11y.updating : nil]))
         .accessibilityAddTraits(.isButton)
         .accessibilityAction { open(row.ref) }
         .accessibilityActions {
@@ -322,9 +320,9 @@ struct BorrowedView: View {
     // MARK: Signed out
 
     private var signedOut: some View {
-        EmptyStateView(systemImage: "person.crop.circle.badge.questionmark", title: "Sign in to see your books",
-                       message: "Your loans and reservations at \(model.libraryName) appear here.",
-                       actionTitle: "Sign in") { model.loginNeeded = true }
+        EmptyStateView(systemImage: "person.crop.circle.badge.questionmark", title: Copy.YourBooks.signedOutTitle,
+                       message: Copy.YourBooks.signedOutMessage(library: model.libraryName),
+                       actionTitle: Copy.Account.signIn) { model.loginNeeded = true }
             .frame(minHeight: Self.stateHeight + 80)
     }
 

@@ -108,14 +108,14 @@ Pass them as launch arguments (docs/native-apps.md §5.6):
 | `-LSLoginCard <card> -LSLoginPIN <pin>` | with `-LSRoute login`: fill the sign-in form; add `-LSLoginSubmit YES` to sign in once. **Demo mode only** (ignored without `-LSDemo YES`), so a worker can't sign in to a real library by accident |
 | `-LSProfileAnchor bottom` | with `-LSRoute profile`: start scrolled to the end of Profile |
 | `-LSPersistDemoAccount YES` | with `-LSDemo YES`: save the demo account on the device (in `AccountCache/Demo/`), to show a cold launch with saved data. Off by default: demo mode keeps the account in memory |
-| `-LSDemoRefreshFails YES` | with `-LSDemo YES`: every account refresh fails, to show "Couldn't refresh — showing saved data" (with saved data) or the error state (without) |
+| `-LSDemoRefreshFails YES` | with `-LSDemo YES`: every account refresh fails, to show "Couldn’t refresh · Showing the saved list" (with saved data) or the error state (without) |
 | `-LSMorningCheckNow YES` | run the alerts' morning check once the launch refresh has settled, instead of waiting for 07:45 (see "Alerts") |
 | `-LSDemoNewReady YES` | with `-LSDemo YES`: "Hollow bones" (pending, Riverton) is ready to collect from the demo account's second refresh on, so a "Ready to collect" alert can be shown |
 | `-LSAlertTime HH:mm` | due reminders show, and the morning check is scheduled, at this time instead of 07:45, to watch a reminder arrive |
 | `-LSMyCard open` / `-LSMyCard edit` | while signed in: Home opens the "My card" sheet (`edit`: on its entry form, filled in) |
 | `-LSDemoCardNumber <number>` | with `-LSDemo YES`: the demo card number instead of `DEMO0012345`; `none` leaves no number, so the sheet asks for one |
 | `-LSHomeOpen <list>` | Home opens a list as if tapped: `arrivals`, `genre:<key>`, or `featured:<title>` (a Featured tile, e.g. `featured:Library of Things`, once the row has loaded) |
-| `-LSHomeScrollTo loans\|featured` | Home scrolls down to "Your borrowed books" / "Featured" |
+| `-LSHomeScrollTo loans\|featured` | Home scrolls down to "Your loans" / "Featured" |
 | `-LSCollectionOpen <section>` | a Featured collection opens that section's "View All" (e.g. `Musical Instruments`) |
 | `-LSCollectionItem "<section>\|<words>"` | a Featured collection scrolls to the section and opens its first item whose title has those words |
 | `-LSCollectionScrollTo <section>` | a Featured collection scrolls to that section |
@@ -191,7 +191,7 @@ verification"). `AppModel.report` then presents the verification sheet (`Verific
   app stops asking and says the library can't be used from the app right now.
 - The app never injects scripts into the challenge or interacts with it. Workers may open the
   sheet to check that it renders, and nothing more (docs/native-apps.md §2).
-- Profile shows "Verified on this device" while a cookie is stored. **Clear verification**
+- Profile shows "Verified on this phone" while a cookie is stored. **Clear verification**
   removes it from the Keychain, the client and the web view's cookie store.
 
 Shortcut to the sheet: `-LSLibraryOrigin https://aberdeencity.spydus.co.uk -LSRoute verify`.
@@ -202,13 +202,13 @@ Only a person may do this. It needs the Search screen (I3) merged.
 
 1. Install a debug build and launch it with `-LSReset YES`, without `-LSDemo`.
 2. In "Choose your library", search `aberdeen` and pick **Aberdeen City Libraries**. Any UK row
-   works; they're marked "Asks you to verify you're human".
-3. Open the Search tab and search `harry potter`. The "Verify you're human" sheet opens on the
+   works; they're marked "Asks you to confirm you’re human".
+3. Open the Search tab and search `harry potter`. The "Confirm you’re human" sheet opens on the
    library's "Let's confirm you are human" page.
 4. Tap **Begin** and complete the puzzle.
 5. The page reloads into the library's website and the sheet closes by itself within a second
    or two.
-6. **Expected:** the search reruns and results load. Profile shows "Verified on this device".
+6. **Expected:** the search reruns and results load. Profile shows "Verified on this phone".
 7. If the sheet opens again, the library rejected the token from the app. Complete the check
    once more. If it's rejected again, the screen says the library can't be used from the app
    right now. Report which of these happened, because whether a WAF token works outside a browser
@@ -247,8 +247,8 @@ each conflict was settled is in `design/copy-decisions.md`.
   refresh (force), and, when the snapshot is more than 2 minutes old or the last refresh failed,
   on returning to the app and on opening Your Books or Home. One fetch runs at a time and callers
   share it; a result for another origin or session, or one that overlaps a change, is dropped. A
-  failed refresh keeps the snapshot and sets `lastRefreshError` (Your Books: "Couldn't refresh —
-  showing saved data" + Retry). Sign-out and an expired session delete the origin's file; other
+  failed refresh keeps the snapshot and sets `lastRefreshError` (Your Books: "Couldn’t refresh ·
+  Showing the saved list" + Retry). Sign-out and an expired session delete the origin's file; other
   libraries' files stay. Demo mode never saves it.
 - **Errors:** `model.report(error)` returns a `UserFacingError` to show (nil for cancellation) and
   performs the side effects. `HumanVerificationRequired` presents the verification sheet. After two
@@ -313,7 +313,7 @@ each conflict was settled is in `design/copy-decisions.md`.
   `collection(url:)` and `holdings(url:)` (`CoreBackend` forwards to the client, `DemoBackend` to
   the real public backend; test fakes get defaults that return nothing). Home's "Featured" row
   (`FeaturedRow`, `FeaturedRowModel`) loads on its own, keyed on origin + verification, between
-  "Popular genres" and "Your borrowed books"; it's hidden while loading, when the list is empty
+  "Popular genres" and "Your loans"; it's hidden while loading, when the list is empty
   (most libraries) and when it fails. Icons map the library's Font Awesome names
   (`FeaturedIcon`, sparkles for anything else). A tile leads where `FeaturedDestination` says:
   `.collection` → `CollectionView`, `.search` → `ResultsPageView` (the results list started from
@@ -322,44 +322,44 @@ each conflict was settled is in `design/copy-decisions.md`.
   page, then one shelf per section from its first results page (≤ 20 covers) as the row comes
   into view, at most 3 at a time (a row scrolled past before its turn waits until it's back);
   empty sections are hidden, a failed one shows Retry in its row, and a page without sections
-  (eLibrary) shows "This collection is on the library's website." + **Open website**.
+  (eLibrary) shows "This collection is on the library’s website." + **Open website**.
   **Edition-level items** (every card in these lists: one format with an empty code and no label,
   `[FormatRef].isEditionLevel`) get no format chip in results rows, on the book page or in the
   reserve sheet; the book page loads the record from that format's `availabilityUrl` first
   (`DetailRecordSource.candidateURLs`), never re-finds formats, and lists the copies under the
   synopsis (`BookDetailModel.copies` from `Availability.holdingsUrl` → `holdings`, `CopyRow`:
   branch in title case, status green when available, the library's note, call number).
-  Favourites store the format with the item, so a saved one opens the same way.
-- **My Picks** (docs/native-apps.md §5.11): signed in, Favourites is the Pick list on the library
+  Picks saved on the phone store the format with the item, so a saved one opens the same way.
+- **My Picks** (docs/native-apps.md §5.11): signed in, the My Picks tab is the Pick list on the library
   account and the book page's bookmark saves to it. `AppModel.picks` is a `PicksStore`, pointed at
   the current origin and session like `AccountStore` (sign-out, an expired session and a library
   change clear it). `refresh()` loads the first page of `LibraryBackend.picks(session:url:)`, then
   the rest in the background up to 10 pages, collecting every record's `workIrn` into `irns`
   (`contains(_:)`); later pages load as the list scrolls. It loads at launch, sign-in, library
   change and verification (RootView's `.task(id: model.reloadKey)` → `loadIfNeeded()`), on pull
-  to refresh, and when Favourites comes on screen after a save it doesn't show yet (`isStale`).
+  to refresh, and when the My Picks tab comes on screen after a save it doesn't show yet (`isStale`).
   A failed first load is the error state with Retry; a failed refresh keeps the rows and shows
   the error as a notice.
   `setPicked(_:irn:)` flips the IRN at once (a removed row leaves the list at once), calls
   `savePick` / `removePick`, and flips back on failure; a change is laid over any load that
   overlaps it. The IRN is `PickIrn.of(ref, record:)`: a `work:` / `bib:` key's IRN, else the loaded
   record's `bibIrn` (`BookDetailModel.pickIrn`; the bookmark is disabled until it's known).
-  Confirmations ("Saved to My Picks", "Removed from My Picks", "Couldn't update My Picks.", the
+  Confirmations ("Saved to My Picks", "Removed from My Picks", "Couldn’t update My Picks", the
   copy's progress and summary) are `picks.notice`, shown by `PicksNoticeOverlay`, a toast above
   the tab bar on any screen, and announced to VoiceOver; `NotLoggedIn` takes the usual
   session-expired path instead. `MyPicksView` is a `List` of `SearchResultCard`s (the search row's
   card; a list would give a navigation link a chevron) with swipe-to-delete, a long-press menu and
   a VoiceOver action; signed out, `FavouritesView` shows `LocalFavouritesView`, unchanged.
   **Copy once:** an interactive `signIn` (never a restored session) with local favourites for a
-  library not asked before sets `picksCopyOffer`; `PicksCopyOfferAlert` (RootView) asks "Add your
-  saved books to My Picks?" once the sign-in sheet has gone. It waits while the app isn't active
+  library not asked before sets `picksCopyOffer`; `PicksCopyOfferAlert` (RootView) asks "Add this
+  phone’s picks to your library account?" once the sign-in sheet has gone. It waits while the app isn't active
   and comes back if something closed it unanswered (iOS's "Save Password?" prompt can, right after
   a sign-in). Either answer is remembered per library (UserDefaults
   `picks.copyOffered.<sha256(origin)>`, demo mode `picks.demo.…`, cleared by `-LSReset`); Add
   (`PicksStore.copy`) saves the local favourites oldest first, one at a time, loading a `brn:` /
   `url:` ref's record for its `bibIrn` (skipped without one), stops on a lost session, a
   verification challenge or a lost connection, shows "Added {k} books to My Picks" (" · {m}
-  couldn't be added"; the error tone when none was added), reloads the list and keeps the local
+  couldn’t be added"; the error tone when none was added), reloads the list and keeps the local
   favourites.
 - **Morning check:** the `BGAppRefreshTask` `com.librespydus.morning-check` (Info.plist
   `BGTaskSchedulerPermittedIdentifiers`, `UIBackgroundModes` `fetch`), handled by

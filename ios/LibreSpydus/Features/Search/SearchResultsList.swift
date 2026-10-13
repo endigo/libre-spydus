@@ -17,10 +17,10 @@ struct SearchResultsList: View {
             SearchSkeletonList()
         case .noResults:
             if let noResultsTitle {
-                EmptyStateView(systemImage: "tray", title: noResultsTitle, message: "Check back soon.")
+                EmptyStateView(systemImage: "tray", title: noResultsTitle, message: Copy.Search.listEmptyMessage)
             } else {
-                EmptyStateView(systemImage: "text.magnifyingglass", title: "No results for “\(query)”",
-                               message: "Check the spelling, or try fewer or different words.")
+                EmptyStateView(systemImage: "text.magnifyingglass", title: Copy.Search.noResultsTitle(query: query),
+                               message: Copy.Search.noResultsMessage)
             }
         case .failed(let error):
             // ErrorStateView hides Retry for errors that retrying can't fix.
@@ -83,22 +83,22 @@ struct SearchResultsList: View {
                         Button {
                             Task { await results.retryLoadMore() }
                         } label: {
-                            Label("Retry", systemImage: "arrow.clockwise")
+                            Label(Copy.Common.retry, systemImage: "arrow.clockwise")
                                 .themeFont(.bodyStrong)
                                 .foregroundStyle(Theme.Colors.primary)
                         }
                         .buttonStyle(.borderless)
-                        .accessibilityLabel("Retry loading more results")
+                        .accessibilityHint(Copy.Search.retryLoadingMoreHint)
                     }
                 }
             } else if results.hasMore {
                 ProgressView()
                     .controlSize(.regular)
                     .tint(Theme.Colors.textSecondary)
-                    .accessibilityLabel("Loading more results")
+                    .accessibilityLabel(Copy.Search.loadingMore)
                     .task(id: results.nextPageUrl) { await results.loadMore() }
             } else if !results.items.isEmpty {
-                Text("End of results")
+                Text(Copy.Search.endOfResults)
                     .themeFont(.caption)
                     .foregroundStyle(Theme.Colors.textMuted)
             }
@@ -139,7 +139,7 @@ struct SearchResultCard: View {
         let maxChips = SearchResultRow.maxChips
         var chips = item.formats.prefix(maxChips).map { Chip(format: $0) }
         if item.formats.count > maxChips {
-            chips.append(Chip(text: "+\(item.formats.count - maxChips)"))
+            chips.append(Chip(text: Copy.Search.moreFormats(count: item.formats.count - maxChips)))
         }
         return chips
     }
@@ -184,6 +184,6 @@ struct SearchSkeletonList: View {
         }
         .scrollDisabled(true)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Loading results")
+        .accessibilityLabel(Copy.Search.loadingResults)
     }
 }

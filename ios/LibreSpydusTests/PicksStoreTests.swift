@@ -266,7 +266,7 @@ struct PicksStoreTests {
 
         #expect(await store.setPicked(true, irn: "7") == false)
         #expect(!store.contains("7"))
-        #expect(store.notice?.message == "Couldn't update My Picks.")
+        #expect(store.notice?.message == "Couldn’t update My Picks")
         #expect(store.notice?.tone == .error)
         #expect(reported.errors.count == 1)
     }
@@ -288,7 +288,7 @@ struct PicksStoreTests {
         await remove.value
         #expect(store.items.map(\.ref.id) == ["work:1", "work:2", "work:3"])
         #expect(store.contains("2"))
-        #expect(store.notice?.message == "Couldn't update My Picks.")
+        #expect(store.notice?.message == "Couldn’t update My Picks")
     }
 
     @Test func removingTheLastPickShowsTheEmptyState() async {
@@ -415,7 +415,7 @@ struct PicksStoreTests {
         await store.refresh()
         #expect(store.phase == .loaded)
         #expect(store.items.count == 1)
-        #expect(store.notice?.message == "Can't reach Canning. Check your connection.")
+        #expect(store.notice?.message == "Can’t reach Canning. Check your connection.")
         #expect(store.notice?.tone == .error)
     }
 
@@ -462,7 +462,7 @@ struct PicksStoreTests {
         #expect(calls.filter { $0.hasPrefix("save:") || $0.hasPrefix("record:") } == [
             "save:1", "save:2", "record:\(relatedURL)", "save:3", "record:https://canning.spydus.com/gone",
         ])
-        #expect(store.notice?.message == "Added 3 books to My Picks · 2 couldn't be added")
+        #expect(store.notice?.message == "Added 3 books to My Picks · 2 couldn’t be added")
         // The set (and list) loads again afterwards.
         #expect(calls.last == "picks:1")
         #expect(store.irns == ["9", "1", "2", "3"])
@@ -476,22 +476,22 @@ struct PicksStoreTests {
         await backend.failChanges(with: .NotLoggedIn(message: "not logged in"))
         let summary = await store.copy([BookRef(id: "work:1", title: "A"), BookRef(id: "work:2", title: "B")])
         #expect(summary == PicksStore.CopySummary(added: 0, failed: 2))
-        #expect(store.notice?.message == "Added 0 books to My Picks · 2 couldn't be added")
+        #expect(store.notice?.message == "Added 0 books to My Picks · 2 couldn’t be added")
         #expect(store.notice?.tone == .error)
         #expect(await backend.calls.filter { $0.hasPrefix("save:") } == ["save:1"])
         #expect(reported.errors.count == 1)
     }
 
     @Test func copyWording() {
-        #expect(PicksText.offerTitle == "Add your saved books to My Picks?")
-        #expect(PicksText.offerMessage(count: 3) == "3 books saved on this phone can be added to your library account.")
-        #expect(PicksText.offerMessage(count: 1) == "1 book saved on this phone can be added to your library account.")
+        #expect(Copy.Picks.offerTitle == "Add this phone’s picks to your library account?")
+        #expect(Copy.Picks.offerMessage(count: 3) == "3 books saved on this phone can be added to My Picks on your library account.")
+        #expect(Copy.Picks.offerMessage(count: 1) == "1 book saved on this phone can be added to My Picks on your library account.")
         #expect(PicksText.copied(added: 4, failed: 0) == "Added 4 books to My Picks")
-        #expect(PicksText.copied(added: 1, failed: 1) == "Added 1 book to My Picks · 1 couldn't be added")
-        #expect(PicksText.save == "Save to My Picks")
-        #expect(PicksText.remove == "Remove from My Picks")
-        #expect(PicksText.emptyTitle == "No picks yet")
-        #expect(PicksText.emptyMessage == "Tap the bookmark on a book to save it to your library account.")
+        #expect(PicksText.copied(added: 1, failed: 1) == "Added 1 book to My Picks · 1 couldn’t be added")
+        #expect(Copy.Picks.save == "Save to My Picks")
+        #expect(Copy.Picks.remove == "Remove from My Picks")
+        #expect(Copy.Picks.emptyTitle == "No picks yet")
+        #expect(Copy.Picks.emptyAccountMessage == "Tap the bookmark on a book to save it to your library account.")
     }
 
     @Test func offeredFlagIsPerLibraryAndReset() {

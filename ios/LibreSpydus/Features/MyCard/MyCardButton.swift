@@ -10,7 +10,7 @@ struct MyCardButton: View {
                 Image(systemName: "barcode")
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundStyle(Theme.Colors.primary)
-                Text("My card")
+                Text(Copy.MyCard.button)
                     .themeFont(.bodyStrong)
                     .foregroundStyle(Theme.Colors.textPrimary)
                     .lineLimit(1)
@@ -22,7 +22,7 @@ struct MyCardButton: View {
         }
         .buttonStyle(PressScaleStyle())
         .fixedSize()
-        .accessibilityLabel("My card")
-        .accessibilityHint("Shows your library card's barcode")
+        .accessibilityLabel(Copy.MyCard.button)
+        .accessibilityHint(Copy.MyCard.buttonHint)
     }
 }

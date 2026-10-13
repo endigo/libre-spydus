@@ -3,7 +3,7 @@ import SwiftUI
 /// "New arrivals ……… View All".
 struct SectionHeader: View {
     let title: String
-    var actionTitle = "View All"
+    var actionTitle = Copy.Common.viewAll
     var onSheet = false
     var action: (() -> Void)?
 
@@ -19,7 +19,8 @@ struct SectionHeader: View {
                     .themeFont(.caption)
                     .foregroundStyle(onSheet ? Theme.Colors.onSheetSecondary : Theme.Colors.textSecondary)
                     .buttonStyle(.borderless)
-                    .accessibilityLabel("\(actionTitle) \(title)")
+                    // "View All New arrivals"; any other action reads as shown, after its header.
+                    .accessibilityLabel(actionTitle == Copy.Common.viewAll ? Copy.A11y.viewAllSection(section: title) : actionTitle)
             }
         }
     }
@@ -28,7 +29,7 @@ struct SectionHeader: View {
 /// The rounded search field on navy. Apply `.focused(_:)` to it to control focus.
 struct SearchField: View {
     @Binding var text: String
-    var placeholder = "Search by title, author, etc."
+    var placeholder = Copy.Search.placeholder
     var onSubmit: () -> Void = {}
 
     var body: some View {
@@ -52,7 +53,7 @@ struct SearchField: View {
                     Image(systemName: "xmark.circle.fill").foregroundStyle(Theme.Colors.textMuted)
                 }
                 .buttonStyle(.borderless)
-                .accessibilityLabel("Clear search")
+                .accessibilityLabel(Copy.Search.clearSearch)
             }
         }
         .padding(.horizontal, Theme.Spacing.l)
@@ -63,7 +64,7 @@ struct SearchField: View {
 
 /// Looks like `SearchField` but is a button (Home: tap → Search tab).
 struct SearchFieldButton: View {
-    var placeholder = "Search by title, author, etc."
+    var placeholder = Copy.Search.placeholder
     let action: () -> Void
 
     var body: some View {
@@ -80,8 +81,8 @@ struct SearchFieldButton: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("Search")
-        .accessibilityHint(placeholder)
+        .accessibilityLabel(Copy.Home.searchField)
+        .accessibilityHint(Copy.Home.searchFieldHint)
     }
 }
 

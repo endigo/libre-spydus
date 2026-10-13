@@ -2,7 +2,7 @@ import LibreSpydusCore
 import SwiftUI
 
 /// Book detail for `Route.detail` (docs/native-apps.md §6): navy header with cover, title,
-/// availability, format chips, "Reserve" and the favourite bookmark; a white sheet with the
+/// availability, format chips, "Reserve" and the My Picks bookmark; a white sheet with the
 /// synopsis, subject chips, details and related carousels. When the saved account has the edition
 /// on screen on loan or reserved, a status pill ("On loan · Due 14 Oct") takes Reserve's place and
 /// opens Your Books.
@@ -122,7 +122,7 @@ struct BookDetailView: View {
             if let held {
                 HeldStatusPill(status: held) { app.openYourBooks(on: held.segment) }
             } else if let format = model.reservableFormat {
-                PrimaryPillButton(title: "Reserve", fillsWidth: true) { borrow(format) }
+                PrimaryPillButton(title: Copy.Detail.reserve, fillsWidth: true) { borrow(format) }
                     .accessibilityHint(reserveHint(format))
                     // Held or not isn't known yet: keep the slot, show nothing.
                     .opacity(awaitingHolding ? 0 : 1)
@@ -141,11 +141,11 @@ struct BookDetailView: View {
         .padding(.horizontal, Theme.Spacing.xl)
     }
 
-    /// Signed out: the local favourites (§5.3).
+    /// Signed out: My Picks on the phone (§5.3).
     private var favouriteButton: some View {
         let isFavourite = app.favourites.contains(id: model.ref.id)
         return CircleIconButton(systemImage: isFavourite ? "bookmark.fill" : "bookmark",
-                                accessibilityLabel: isFavourite ? "Remove from favourites" : "Add to favourites") {
+                                accessibilityLabel: isFavourite ? Copy.Picks.remove : Copy.Picks.save) {
             app.favourites.toggle(model.favouriteRef)
         }
         .accessibilityAddTraits(isFavourite ? .isSelected : [])
@@ -158,7 +158,7 @@ struct BookDetailView: View {
         let irn = model.pickIrn
         let isPicked = irn.map(app.picks.contains) ?? false
         return CircleIconButton(systemImage: isPicked ? "bookmark.fill" : "bookmark",
-                                accessibilityLabel: isPicked ? PicksText.remove : PicksText.save) {
+                                accessibilityLabel: isPicked ? Copy.Picks.remove : Copy.Picks.save) {
             guard let irn, !app.picks.isChanging(irn) else { return }
             Task { await app.picks.setPicked(!isPicked, irn: irn) }
         }
@@ -168,11 +168,14 @@ struct BookDetailView: View {
         .sensoryFeedback(.selection, trigger: isPicked)
     }
 
-    /// "Reserve the book" / "Sign in to reserve the book"; an edition-level item's format has no
-    /// name, so "this item".
+    /// "Reserves the book" / "Asks you to sign in, then reserves the book"; an edition-level
+    /// item's format has no name, so "this item".
     private func reserveHint(_ format: FormatRef) -> String {
-        let what = format.isEditionLevel ? "this item" : "the \(format.displayLabel.lowercased())"
-        return app.isSignedIn ? "Reserve \(what)" : "Sign in to reserve \(what)"
+        if format.isEditionLevel {
+            return app.isSignedIn ? Copy.Detail.reserveItemHint : Copy.Detail.signInToReserveItemHint
+        }
+        let name = format.displayLabel.lowercased()
+        return app.isSignedIn ? Copy.Detail.reserveFormatHint(format: name) : Copy.Detail.signInToReserveFormatHint(format: name)
     }
 
     private func borrow(_ format: FormatRef) {
@@ -336,17 +339,17 @@ private struct DetailHeader: View {
             }
             .themeFont(.bodyStrong)
             .foregroundStyle(color(for: line.tone))
-            .accessibilityLabel("Availability: \(line.text)")
+            .accessibilityLabel(Copy.Detail.availability(status: line.text))
         case .availabilityFailed:
-            retryLine("Couldn't check availability") {
+            retryLine(Copy.Detail.availabilityFailed, hint: Copy.Detail.retryAvailabilityHint) {
                 await model.loadAvailability(backend: backend, report: report)
             }
         case .lookupFailed:
-            retryLine("Couldn't look up availability") {
+            retryLine(Copy.Detail.lookupFailed, hint: Copy.Detail.retryLookupHint) {
                 await model.refindFormats(backend: backend, report: report)
             }
         case .checkWebsite:
-            Label("Check availability on the library website", systemImage: "globe")
+            Label(Copy.Detail.checkWebsite, systemImage: "globe")
                 .themeFont(.caption)
                 .foregroundStyle(Theme.Colors.textSecondary)
         case .none:
@@ -354,14 +357,14 @@ private struct DetailHeader: View {
         }
     }
 
-    private func retryLine(_ text: String, action: @escaping @MainActor () async -> Void) -> some View {
+    private func retryLine(_ text: String, hint: String, action: @escaping @MainActor () async -> Void) -> some View {
         HStack(spacing: Theme.Spacing.s) {
             Text(text)
                 .foregroundStyle(Theme.Colors.textSecondary)
-            Button("Retry") { Task { await action() } }
+            Button(Copy.Common.retry) { Task { await action() } }
                 .foregroundStyle(Theme.Colors.primary)
                 .buttonStyle(.borderless)
-                .accessibilityLabel("Retry: \(text)")
+                .accessibilityHint(hint)
         }
         .themeFont(.caption)
     }
@@ -379,12 +382,12 @@ private struct DetailHeader: View {
                 }
                 .buttonStyle(PressScaleStyle())
                 .accessibilityLabel(format.displayLabel)
-                .accessibilityHint("Shows availability for this format")
+                .accessibilityHint(Copy.Detail.formatHint)
                 .accessibilityAddTraits(selected ? .isSelected : [])
             }
         }
         .accessibilityElement(children: .contain)
-        .accessibilityLabel("Formats")
+        .accessibilityLabel(Copy.Detail.formats)
     }
 
     private func icon(for tone: AvailabilityLine.Tone) -> String {
@@ -432,7 +435,7 @@ private struct HeldStatusPill: View {
         .buttonStyle(PressScaleStyle())
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(status.accessibilityLabel)
-        .accessibilityHint("Opens Your Books")
+        .accessibilityHint(Copy.Detail.heldHint)
         .accessibilityAddTraits(.isButton)
     }
 

@@ -24,15 +24,15 @@ struct BorrowedStatusTextTests {
         let row = ReservationRow(item: item(status: "Requested pickup location: RIVERTON LIBRARY",
                                             extra: ["Rank": "5", "Placed": "22 Sep 2026"]), kind: .pending)
         #expect(row.statusLabel == "Pending")
-        #expect(row.meta?.contains("Pick up at Riverton Library") == true)
+        #expect(row.meta?.contains("Collect from Riverton Library") == true)
         #expect(row.meta?.contains("#5 in queue") == true)
     }
 
     @Test func readyRowShowsCollectByDate() {
         let row = ReservationRow(item: item(status: "Please pickup from: RIVERTON LIBRARY by 17 Oct 2026"), kind: .ready)
-        #expect(row.statusLabel == "Ready for pickup")
+        #expect(row.statusLabel == "Ready to collect")
         // The date follows the device locale ("17 Oct" / "Oct 17").
-        #expect(row.meta?.hasPrefix("Pick up at Riverton Library by ") == true)
+        #expect(row.meta?.hasPrefix("Collect from Riverton Library by ") == true)
         #expect(row.meta?.contains("17") == true)
     }
 

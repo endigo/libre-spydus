@@ -18,7 +18,7 @@ struct LoadingView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding(Theme.Spacing.xl)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel(message ?? "Loading")
+        .accessibilityLabel(message ?? Copy.Common.loading)
     }
 }
 
@@ -77,11 +77,11 @@ struct ErrorStateView: View {
                 .foregroundStyle(Theme.Colors.textSecondary)
                 .multilineTextAlignment(.center)
             if let retry, error.canRetry {
-                PrimaryPillButton(title: "Retry", systemImage: "arrow.clockwise", action: retry)
+                PrimaryPillButton(title: Copy.Common.retry, systemImage: "arrow.clockwise", action: retry)
                     .padding(.top, Theme.Spacing.s)
             }
             if let detail = error.detail {
-                DisclosureGroup("Details", isExpanded: $showsDetail) {
+                DisclosureGroup(Copy.Errors.details, isExpanded: $showsDetail) {
                     Text(detail)
                         .themeFont(.caption)
                         .foregroundStyle(Theme.Colors.textMuted)

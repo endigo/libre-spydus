@@ -15,8 +15,8 @@ final class BorrowedViewModel {
         var id: String { rawValue }
         var title: String {
             switch self {
-            case .loans: "Loans"
-            case .reservations: "Reservations"
+            case .loans: Copy.YourBooks.loans
+            case .reservations: Copy.YourBooks.reservations
             }
         }
     }
@@ -112,7 +112,7 @@ final class BorrowedViewModel {
                 try await backend.cancelReservation(url: href, session: session)
             } accepted: { $0.ok }
             guard model.reloadKey == key else { return }
-            notice = Notice(message: result.message.nonEmpty ?? (result.ok ? "Reservation cancelled." : "The library didn't cancel this reservation."),
+            notice = Notice(message: result.message.nonEmpty ?? (result.ok ? Copy.YourBooks.cancelled : Copy.YourBooks.cancelFailed),
                             isError: !result.ok)
             if result.ok {
                 model.account.update { $0 = $0.removingReservation(actionHref: href) }
@@ -148,7 +148,7 @@ final class BorrowedViewModel {
         case .closed:
             break
         case .saved(let result):
-            notice = Notice(message: result.message.nonEmpty ?? "Reservation updated.", isError: !result.ok)
+            notice = Notice(message: result.message.nonEmpty ?? Copy.YourBooks.updated, isError: !result.ok)
         case .failed(let error):
             deferredError = error
         }

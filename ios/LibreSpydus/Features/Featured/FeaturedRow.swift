@@ -8,7 +8,7 @@ struct FeaturedRow: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.m) {
-            SectionHeader(title: "Featured")
+            SectionHeader(title: Copy.Featured.title)
                 .padding(.horizontal, Theme.Spacing.l)
             ScrollView(.horizontal) {
                 HStack(alignment: .top, spacing: Theme.Spacing.m) {
@@ -67,8 +67,8 @@ private struct FeaturedTile: View {
 
     private var hint: String {
         switch link.kind {
-        case .collection, .search: "Shows this collection"
-        case .web: "Opens the library's website"
+        case .collection, .search: Copy.Featured.collectionHint
+        case .web: Copy.Featured.websiteHint
         }
     }
 }

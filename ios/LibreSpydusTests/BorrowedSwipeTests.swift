@@ -49,8 +49,8 @@ struct ReservationActionTests {
     }
 
     @Test func hintNamesTheGestureThisDeviceHas() {
-        #expect(SwipeReveal.hint(swipes: true).text == "Swipe left on a reservation to change or cancel it.")
-        #expect(SwipeReveal.hint(swipes: false).text == "Touch and hold a reservation to change or cancel it.")
+        #expect(SwipeReveal.hint(swipes: true).text == "Swipe left on a reservation to edit or cancel it.")
+        #expect(SwipeReveal.hint(swipes: false).text == "Touch and hold a reservation to edit or cancel it.")
         #expect(SwipeReveal.isSupported) // the test runtime is iOS 18 or later
     }
 }

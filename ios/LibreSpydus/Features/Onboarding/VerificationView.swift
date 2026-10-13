@@ -37,7 +37,7 @@ struct VerificationView: View {
     private var header: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.s) {
             HStack {
-                Button("Cancel") { dismiss() }
+                Button(Copy.Common.cancel) { dismiss() }
                     .themeFont(.bodyStrong)
                     .foregroundStyle(Theme.Colors.primary)
                 Spacer()
@@ -51,17 +51,17 @@ struct VerificationView: View {
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel("Reload page")
+                .accessibilityLabel(Copy.Verification.reload)
             }
-            Text("Verify you're human")
+            Text(Copy.Verification.title)
                 .themeFont(.title)
                 .foregroundStyle(Theme.Colors.textPrimary)
                 .accessibilityAddTraits(.isHeader)
-            Text("\(model.libraryName) asks you to confirm you're human. Complete the check below.")
+            Text(Copy.Verification.message(library: model.libraryName).capitalisedFirst)
                 .themeFont(.body)
                 .foregroundStyle(Theme.Colors.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
-            Label("This closes by itself once the library lets you in.", systemImage: "checkmark.shield")
+            Label(Copy.Verification.closesByItself, systemImage: "checkmark.shield")
                 .themeFont(.caption)
                 .foregroundStyle(Theme.Colors.textMuted)
         }
@@ -76,13 +76,12 @@ struct VerificationView: View {
             ErrorStateView(error: error) { session.reload() }
                 .background(Theme.Colors.background)
         } else if session.isLoading, session.showingChallenge == nil {
-            LoadingView(message: "Opening \(model.libraryName)…")
+            LoadingView(message: Copy.Verification.opening(library: model.libraryName))
                 .background(Theme.Colors.background)
         } else if session.finishedWithoutCheck {
             VStack {
                 Spacer()
-                Banner(message: "\(model.libraryName) didn't ask for a check this time. Close this and try again.",
-                       tone: .info)
+                Banner(message: Copy.Verification.noCheck(library: model.libraryName).capitalisedFirst, tone: .info)
                     .background(RoundedRectangle(cornerRadius: Theme.Radius.field).fill(Theme.Colors.background))
                     .padding(Theme.Spacing.l)
             }

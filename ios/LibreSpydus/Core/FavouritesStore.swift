@@ -37,7 +37,7 @@ final class FavouritesStore {
             items = Self.sorted(try decoder.decode([BookRef].self, from: Data(contentsOf: file)))
         } catch {
             items = []
-            lastError = "Couldn't read favourites: \(error.localizedDescription)"
+            lastError = Copy.Picks.loadFailed
         }
     }
 
@@ -90,7 +90,7 @@ final class FavouritesStore {
             try encoder.encode(items).write(to: file, options: .atomic)
             lastError = nil
         } catch {
-            lastError = "Couldn't save favourites: \(error.localizedDescription)"
+            lastError = Copy.Picks.saveFailed
         }
     }
 
