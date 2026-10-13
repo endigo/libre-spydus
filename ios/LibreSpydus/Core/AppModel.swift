@@ -28,6 +28,9 @@ final class AppModel {
     // MARK: Local data
 
     let favourites: FavouritesStore
+    /// "Ready to collect" alerts and due-date reminders (§5.8): the Profile switches and the
+    /// processing of every fetched snapshot.
+    let alerts: AlertCenter
 
     // MARK: Navigation
 
@@ -80,7 +83,12 @@ final class AppModel {
         // Demo mode never saves the account, unless a DEBUG launch flag asks to (screenshots).
         let savesAccount = !dependencies.isDemo || dependencies.persistsDemoAccount
         account = AccountStore(cache: savesAccount ? dependencies.accountCacheDirectory.map(AccountSnapshotCache.init) : nil)
+        // Demo mode keeps its own switches and keys, so it never changes the real ones.
+        let alerts = AlertCenter(defaults: dependencies.defaults, system: dependencies.alertSystem,
+                                 namespace: dependencies.isDemo ? AlertCenter.demoNamespace : AlertCenter.namespace)
+        self.alerts = alerts
         account.report = { [weak self] error in self?.report(error) }
+        account.didFetch = { snapshot, origin in await alerts.process(snapshot, origin: origin) }
         installSecrets()
     }
 
@@ -166,6 +174,7 @@ final class AppModel {
         loginNeeded = false
         accountGeneration += 1
         account.use(origin: backend.origin, session: token, backend: backend)
+        rescheduleMorningCheck()
         await account.refresh(force: true)
     }
 
@@ -309,6 +318,7 @@ final class AppModel {
         verificationNeeded = false
         installSecrets()
         accountGeneration += 1
+        rescheduleMorningCheck()
         // RootView's `.task(id: backend.origin)` calls refreshAccount() for the new origin.
     }
 
@@ -334,7 +344,9 @@ final class AppModel {
         dependencies.sessions.setValue(nil, for: backend.origin)
         session = nil
         account.clear(origin: backend.origin)
+        alerts.forget(origin: backend.origin)
         accountGeneration += 1
+        rescheduleMorningCheck()
     }
 
     nonisolated private static let libraryKey = "LibreSpydus.selectedLibrary"
@@ -367,10 +379,16 @@ extension AppModel {
         /// DEBUG `-LSPersistDemoAccount`: demo mode saves its account too (otherwise it never does).
         var persistsDemoAccount = false
         var makeBackend: @MainActor (_ origin: String?) -> any LibraryBackend
+        /// The notification centre, background task scheduler and clock the alerts use; nothing
+        /// reaches the system unless set (tests).
+        var alertSystem: AlertSystem = .inert
 
         /// The app's real stores. Demo mode keeps its session in memory (never the Keychain), and
         /// its account too unless `persistDemoAccount` (then in a folder of its own).
-        static func live(demo: Bool, persistDemoAccount: Bool = false, demoRefreshFails: Bool = false) -> Dependencies {
+        /// `demoNewReady` (DEBUG `-LSDemoNewReady`): the demo account has one more reservation ready
+        /// from its second refresh on. `alertTime` (DEBUG `-LSAlertTime`) replaces 07:45.
+        static func live(demo: Bool, persistDemoAccount: Bool = false, demoRefreshFails: Bool = false,
+                         demoNewReady: Bool = false, alertTime: DateComponents = AlertContent.alertTime) -> Dependencies {
             Dependencies(
                 defaults: .standard,
                 sessions: demo ? InMemorySecretStore() : KeychainSecretStore(service: "com.librespydus.session"),
@@ -382,13 +400,16 @@ extension AppModel {
                     : AccountSnapshotCache.defaultDirectory,
                 persistsDemoAccount: demo && persistDemoAccount,
                 makeBackend: { origin -> any LibraryBackend in
-                    demo ? DemoBackend.live(origin: origin, failsAccountSnapshot: demoRefreshFails) : CoreBackend(origin: origin)
-                }
+                    demo
+                        ? DemoBackend.live(origin: origin, failsAccountSnapshot: demoRefreshFails, addsReadyOnNextRefresh: demoNewReady)
+                        : CoreBackend(origin: origin)
+                },
+                alertSystem: .live(alertTime: alertTime)
             )
         }
 
-        /// `-LSReset`: forget the library, every session, verification, favourite, recent search
-        /// and saved account.
+        /// `-LSReset`: forget the library, every session, verification, favourite, recent search,
+        /// saved account and alert setting.
         func resetPersistentState() {
             defaults.removeObject(forKey: AppModel.libraryKey)
             defaults.removeObject(forKey: "LibreSpydus.recentSearches") // RecentSearchStore.defaultsKey
@@ -396,6 +417,7 @@ extension AppModel {
             verificationCookies.removeAll()
             FavouritesStore.deleteAll(in: favouritesDirectory)
             if let accountCacheDirectory { AccountSnapshotCache.deleteAll(in: accountCacheDirectory) }
+            AlertCenter.deleteAll(in: defaults)
         }
     }
 }

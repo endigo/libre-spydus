@@ -27,6 +27,9 @@ final class AccountStore {
     /// Routes a failed fetch (`AppModel.report`): returns what to show, nil for a cancellation.
     /// `NotLoggedIn` signs out, which `clear`s this store.
     @ObservationIgnored var report: @MainActor (any Error) -> UserFacingError? = { _ in nil }
+    /// Runs after every fetched snapshot is saved, before `refresh` returns: the alerts (§5.8)
+    /// process it (`AlertCenter.process`).
+    @ObservationIgnored var didFetch: @MainActor (_ snapshot: AccountSnapshot, _ origin: String) async -> Void = { _, _ in }
 
     private struct Account {
         var origin: String
@@ -121,6 +124,13 @@ final class AccountStore {
         await startRefresh().value
     }
 
+    /// A fetch that starts now, however new the snapshot (the morning check): one already running
+    /// may have started too early, so this waits for it and then fetches again.
+    func refreshNow() async {
+        if let refreshTask { await refreshTask.value }
+        await refresh(force: true)
+    }
+
     /// A hold was placed (or the account otherwise changed on the library): a fetch in flight may
     /// predate it, so it's dropped and the account fetched again.
     func libraryDidChange() {
@@ -207,6 +217,9 @@ final class AccountStore {
                 self.snapshot = snapshot
                 lastRefreshError = nil
                 save(snapshot, origin: account.origin)
+                await didFetch(snapshot, account.origin)
+                // Signed out or another library meanwhile (the new one owns the flags now).
+                guard generation == self.generation else { return }
             case .failure(let error):
                 let shown = report(error)
                 // `NotLoggedIn` signed out (a new generation); a cancellation shows nothing.

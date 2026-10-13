@@ -11,7 +11,9 @@ import LibreSpydusCore
 /// `login("demo", "demo")` succeeds, anything else is `CredentialsRejected`. Mutations succeed
 /// after `mutationDelay` and update the in-memory lists: cancel removes the row, reserve adds a
 /// pending row, edit changes the pickup location. `accountSnapshot` takes `snapshotDelay`, so the
-/// refreshing state is visible, and reflects those changes.
+/// refreshing state is visible, and reflects those changes. With `addsReadyOnNextRefresh` (DEBUG
+/// `-LSDemoNewReady`) one more reservation is ready from the second `accountSnapshot` on, so a
+/// "Ready to collect" alert can be shown (docs/native-apps.md §5.8).
 actor DemoBackend: LibraryBackend {
     static let username = "demo"
     static let password = "demo"
@@ -28,6 +30,9 @@ actor DemoBackend: LibraryBackend {
     private let snapshotDelay: Duration
     /// `-LSDemoRefreshFails YES`: every `accountSnapshot` fails, to show a failed refresh.
     private let failsAccountSnapshot: Bool
+    /// `-LSDemoNewReady YES`: a pending reservation comes in on the next refresh.
+    private var addsReadyOnNextRefresh: Bool
+    private var snapshotsServed = 0
     private var fixtures: DemoFixtures
     /// Search records seen through this backend, by `RecordFormat.reserveUrl`, so a demo
     /// reservation can show the right title and link to the right bib.
@@ -36,17 +41,19 @@ actor DemoBackend: LibraryBackend {
     private var nextIrn = 19_100_000
 
     init(publicBackend: any LibraryBackend, fixtures: DemoFixtures, mutationDelay: Duration = .milliseconds(600),
-         snapshotDelay: Duration = .milliseconds(1500), failsAccountSnapshot: Bool = false) {
+         snapshotDelay: Duration = .milliseconds(1500), failsAccountSnapshot: Bool = false,
+         addsReadyOnNextRefresh: Bool = false) {
         self.publicBackend = publicBackend
         self.origin = publicBackend.origin
         self.fixtures = fixtures
         self.mutationDelay = mutationDelay
         self.snapshotDelay = snapshotDelay
         self.failsAccountSnapshot = failsAccountSnapshot
+        self.addsReadyOnNextRefresh = addsReadyOnNextRefresh
     }
 
     /// The demo backend the app uses: real public reads for `origin`, bundled account fixtures.
-    static func live(origin: String?, failsAccountSnapshot: Bool = false) -> DemoBackend {
+    static func live(origin: String?, failsAccountSnapshot: Bool = false, addsReadyOnNextRefresh: Bool = false) -> DemoBackend {
         let core = CoreBackend(origin: origin)
         let fixtures: DemoFixtures
         do {
@@ -54,7 +61,8 @@ actor DemoBackend: LibraryBackend {
         } catch {
             preconditionFailure("DemoData fixtures missing from the app bundle: \(error)")
         }
-        return DemoBackend(publicBackend: core, fixtures: fixtures, failsAccountSnapshot: failsAccountSnapshot)
+        return DemoBackend(publicBackend: core, fixtures: fixtures, failsAccountSnapshot: failsAccountSnapshot,
+                           addsReadyOnNextRefresh: addsReadyOnNextRefresh)
     }
 
     nonisolated func setVerificationCookie(_ cookie: String?) {
@@ -125,6 +133,11 @@ actor DemoBackend: LibraryBackend {
         try await Task.sleep(for: snapshotDelay)
         if failsAccountSnapshot {
             throw SpydusError.Network(message: "demo: -LSDemoRefreshFails")
+        }
+        snapshotsServed += 1
+        if addsReadyOnNextRefresh, snapshotsServed > 1 {
+            addsReadyOnNextRefresh = false
+            fixtures.makeNewReady()
         }
         return AccountSnapshot(
             version: Self.snapshotVersion,
