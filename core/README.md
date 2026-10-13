@@ -30,6 +30,7 @@ core/
                         origin guard, timeouts, AWS WAF detection, verification cookie
     parse/featured.rs   the home page's Featured list, collection pages, results-list URLs
     parse/picks.rs      the Pick list's save/remove reply (the list itself is a results page)
+    parse/renew.rs      a loan's renew link, its confirm form, the library's reason for refusing
     barcode.rs          card_barcode: a card number as Code 128 / Code 39 / Codabar modules
     timing.rs           opt-in timing log (set_timing_sink): network and parse time per page
     crypto.rs           encrypt.js → PEM, RSA PKCS#1 v1.5 (JSEncrypt-compatible) PIN encryption
@@ -150,6 +151,12 @@ Featured collections (`docs/native-apps.md` §5.10), all public:
 | `featured()` | The "Featured" list on the OPAC home page (`/cgi-bin/spydus.exe/MSGTRN/OPAC/HOME`) as `[FeaturedLink{title, description?, icon?, kind, url}]`, in order. `kind`: `.collection` (a `MSGTRNGEN` page for `collection`), `.search` (one saved search, already a results list for `page`) or `.web`. `icon` is the library's Font Awesome name without `fa-` (Canning: book, balloons, computer, circle, globe, game-board, map-location-dot, user-circle). Empty for a library without the list (Hutt, Geelong, Cumberland). Cached 10 min. |
 | `collection(url)` | `FeaturedCollection{title?, sections: [FeaturedSection{title, url}]}`: each section of the page is a saved search (`RUNSQRY`), its `url` a results list for `page` (20 a page, without the home page's grid view and random order). A page of outside links (eLibrary) has no sections. Cached 10 min. |
 | `holdings(url)` | An `Availability.holdingsUrl` → one `Holding{location, collection, callNumber, status, description, available}` per copy (`available`: the status starts with "Available", "On shelf" or "In library"). Cached 60 s. |
+
+Renew (`docs/native-apps.md` §5.12):
+
+| call | returns |
+|---|---|
+| `renewLoan(url, session)` | MUTATING. Renews one loan via its "Renew loan" action href (`…/PGM/OPAC/CCOPT/{set}/0/N/3/LOANRENQ?SVL={loanIrn}`; anything else is `Parse`). Returns `RenewResult{ok, message?, due?}`: `ok` when the loan's due date on the loans list moved; `message` the library's reason (its validation message or a refusing alert) or "The library didn’t renew this loan."; `due` the date after the attempt. A loan no longer on the list isn't renewed ("This loan isn’t on your loans list any more."). Whether the link renews at once or asks to confirm (a `#mainForm` with a submit button) is handled both ways: before submitting a confirm form the loans list is read again, so a library that renews on the link is never asked twice. A page asking to sign in is `NotLoggedIn`. |
 
 My Picks (`docs/native-apps.md` §5.11), the reader's Pick list on the library account:
 

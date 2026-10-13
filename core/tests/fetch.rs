@@ -23,7 +23,7 @@ use librespydus_core::parse::reserve::{
     ManageKind, parse_edit_form, parse_manage_result, parse_reserve_form, parse_reserve_result,
     to_reserve_options,
 };
-use librespydus_core::{EditOverrides, ReserveResult, SearchSort, SpydusError};
+use librespydus_core::{EditOverrides, RenewResult, ReserveResult, SearchSort, SpydusClient, SpydusError};
 use mock::{Reply, Server, Stall};
 use rsa::pkcs8::{EncodePublicKey, LineEnding};
 use rsa::{Pkcs1v15Encrypt, RsaPrivateKey};
@@ -1195,6 +1195,163 @@ async fn live_direct_search_on_hutt_returns_card_list_html() {
 async fn live_uk_library_is_human_verification_required() {
     let http = Http::new("https://stockport.spydus.co.uk").unwrap();
     human_verification(http.fetch_search_html("harry potter").await);
+}
+
+// ---- Renewing a loan (SpydusClient::renew_loan) ------------------------------------------------
+
+const RENEW_PATH: &str = "/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/78500000/0/N/3/LOANRENQ";
+const RENEW_CONFIRM_PATH: &str = "/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/78500000/0/N/4/LOANRENQ";
+
+/// How the fake library answers a loan's "Renew loan" link.
+#[derive(Clone, Copy, PartialEq)]
+enum RenewLibrary {
+    /// A confirm form; the POST renews.
+    Confirms,
+    /// Renews on the link and shows a finished page (an empty `#mainForm`, no submit).
+    RenewsOnTheLink,
+    /// Renews on the link AND shows a confirm form.
+    RenewsAndConfirms,
+    /// Refuses with an alert.
+    Refuses,
+    /// The session has ended.
+    SignedOut,
+}
+
+fn loans_page(due: &str) -> String {
+    format!(
+        r#"<html><body><table class="table"><tbody><tr>
+ <td><input type="checkbox" name="SVL" value="19000005"></td>
+ <td><h3 class="card-title"><a href="/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/78500000?SETLVL=&amp;IRN=17651573">Lessons in chemistry</a></h3></td>
+ <td data-caption="Due">{due}</td>
+ <td><div class="dropdown-menu"><a class="dropdown-item" href="{RENEW_PATH}?SVL=19000005&amp;SETDESC=Current%20loans">Renew loan</a></div></td>
+</tr></tbody></table></body></html>"#
+    )
+}
+
+fn renew_library(kind: RenewLibrary) -> Server {
+    let renewed = Arc::new(std::sync::atomic::AtomicBool::new(false));
+    let account = common::fixture("synthetic/account-links.html");
+    Server::start(move |req| {
+        let renew = |state: &std::sync::atomic::AtomicBool| state.store(true, std::sync::atomic::Ordering::SeqCst);
+        let confirm = || {
+            Reply::ok(format!(
+                r#"<html><body><form id="mainForm" method="post" action="{RENEW_CONFIRM_PATH}"><input type="hidden" name="csrf" value="renew-csrf"><input type="checkbox" name="SVL" value="19000005" checked><button type="submit" name="submitButton" value="Continue">Continue</button></form></body></html>"#
+            ))
+        };
+        match (req.method.as_str(), req.path()) {
+            ("GET", LOGIN_RDT_PATH) => Reply::ok(format!(
+                r#"<html><head><meta http-equiv="Refresh" content="0; url=http://{}/cgi-bin/spydus.exe/ENQ/WQUP/BRWENQ/42?QRY=BRWIRN"></head></html>"#,
+                req.header("host").unwrap()
+            )),
+            ("GET", "/cgi-bin/spydus.exe/ENQ/OPAC/BRWENQ/42") => Reply::ok(account.clone()),
+            ("GET", path) if path.starts_with("/cgi-bin/spydus.exe/ENQ/OPAC/LOANRENQ/") => {
+                let due = if renewed.load(std::sync::atomic::Ordering::SeqCst) { "17 Nov 2026" } else { "27 Oct 2026" };
+                Reply::ok(loans_page(due))
+            }
+            ("GET", RENEW_PATH) => match kind {
+                RenewLibrary::Confirms => confirm(),
+                RenewLibrary::RenewsOnTheLink => {
+                    renew(&renewed);
+                    Reply::ok(format!(r#"<html><body><form id="mainForm" method="post" action="{RENEW_CONFIRM_PATH}"></form></body></html>"#))
+                }
+                RenewLibrary::RenewsAndConfirms => {
+                    renew(&renewed);
+                    confirm()
+                }
+                RenewLibrary::Refuses => Reply::ok(
+                    r#"<html><body><div class="alert alert-danger">Lessons in chemistry cannot be renewed as it is reserved by another borrower.</div></body></html>"#,
+                ),
+                RenewLibrary::SignedOut => Reply::ok(LOGIN_PAGE),
+            },
+            ("POST", RENEW_CONFIRM_PATH) => {
+                renew(&renewed);
+                Reply::ok("<html><body><p>Done</p></body></html>")
+            }
+            _ => Reply::status(404, "unexpected"),
+        }
+    })
+}
+
+const LOGIN_RDT_PATH: &str = "/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/LB/1";
+
+fn renew_url(server: &Server, loan: &str) -> String {
+    format!("{}{RENEW_PATH}?SVL={loan}&SETDESC=Current%20loans", server.origin)
+}
+
+fn renew_requests(server: &Server) -> Vec<String> {
+    server
+        .requests()
+        .iter()
+        .filter(|r| r.path().contains("/N/"))
+        .map(|r| format!("{} {}", r.method, r.path()))
+        .collect()
+}
+
+#[tokio::test]
+async fn renew_submits_the_confirm_form_once() {
+    let server = renew_library(RenewLibrary::Confirms);
+    let client = SpydusClient::new(Some(server.origin.clone()));
+    let result = client.renew_loan(renew_url(&server, "19000005"), SESSION.into()).await.unwrap();
+    assert_eq!(result, RenewResult { ok: true, message: None, due: Some("17 Nov 2026".into()) });
+    assert_eq!(renew_requests(&server), [format!("GET {RENEW_PATH}"), format!("POST {RENEW_CONFIRM_PATH}")]);
+    let post = server.requests().into_iter().find(|r| r.method == "POST").unwrap();
+    assert_eq!(post.form_value("csrf").as_deref(), Some("renew-csrf"));
+    assert_eq!(post.form_value("SVL").as_deref(), Some("19000005"));
+    assert_eq!(post.header("cookie"), Some(authed_cookie().as_str()));
+}
+
+#[tokio::test]
+async fn a_library_that_renews_on_the_link_is_not_asked_again() {
+    for kind in [RenewLibrary::RenewsOnTheLink, RenewLibrary::RenewsAndConfirms] {
+        let server = renew_library(kind);
+        let client = SpydusClient::new(Some(server.origin.clone()));
+        let result = client.renew_loan(renew_url(&server, "19000005"), SESSION.into()).await.unwrap();
+        assert!(result.ok);
+        assert_eq!(result.due.as_deref(), Some("17 Nov 2026"));
+        assert_eq!(renew_requests(&server), [format!("GET {RENEW_PATH}")], "no POST");
+    }
+}
+
+#[tokio::test]
+async fn a_refused_renewal_says_why() {
+    let server = renew_library(RenewLibrary::Refuses);
+    let client = SpydusClient::new(Some(server.origin.clone()));
+    let result = client.renew_loan(renew_url(&server, "19000005"), SESSION.into()).await.unwrap();
+    assert!(!result.ok);
+    assert_eq!(result.due.as_deref(), Some("27 Oct 2026"));
+    assert_eq!(
+        result.message.as_deref(),
+        Some("Lessons in chemistry cannot be renewed as it is reserved by another borrower.")
+    );
+}
+
+#[tokio::test]
+async fn renew_checks_the_loan_is_still_there_and_the_session() {
+    let server = renew_library(RenewLibrary::Confirms);
+    let client = SpydusClient::new(Some(server.origin.clone()));
+    let gone = client.renew_loan(renew_url(&server, "19000099"), SESSION.into()).await.unwrap();
+    assert_eq!(gone, RenewResult { ok: false, message: Some("This loan isn’t on your loans list any more.".into()), due: None });
+    assert!(renew_requests(&server).is_empty(), "the link isn't opened");
+
+    let server = renew_library(RenewLibrary::SignedOut);
+    let client = SpydusClient::new(Some(server.origin.clone()));
+    assert!(matches!(
+        client.renew_loan(renew_url(&server, "19000005"), SESSION.into()).await,
+        Err(SpydusError::NotLoggedIn)
+    ));
+}
+
+#[tokio::test]
+async fn only_a_loans_renew_link_is_followed() {
+    let server = renew_library(RenewLibrary::Confirms);
+    let client = SpydusClient::new(Some(server.origin.clone()));
+    let cancel = format!("{}/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/78500000/0/C/5/RSVCENQ?SVL=19000005", server.origin);
+    assert!(matches!(client.renew_loan(cancel, SESSION.into()).await, Err(SpydusError::Parse { .. })));
+    assert!(matches!(
+        client.renew_loan(format!("{}{RENEW_PATH}", server.origin), SESSION.into()).await,
+        Err(SpydusError::Parse { .. })
+    ));
+    assert!(server.requests().is_empty());
 }
 
 /// A minimal, sequential HTTP/1.1 server on 127.0.0.1 (one request per connection) that records

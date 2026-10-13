@@ -385,7 +385,34 @@ object Copy {
         /** "Books on loan from {library} show up here with their due dates." */
         fun noLoansMessage(library: String): String =
             "Books on loan from ${library} show up here with their due dates."
+        /** Retired by the renew feature (§5.12): remove once neither app uses it. */
         const val renewalsSoon = "Renewals coming soon"
+        /** Swipe action / button on a loan, and the Renew dialog's confirming button (cancel button: common.notNow). */
+        const val renew = "Renew"
+        /** Menu item and screen-reader action on a loan row (like editReservation / cancelReservation). */
+        const val renewLoan = "Renew loan"
+        /** Footnote under the Loans list (replaces renewalsSoon); touchAndHold variant where the reservation footnote uses touchAndHoldHint. */
+        const val loanSwipeHint = "Swipe left on a loan to renew it."
+        const val loanTouchAndHoldHint = "Touch and hold a loan to renew it."
+        const val renewTitle = "Renew this loan?"
+        /** "“{title}” is due {date}. Renewing asks the library for a later due date." */
+        /** Renew dialog body; {date} as loans.dueOn writes it. renewMessageNoDate when the loan has no due date. */
+        fun renewMessage(title: String, date: String): String =
+            "“${title}” is due ${date}. Renewing asks the library for a later due date."
+        /** "Renewing “{title}” asks the library for a later due date." */
+        fun renewMessageNoDate(title: String): String =
+            "Renewing “${title}” asks the library for a later due date."
+        /** Progress toast while renewLoan runs (it takes a few seconds: it reads the loans list before and after). */
+        const val renewing = "Renewing…"
+        /** "Renewed · Due {date}" */
+        /** Success toast; {date} = RenewResult.due as loans.dueOn writes it. renewedNoDate when due is missing. */
+        fun renewed(date: String): String =
+            "Renewed · Due ${date}"
+        const val renewedNoDate = "Renewed"
+        /** Error toast when renewLoan throws (not NotLoggedIn). When RenewResult.ok is false, show RenewResult.message (the library's reason or the core's) as the error toast instead. */
+        const val renewFailed = "Couldn’t renew this loan"
+        /** Screen-reader hint on the Renew action. */
+        const val renewHint = "Asks the library for a later due date"
         const val noReservationsTitle = "No reservations"
         const val noReservationsMessage = "Tap Reserve on any book and follow it here until it’s ready to collect."
         /** Section header and the ready card's status chip (§7.1; was 'Ready for pickup'). Pending cards show the library's own status, else 'Pending'. */

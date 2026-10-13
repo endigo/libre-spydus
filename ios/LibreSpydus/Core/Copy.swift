@@ -429,7 +429,37 @@ enum Copy {
         static func noLoansMessage(library: String) -> String {
             "Books on loan from \(library) show up here with their due dates."
         }
+        /// Retired by the renew feature (§5.12): remove once neither app uses it.
         static let renewalsSoon = "Renewals coming soon"
+        /// Swipe action / button on a loan, and the Renew dialog's confirming button (cancel button: common.notNow).
+        static let renew = "Renew"
+        /// Menu item and screen-reader action on a loan row (like editReservation / cancelReservation).
+        static let renewLoan = "Renew loan"
+        /// Footnote under the Loans list (replaces renewalsSoon); touchAndHold variant where the reservation footnote uses touchAndHoldHint.
+        static let loanSwipeHint = "Swipe left on a loan to renew it."
+        static let loanTouchAndHoldHint = "Touch and hold a loan to renew it."
+        static let renewTitle = "Renew this loan?"
+        /// "“{title}” is due {date}. Renewing asks the library for a later due date."
+        /// Renew dialog body; {date} as loans.dueOn writes it. renewMessageNoDate when the loan has no due date.
+        static func renewMessage(title: String, date: String) -> String {
+            "“\(title)” is due \(date). Renewing asks the library for a later due date."
+        }
+        /// "Renewing “{title}” asks the library for a later due date."
+        static func renewMessageNoDate(title: String) -> String {
+            "Renewing “\(title)” asks the library for a later due date."
+        }
+        /// Progress toast while renewLoan runs (it takes a few seconds: it reads the loans list before and after).
+        static let renewing = "Renewing…"
+        /// "Renewed · Due {date}"
+        /// Success toast; {date} = RenewResult.due as loans.dueOn writes it. renewedNoDate when due is missing.
+        static func renewed(date: String) -> String {
+            "Renewed · Due \(date)"
+        }
+        static let renewedNoDate = "Renewed"
+        /// Error toast when renewLoan throws (not NotLoggedIn). When RenewResult.ok is false, show RenewResult.message (the library's reason or the core's) as the error toast instead.
+        static let renewFailed = "Couldn’t renew this loan"
+        /// Screen-reader hint on the Renew action.
+        static let renewHint = "Asks the library for a later due date"
         static let noReservationsTitle = "No reservations"
         static let noReservationsMessage = "Tap Reserve on any book and follow it here until it’s ready to collect."
         /// Section header and the ready card's status chip (§7.1; was 'Ready for pickup'). Pending cards show the library's own status, else 'Pending'.

@@ -774,6 +774,8 @@ internal object IntegrityCheckingUniffiLib {
     ): Int
     external fun uniffi_librespydus_core_checksum_method_spydusclient_remove_pick(
     ): Int
+    external fun uniffi_librespydus_core_checksum_method_spydusclient_renew_loan(
+    ): Int
     external fun uniffi_librespydus_core_checksum_method_spydusclient_reservations(
     ): Int
     external fun uniffi_librespydus_core_checksum_method_spydusclient_reserve_options(
@@ -854,6 +856,8 @@ internal object UniffiLib {
     external fun uniffi_librespydus_core_fn_method_spydusclient_related(`ptr`: Long,`url`: RustBuffer.ByValue,
     ): Long
     external fun uniffi_librespydus_core_fn_method_spydusclient_remove_pick(`ptr`: Long,`irn`: RustBuffer.ByValue,`session`: RustBuffer.ByValue,
+    ): Long
+    external fun uniffi_librespydus_core_fn_method_spydusclient_renew_loan(`ptr`: Long,`url`: RustBuffer.ByValue,`session`: RustBuffer.ByValue,
     ): Long
     external fun uniffi_librespydus_core_fn_method_spydusclient_reservations(`ptr`: Long,`session`: RustBuffer.ByValue,
     ): Long
@@ -1129,6 +1133,9 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if ((lib.uniffi_librespydus_core_checksum_method_spydusclient_remove_pick() and 0xFFFF) != 49529) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_librespydus_core_checksum_method_spydusclient_renew_loan() and 0xFFFF) != 40043) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if ((lib.uniffi_librespydus_core_checksum_method_spydusclient_reservations() and 0xFFFF) != 43078) {
@@ -1835,6 +1842,18 @@ public interface SpydusClientInterface {
     suspend fun `removePick`(`irn`: kotlin.String, `session`: kotlin.String): kotlin.Long
     
     /**
+     * Renew a loan via its "Renew loan" action href (`…/PGM/OPAC/CCOPT/{set}/0/N/3/LOANRENQ?SVL=`).
+     * MUTATING — call only on explicit user confirmation. Not being renewed is `ok: false` data
+     * with the reason, not an error.
+     *
+     * The outcome comes from the loans list, not from the library's reply page: the loan's due
+     * date before and after. When the link answers with a confirm form, the loans list is
+     * checked again before submitting it, so a library that renews on the link itself is never
+     * asked twice. A loan that isn't on the list any more isn't renewed.
+     */
+    suspend fun `renewLoan`(`url`: kotlin.String, `session`: kotlin.String): RenewResult
+    
+    /**
      * Ready-for-pickup and pending reservations, fetched concurrently (server.ts:305-322).
      * A missing link → an empty list for that half.
      */
@@ -2502,6 +2521,39 @@ open class SpydusClient: Disposable, AutoCloseable, SpydusClientInterface
         { future -> UniffiLib.ffi_librespydus_core_rust_future_free_i64(future) },
         // lift function
         { FfiConverterLong.lift(it) },
+        // Error FFI converter
+        SpydusException.ErrorHandler,
+    )
+    }
+
+    
+    /**
+     * Renew a loan via its "Renew loan" action href (`…/PGM/OPAC/CCOPT/{set}/0/N/3/LOANRENQ?SVL=`).
+     * MUTATING — call only on explicit user confirmation. Not being renewed is `ok: false` data
+     * with the reason, not an error.
+     *
+     * The outcome comes from the loans list, not from the library's reply page: the loan's due
+     * date before and after. When the link answers with a confirm form, the loans list is
+     * checked again before submitting it, so a library that renews on the link itself is never
+     * asked twice. A loan that isn't on the list any more isn't renewed.
+     */
+    @Throws(SpydusException::class)
+    @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
+    override suspend fun `renewLoan`(`url`: kotlin.String, `session`: kotlin.String) : RenewResult {
+        return uniffiRustCallAsync(
+        callWithHandle { uniffiHandle ->
+            UniffiLib.uniffi_librespydus_core_fn_method_spydusclient_renew_loan(
+                uniffiHandle,
+                
+        FfiConverterString.lower(`url`),
+        FfiConverterString.lower(`session`),
+            )
+        },
+        { future, callback, continuation -> UniffiLib.ffi_librespydus_core_rust_future_poll_rust_buffer(future, callback, continuation) },
+        { future, continuation -> UniffiLib.ffi_librespydus_core_rust_future_complete_rust_buffer(future, continuation) },
+        { future -> UniffiLib.ffi_librespydus_core_rust_future_free_rust_buffer(future) },
+        // lift function
+        { FfiConverterTypeRenewResult.lift(it) },
         // Error FFI converter
         SpydusException.ErrorHandler,
     )
@@ -4683,6 +4735,63 @@ public object FfiConverterTypeRelatedList: FfiConverterRustBuffer<RelatedList> {
 
     override fun write(value: RelatedList, buf: ByteBuffer) {
             FfiConverterSequenceTypeRelatedItem.write(value.`items`, buf)
+    }
+}
+
+
+
+/**
+ * Outcome of renewing a loan (`SpydusClient::renew_loan`).
+ */
+data class RenewResult (
+    /**
+     * The loan's due date moved: the library renewed it.
+     */
+    var `ok`: kotlin.Boolean
+    , 
+    /**
+     * Why it wasn't renewed: the library's own words when its page gave a reason, else the
+     * core's ("The library didn’t renew this loan."). `None` when `ok`.
+     */
+    var `message`: kotlin.String?
+    , 
+    /**
+     * The loan's due date after the attempt, as the loans list writes it ("17 Nov 2026"); `None`
+     * when the loan is no longer on the list.
+     */
+    var `due`: kotlin.String?
+    
+){
+    
+
+    
+
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeRenewResult: FfiConverterRustBuffer<RenewResult> {
+    override fun read(buf: ByteBuffer): RenewResult {
+        return RenewResult(
+            FfiConverterBoolean.read(buf),
+            FfiConverterOptionalString.read(buf),
+            FfiConverterOptionalString.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: RenewResult) = (
+            FfiConverterBoolean.allocationSize(value.`ok`) +
+            FfiConverterOptionalString.allocationSize(value.`message`) +
+            FfiConverterOptionalString.allocationSize(value.`due`)
+    )
+
+    override fun write(value: RenewResult, buf: ByteBuffer) {
+            FfiConverterBoolean.write(value.`ok`, buf)
+            FfiConverterOptionalString.write(value.`message`, buf)
+            FfiConverterOptionalString.write(value.`due`, buf)
     }
 }
 

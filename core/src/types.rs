@@ -350,6 +350,20 @@ pub struct ReserveResult {
     pub message: Option<String>,
 }
 
+/// Outcome of renewing a loan (`SpydusClient::renew_loan`).
+#[derive(uniffi::Record, serde::Serialize, serde::Deserialize, Debug, Clone, PartialEq, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct RenewResult {
+    /// The loan's due date moved: the library renewed it.
+    pub ok: bool,
+    /// Why it wasn't renewed: the library's own words when its page gave a reason, else the
+    /// core's ("The library didn’t renew this loan."). `None` when `ok`.
+    pub message: Option<String>,
+    /// The loan's due date after the attempt, as the loans list writes it ("17 Nov 2026"); `None`
+    /// when the loan is no longer on the list.
+    pub due: Option<String>,
+}
+
 /// A pickup-location choice from the edit-reservation form.
 #[derive(uniffi::Record, serde::Serialize, serde::Deserialize, Debug, Clone, PartialEq, Default)]
 #[serde(rename_all = "camelCase")]

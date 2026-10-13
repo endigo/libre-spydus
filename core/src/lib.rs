@@ -448,6 +448,45 @@ impl SpydusClient {
             .await?
     }
 
+    /// Renew a loan via its "Renew loan" action href (`…/PGM/OPAC/CCOPT/{set}/0/N/3/LOANRENQ?SVL=`).
+    /// MUTATING — call only on explicit user confirmation. Not being renewed is `ok: false` data
+    /// with the reason, not an error.
+    ///
+    /// The outcome comes from the loans list, not from the library's reply page: the loan's due
+    /// date before and after. When the link answers with a confirm form, the loans list is
+    /// checked again before submitting it, so a library that renews on the link itself is never
+    /// asked twice. A loan that isn't on the list any more isn't renewed.
+    pub async fn renew_loan(&self, url: String, session: String) -> Result<RenewResult, SpydusError> {
+        let session = signed_in(&session)?;
+        let http = self.guarded(&url)?;
+        let Some(irn) = parse::renew::renew_link_loan(&url) else {
+            return Err(SpydusError::Parse { message: "not a renew link".into() });
+        };
+        let due_of = |loans: &PatronList| {
+            loans.items.iter().find(|item| item.irn.as_deref() == Some(irn.as_str())).map(|item| item.fields.get("Due").cloned())
+        };
+        let Some(due_before) = due_of(&self.loans(session.to_owned()).await?) else {
+            return Ok(RenewResult { ok: false, message: Some(NOT_ON_LOANS.to_owned()), due: None });
+        };
+
+        let page = timing::fetch_and_parse("renew", http.fetch_authed(&url, session), str::to_owned).await?;
+        if fetch::is_sign_in_page(&page) {
+            return Err(SpydusError::NotLoggedIn);
+        }
+        let result_page = match parse::renew::confirm_form(&page, http.origin()) {
+            Some(form) if due_of(&self.loans(session.to_owned()).await?) == Some(due_before.clone()) => {
+                timing::fetch_and_parse("renew confirm", http.renew_confirm(&form, session), str::to_owned).await?
+            }
+            _ => page,
+        };
+
+        let due = due_of(&self.loans(session.to_owned()).await?).flatten();
+        let ok = due.is_some() && due != due_before;
+        let message = (!ok)
+            .then(|| parse::renew::refusal(&result_page).unwrap_or_else(|| DIDNT_RENEW.to_owned()));
+        Ok(RenewResult { ok, message, due })
+    }
+
     /// The reservation request form for a format's `reserveUrl` (server.ts:186-198). Read-only:
     /// no hold is placed. A logged-out session yields `message: "Please sign in again."`.
     pub async fn reserve_options(
@@ -579,6 +618,10 @@ async fn cached<V: Clone + Send>(
     cache.insert(key, value.clone(), ttl);
     Ok(value)
 }
+
+/// `renew_loan`'s own reasons (docs/native-apps.md §7.1 wording).
+const NOT_ON_LOANS: &str = "This loan isn’t on your loans list any more.";
+const DIDNT_RENEW: &str = "The library didn’t renew this loan.";
 
 /// `X-Spydus-Session` is trimmed, and a blank one is "not signed in" (server.ts:149-151).
 fn signed_in(session: &str) -> Result<&str, SpydusError> {

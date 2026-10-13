@@ -129,8 +129,8 @@ Data notes (verified on real pages):
   Render with `availabilitySummary(availability:).label`.
 - Some libraries are slow (Brazoria County: 40–60 s for big result sets, near the core's 60 s
   timeout): show progress patiently, keep shelves independent so one slow shelf doesn't block Home.
-- Loans: `PatronItem.fields["Due"]` (e.g. "27 Oct 2026"), action "Renew loan" (renew is NOT
-  implemented yet — show no Renew button). Reservations: `fields` `Status`, `Rank`, `Placed`,
+- Loans: `PatronItem.fields["Due"]` (e.g. "27 Oct 2026"), action "Renew loan" (renew with
+  `renewLoan`, §5.12). Reservations: `fields` `Status`, `Rank`, `Placed`,
   `Pickup location`; actions labelled like "Cancel reservation" / "Edit reservation" (match
   `/cancel/i`, `/edit/i`).
 - Covers: `coverUrls` (Syndetics). Missing cover → generated placeholder (title on a token colour).
@@ -387,6 +387,33 @@ tap. Not cached in the core.
   and counts from save/remove — so every flow above works signed in to the demo account.
 - **Verification:** workers use demo mode only — never save/remove on a real account. The
   coordinator and the user check the real list on the phone.
+
+### 5.12 Renew a loan (I14 iOS / A12 Android)
+The reader renews a loan from Your Books, as on the library's website ("Renew loan" in a loan's
+menu). Core (`core/README.md`, "Renew"): `renewLoan(url, session) -> RenewResult{ok, message?,
+due?}`, `url` = the loan's `PatronItem.actions` entry whose label matches `/renew/i`. MUTATING:
+only after the reader confirms. It takes a few seconds (it reads the loans list before and after to
+see whether the due date moved). Copy: `design/copy.json` `yourBooks.renew*` / `loanSwipeHint`.
+- **Where:** each loan row in Your Books › Loans that has a renew action. iOS: a trailing swipe
+  action **Renew** (like reservations' Edit / Cancel) and the row's context menu **Renew loan**;
+  Android: the same swipe action as reservations plus the long-press menu and a TalkBack custom
+  action **Renew loan**. The footnote under the Loans list is `loanSwipeHint` (iOS 17 fallback
+  `loanTouchAndHoldHint`), replacing "Renewals coming soon" (delete `renewalsSoon` once unused).
+  No renew on the book page or Home for now.
+- **Confirm:** an alert/dialog `renewTitle` — `renewMessage(title, date)` (date as `loans.dueOn`;
+  `renewMessageNoDate` without one) — **Renew** / **Not now**.
+- **While renewing:** the row shows progress and its actions are disabled; toast `renewing`.
+- **Result:** `ok` → toast `renewed(date)` (`RenewResult.due` written as `loans.dueOn`;
+  `renewedNoDate` without one). `ok == false` → error toast with `RenewResult.message` (the library's
+  reason, or the core's "The library didn’t renew this loan."). Either way refresh the account
+  (the saved snapshot updates, so the row, Home's "Your loans" and the due-date reminders follow the
+  new date). A thrown error → error toast `renewFailed`; `NotLoggedIn` → the usual session-expired
+  path (§5.2).
+- **Demo mode:** `DemoBackend.renewLoan` renews in memory (the due date moves 21 days later), but one
+  demo loan refuses with a library-style reason ("This item cannot be renewed as it is reserved by
+  another borrower.") — so both outcomes can be seen.
+- **Verification:** workers use demo mode only — never renew on a real account. The user does the
+  first real renewal on the phone; the coordinator checks the result and the loans list.
 
 ### 5.7 User-facing errors
 `Network` → "Can't reach {library}. Check your connection." · `HumanVerificationRequired` →

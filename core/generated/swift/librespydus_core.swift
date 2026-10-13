@@ -771,6 +771,18 @@ public protocol SpydusClientProtocol: AnyObject, Sendable {
     func removePick(irn: String, session: String) async throws  -> Int64
     
     /**
+     * Renew a loan via its "Renew loan" action href (`…/PGM/OPAC/CCOPT/{set}/0/N/3/LOANRENQ?SVL=`).
+     * MUTATING — call only on explicit user confirmation. Not being renewed is `ok: false` data
+     * with the reason, not an error.
+     *
+     * The outcome comes from the loans list, not from the library's reply page: the loan's due
+     * date before and after. When the link answers with a confirm form, the loans list is
+     * checked again before submitting it, so a library that renews on the link itself is never
+     * asked twice. A loan that isn't on the list any more isn't renewed.
+     */
+    func renewLoan(url: String, session: String) async throws  -> RenewResult
+    
+    /**
      * Ready-for-pickup and pending reservations, fetched concurrently (server.ts:305-322).
      * A missing link → an empty list for that half.
      */
@@ -1271,6 +1283,32 @@ open func removePick(irn: String, session: String)async throws  -> Int64  {
             completeFunc: ffi_librespydus_core_rust_future_complete_i64,
             freeFunc: ffi_librespydus_core_rust_future_free_i64,
             liftFunc: FfiConverterInt64.lift,
+            errorHandler: FfiConverterTypeSpydusError_lift
+        )
+}
+    
+    /**
+     * Renew a loan via its "Renew loan" action href (`…/PGM/OPAC/CCOPT/{set}/0/N/3/LOANRENQ?SVL=`).
+     * MUTATING — call only on explicit user confirmation. Not being renewed is `ok: false` data
+     * with the reason, not an error.
+     *
+     * The outcome comes from the loans list, not from the library's reply page: the loan's due
+     * date before and after. When the link answers with a confirm form, the loans list is
+     * checked again before submitting it, so a library that renews on the link itself is never
+     * asked twice. A loan that isn't on the list any more isn't renewed.
+     */
+open func renewLoan(url: String, session: String)async throws  -> RenewResult  {
+    return
+        try  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_librespydus_core_fn_method_spydusclient_renew_loan(
+                        self.uniffiCloneHandle(),FfiConverterString.lower(url),FfiConverterString.lower(session)
+                )
+            },
+            pollFunc: ffi_librespydus_core_rust_future_poll_rust_buffer,
+            completeFunc: ffi_librespydus_core_rust_future_complete_rust_buffer,
+            freeFunc: ffi_librespydus_core_rust_future_free_rust_buffer,
+            liftFunc: FfiConverterTypeRenewResult_lift,
             errorHandler: FfiConverterTypeSpydusError_lift
         )
 }
@@ -3879,6 +3917,89 @@ public func FfiConverterTypeRelatedList_lower(_ value: RelatedList) -> RustBuffe
 
 
 /**
+ * Outcome of renewing a loan (`SpydusClient::renew_loan`).
+ */
+public struct RenewResult: Equatable, Hashable {
+    /**
+     * The loan's due date moved: the library renewed it.
+     */
+    public var ok: Bool
+    /**
+     * Why it wasn't renewed: the library's own words when its page gave a reason, else the
+     * core's ("The library didn’t renew this loan."). `None` when `ok`.
+     */
+    public var message: String?
+    /**
+     * The loan's due date after the attempt, as the loans list writes it ("17 Nov 2026"); `None`
+     * when the loan is no longer on the list.
+     */
+    public var due: String?
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(
+        /**
+         * The loan's due date moved: the library renewed it.
+         */ok: Bool, 
+        /**
+         * Why it wasn't renewed: the library's own words when its page gave a reason, else the
+         * core's ("The library didn’t renew this loan."). `None` when `ok`.
+         */message: String?, 
+        /**
+         * The loan's due date after the attempt, as the loans list writes it ("17 Nov 2026"); `None`
+         * when the loan is no longer on the list.
+         */due: String?) {
+        self.ok = ok
+        self.message = message
+        self.due = due
+    }
+
+    
+
+    
+}
+
+#if compiler(>=6)
+extension RenewResult: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeRenewResult: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> RenewResult {
+        return
+            try RenewResult(
+                ok: FfiConverterBool.read(from: &buf), 
+                message: FfiConverterOptionString.read(from: &buf), 
+                due: FfiConverterOptionString.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: RenewResult, into buf: inout [UInt8]) {
+        FfiConverterBool.write(value.ok, into: &buf)
+        FfiConverterOptionString.write(value.message, into: &buf)
+        FfiConverterOptionString.write(value.due, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeRenewResult_lift(_ buf: RustBuffer) throws -> RenewResult {
+    return try FfiConverterTypeRenewResult.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeRenewResult_lower(_ value: RenewResult) -> RustBuffer {
+    return FfiConverterTypeRenewResult.lower(value)
+}
+
+
+/**
  * `/account/reservations` response: ready-for-pickup + pending lists.
  */
 public struct Reservations: Equatable, Hashable {
@@ -6136,6 +6257,9 @@ private let initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_librespydus_core_checksum_method_spydusclient_remove_pick() != 49529) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_librespydus_core_checksum_method_spydusclient_renew_loan() != 40043) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_librespydus_core_checksum_method_spydusclient_reservations() != 43078) {

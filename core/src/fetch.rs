@@ -29,8 +29,8 @@ use crate::timing;
 use crate::parse::account::parse_account_links;
 use crate::parse::decode::JS_WS;
 use crate::parse::reserve::{
-    ManageKind, parse_edit_form, parse_manage_result, parse_reserve_form, parse_reserve_result,
-    to_edit_options, to_reserve_options,
+    ManageKind, ReserveForm, parse_edit_form, parse_manage_result, parse_reserve_form,
+    parse_reserve_result, to_edit_options, to_reserve_options,
 };
 use crate::types::{
     AccountLinks, EditOptions, EditOverrides, ReserveOptions, ReserveResult, SearchSort,
@@ -319,6 +319,12 @@ impl Http {
         Ok(parse_manage_result(&html, ManageKind::Cancel))
     }
 
+    /// Submits a loan's renew confirm form (`parse::renew::confirm_form`) and follows to the
+    /// result page. MUTATING.
+    pub async fn renew_confirm(&self, form: &ReserveForm, session: &str) -> Result<String, SpydusError> {
+        self.post_form_follow(&form.action, &form.body, &authed_cookie(session)).await
+    }
+
     /// auth.ts:266-272 (read-only GET of the edit form, `…/ER/1/RSVCENQ?SVL=`).
     pub async fn edit_reservation_options(
         &self,
@@ -519,6 +525,11 @@ fn under_origin(origin: &str, url: &str) -> bool {
 }
 
 /// First non-empty `SPYDUS_BRWSESSIONID(?:_\d+)?=([^;\s]+)` value (auth.ts:60-68).
+/// A page that asks the reader to sign in (its `#frmLogin`): the session has ended.
+pub fn is_sign_in_page(html: &str) -> bool {
+    html.contains(LOGIN_FORM)
+}
+
 pub fn session_from_set_cookies(set_cookies: &[String]) -> Option<String> {
     set_cookies.iter().find_map(|c| SESSION_RE.captures(c).map(|m| m[1].to_owned()))
 }
