@@ -144,7 +144,9 @@ AvailabilitySummary{available?, copies?, reserved?, label}` · `parseDueDate(tex
 item}?` (`HoldingKind`: loan, reservationReady, reservationPending) · (I9/A7, §5.8)
 `patronItemKey(item) -> String` · `readyAlerts(snapshot, alertedKeys) -> ReadyAlerts{newItems,
 alertedKeys}` · `dueReminders(snapshot, today: SimpleDate, daysBefore) -> [DueReminder{key, due,
-remindOn, items}]`.
+remindOn, items}]` · (I10/A8, §5.9) `cardBarcode(cardNumber, symbology) -> CardBarcode{symbology,
+modules: [Bool], text}?` · `SpydusClient.cardBarcodeSymbology() async -> BarcodeSymbology`
+(`.code128`, `.code39`, `.codabar`).
 Newest = `SORTS=MAIN.CREATED_DATE.DESC]MAIN.CREATED_TIME.DESC` (the OPAC's own new-items RSS order).
 
 ## 5. App architecture (same shape on both platforms)
@@ -272,6 +274,35 @@ Canning sends its notices at about 07:20–07:45 local time, so LibreSpydus chec
     next 07:45, re-enqueued at the end of each run; no network constraint (it falls back to the
     saved snapshot).
 
+### 5.9 My card (I10 iOS / A8 Android)
+The library card as a barcode to scan at the desk or self-checkout, like the official app's card.
+- **The number** is the borrower ID: what the patron types as "Library card number" to sign in
+  (the official app's barcode is the same `BrwId`; Canning's start `CL114D…`). Saved per library in
+  the secure store with the session (iOS Keychain service `com.librespydus.card`, account = origin;
+  Android the encrypted secrets store, key `card.<origin>`) when sign-in succeeds, trimmed, as
+  typed. Editable on the card. Deleted on sign-out; kept when the session expires. Demo mode:
+  `DEMO0012345`, in memory.
+- **Symbology:** `client.cardBarcodeSymbology()` (the library's `barcodeType` from the Spydus
+  mobile config: Canning Code 128, Cumberland Code 39; Code 128 when the library has none; cached
+  in the core). `cardBarcode(number, symbology)` → `modules` (true = black, quiet zones not
+  included) drawn by the app; it falls back to Code 128 for numbers the library's symbology can't
+  encode, and is nil only for numbers Code 128 can't encode either.
+- **Home:** while signed in, a capsule button **"My card"** with a barcode icon in the header,
+  right of the greeting (surfaceElevated fill, primary-tinted icon). Tap → the card sheet.
+- **Card sheet** "My card": a **white** rounded card (white whatever the theme — scanners need
+  black on white) with the library logo + name, the borrower's name, the barcode (black modules on
+  white, ≥ 10 white modules of quiet zone each side, a whole number of device pixels per module,
+  ~100 pt / dp tall, as wide as fits) and the number under it in a monospaced font. Below the
+  card: "Show this at the library desk or self-checkout." and an **"Edit card number"** button.
+  Screen brightness goes to full while the sheet is up and back when it closes or the app leaves
+  the foreground. While the symbology loads the barcode area shows a spinner (first open only).
+  - No number saved (signed in before this version, or edited away): the sheet asks for it —
+    field "Library card number", note "The number on your library card. It's what you sign in
+    with.", **Save** (disabled while blank) — then shows the card.
+  - A number `cardBarcode` can't encode: the number shown large, with "This number can't be
+    shown as a barcode."
+  - VoiceOver / TalkBack: the barcode is one element, "Barcode for card <number>".
+
 ### 5.7 User-facing errors
 `Network` → "Can't reach {library}. Check your connection." · `HumanVerificationRequired` →
 verification sheet · `NotLoggedIn` → "Please sign in again." (+ login) · `CredentialsRejected` →
@@ -291,7 +322,7 @@ Search tab. Sections (each with "View All"): **"New arrivals"** (first `homeShel
 horizontal cover cards, tap → detail), **"Popular genres"** (`homeGenres()` rounded colour tiles
 with a platform icon per `key`, tap → results), **"Your borrowed books"** (signed in: current
 loans as covers with "N days left"/"Due {date}", overdue in danger colour; signed out: a sign-in
-card). No bell icon.
+card). No bell icon. Signed in: a **"My card"** button in the header (§5.9).
 
 **Search (I3/A3).** Search field (autofocus from Home), sort toggle Relevance / Newest, result rows
 (cover, title, author, year, format chips; digital formats tinted `digital`), infinite scroll via

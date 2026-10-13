@@ -732,6 +732,8 @@ internal object IntegrityCheckingUniffiLib {
     ): Int
     external fun uniffi_librespydus_core_checksum_func_ready_alerts(
     ): Int
+    external fun uniffi_librespydus_core_checksum_func_card_barcode(
+    ): Int
     external fun uniffi_librespydus_core_checksum_func_set_timing_sink(
     ): Int
     external fun uniffi_librespydus_core_checksum_method_spydusclient_account(
@@ -741,6 +743,8 @@ internal object IntegrityCheckingUniffiLib {
     external fun uniffi_librespydus_core_checksum_method_spydusclient_availability(
     ): Int
     external fun uniffi_librespydus_core_checksum_method_spydusclient_cancel_reservation(
+    ): Int
+    external fun uniffi_librespydus_core_checksum_method_spydusclient_card_barcode_symbology(
     ): Int
     external fun uniffi_librespydus_core_checksum_method_spydusclient_edit_options(
     ): Int
@@ -809,6 +813,8 @@ internal object UniffiLib {
     ): Long
     external fun uniffi_librespydus_core_fn_method_spydusclient_cancel_reservation(`ptr`: Long,`url`: RustBuffer.ByValue,`session`: RustBuffer.ByValue,
     ): Long
+    external fun uniffi_librespydus_core_fn_method_spydusclient_card_barcode_symbology(`ptr`: Long,
+    ): Long
     external fun uniffi_librespydus_core_fn_method_spydusclient_edit_options(`ptr`: Long,`url`: RustBuffer.ByValue,`session`: RustBuffer.ByValue,
     ): Long
     external fun uniffi_librespydus_core_fn_method_spydusclient_edit_reservation(`ptr`: Long,`url`: RustBuffer.ByValue,`session`: RustBuffer.ByValue,`overrides`: RustBuffer.ByValue,
@@ -872,6 +878,8 @@ internal object UniffiLib {
     external fun uniffi_librespydus_core_fn_func_patron_item_record_url(`item`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     external fun uniffi_librespydus_core_fn_func_ready_alerts(`snapshot`: RustBuffer.ByValue,`alertedKeys`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    external fun uniffi_librespydus_core_fn_func_card_barcode(`cardNumber`: RustBuffer.ByValue,`symbology`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     external fun uniffi_librespydus_core_fn_func_set_timing_sink(`sink`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
@@ -1036,6 +1044,9 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
     if ((lib.uniffi_librespydus_core_checksum_func_ready_alerts() and 0xFFFF) != 57947) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
+    if ((lib.uniffi_librespydus_core_checksum_func_card_barcode() and 0xFFFF) != 27575) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
     if ((lib.uniffi_librespydus_core_checksum_func_set_timing_sink() and 0xFFFF) != 27295) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
@@ -1049,6 +1060,9 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if ((lib.uniffi_librespydus_core_checksum_method_spydusclient_cancel_reservation() and 0xFFFF) != 50116) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_librespydus_core_checksum_method_spydusclient_card_barcode_symbology() and 0xFFFF) != 26393) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if ((lib.uniffi_librespydus_core_checksum_method_spydusclient_edit_options() and 0xFFFF) != 27600) {
@@ -1679,6 +1693,14 @@ public interface SpydusClientInterface {
     suspend fun `cancelReservation`(`url`: kotlin.String, `session`: kotlin.String): ReserveResult
     
     /**
+     * The barcode symbology the library's card scanners read, for `card_barcode`: the
+     * `barcodeType` of the Spydus mobile app's public config (Canning `Code128`, Cumberland
+     * `Code39`). Code 128 when the library has no such config (404), it can't be read, or it names
+     * another symbology. Never fails; a successful answer (404 included) is cached 10 min.
+     */
+    suspend fun `cardBarcodeSymbology`(): BarcodeSymbology
+    
+    /**
      * The edit-reservation form (pickup choices + current dates) for a reservation row's
      * "Edit" action href (server.ts:248-258). Read-only.
      */
@@ -1999,6 +2021,32 @@ open class SpydusClient: Disposable, AutoCloseable, SpydusClientInterface
         { FfiConverterTypeReserveResult.lift(it) },
         // Error FFI converter
         SpydusException.ErrorHandler,
+    )
+    }
+
+    
+    /**
+     * The barcode symbology the library's card scanners read, for `card_barcode`: the
+     * `barcodeType` of the Spydus mobile app's public config (Canning `Code128`, Cumberland
+     * `Code39`). Code 128 when the library has no such config (404), it can't be read, or it names
+     * another symbology. Never fails; a successful answer (404 included) is cached 10 min.
+     */
+    @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
+    override suspend fun `cardBarcodeSymbology`() : BarcodeSymbology {
+        return uniffiRustCallAsync(
+        callWithHandle { uniffiHandle ->
+            UniffiLib.uniffi_librespydus_core_fn_method_spydusclient_card_barcode_symbology(
+                uniffiHandle,
+                
+            )
+        },
+        { future, callback, continuation -> UniffiLib.ffi_librespydus_core_rust_future_poll_rust_buffer(future, callback, continuation) },
+        { future, continuation -> UniffiLib.ffi_librespydus_core_rust_future_complete_rust_buffer(future, continuation) },
+        { future -> UniffiLib.ffi_librespydus_core_rust_future_free_rust_buffer(future) },
+        // lift function
+        { FfiConverterTypeBarcodeSymbology.lift(it) },
+        // Error FFI converter
+        UniffiNullRustCallStatusErrorHandler,
     )
     }
 
@@ -3026,6 +3074,63 @@ public object FfiConverterTypeAvailabilitySummary: FfiConverterRustBuffer<Availa
             FfiConverterOptionalLong.write(value.`copies`, buf)
             FfiConverterOptionalLong.write(value.`reserved`, buf)
             FfiConverterString.write(value.`label`, buf)
+    }
+}
+
+
+
+/**
+ * A card number ready to draw.
+ */
+data class CardBarcode (
+    /**
+     * The symbology the bars are in: the one asked for, or Code 128 when the number has
+     * characters it can't encode.
+     */
+    var `symbology`: BarcodeSymbology
+    , 
+    /**
+     * One entry per module (the narrowest bar or space), left to right: `true` is black. Quiet
+     * zones are not included: leave at least 10 white modules on each side.
+     */
+    var `modules`: List<kotlin.Boolean>
+    , 
+    /**
+     * The number as encoded (trimmed; upper-case for Code 39), to print under the bars.
+     */
+    var `text`: kotlin.String
+    
+){
+    
+
+    
+
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeCardBarcode: FfiConverterRustBuffer<CardBarcode> {
+    override fun read(buf: ByteBuffer): CardBarcode {
+        return CardBarcode(
+            FfiConverterTypeBarcodeSymbology.read(buf),
+            FfiConverterSequenceBoolean.read(buf),
+            FfiConverterString.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: CardBarcode) = (
+            FfiConverterTypeBarcodeSymbology.allocationSize(value.`symbology`) +
+            FfiConverterSequenceBoolean.allocationSize(value.`modules`) +
+            FfiConverterString.allocationSize(value.`text`)
+    )
+
+    override fun write(value: CardBarcode, buf: ByteBuffer) {
+            FfiConverterTypeBarcodeSymbology.write(value.`symbology`, buf)
+            FfiConverterSequenceBoolean.write(value.`modules`, buf)
+            FfiConverterString.write(value.`text`, buf)
     }
 }
 
@@ -4565,6 +4670,55 @@ public object FfiConverterTypeTiming: FfiConverterRustBuffer<Timing> {
 
 
 /**
+ * A 1D barcode symbology a library's card scanners read. Spydus libraries configure one in the
+ * mobile app config (`barcodeType`: Canning `Code128`, Cumberland `Code39`); Codabar is the
+ * classic library-card symbology.
+ */
+
+enum class BarcodeSymbology {
+    
+    /**
+     * Code 128 (subset C for an even run of digits, else subset B). The default.
+     */
+    CODE128,
+    /**
+     * Code 39 (upper-case letters, digits, space and `-.$/+%`), wide:narrow 3:1.
+     */
+    CODE39,
+    /**
+     * Codabar (digits and `-$:/.+`), start/stop `A`, wide:narrow 3:1.
+     */
+    CODABAR;
+
+    
+
+
+    companion object
+}
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeBarcodeSymbology: FfiConverterRustBuffer<BarcodeSymbology> {
+    override fun read(buf: ByteBuffer) = try {
+        BarcodeSymbology.values()[buf.getInt() - 1]
+    } catch (e: IndexOutOfBoundsException) {
+        throw RuntimeException("invalid enum value, something is very wrong!!", e)
+    }
+
+    override fun allocationSize(value: BarcodeSymbology) = 4UL
+
+    override fun write(value: BarcodeSymbology, buf: ByteBuffer) {
+        buf.putInt(value.ordinal + 1)
+    }
+}
+
+
+
+
+
+/**
  * How the patron already has a title (`AccountHolding.kind`).
  */
 
@@ -4888,6 +5042,38 @@ public object FfiConverterOptionalTypeAccountHolding: FfiConverterRustBuffer<Acc
 /**
  * @suppress
  */
+public object FfiConverterOptionalTypeCardBarcode: FfiConverterRustBuffer<CardBarcode?> {
+    override fun read(buf: ByteBuffer): CardBarcode? {
+        if (buf.get().toInt() == 0) {
+            return null
+        }
+        return FfiConverterTypeCardBarcode.read(buf)
+    }
+
+    override fun allocationSize(value: CardBarcode?): ULong {
+        if (value == null) {
+            return 1UL
+        } else {
+            return 1UL + FfiConverterTypeCardBarcode.allocationSize(value)
+        }
+    }
+
+    override fun write(value: CardBarcode?, buf: ByteBuffer) {
+        if (value == null) {
+            buf.put(0)
+        } else {
+            buf.put(1)
+            FfiConverterTypeCardBarcode.write(value, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
 public object FfiConverterOptionalTypeShowing: FfiConverterRustBuffer<Showing?> {
     override fun read(buf: ByteBuffer): Showing? {
         if (buf.get().toInt() == 0) {
@@ -4942,6 +5128,34 @@ public object FfiConverterOptionalTypeSimpleDate: FfiConverterRustBuffer<SimpleD
         } else {
             buf.put(1)
             FfiConverterTypeSimpleDate.write(value, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterSequenceBoolean: FfiConverterRustBuffer<List<kotlin.Boolean>> {
+    override fun read(buf: ByteBuffer): List<kotlin.Boolean> {
+        val len = buf.getInt()
+        return List<kotlin.Boolean>(len) {
+            FfiConverterBoolean.read(buf)
+        }
+    }
+
+    override fun allocationSize(value: List<kotlin.Boolean>): ULong {
+        val sizeForLength = 4UL
+        val sizeForItems = value.map { FfiConverterBoolean.allocationSize(it) }.sum()
+        return sizeForLength + sizeForItems
+    }
+
+    override fun write(value: List<kotlin.Boolean>, buf: ByteBuffer) {
+        buf.putInt(value.size)
+        value.iterator().forEach {
+            FfiConverterBoolean.write(it, buf)
         }
     }
 }
@@ -5670,6 +5884,23 @@ public object FfiConverterMapStringString: FfiConverterRustBuffer<Map<kotlin.Str
         
         FfiConverterTypeAccountSnapshot.lower(`snapshot`),
         FfiConverterSequenceString.lower(`alertedKeys`),_status)
+}
+    )
+    }
+    
+
+        /**
+         * `card_number` as a barcode in `symbology`, falling back to Code 128 when it has characters that
+         * symbology can't encode. `None` for a blank number or one Code 128 can't encode either
+         * (characters outside printable ASCII).
+         */ fun `cardBarcode`(`cardNumber`: kotlin.String, `symbology`: BarcodeSymbology): CardBarcode? {
+            return FfiConverterOptionalTypeCardBarcode.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_librespydus_core_fn_func_card_barcode(
+    
+        
+        FfiConverterString.lower(`cardNumber`),
+        FfiConverterTypeBarcodeSymbology.lower(`symbology`),_status)
 }
     )
     }

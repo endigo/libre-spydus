@@ -28,6 +28,7 @@ core/
     directory.rs        Civica's library directory → LibraryInfo (region, test-instance flag)
     fetch.rs            HTTP: search, fragments, authed GET, login, reservation wizards;
                         origin guard, timeouts, AWS WAF detection, verification cookie
+    barcode.rs          card_barcode: a card number as Code 128 / Code 39 / Codabar modules
     timing.rs           opt-in timing log (set_timing_sink): network and parse time per page
     crypto.rs           encrypt.js → PEM, RSA PKCS#1 v1.5 (JSEncrypt-compatible) PIN encryption
     cache.rs            thread-safe TTL cache
@@ -121,6 +122,16 @@ Alerts (`docs/native-apps.md` §5.8):
 | `patronItemKey(item)` → `String` | A loan's or reservation's identity across refreshes: its IRN, else `bib:<bibIrn>`, else `title:<title>`, else empty. |
 | `readyAlerts(snapshot, alertedKeys)` → `ReadyAlerts{newItems, alertedKeys}` | The ready-to-collect reservations whose key isn't in `alertedKeys` (one notification each), and the keys to save for next time: every reservation ready now, so one that is collected and later ready again is alerted again. When alerts are turned on, call it with no keys and save only `alertedKeys`. |
 | `dueReminders(snapshot, today, daysBefore)` → `[DueReminder{key, due, remindOn, items}]` | One reminder per due date (`key` = `due:YYYY-MM-DD`), sorted by date, for loans due on or after `today`, reminded `daysBefore` days ahead or `today` if that has passed. Overdue loans and unreadable due dates are left out. |
+
+My card (`docs/native-apps.md` §5.9): `cardBarcode(cardNumber, symbology)` →
+`CardBarcode{symbology, modules, text}?` draws a card number as Code 128 (subset C for an even run of
+digits, else B), Code 39 (upper-cased, 3:1) or Codabar (start/stop `A`, 3:1): `modules` has one
+`Bool` per narrowest bar or space (`true` = black), without quiet zones. A number the symbology
+can't encode falls back to Code 128; `nil` only when Code 128 can't encode it either (non-ASCII)
+or it's blank. `SpydusClient.cardBarcodeSymbology()` reads the library's `barcodeType` from the
+Spydus mobile app's public config (`/api/mobile/1.0/general/config`): Canning `Code128`,
+Cumberland `Code39`; Code 128 when the library has none (Hutt City, Geelong: 404). Never throws;
+cached 10 min. The test patterns in `tests/barcode.rs` were decoded back by Apple's Vision.
 
 Saving the account on the device: `encodeAccountSnapshot(snapshot)` → JSON `String` and
 `decodeAccountSnapshot(json)` → `AccountSnapshot` (throws `Parse` for malformed JSON or a snapshot

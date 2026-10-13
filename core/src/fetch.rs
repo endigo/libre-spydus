@@ -158,6 +158,15 @@ impl Http {
         self.get_public(url, "fragment").await
     }
 
+    /// The Spydus mobile app's public library config (`/api/mobile/1.0/general/config`, JSON),
+    /// e.g. its card `barcodeType`. Not every library has it (Hutt City, Geelong: 404 → `Upstream`).
+    pub async fn fetch_mobile_config(&self) -> Result<String, SpydusError> {
+        let url = format!("{}{}", self.origin, config::MOBILE_CONFIG_PATH);
+        let req = self.request(&self.client, Method::GET, &url, None)?.header(ACCEPT, "application/json");
+        let res = self.follow(req).await?;
+        self.ok_text(res, "mobile config").await
+    }
+
     /// auth.ts:142-146 — authed GET (follows same-origin redirects, keeping the `Cookie`).
     pub async fn fetch_authed(&self, url: &str, session: &str) -> Result<String, SpydusError> {
         let res = self.get(url, Some(&authed_cookie(session))).await?;

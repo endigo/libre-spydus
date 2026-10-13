@@ -671,6 +671,14 @@ public protocol SpydusClientProtocol: AnyObject, Sendable {
     func cancelReservation(url: String, session: String) async throws  -> ReserveResult
     
     /**
+     * The barcode symbology the library's card scanners read, for `card_barcode`: the
+     * `barcodeType` of the Spydus mobile app's public config (Canning `Code128`, Cumberland
+     * `Code39`). Code 128 when the library has no such config (404), it can't be read, or it names
+     * another symbology. Never fails; a successful answer (404 included) is cached 10 min.
+     */
+    func cardBarcodeSymbology() async  -> BarcodeSymbology
+    
+    /**
      * The edit-reservation form (pickup choices + current dates) for a reservation row's
      * "Edit" action href (server.ts:248-258). Read-only.
      */
@@ -916,6 +924,29 @@ open func cancelReservation(url: String, session: String)async throws  -> Reserv
             freeFunc: ffi_librespydus_core_rust_future_free_rust_buffer,
             liftFunc: FfiConverterTypeReserveResult_lift,
             errorHandler: FfiConverterTypeSpydusError_lift
+        )
+}
+    
+    /**
+     * The barcode symbology the library's card scanners read, for `card_barcode`: the
+     * `barcodeType` of the Spydus mobile app's public config (Canning `Code128`, Cumberland
+     * `Code39`). Code 128 when the library has no such config (404), it can't be read, or it names
+     * another symbology. Never fails; a successful answer (404 included) is cached 10 min.
+     */
+open func cardBarcodeSymbology()async  -> BarcodeSymbology  {
+    return
+        try!  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_librespydus_core_fn_method_spydusclient_card_barcode_symbology(
+                        self.uniffiCloneHandle()
+                )
+            },
+            pollFunc: ffi_librespydus_core_rust_future_poll_rust_buffer,
+            completeFunc: ffi_librespydus_core_rust_future_complete_rust_buffer,
+            freeFunc: ffi_librespydus_core_rust_future_free_rust_buffer,
+            liftFunc: FfiConverterTypeBarcodeSymbology_lift,
+            errorHandler: nil
+            
         )
 }
     
@@ -1853,6 +1884,89 @@ public func FfiConverterTypeAvailabilitySummary_lift(_ buf: RustBuffer) throws -
 #endif
 public func FfiConverterTypeAvailabilitySummary_lower(_ value: AvailabilitySummary) -> RustBuffer {
     return FfiConverterTypeAvailabilitySummary.lower(value)
+}
+
+
+/**
+ * A card number ready to draw.
+ */
+public struct CardBarcode: Equatable, Hashable {
+    /**
+     * The symbology the bars are in: the one asked for, or Code 128 when the number has
+     * characters it can't encode.
+     */
+    public var symbology: BarcodeSymbology
+    /**
+     * One entry per module (the narrowest bar or space), left to right: `true` is black. Quiet
+     * zones are not included: leave at least 10 white modules on each side.
+     */
+    public var modules: [Bool]
+    /**
+     * The number as encoded (trimmed; upper-case for Code 39), to print under the bars.
+     */
+    public var text: String
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(
+        /**
+         * The symbology the bars are in: the one asked for, or Code 128 when the number has
+         * characters it can't encode.
+         */symbology: BarcodeSymbology, 
+        /**
+         * One entry per module (the narrowest bar or space), left to right: `true` is black. Quiet
+         * zones are not included: leave at least 10 white modules on each side.
+         */modules: [Bool], 
+        /**
+         * The number as encoded (trimmed; upper-case for Code 39), to print under the bars.
+         */text: String) {
+        self.symbology = symbology
+        self.modules = modules
+        self.text = text
+    }
+
+    
+
+    
+}
+
+#if compiler(>=6)
+extension CardBarcode: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeCardBarcode: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> CardBarcode {
+        return
+            try CardBarcode(
+                symbology: FfiConverterTypeBarcodeSymbology.read(from: &buf), 
+                modules: FfiConverterSequenceBool.read(from: &buf), 
+                text: FfiConverterString.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: CardBarcode, into buf: inout [UInt8]) {
+        FfiConverterTypeBarcodeSymbology.write(value.symbology, into: &buf)
+        FfiConverterSequenceBool.write(value.modules, into: &buf)
+        FfiConverterString.write(value.text, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeCardBarcode_lift(_ buf: RustBuffer) throws -> CardBarcode {
+    return try FfiConverterTypeCardBarcode.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeCardBarcode_lower(_ value: CardBarcode) -> RustBuffer {
+    return FfiConverterTypeCardBarcode.lower(value)
 }
 
 
@@ -3863,6 +3977,93 @@ public func FfiConverterTypeTiming_lower(_ value: Timing) -> RustBuffer {
 
 
 /**
+ * A 1D barcode symbology a library's card scanners read. Spydus libraries configure one in the
+ * mobile app config (`barcodeType`: Canning `Code128`, Cumberland `Code39`); Codabar is the
+ * classic library-card symbology.
+ */
+
+public enum BarcodeSymbology: Equatable, Hashable {
+    
+    /**
+     * Code 128 (subset C for an even run of digits, else subset B). The default.
+     */
+    case code128
+    /**
+     * Code 39 (upper-case letters, digits, space and `-.$/+%`), wide:narrow 3:1.
+     */
+    case code39
+    /**
+     * Codabar (digits and `-$:/.+`), start/stop `A`, wide:narrow 3:1.
+     */
+    case codabar
+
+
+
+
+
+}
+
+#if compiler(>=6)
+extension BarcodeSymbology: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeBarcodeSymbology: FfiConverterRustBuffer {
+    typealias SwiftType = BarcodeSymbology
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> BarcodeSymbology {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+        
+        case 1: return .code128
+        
+        case 2: return .code39
+        
+        case 3: return .codabar
+        
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: BarcodeSymbology, into buf: inout [UInt8]) {
+        switch value {
+        
+        
+        case .code128:
+            writeInt(&buf, Int32(1))
+        
+        
+        case .code39:
+            writeInt(&buf, Int32(2))
+        
+        
+        case .codabar:
+            writeInt(&buf, Int32(3))
+        
+        }
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeBarcodeSymbology_lift(_ buf: RustBuffer) throws -> BarcodeSymbology {
+    return try FfiConverterTypeBarcodeSymbology.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeBarcodeSymbology_lower(_ value: BarcodeSymbology) -> RustBuffer {
+    return FfiConverterTypeBarcodeSymbology.lower(value)
+}
+
+
+
+/**
  * How the patron already has a title (`AccountHolding.kind`).
  */
 
@@ -4261,6 +4462,30 @@ fileprivate struct FfiConverterOptionTypeAccountHolding: FfiConverterRustBuffer 
 #if swift(>=5.8)
 @_documentation(visibility: private)
 #endif
+fileprivate struct FfiConverterOptionTypeCardBarcode: FfiConverterRustBuffer {
+    typealias SwiftType = CardBarcode?
+
+    public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
+        guard let value = value else {
+            writeInt(&buf, Int8(0))
+            return
+        }
+        writeInt(&buf, Int8(1))
+        FfiConverterTypeCardBarcode.write(value, into: &buf)
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SwiftType {
+        switch try readInt(&buf) as Int8 {
+        case 0: return nil
+        case 1: return try FfiConverterTypeCardBarcode.read(from: &buf)
+        default: throw UniffiInternalError.unexpectedOptionalTag
+        }
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 fileprivate struct FfiConverterOptionTypeShowing: FfiConverterRustBuffer {
     typealias SwiftType = Showing?
 
@@ -4303,6 +4528,31 @@ fileprivate struct FfiConverterOptionTypeSimpleDate: FfiConverterRustBuffer {
         case 1: return try FfiConverterTypeSimpleDate.read(from: &buf)
         default: throw UniffiInternalError.unexpectedOptionalTag
         }
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterSequenceBool: FfiConverterRustBuffer {
+    typealias SwiftType = [Bool]
+
+    public static func write(_ value: [Bool], into buf: inout [UInt8]) {
+        let len = Int32(value.count)
+        writeInt(&buf, len)
+        for item in value {
+            FfiConverterBool.write(item, into: &buf)
+        }
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> [Bool] {
+        let len: Int32 = try readInt(&buf)
+        var seq = [Bool]()
+        seq.reserveCapacity(Int(len))
+        for _ in 0 ..< len {
+            seq.append(try FfiConverterBool.read(from: &buf))
+        }
+        return seq
     }
 }
 
@@ -4966,6 +5216,20 @@ public func readyAlerts(snapshot: AccountSnapshot, alertedKeys: [String]) -> Rea
 })
 }
 /**
+ * `card_number` as a barcode in `symbology`, falling back to Code 128 when it has characters that
+ * symbology can't encode. `None` for a blank number or one Code 128 can't encode either
+ * (characters outside printable ASCII).
+ */
+public func cardBarcode(cardNumber: String, symbology: BarcodeSymbology) -> CardBarcode?  {
+    return try!  FfiConverterOptionTypeCardBarcode.lift(try! rustCall() {
+        uniffiCallStatus in
+    uniffi_librespydus_core_fn_func_card_barcode(
+        FfiConverterString.lower(cardNumber),
+        FfiConverterTypeBarcodeSymbology_lower(symbology),uniffiCallStatus
+    )
+})
+}
+/**
  * Installs `sink` for every client (replacing any earlier one), or with `None` turns the
  * timing log off.
  */
@@ -5034,6 +5298,9 @@ private let initializationResult: InitializationResult = {
     if (uniffi_librespydus_core_checksum_func_ready_alerts() != 57947) {
         return InitializationResult.apiChecksumMismatch
     }
+    if (uniffi_librespydus_core_checksum_func_card_barcode() != 27575) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_librespydus_core_checksum_func_set_timing_sink() != 27295) {
         return InitializationResult.apiChecksumMismatch
     }
@@ -5047,6 +5314,9 @@ private let initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_librespydus_core_checksum_method_spydusclient_cancel_reservation() != 50116) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_librespydus_core_checksum_method_spydusclient_card_barcode_symbology() != 26393) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_librespydus_core_checksum_method_spydusclient_edit_options() != 27600) {

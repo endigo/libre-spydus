@@ -12,6 +12,7 @@
 uniffi::setup_scaffolding!();
 
 pub mod app;
+pub mod barcode;
 pub mod cache;
 pub mod config;
 pub mod crypto;
@@ -93,6 +94,8 @@ struct Caches {
     related: TtlCache<RelatedList>,
     /// `acct:{session}` → the session's account links.
     accounts: TtlCache<AccountLinks>,
+    /// The library's card barcode symbology (one entry).
+    symbology: TtlCache<barcode::BarcodeSymbology>,
 }
 
 #[uniffi::export(async_runtime = "tokio")]
@@ -235,6 +238,28 @@ impl SpydusClient {
             .await
         })
         .await
+    }
+
+    /// The barcode symbology the library's card scanners read, for `card_barcode`: the
+    /// `barcodeType` of the Spydus mobile app's public config (Canning `Code128`, Cumberland
+    /// `Code39`). Code 128 when the library has no such config (404), it can't be read, or it names
+    /// another symbology. Never fails; a successful answer (404 included) is cached 10 min.
+    pub async fn card_barcode_symbology(&self) -> barcode::BarcodeSymbology {
+        let Ok(http) = self.http() else { return barcode::BarcodeSymbology::default() };
+        let lookup = async {
+            match http.fetch_mobile_config().await {
+                Ok(json) => {
+                    let config: serde_json::Value = serde_json::from_str(&json).unwrap_or_default();
+                    Ok(barcode::symbology_named(config.get("barcodeType").and_then(|t| t.as_str())))
+                }
+                // No config at this library: the default, remembered like an answer.
+                Err(SpydusError::Upstream { .. }) => Ok(barcode::BarcodeSymbology::default()),
+                Err(e) => Err(e),
+            }
+        };
+        cached(&self.caches().symbology, "barcode".into(), LIST_TTL, "mobile config", lookup)
+            .await
+            .unwrap_or_default()
     }
 
     /// Sign in (server.ts:153-182) and return the session token to pass to the account
