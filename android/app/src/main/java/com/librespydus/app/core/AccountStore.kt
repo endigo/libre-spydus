@@ -34,6 +34,7 @@ import uniffi.librespydus_core.Reservations
  *   AppState calling [discard]).
  * - A binding with a cache key saves each fresh snapshot to [storage] under that key; demo mode
  *   binds without one, so its data stays in memory.
+ * - Every fresh snapshot then goes to [onRefreshed] (the alerts, §5.8), demo or not.
  *
  * Confined to the main thread like AppState: call it from the UI or the app scope.
  */
@@ -43,6 +44,7 @@ class AccountStore(
     private val report: (Throwable) -> UserFacingError,
     private val now: () -> Long = System::currentTimeMillis,
     private val io: CoroutineDispatcher = Dispatchers.IO,
+    private val onRefreshed: suspend (backend: LibraryBackend, snapshot: AccountSnapshot) -> Unit = { _, _ -> },
 ) {
     private class Binding(val backend: LibraryBackend, val session: String, val cacheKey: String?)
 
@@ -62,6 +64,9 @@ class AccountStore(
     private var binding: Binding? = null
 
     private var running: Job? = null
+
+    /** The refresh running now, if any (join it to wait for the account to settle). */
+    val runningRefresh: Job? get() = running
 
     /** When the last refresh for this binding started; spaces out automatic retries after a failure. */
     private var lastAttemptAt: Long? = null
@@ -172,6 +177,7 @@ class AccountStore(
                 _snapshot.value = fresh
                 _lastRefreshError.value = null
                 bound.cacheKey?.let { save(bound, it, fresh) }
+                if (binding === bound) notifyRefreshed(bound, fresh)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -189,6 +195,14 @@ class AccountStore(
         running = job
         job.start()
         return job
+    }
+
+    private suspend fun notifyRefreshed(bound: Binding, snapshot: AccountSnapshot) {
+        try {
+            withContext(NonCancellable) { onRefreshed(bound.backend, snapshot) }
+        } catch (e: Exception) {
+            Log.w(TAG, "couldn't process the fresh account snapshot", e)
+        }
     }
 
     private fun cancelRunning() {

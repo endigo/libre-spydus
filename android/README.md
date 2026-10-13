@@ -103,6 +103,8 @@ Intent extras read by `MainActivity` (`core/LaunchOptions.kt`, docs §5.6):
 | `--ez ls_reset true` | clear persisted library, sessions, verification cookies, favourites and saved accounts first |
 | `--ez ls_demo_persist true` | with `ls_demo`: save the demo account on the device like a real one (under its own key), so a cold relaunch shows it at once |
 | `--ez ls_demo_refresh_fails true` | with `ls_demo`: every demo account refresh fails like an unreachable library ("Couldn't refresh — showing saved data" over a saved demo account) |
+| `--ez ls_morning_check_now true` | run the 07:45 morning check (docs §5.8) through WorkManager now, once the launch's own account refresh has settled |
+| `--ez ls_demo_new_ready true` | with `ls_demo`: the "In transit" reservation (Baby-sitters club) becomes ready at Riverton Library from the demo account's second refresh on, so a "Ready to collect" alert can be shown |
 
 ```sh
 adb -s emulator-5554 shell am start -n com.librespydus.app/.MainActivity \
@@ -160,6 +162,38 @@ and Profile's name all read it; no screen calls `loans()` / `reservations()` any
 Never sign in with real credentials while developing (docs §2). Account screens are built and
 screenshotted in demo mode.
 
+## Alerts (docs §5.8)
+
+Profile → Notifications (signed in) has two app-wide switches, both off by default: "Ready to
+collect" and "Due-date reminders". Turning one on asks for `POST_NOTIFICATIONS` on Android 13+;
+refused or blocked → the switch stays off and "Notifications are turned off for LibreSpydus." +
+Open Settings shows.
+
+- `core/Alerts.kt` is the one processor. `AccountStore` hands it every fresh `accountSnapshot`
+  (launch, foreground, pull to refresh, after a reserve / cancel / edit, the morning check):
+  `readyAlerts` → one notification per new ready reservation → the returned keys are saved.
+  Turning Ready on seeds the keys from the saved account (no notification). State lives in the
+  `alerts` SharedPreferences: `readyEnabled`, `dueEnabled`, `readyKeys.<sha256(origin)>`,
+  `dueLastPosted.<sha256(origin)>.<due:YYYY-MM-DD>`; demo data is filed under `demo:<origin>`.
+- `core/MorningCheckWorker.kt`: WorkManager unique one-time work `morning-check`, delayed to the
+  next 07:45 local (`MorningCheckTime`, java.time, DST-safe), no constraints. The app keeps it
+  scheduled (KEEP) while signed in with a switch on and cancels it otherwise; each run fetches
+  the account like a foreground refresh (`AppState.morningCheck`), posts the due reminders whose
+  `remindOn` is today (once per key per day, from the saved account if the fetch failed) and
+  replaces itself with the next 07:45 (REPLACE).
+- `core/AlertsAndroid.kt`: channels `ready` / `due`, notification tag = the §5.8 id
+  (`ready:<originHash>:<key>`, `due:<originHash>:<YYYY-MM-DD>`), tap → `MainActivity` with
+  `ls_open_borrowed` → `AppState.openFromAlert` → Your Books on Reservations / Loans.
+- Sign-out and an expired session forget that library's keys and remove its notifications.
+
+```sh
+# Demo: turn both switches on in Profile first, then:
+adb -s emulator-5556 shell am start -S -n com.librespydus.app/.MainActivity --es ls_origin https://canning.spydus.com \
+  --ez ls_demo true --ez ls_demo_new_ready true --ez ls_morning_check_now true
+adb -s emulator-5556 shell am broadcast -a androidx.work.diagnostics.REQUEST_DIAGNOSTICS -p com.librespydus.app
+adb -s emulator-5556 logcat -s MorningCheck Alerts WM-DiagnosticsWrkr
+```
+
 ## Code map (`app/src/main/java/com/librespydus/app/`)
 
 | path | owner | what |
@@ -176,10 +210,11 @@ screenshotted in demo mode.
 | `core/UserFacingError.kt`, `core/Formatting.kt` | A1 | §5.7 messages; author, due date and greeting helpers |
 | `core/CoreHelpers.kt` | A1 | seams for the P helpers (`userAgent`, `isDigitalFormat`, `availabilitySummary`, `homeGenres`, `homeShelves`) and `LibraryDirectory` |
 | `core/LaunchOptions.kt` | A1 | DEBUG intent extras |
+| `core/Alerts.kt`, `core/AlertsContent.kt`, `core/AlertsAndroid.kt`, `core/MorningCheckWorker.kt` | A7 | ready-to-collect alerts and due-date reminders (§5.8): processor + stores, wording and 07:45 maths, channels/permission/tap intent, the WorkManager morning check |
 | `ui/theme/` | A1 | `design/tokens.json` as `LsColors`, `LsType`, `LsRadius`, `LsSpacing`, `LsCover`, `LsTabBar`; `LsIcons` |
 | `ui/components/` | A1 | `CoverImage`, `ShelfCover`, `BookRowCard`, `SectionHeader`, `SearchField`, `PrimaryPillButton`, `SecondaryPillButton`, `CircleIconButton`, `LsTopBar`, `GenreTile`, `Chip`, `SegmentedToggle`, `LoadingView`, `EmptyStateView`, `ErrorStateView`, `PlaceholderScreen`, `LsTabBar`, `ComponentGallery` |
 | `ui/nav/` | A1 | `LibreSpydusRoot` (splash, onboarding, tabs, AppState-driven sheets), one `NavHost` per tab, `AppNavigator`, `LocalAppState` |
-| `feature/onboarding/`, `feature/profile/`, `feature/borrowed/`, `feature/favourites/` | A2 | `LibraryPickerScreen`, `LoginSheet`, `VerificationScreen`, `ProfileScreen`, `BorrowedScreen`, `FavouritesScreen` |
+| `feature/onboarding/`, `feature/profile/`, `feature/borrowed/`, `feature/favourites/` | A2 | `LibraryPickerScreen`, `LoginSheet`, `VerificationScreen`, `ProfileScreen` (+ A7 `NotificationsSection`), `BorrowedScreen`, `FavouritesScreen` |
 | `feature/home/`, `feature/search/`, `feature/detail/` | A3 | `HomeScreen`, `SearchScreen`, `SearchResultsScreen`, `BookDetailScreen` |
 
 ### Notes for screen authors (waves 2–3)

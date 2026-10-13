@@ -45,7 +45,9 @@ import kotlin.time.Duration.Companion.milliseconds
  * adds a pending row (with the reserved edition's bib IRN, so the book page shows "Reserved"),
  * edit updates the pickup location. [accountSnapshot] takes [snapshotDelay], so the refreshing
  * state is visible, and with [refreshFails] (DEBUG `ls_demo_refresh_fails`) it fails like an
- * unreachable library.
+ * unreachable library. With [newReady] (DEBUG `ls_demo_new_ready`) the "In transit" reservation
+ * arrives at Riverton Library from the second snapshot on, so a "Ready to collect" alert (§5.8)
+ * can be shown.
  */
 class DemoBackend(
     private val public: LibraryBackend,
@@ -54,6 +56,7 @@ class DemoBackend(
     private val mutationDelay: Duration = 600.milliseconds,
     private val snapshotDelay: Duration = 1_500.milliseconds,
     private val refreshFails: Boolean = false,
+    private val newReady: Boolean = false,
     private val now: () -> Long = System::currentTimeMillis,
 ) : LibraryBackend {
     override val origin: String get() = public.origin
@@ -68,6 +71,7 @@ class DemoBackend(
     private val readyItems = data.ready.toMutableList()
     private val pendingItems = data.pending.toMutableList()
     private var nextIrn = 1
+    private var snapshots = 0
 
     /** reserveUrl → the search record it came from, so a demo reservation shows a real title. */
     private val reservable = ConcurrentHashMap<String, SearchRecord>()
@@ -113,7 +117,23 @@ class DemoBackend(
         requireSession(session)
         delay(snapshotDelay)
         if (refreshFails) throw SpydusException.Network("network error: demo refresh set to fail (ls_demo_refresh_fails)")
+        mutex.withLock {
+            snapshots++
+            if (newReady && snapshots >= 2) arrive()
+        }
         return AccountSnapshot(SNAPSHOT_VERSION, accountLinks.name, loans(session), reservations(session), now())
+    }
+
+    /**
+     * The "In transit" reservation is ready to collect, written the way Canning writes it ("Please
+     * pickup from: RIVERTON LIBRARY by …"). Once; call under [mutex].
+     */
+    private fun arrive() {
+        val index = pendingItems.indexOfFirst { it.irn == NEW_READY_IRN }
+        if (index < 0) return
+        val item = pendingItems.removeAt(index)
+        val pickupBy = DemoData.formatDate(today.plusDays(7))
+        readyItems.add(item.copy(fields = linkedMapOf("Status" to "Please pickup from: RIVERTON LIBRARY by $pickupBy")))
     }
 
     override suspend fun reserveOptions(url: String, session: String): ReserveOptions {
@@ -223,6 +243,9 @@ class DemoBackend(
         const val SESSION = "demo-session"
         const val DEMO_USERNAME = "demo"
         const val DEMO_PASSWORD = "demo"
+
+        /** The reservation `ls_demo_new_ready` makes ready (Baby-sitters club, "In transit"). */
+        const val NEW_READY_IRN = "19000002"
 
         /** The core's `ACCOUNT_SNAPSHOT_VERSION` (core/src/app.rs); DemoBackendTest checks it still decodes. */
         const val SNAPSHOT_VERSION: UInt = 1u

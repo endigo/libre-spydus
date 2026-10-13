@@ -13,6 +13,8 @@ coreKtx = "1.18.0"
 lifecycle = "2.10.0"
 navigation = "2.9.8"
 datastore = "1.2.1"
+# WorkManager 2.11 (minCompileSdk 35): the 07:45 morning check (§5.8).
+work = "2.11.2"
 coil = "3.5.0"
 # UniFFI 0.32 bindings use com.sun.jna.internal.Cleaner (JNA >= 5.12).
 jna = "5.17.0"
@@ -28,6 +30,7 @@ androidx-lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-ru
 androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycle" }
 androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigation" }
 androidx-datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastore" }
+androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "work" }
 androidx-compose-bom = { module = "androidx.compose:compose-bom", version.ref = "composeBom" }
 androidx-compose-ui = { module = "androidx.compose.ui:ui" }
 androidx-compose-ui-graphics = { module = "androidx.compose.ui:ui-graphics" }

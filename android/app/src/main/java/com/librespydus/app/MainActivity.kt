@@ -7,6 +7,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import com.librespydus.app.core.AlertIntents
 import com.librespydus.app.core.LaunchOptions
 import com.librespydus.app.ui.nav.LibreSpydusRoot
 import com.librespydus.app.ui.theme.LibreSpydusTheme
@@ -22,8 +23,11 @@ class MainActivity : ComponentActivity() {
             navigationBarStyle = SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT),
         )
         super.onCreate(savedInstanceState)
-        // Launch hooks only on a fresh start, not when the activity is recreated.
-        if (savedInstanceState == null) applyLaunchOptions(intent)
+        // Launch hooks and notification taps only on a fresh start, not when the activity is recreated.
+        if (savedInstanceState == null) {
+            applyLaunchOptions(intent)
+            openAlert(intent)
+        }
         setContent {
             LibreSpydusTheme {
                 LibreSpydusRoot(appState)
@@ -41,9 +45,17 @@ class MainActivity : ComponentActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         applyLaunchOptions(intent)
+        openAlert(intent)
     }
 
     private fun applyLaunchOptions(intent: Intent?) {
         appState.applyLaunchOptions(LaunchOptions.fromIntent(intent, BuildConfig.DEBUG))
+    }
+
+    /** A tapped alert (§5.8) opens Your Books on its segment (once: the extra is then removed). */
+    private fun openAlert(intent: Intent?) {
+        val segment = AlertIntents.segment(intent) ?: return
+        intent?.removeExtra(AlertIntents.EXTRA_OPEN_BORROWED)
+        appState.openFromAlert(segment)
     }
 }
