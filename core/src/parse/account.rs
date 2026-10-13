@@ -8,7 +8,7 @@
 //! state through `Rc<RefCell<…>>`; end-tag handlers must be `'static`, so they own `Rc` clones.
 
 use crate::parse::decode::{JS_WS, absolute, collapse, decode, parse_covers, to_int};
-use crate::types::{AccountLinks, PatronAction, PatronItem, PatronList};
+use crate::types::{AccountLinks, PatronAction, PatronItem, PatronList, PersonalDetails};
 use lol_html::{
     ElementContentHandlers, RewriteStrSettings, Selector, element, end_tag, rewrite_str, text,
 };
@@ -52,6 +52,7 @@ struct Links {
     loans: Option<String>,
     ready: Option<String>,
     pending: Option<String>,
+    personal: Option<String>,
 }
 
 pub fn parse_account_links(html: &str, origin: &str) -> AccountLinks {
@@ -76,6 +77,8 @@ pub fn parse_account_links(html: &str, origin: &str) -> AccountLinks {
                     l.ready = Some(href);
                 } else if href.contains("/RSVCENQ/") && fmt == Some("WR") && l.pending.is_none() {
                     l.pending = Some(href);
+                } else if href.contains("/BRWENQ/") && fmt == Some("PD") && l.personal.is_none() {
+                    l.personal = Some(href);
                 }
                 Ok(())
             }),
@@ -103,7 +106,55 @@ pub fn parse_account_links(html: &str, origin: &str) -> AccountLinks {
         loans_url: absolute(origin, l.loans.as_deref()),
         reservations_ready_url: absolute(origin, l.ready.as_deref()),
         reservations_pending_url: absolute(origin, l.pending.as_deref()),
+        personal_details_url: absolute(origin, l.personal.as_deref()),
     }
+}
+
+// ---------------------------------------------------------------------------
+// "Personal details" page → card number and expiry (new; no TS counterpart)
+// ---------------------------------------------------------------------------
+
+/// One labelled row: `<div class="… fd-caption"><span>Card number</span><span>:</span></div>`
+/// followed by `<div class="col …"><span class="d-block">CL114…</span></div>` (Canning,
+/// 2026-10-13; the same rows carry Name, Username, Date of birth, addresses, Phone, Card expires).
+static DETAIL_ROW: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r#"(?s)<div class="[^"]*\bfd-caption\b[^"]*">(.*?)</div>\s*<div[^>]*>(.*?)</div>"#).unwrap()
+});
+static FIRST_LINE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r#"(?s)<span class="[^"]*\bd-block\b[^"]*">(.*?)</span>"#).unwrap());
+static TAG: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"<[^>]*>").unwrap());
+
+/// Labels of the card number row, lower case, without the colon.
+const CARD_NUMBER_LABELS: &[&str] = &[
+    "card number", "library card number", "card no", "card no.", "barcode", "borrower barcode",
+    "borrower number", "membership number", "member number",
+];
+const CARD_EXPIRES_LABELS: &[&str] =
+    &["card expires", "card expiry", "card expiry date", "expiry date", "membership expires"];
+
+/// The account's "Personal details" page (`AccountLinks.personal_details_url`) → the card number
+/// and its expiry, from the rows labelled "Card number" and "Card expires" (or the alternatives
+/// above). Only those two values are read; the page's other personal data is ignored.
+pub fn parse_personal_details(html: &str) -> PersonalDetails {
+    let text = |fragment: &str| collapse(&decode(&TAG.replace_all(fragment, " ")));
+    let mut details = PersonalDetails::default();
+    for row in DETAIL_ROW.captures_iter(html) {
+        let label = text(&row[1]);
+        let label = label.trim_end_matches(':').trim().to_lowercase();
+        let wanted = if CARD_NUMBER_LABELS.contains(&label.as_str()) {
+            &mut details.card_number
+        } else if CARD_EXPIRES_LABELS.contains(&label.as_str()) {
+            &mut details.card_expires
+        } else {
+            continue;
+        };
+        // The first line of the value (a multi-line value has one `d-block` span per line).
+        let value = FIRST_LINE.captures(&row[2]).map_or_else(|| text(&row[2]), |line| text(&line[1]));
+        if wanted.is_none() && !value.is_empty() {
+            *wanted = Some(value);
+        }
+    }
+    details
 }
 
 // ---------------------------------------------------------------------------

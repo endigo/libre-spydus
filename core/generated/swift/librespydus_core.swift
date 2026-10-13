@@ -653,9 +653,10 @@ public protocol SpydusClientProtocol: AnyObject, Sendable {
     func account(session: String) async throws  -> AccountLinks
     
     /**
-     * Name, loans and both reservation lists in one call — what the apps save on the device and
-     * refresh in the background. Loans and reservations load concurrently; the account links
-     * they share are fetched once (cached per session).
+     * Name, card number, loans and both reservation lists in one call — what the apps save on the
+     * device and refresh in the background. Loans, reservations and the Personal details page load
+     * concurrently; the account links they share are fetched once (cached per session). The card
+     * number and expiry are `None` when the Personal details page has none or fails to load.
      */
     func accountSnapshot(session: String) async throws  -> AccountSnapshot
     
@@ -868,9 +869,10 @@ open func account(session: String)async throws  -> AccountLinks  {
 }
     
     /**
-     * Name, loans and both reservation lists in one call — what the apps save on the device and
-     * refresh in the background. Loans and reservations load concurrently; the account links
-     * they share are fetched once (cached per session).
+     * Name, card number, loans and both reservation lists in one call — what the apps save on the
+     * device and refresh in the background. Loans, reservations and the Personal details page load
+     * concurrently; the account links they share are fetched once (cached per session). The card
+     * number and expiry are `None` when the Personal details page has none or fails to load.
      */
 open func accountSnapshot(session: String)async throws  -> AccountSnapshot  {
     return
@@ -1552,14 +1554,22 @@ public struct AccountLinks: Equatable, Hashable {
     public var loansUrl: String?
     public var reservationsReadyUrl: String?
     public var reservationsPendingUrl: String?
+    /**
+     * The "Personal details" page (`…/BRWENQ/…?FMT=PD`): card number and expiry.
+     */
+    public var personalDetailsUrl: String?
 
     // Default memberwise initializers are never public by default, so we
     // declare one manually.
-    public init(name: String?, loansUrl: String?, reservationsReadyUrl: String?, reservationsPendingUrl: String?) {
+    public init(name: String?, loansUrl: String?, reservationsReadyUrl: String?, reservationsPendingUrl: String?, 
+        /**
+         * The "Personal details" page (`…/BRWENQ/…?FMT=PD`): card number and expiry.
+         */personalDetailsUrl: String? = nil) {
         self.name = name
         self.loansUrl = loansUrl
         self.reservationsReadyUrl = reservationsReadyUrl
         self.reservationsPendingUrl = reservationsPendingUrl
+        self.personalDetailsUrl = personalDetailsUrl
     }
 
     
@@ -1581,7 +1591,8 @@ public struct FfiConverterTypeAccountLinks: FfiConverterRustBuffer {
                 name: FfiConverterOptionString.read(from: &buf), 
                 loansUrl: FfiConverterOptionString.read(from: &buf), 
                 reservationsReadyUrl: FfiConverterOptionString.read(from: &buf), 
-                reservationsPendingUrl: FfiConverterOptionString.read(from: &buf)
+                reservationsPendingUrl: FfiConverterOptionString.read(from: &buf), 
+                personalDetailsUrl: FfiConverterOptionString.read(from: &buf)
         )
     }
 
@@ -1590,6 +1601,7 @@ public struct FfiConverterTypeAccountLinks: FfiConverterRustBuffer {
         FfiConverterOptionString.write(value.loansUrl, into: &buf)
         FfiConverterOptionString.write(value.reservationsReadyUrl, into: &buf)
         FfiConverterOptionString.write(value.reservationsPendingUrl, into: &buf)
+        FfiConverterOptionString.write(value.personalDetailsUrl, into: &buf)
     }
 }
 
@@ -1626,6 +1638,15 @@ public struct AccountSnapshot: Equatable, Hashable {
      * When it was fetched, Unix epoch milliseconds.
      */
     public var fetchedAtMs: Int64
+    /**
+     * The library card number from the Personal details page; `None` when that page has none or
+     * couldn't be loaded (the rest of the snapshot is still good).
+     */
+    public var cardNumber: String?
+    /**
+     * When the card expires, as the Personal details page writes it.
+     */
+    public var cardExpires: String?
 
     // Default memberwise initializers are never public by default, so we
     // declare one manually.
@@ -1635,12 +1656,21 @@ public struct AccountSnapshot: Equatable, Hashable {
          */version: UInt32, accountName: String?, loans: PatronList, reservations: Reservations, 
         /**
          * When it was fetched, Unix epoch milliseconds.
-         */fetchedAtMs: Int64) {
+         */fetchedAtMs: Int64, 
+        /**
+         * The library card number from the Personal details page; `None` when that page has none or
+         * couldn't be loaded (the rest of the snapshot is still good).
+         */cardNumber: String? = nil, 
+        /**
+         * When the card expires, as the Personal details page writes it.
+         */cardExpires: String? = nil) {
         self.version = version
         self.accountName = accountName
         self.loans = loans
         self.reservations = reservations
         self.fetchedAtMs = fetchedAtMs
+        self.cardNumber = cardNumber
+        self.cardExpires = cardExpires
     }
 
     
@@ -1663,7 +1693,9 @@ public struct FfiConverterTypeAccountSnapshot: FfiConverterRustBuffer {
                 accountName: FfiConverterOptionString.read(from: &buf), 
                 loans: FfiConverterTypePatronList.read(from: &buf), 
                 reservations: FfiConverterTypeReservations.read(from: &buf), 
-                fetchedAtMs: FfiConverterInt64.read(from: &buf)
+                fetchedAtMs: FfiConverterInt64.read(from: &buf), 
+                cardNumber: FfiConverterOptionString.read(from: &buf), 
+                cardExpires: FfiConverterOptionString.read(from: &buf)
         )
     }
 
@@ -1673,6 +1705,8 @@ public struct FfiConverterTypeAccountSnapshot: FfiConverterRustBuffer {
         FfiConverterTypePatronList.write(value.loans, into: &buf)
         FfiConverterTypeReservations.write(value.reservations, into: &buf)
         FfiConverterInt64.write(value.fetchedAtMs, into: &buf)
+        FfiConverterOptionString.write(value.cardNumber, into: &buf)
+        FfiConverterOptionString.write(value.cardExpires, into: &buf)
     }
 }
 
@@ -2768,6 +2802,77 @@ public func FfiConverterTypePatronList_lift(_ buf: RustBuffer) throws -> PatronL
 #endif
 public func FfiConverterTypePatronList_lower(_ value: PatronList) -> RustBuffer {
     return FfiConverterTypePatronList.lower(value)
+}
+
+
+/**
+ * From the account's "Personal details" page (`parse_personal_details`).
+ */
+public struct PersonalDetails: Equatable, Hashable {
+    /**
+     * The library card number, e.g. Canning's `CL114…`: the barcode on the card (the sign-in
+     * ID can be a username instead).
+     */
+    public var cardNumber: String?
+    /**
+     * When the card expires, as the page writes it ("12 Mar 2027").
+     */
+    public var cardExpires: String?
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(
+        /**
+         * The library card number, e.g. Canning's `CL114…`: the barcode on the card (the sign-in
+         * ID can be a username instead).
+         */cardNumber: String?, 
+        /**
+         * When the card expires, as the page writes it ("12 Mar 2027").
+         */cardExpires: String?) {
+        self.cardNumber = cardNumber
+        self.cardExpires = cardExpires
+    }
+
+    
+
+    
+}
+
+#if compiler(>=6)
+extension PersonalDetails: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypePersonalDetails: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> PersonalDetails {
+        return
+            try PersonalDetails(
+                cardNumber: FfiConverterOptionString.read(from: &buf), 
+                cardExpires: FfiConverterOptionString.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: PersonalDetails, into buf: inout [UInt8]) {
+        FfiConverterOptionString.write(value.cardNumber, into: &buf)
+        FfiConverterOptionString.write(value.cardExpires, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypePersonalDetails_lift(_ buf: RustBuffer) throws -> PersonalDetails {
+    return try FfiConverterTypePersonalDetails.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypePersonalDetails_lower(_ value: PersonalDetails) -> RustBuffer {
+    return FfiConverterTypePersonalDetails.lower(value)
 }
 
 
@@ -5307,7 +5412,7 @@ private let initializationResult: InitializationResult = {
     if (uniffi_librespydus_core_checksum_method_spydusclient_account() != 60698) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_librespydus_core_checksum_method_spydusclient_account_snapshot() != 50114) {
+    if (uniffi_librespydus_core_checksum_method_spydusclient_account_snapshot() != 56033) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_librespydus_core_checksum_method_spydusclient_availability() != 17964) {

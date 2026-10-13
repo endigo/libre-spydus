@@ -146,7 +146,8 @@ item}?` (`HoldingKind`: loan, reservationReady, reservationPending) · (I9/A7, �
 alertedKeys}` · `dueReminders(snapshot, today: SimpleDate, daysBefore) -> [DueReminder{key, due,
 remindOn, items}]` · (I10/A8, §5.9) `cardBarcode(cardNumber, symbology) -> CardBarcode{symbology,
 modules: [Bool], text}?` · `SpydusClient.cardBarcodeSymbology() async -> BarcodeSymbology`
-(`.code128`, `.code39`, `.codabar`).
+(`.code128`, `.code39`, `.codabar`) · `AccountSnapshot.cardNumber` / `.cardExpires` and
+`AccountLinks.personalDetailsUrl` (default nil).
 Newest = `SORTS=MAIN.CREATED_DATE.DESC]MAIN.CREATED_TIME.DESC` (the OPAC's own new-items RSS order).
 
 ## 5. App architecture (same shape on both platforms)
@@ -276,12 +277,15 @@ Canning sends its notices at about 07:20–07:45 local time, so LibreSpydus chec
 
 ### 5.9 My card (I10 iOS / A8 Android)
 The library card as a barcode to scan at the desk or self-checkout, like the official app's card.
-- **The number** is the borrower ID: what the patron types as "Library card number" to sign in
-  (the official app's barcode is the same `BrwId`; Canning's start `CL114D…`). Saved per library in
-  the secure store with the session (iOS Keychain service `com.librespydus.card`, account = origin;
-  Android the encrypted secrets store, key `card.<origin>`) when sign-in succeeds, trimmed, as
-  typed. Editable on the card. Deleted on sign-out; kept when the session expires. Demo mode:
-  `DEMO0012345`, in memory.
+- **The number** is the library card number (the official app's barcode is the same: the `BrwId`
+  claim of its OpenID token; Canning's start `CL114…`). Sign-in can use a **username** instead, so
+  the sign-in ID is never used. Sources, first wins: (1) a number the patron entered or edited on
+  the card, saved per library in the secure store (iOS Keychain service `com.librespydus.card`,
+  account = origin; Android the encrypted secrets store, key `card.<origin>`), deleted on
+  sign-out, kept when the session expires; (2) `AccountSnapshot.cardNumber`, which the core reads
+  from the account's **Personal details** page (`AccountLinks.personalDetailsUrl`, the
+  "Card number" row) on every `accountSnapshot`, with `cardExpires` ("Card expires"). Demo mode:
+  the demo snapshot carries `DEMO0012345` / an expiry a year out.
 - **Symbology:** `client.cardBarcodeSymbology()` (the library's `barcodeType` from the Spydus
   mobile config: Canning Code 128, Cumberland Code 39; Code 128 when the library has none; cached
   in the core). `cardBarcode(number, symbology)` → `modules` (true = black, quiet zones not
@@ -292,13 +296,15 @@ The library card as a barcode to scan at the desk or self-checkout, like the off
 - **Card sheet** "My card": a **white** rounded card (white whatever the theme — scanners need
   black on white) with the library logo + name, the borrower's name, the barcode (black modules on
   white, ≥ 10 white modules of quiet zone each side, a whole number of device pixels per module,
-  ~100 pt / dp tall, as wide as fits) and the number under it in a monospaced font. Below the
+  ~100 pt / dp tall, as wide as fits), the number under it in a monospaced font and, when known,
+  "Expires 12 Mar 2027" (`cardExpires` as written) in secondary text. Below the
   card: "Show this at the library desk or self-checkout." and an **"Edit card number"** button.
   Screen brightness goes to full while the sheet is up and back when it closes or the app leaves
   the foreground. While the symbology loads the barcode area shows a spinner (first open only).
-  - No number saved (signed in before this version, or edited away): the sheet asks for it —
-    field "Library card number", note "The number on your library card. It's what you sign in
-    with.", **Save** (disabled while blank) — then shows the card.
+  - No number from either source (the account hasn't loaded yet, or its Personal details page has
+    none): the sheet asks for it — field "Library card number", note "Enter the number on your
+    library card or in your library account's Personal details (e.g. CL114D…).", **Save**
+    (disabled while blank) — then shows the card.
   - A number `cardBarcode` can't encode: the number shown large, with "This number can't be
     shown as a barcode."
   - VoiceOver / TalkBack: the barcode is one element, "Barcode for card <number>".

@@ -7,7 +7,8 @@
 mod common;
 
 use librespydus_core::config::ORIGIN;
-use librespydus_core::parse::account::{parse_account_links, parse_patron_items};
+use librespydus_core::parse::account::{parse_account_links, parse_patron_items, parse_personal_details};
+use librespydus_core::types::PersonalDetails;
 
 // ---- synthetic goldens ----
 
@@ -27,6 +28,29 @@ fn golden_synthetic_patron_items() {
         &parse_patron_items(&html, ORIGIN),
         "synthetic/patron-items.json",
     );
+}
+
+#[test]
+fn golden_synthetic_personal_details() {
+    let html = common::fixture("synthetic/personal-details.html");
+    common::assert_golden(&parse_personal_details(&html), "synthetic/personal-details.json");
+}
+
+#[test]
+fn personal_details_take_the_card_rows_only() {
+    let row = |label: &str, value: &str| {
+        format!(r#"<div class="row"><div class="col-sm-3 fd-caption"><span>{label}</span><span>:</span></div><div class="col"><span class="d-block">{value}</span></div></div>"#)
+    };
+    // Other libraries' labels; the first matching row wins; entities are decoded.
+    let html = [row("Barcode", "21234&#48;00567890"), row("Card number", "IGNORED"), row("Expiry date", "1 Jan 2030")].concat();
+    assert_eq!(
+        parse_personal_details(&html),
+        PersonalDetails { card_number: Some("21234000567890".into()), card_expires: Some("1 Jan 2030".into()) }
+    );
+    // No card rows, an empty value, or not a details page at all.
+    assert_eq!(parse_personal_details(&row("Username", "tborrower")), PersonalDetails::default());
+    assert_eq!(parse_personal_details(&row("Card number", " ")), PersonalDetails::default());
+    assert_eq!(parse_personal_details("<html>Please log in</html>"), PersonalDetails::default());
 }
 
 // ---- private goldens (skip when the staged account data is absent) ----
@@ -97,7 +121,10 @@ fn patron_items_edge_cases_match_ts() {
 #[test]
 fn account_links_edge_cases_match_ts() {
     check(LINK_CASES, |html| {
-        serde_json::to_value(parse_account_links(html, ORIGIN)).unwrap()
+        let mut links = serde_json::to_value(parse_account_links(html, ORIGIN)).unwrap();
+        // Not in the TS parser (added for My card); the synthetic golden covers it.
+        links.as_object_mut().unwrap().remove("personalDetailsUrl");
+        links
     });
 }
 
@@ -175,3 +202,12 @@ const LINK_CASES: &[(&str, &str, &str)] = &[
         r#"{"name": null, "loansUrl": null, "reservationsReadyUrl": null, "reservationsPendingUrl": null}"#,
     ),
 ];
+
+#[test]
+fn golden_private_personal_details() {
+    if common::skip_private("golden_private_personal_details") {
+        return;
+    }
+    let html = common::fixture("private/personal-details.html");
+    common::assert_golden(&parse_personal_details(&html), "private/personal-details.json");
+}

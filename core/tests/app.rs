@@ -356,6 +356,8 @@ fn snapshot() -> AccountSnapshot {
         loans: PatronList { total: Some(1), items: vec![book] },
         reservations: Reservations::default(),
         fetched_at_ms: 1_791_792_000_000,
+        card_number: Some("XX123A4567890B".into()),
+        card_expires: Some("12 Mar 2027".into()),
     }
 }
 
@@ -364,6 +366,17 @@ fn account_snapshot_round_trips() {
     let json = encode_account_snapshot(snapshot());
     assert!(json.contains(r#""accountName":"Test Borrower""#), "camelCase JSON: {json}");
     assert_eq!(decode_account_snapshot(json).unwrap(), snapshot());
+}
+
+#[test]
+fn a_snapshot_saved_before_card_numbers_still_decodes() {
+    let mut json: Value = serde_json::from_str(&encode_account_snapshot(snapshot())).unwrap();
+    let saved = json.as_object_mut().unwrap();
+    saved.remove("cardNumber");
+    saved.remove("cardExpires");
+    let decoded = decode_account_snapshot(json.to_string()).unwrap();
+    assert_eq!((decoded.card_number, decoded.card_expires), (None, None));
+    assert_eq!(decoded.loans, snapshot().loans);
 }
 
 #[test]
@@ -426,6 +439,8 @@ fn holdings_snapshot() -> AccountSnapshot {
             pending: PatronList { total: Some(2), items: vec![item("300", "Pending"), item("200", "Pending too")] },
         },
         fetched_at_ms: 0,
+        card_number: None,
+        card_expires: None,
     }
 }
 
@@ -477,6 +492,8 @@ fn account(loans: Vec<PatronItem>, ready: Vec<PatronItem>) -> AccountSnapshot {
             pending: PatronList { total: None, items: vec![row(Some("9"), None, "Queued", &[])] },
         },
         fetched_at_ms: 0,
+        card_number: None,
+        card_expires: None,
     }
 }
 

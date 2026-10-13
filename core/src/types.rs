@@ -219,6 +219,15 @@ pub struct AccountSnapshot {
     pub reservations: Reservations,
     /// When it was fetched, Unix epoch milliseconds.
     pub fetched_at_ms: i64,
+    /// The library card number from the Personal details page; `None` when that page has none or
+    /// couldn't be loaded (the rest of the snapshot is still good).
+    #[serde(default)]
+    #[uniffi(default = None)]
+    pub card_number: Option<String>,
+    /// When the card expires, as the Personal details page writes it.
+    #[serde(default)]
+    #[uniffi(default = None)]
+    pub card_expires: Option<String>,
 }
 
 /// Links extracted from the authenticated account (BRWENQ) page.
@@ -229,6 +238,21 @@ pub struct AccountLinks {
     pub loans_url: Option<String>,
     pub reservations_ready_url: Option<String>,
     pub reservations_pending_url: Option<String>,
+    /// The "Personal details" page (`…/BRWENQ/…?FMT=PD`): card number and expiry.
+    #[serde(default)]
+    #[uniffi(default = None)]
+    pub personal_details_url: Option<String>,
+}
+
+/// From the account's "Personal details" page (`parse_personal_details`).
+#[derive(uniffi::Record, serde::Serialize, serde::Deserialize, Debug, Clone, PartialEq, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct PersonalDetails {
+    /// The library card number, e.g. Canning's `CL114…`: the barcode on the card (the sign-in
+    /// ID can be a username instead).
+    pub card_number: Option<String>,
+    /// When the card expires, as the page writes it ("12 Mar 2027").
+    pub card_expires: Option<String>,
 }
 
 /// A "Not required after" choice (`XDAYS` option).

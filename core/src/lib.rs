@@ -34,7 +34,7 @@ use regex::Regex;
 
 use cache::TtlCache;
 use fetch::Http;
-use parse::account::parse_patron_items;
+use parse::account::{parse_patron_items, parse_personal_details};
 use parse::availability::parse_availability;
 use parse::decode::js_trim;
 use parse::record::{bib_link_from_fragment, parse_brief_cards, parse_record_detail};
@@ -319,13 +319,18 @@ impl SpydusClient {
         Ok(Reservations { ready: ready?, pending: pending? })
     }
 
-    /// Name, loans and both reservation lists in one call — what the apps save on the device and
-    /// refresh in the background. Loans and reservations load concurrently; the account links
-    /// they share are fetched once (cached per session).
+    /// Name, card number, loans and both reservation lists in one call — what the apps save on the
+    /// device and refresh in the background. Loans, reservations and the Personal details page load
+    /// concurrently; the account links they share are fetched once (cached per session). The card
+    /// number and expiry are `None` when the Personal details page has none or fails to load.
     pub async fn account_snapshot(&self, session: String) -> Result<AccountSnapshot, SpydusError> {
         let links = self.account_links(signed_in(&session)?).await?;
-        let (loans, reservations) =
-            tokio::join!(self.loans(session.clone()), self.reservations(session.clone()));
+        let (loans, reservations, details) = tokio::join!(
+            self.loans(session.clone()),
+            self.reservations(session.clone()),
+            self.personal_details(&links, &session)
+        );
+        let details = details.unwrap_or_default();
         let fetched_at_ms = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .map_or(0, |d| i64::try_from(d.as_millis()).unwrap_or(i64::MAX));
@@ -335,6 +340,8 @@ impl SpydusClient {
             loans: loans?,
             reservations: reservations?,
             fetched_at_ms,
+            card_number: details.card_number,
+            card_expires: details.card_expires,
         })
     }
 
@@ -421,6 +428,14 @@ impl SpydusClient {
         let http = self.http()?;
         http.guard(url)?;
         Ok(http)
+    }
+
+    /// The card number and expiry from `links`' Personal details page; an empty result without one.
+    async fn personal_details(&self, links: &AccountLinks, session: &str) -> Result<PersonalDetails, SpydusError> {
+        let http = self.http()?;
+        let Some(url) = links.personal_details_url.as_deref() else { return Ok(PersonalDetails::default()) };
+        http.guard(url)?;
+        timing::fetch_and_parse("personal details", http.fetch_authed(url, signed_in(session)?), parse_personal_details).await
     }
 
     /// server.ts:145-147 — `acct:{session}`, cached 60 s.

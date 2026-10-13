@@ -1053,7 +1053,7 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
     if ((lib.uniffi_librespydus_core_checksum_method_spydusclient_account() and 0xFFFF) != 60698) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if ((lib.uniffi_librespydus_core_checksum_method_spydusclient_account_snapshot() and 0xFFFF) != 50114) {
+    if ((lib.uniffi_librespydus_core_checksum_method_spydusclient_account_snapshot() and 0xFFFF) != 56033) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if ((lib.uniffi_librespydus_core_checksum_method_spydusclient_availability() and 0xFFFF) != 17964) {
@@ -1675,9 +1675,10 @@ public interface SpydusClientInterface {
     suspend fun `account`(`session`: kotlin.String): AccountLinks
     
     /**
-     * Name, loans and both reservation lists in one call — what the apps save on the device and
-     * refresh in the background. Loans and reservations load concurrently; the account links
-     * they share are fetched once (cached per session).
+     * Name, card number, loans and both reservation lists in one call — what the apps save on the
+     * device and refresh in the background. Loans, reservations and the Personal details page load
+     * concurrently; the account links they share are fetched once (cached per session). The card
+     * number and expiry are `None` when the Personal details page has none or fails to load.
      */
     suspend fun `accountSnapshot`(`session`: kotlin.String): AccountSnapshot
     
@@ -1947,9 +1948,10 @@ open class SpydusClient: Disposable, AutoCloseable, SpydusClientInterface
 
     
     /**
-     * Name, loans and both reservation lists in one call — what the apps save on the device and
-     * refresh in the background. Loans and reservations load concurrently; the account links
-     * they share are fetched once (cached per session).
+     * Name, card number, loans and both reservation lists in one call — what the apps save on the
+     * device and refresh in the background. Loans, reservations and the Personal details page load
+     * concurrently; the account links they share are fetched once (cached per session). The card
+     * number and expiry are `None` when the Personal details page has none or fails to load.
      */
     @Throws(SpydusException::class)
     @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
@@ -2830,6 +2832,11 @@ data class AccountLinks (
     var `reservationsReadyUrl`: kotlin.String?
     , 
     var `reservationsPendingUrl`: kotlin.String?
+    , 
+    /**
+     * The "Personal details" page (`…/BRWENQ/…?FMT=PD`): card number and expiry.
+     */
+    var `personalDetailsUrl`: kotlin.String? = null 
     
 ){
     
@@ -2850,6 +2857,7 @@ public object FfiConverterTypeAccountLinks: FfiConverterRustBuffer<AccountLinks>
             FfiConverterOptionalString.read(buf),
             FfiConverterOptionalString.read(buf),
             FfiConverterOptionalString.read(buf),
+            FfiConverterOptionalString.read(buf),
         )
     }
 
@@ -2857,7 +2865,8 @@ public object FfiConverterTypeAccountLinks: FfiConverterRustBuffer<AccountLinks>
             FfiConverterOptionalString.allocationSize(value.`name`) +
             FfiConverterOptionalString.allocationSize(value.`loansUrl`) +
             FfiConverterOptionalString.allocationSize(value.`reservationsReadyUrl`) +
-            FfiConverterOptionalString.allocationSize(value.`reservationsPendingUrl`)
+            FfiConverterOptionalString.allocationSize(value.`reservationsPendingUrl`) +
+            FfiConverterOptionalString.allocationSize(value.`personalDetailsUrl`)
     )
 
     override fun write(value: AccountLinks, buf: ByteBuffer) {
@@ -2865,6 +2874,7 @@ public object FfiConverterTypeAccountLinks: FfiConverterRustBuffer<AccountLinks>
             FfiConverterOptionalString.write(value.`loansUrl`, buf)
             FfiConverterOptionalString.write(value.`reservationsReadyUrl`, buf)
             FfiConverterOptionalString.write(value.`reservationsPendingUrl`, buf)
+            FfiConverterOptionalString.write(value.`personalDetailsUrl`, buf)
     }
 }
 
@@ -2891,6 +2901,17 @@ data class AccountSnapshot (
      * When it was fetched, Unix epoch milliseconds.
      */
     var `fetchedAtMs`: kotlin.Long
+    , 
+    /**
+     * The library card number from the Personal details page; `None` when that page has none or
+     * couldn't be loaded (the rest of the snapshot is still good).
+     */
+    var `cardNumber`: kotlin.String? = null 
+    , 
+    /**
+     * When the card expires, as the Personal details page writes it.
+     */
+    var `cardExpires`: kotlin.String? = null 
     
 ){
     
@@ -2912,6 +2933,8 @@ public object FfiConverterTypeAccountSnapshot: FfiConverterRustBuffer<AccountSna
             FfiConverterTypePatronList.read(buf),
             FfiConverterTypeReservations.read(buf),
             FfiConverterLong.read(buf),
+            FfiConverterOptionalString.read(buf),
+            FfiConverterOptionalString.read(buf),
         )
     }
 
@@ -2920,7 +2943,9 @@ public object FfiConverterTypeAccountSnapshot: FfiConverterRustBuffer<AccountSna
             FfiConverterOptionalString.allocationSize(value.`accountName`) +
             FfiConverterTypePatronList.allocationSize(value.`loans`) +
             FfiConverterTypeReservations.allocationSize(value.`reservations`) +
-            FfiConverterLong.allocationSize(value.`fetchedAtMs`)
+            FfiConverterLong.allocationSize(value.`fetchedAtMs`) +
+            FfiConverterOptionalString.allocationSize(value.`cardNumber`) +
+            FfiConverterOptionalString.allocationSize(value.`cardExpires`)
     )
 
     override fun write(value: AccountSnapshot, buf: ByteBuffer) {
@@ -2929,6 +2954,8 @@ public object FfiConverterTypeAccountSnapshot: FfiConverterRustBuffer<AccountSna
             FfiConverterTypePatronList.write(value.`loans`, buf)
             FfiConverterTypeReservations.write(value.`reservations`, buf)
             FfiConverterLong.write(value.`fetchedAtMs`, buf)
+            FfiConverterOptionalString.write(value.`cardNumber`, buf)
+            FfiConverterOptionalString.write(value.`cardExpires`, buf)
     }
 }
 
@@ -3737,6 +3764,54 @@ public object FfiConverterTypePatronList: FfiConverterRustBuffer<PatronList> {
     override fun write(value: PatronList, buf: ByteBuffer) {
             FfiConverterOptionalLong.write(value.`total`, buf)
             FfiConverterSequenceTypePatronItem.write(value.`items`, buf)
+    }
+}
+
+
+
+/**
+ * From the account's "Personal details" page (`parse_personal_details`).
+ */
+data class PersonalDetails (
+    /**
+     * The library card number, e.g. Canning's `CL114…`: the barcode on the card (the sign-in
+     * ID can be a username instead).
+     */
+    var `cardNumber`: kotlin.String?
+    , 
+    /**
+     * When the card expires, as the page writes it ("12 Mar 2027").
+     */
+    var `cardExpires`: kotlin.String?
+    
+){
+    
+
+    
+
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypePersonalDetails: FfiConverterRustBuffer<PersonalDetails> {
+    override fun read(buf: ByteBuffer): PersonalDetails {
+        return PersonalDetails(
+            FfiConverterOptionalString.read(buf),
+            FfiConverterOptionalString.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: PersonalDetails) = (
+            FfiConverterOptionalString.allocationSize(value.`cardNumber`) +
+            FfiConverterOptionalString.allocationSize(value.`cardExpires`)
+    )
+
+    override fun write(value: PersonalDetails, buf: ByteBuffer) {
+            FfiConverterOptionalString.write(value.`cardNumber`, buf)
+            FfiConverterOptionalString.write(value.`cardExpires`, buf)
     }
 }
 

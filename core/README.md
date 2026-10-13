@@ -133,6 +133,14 @@ Spydus mobile app's public config (`/api/mobile/1.0/general/config`): Canning `C
 Cumberland `Code39`; Code 128 when the library has none (Hutt City, Geelong: 404). Never throws;
 cached 10 min. The test patterns in `tests/barcode.rs` were decoded back by Apple's Vision.
 
+The card number itself: `accountSnapshot` also loads the account's **Personal details** page
+(`AccountLinks.personalDetailsUrl`, `…/FULL/OPAC/BRWENQ/{set}/{irn},1?FMT=PD`) alongside loans and
+reservations, and `parse_personal_details` reads only its "Card number" and "Card expires" rows
+(Canning's `fd-caption` label + `span.d-block` value layout; also "Barcode", "Borrower number",
+"Membership number", "Expiry date", …) into `AccountSnapshot.cardNumber` / `.cardExpires`. A missing
+or failing page leaves both `nil` without failing the snapshot. Older saved snapshots without
+these fields still decode.
+
 Saving the account on the device: `encodeAccountSnapshot(snapshot)` → JSON `String` and
 `decodeAccountSnapshot(json)` → `AccountSnapshot` (throws `Parse` for malformed JSON or a snapshot
 written with another `ACCOUNT_SNAPSHOT_VERSION`, currently 1 — drop it and fetch a new one).
