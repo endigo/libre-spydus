@@ -57,6 +57,8 @@ class AppState(
      * on the device: the core reads it from the account's Personal details page.
      */
     private val accountCardNumber: (AccountSnapshot) -> String? = ::accountCardNumberOf,
+    /** Which libraries were offered the copy of local favourites into My Picks (§5.11). */
+    picksOffers: PicksOfferStore = InMemoryPicksOfferStore(),
 ) {
     private val ops = Mutex()
 
@@ -109,6 +111,12 @@ class AppState(
      * background (§5.2a). Your Books, Home's loans shelf and the account name read it.
      */
     val account = AccountStore(scope, accountStorage, report = ::report, now = now, io = io, onRefreshed = ::accountRefreshed)
+
+    /**
+     * My Picks (§5.11): signed in, the bookmark saves to the reader's Pick list on the library
+     * account and Favourites shows it. Bound to the library and session with [account].
+     */
+    val picks = PicksStore(scope, picksOffers, report = ::report, now = now)
 
     /** The borrower's name, e.g. "Test Borrower": from [account]'s snapshot, else [refreshAccount]. */
     val accountName: StateFlow<String?> =
@@ -234,6 +242,7 @@ class AppState(
 
         // From here on nothing suspends: the store and the screens switch library together.
         account.bind(backend, session, key, saved)
+        picks.bind(backend, session)
         _library.value = info
         _backend.value = backend
         _hasVerificationCookie.value = cookie != null
@@ -245,7 +254,10 @@ class AppState(
         _savedCardNumber.value = card
         _accountGeneration.update { it + 1 }
         _verificationGeneration.update { it + 1 }
-        if (session != null) account.refresh(force = true)
+        if (session != null) {
+            account.refresh(force = true)
+            picks.reload()
+        }
         updateMorningCheck()
     }
 
@@ -284,11 +296,15 @@ class AppState(
             account.bind(null, null, null)
             if (key != null) account.deleteSaved(key)
             account.bind(backend, token, key)
+            picks.bind(backend, token)
             _fallbackName.value = null
             _session.value = token
             _loginNeeded.value = false
             _accountGeneration.update { it + 1 }
             account.refresh(force = true)
+            picks.reload()
+            // An interactive sign-in: offer, once per library, to copy this phone's favourites.
+            picks.offerAfterSignIn(picksScope(backend), favourites.list(_library.value?.origin ?: backend.origin))
             updateMorningCheck()
         }
     }
@@ -301,6 +317,7 @@ class AppState(
         _fallbackName.value = null
         _savedCardNumber.value = null
         val forgotten = account.discard()
+        picks.clear()
         updateMorningCheck()
         withContext(io) { secrets.put(sessionKey(origin), null) }
         storeCardNumber(backend, null)
@@ -425,6 +442,10 @@ class AppState(
         alerts.updateSchedule(signedIn = _session.value != null)
     }
 
+    /** The library My Picks remembers its copy offer under; demo under its own. */
+    private fun picksScope(backend: LibraryBackend): String =
+        if (backend.isDemo) "demo:${backend.origin}" else backend.origin
+
     /** The library [Alerts] files [backend]'s keys under; demo data under its own. */
     private fun alertScope(backend: LibraryBackend): String =
         if (backend.isDemo) "demo:${backend.origin}" else backend.origin
@@ -445,6 +466,7 @@ class AppState(
                     _session.value = null
                     _fallbackName.value = null
                     account.discard()
+                    picks.clear()
                     _accountGeneration.update { it + 1 }
                     updateMorningCheck()
                     if (backend != null) {
@@ -594,6 +616,8 @@ class AppState(
         _savedCardNumber.value = null
         account.bind(null, null, null)
         account.deleteAllSaved()
+        picks.clear()
+        picks.forgetOffers()
         alerts.reset()
         clients.values.forEach { it.setVerificationCookie(null) }
         _library.value = null
@@ -684,6 +708,9 @@ class AppState(
                     store = SharedPreferencesAlertStore(app.getSharedPreferences(SharedPreferencesAlertStore.PREFS_NAME, Context.MODE_PRIVATE)),
                     notifier = AndroidAlertNotifier(app),
                     scheduler = WorkManagerMorningCheck(app),
+                ),
+                picksOffers = SharedPreferencesPicksOfferStore(
+                    app.getSharedPreferences(SharedPreferencesPicksOfferStore.PREFS_NAME, Context.MODE_PRIVATE),
                 ),
             )
         }

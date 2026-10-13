@@ -47,7 +47,8 @@ import kotlin.time.Duration.Companion.milliseconds
  * state is visible, and with [refreshFails] (DEBUG `ls_demo_refresh_fails`) it fails like an
  * unreachable library. With [newReady] (DEBUG `ls_demo_new_ready`) the "In transit" reservation
  * arrives at Riverton Library from the second snapshot on, so a "Ready to collect" alert (§5.8)
- * can be shown.
+ * can be shown. My Picks (§5.11) is an in-memory list ([DemoPicks]) seeded with two catalogue
+ * records; saves and removes change it after [mutationDelay].
  */
 class DemoBackend(
     private val public: LibraryBackend,
@@ -72,6 +73,7 @@ class DemoBackend(
     private val pendingItems = data.pending.toMutableList()
     private var nextIrn = 1
     private var snapshots = 0
+    private val pickList = DemoPicks(catalogue, public.origin)
 
     /** reserveUrl → the search record it came from, so a demo reservation shows a real title. */
     private val reservable = ConcurrentHashMap<String, SearchRecord>()
@@ -82,8 +84,9 @@ class DemoBackend(
     override suspend fun searchSorted(query: String, sort: ResultsSort) =
         (catalogue.search(query) ?: public.searchSorted(query, sort)).also(::remember)
     override suspend fun page(url: String) = public.page(url).also(::remember)
-    override suspend fun availability(url: String) = catalogue.availability(url) ?: public.availability(url)
-    override suspend fun record(url: String) = catalogue.record(url) ?: public.record(url)
+    override suspend fun availability(url: String) =
+        catalogue.availability(url) ?: pickList.availability(url) ?: public.availability(url)
+    override suspend fun record(url: String) = (catalogue.record(url) ?: public.record(url)).also(pickList::remember)
     override suspend fun related(url: String) = public.related(url)
 
     /** A public GET of the library's mobile config, like the other public reads (§5.9). */
@@ -145,6 +148,25 @@ class DemoBackend(
         val item = pendingItems.removeAt(index)
         val pickupBy = DemoData.formatDate(today.plusDays(7))
         readyItems.add(item.copy(fields = linkedMapOf("Status" to "Please pickup from: RIVERTON LIBRARY by $pickupBy")))
+    }
+
+    /** The demo Pick list, one page (nothing is fetched). */
+    override suspend fun picks(session: String, url: String?): SearchResults {
+        requireSession(session)
+        delay(mutationDelay)
+        return pickList.page().also(::remember)
+    }
+
+    override suspend fun savePick(irn: String, session: String): Long {
+        requireSession(session)
+        delay(mutationDelay)
+        return mutex.withLock { pickList.save(irn) }
+    }
+
+    override suspend fun removePick(irn: String, session: String): Long {
+        requireSession(session)
+        delay(mutationDelay)
+        return mutex.withLock { pickList.remove(irn) }
     }
 
     override suspend fun reserveOptions(url: String, session: String): ReserveOptions {
@@ -231,8 +253,9 @@ class DemoBackend(
     }
 
     private fun remember(results: SearchResults) {
-        for (record in results.records) for (format in record.formats) {
-            format.reserveUrl?.let { reservable[it] = record }
+        for (record in results.records) {
+            for (format in record.formats) format.reserveUrl?.let { reservable[it] = record }
+            pickList.remember(record)
         }
     }
 

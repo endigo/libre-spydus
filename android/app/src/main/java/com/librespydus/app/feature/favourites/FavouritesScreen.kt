@@ -84,13 +84,29 @@ object FavouritesLayout {
 }
 
 /**
- * Favourites (docs/native-apps.md §6): this library's saved books, newest first, as a two-column
- * cover grid. Tap → detail; remove from the long-press menu or in Edit mode. Favourites are local
- * and per library, so switching library shows that library's list.
+ * The Favourites tab: signed in, the reader's Pick list on the library account ([MyPicksScreen],
+ * §5.11); signed out, this phone's own favourites ([LocalFavouritesScreen], §5.3).
+ */
+@Composable
+fun FavouritesScreen(appState: AppState, navigator: AppNavigator, modifier: Modifier = Modifier) {
+    val signedIn by appState.isSignedIn.collectAsStateWithLifecycle()
+    val library by appState.library.collectAsStateWithLifecycle()
+    val activity = LocalActivity.current
+    LaunchedEffect(library?.origin) { FavouritesDebugHooks.seed(activity, appState) }
+    when (FavouritesMode.of(signedIn)) {
+        FavouritesMode.MY_PICKS -> MyPicksScreen(appState, navigator, modifier)
+        FavouritesMode.LOCAL -> LocalFavouritesScreen(appState, navigator, modifier)
+    }
+}
+
+/**
+ * Favourites signed out (docs/native-apps.md §6): this library's saved books, newest first, as a
+ * two-column cover grid. Tap → detail; remove from the long-press menu or in Edit mode. Favourites
+ * are local and per library, so switching library shows that library's list.
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun FavouritesScreen(appState: AppState, navigator: AppNavigator, modifier: Modifier = Modifier) {
+private fun LocalFavouritesScreen(appState: AppState, navigator: AppNavigator, modifier: Modifier = Modifier) {
     val favourites by appState.currentFavourites.collectAsStateWithLifecycle()
     val library by appState.library.collectAsStateWithLifecycle()
     val activity = LocalActivity.current
@@ -101,7 +117,6 @@ fun FavouritesScreen(appState: AppState, navigator: AppNavigator, modifier: Modi
     val libraryName = library?.name ?: "your library"
 
     LaunchedEffect(favourites.isEmpty()) { if (favourites.isEmpty()) editing = false }
-    LaunchedEffect(library?.origin) { FavouritesDebugHooks.seed(activity, appState) }
     LaunchedEffect(favourites.size) {
         if (favourites.isNotEmpty() && FavouritesDebugHooks.scrollsToBottom(activity)) {
             delay(800)
@@ -288,7 +303,10 @@ internal object FavouritesDebugHooks {
     fun scrollsToBottom(activity: Activity?): Boolean =
         BorrowedDebugHooks.flag(activity, BorrowedDebugHooks.SCROLL_BOTTOM)
 
-    /** `--ez ls_seed_favourites true` in demo mode: saves the demo account's books (local only). */
+    /**
+     * `--ez ls_seed_favourites true` in demo mode: saves the demo account's books in this phone's
+     * favourites (local only, signed in or not: signed in, they are what the My Picks copy offers).
+     */
     suspend fun seed(activity: Activity?, appState: AppState) {
         if (!BorrowedDebugHooks.flag(activity, BorrowedDebugHooks.SEED_FAVOURITES)) return
         val backend = appState.backend.value?.takeIf { it.isDemo } ?: return

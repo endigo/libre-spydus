@@ -260,6 +260,38 @@ adb -s emulator-5556 shell am start -S -n com.librespydus.app/.MainActivity --es
 adb -s emulator-5556 shell am start -S -n com.librespydus.app/.MainActivity --es ls_origin https://hutt.spydus.co.nz
 ```
 
+## My Picks (docs §5.11)
+
+Signed in, Favourites is the reader's Pick list on the library account ("My Picks" on the website)
+and the bookmark saves to it; signed out, both are this phone's own favourites, unchanged.
+
+- **`AppState.picks`** (`core/PicksStore.kt`), bound to the library and session next to the account:
+  the picked set (`irns`, the `workIrn` of every record on the first 10 pages), loaded after sign-in,
+  at launch while signed in and when Favourites refreshes; cleared on sign-out, session expiry and
+  library switch. `PickIrn`: a results card's `workIrn`; a ref keyed `work:` / `bib:` → that IRN;
+  otherwise the loaded record's `bibIrn` (the bookmark is disabled until then).
+- **Bookmark** (book page): flips at once, then `savePick` / `removePick`; a failure flips back with
+  "Couldn't update My Picks.", `NotLoggedIn` signs out as anywhere else. "Saved to My Picks" /
+  "Removed from My Picks" show in a pill above the tab bar (`feature/favourites/PicksOverlays.kt`,
+  hosted by `LibreSpydusRoot`).
+- **Favourites** (`MyPicksScreen`): "My Picks" / "Saved on your library account", the search results
+  row (`SearchResultRow` with a filled bookmark, a long-press menu and a TalkBack action, each of which
+  removes the row at once), pull to refresh, paging past 10 pages, "No picks yet".
+- **Copy once:** after an interactive sign-in with local favourites, "Add your saved books to My
+  Picks?" (Add / Not now), remembered per library in the `picks` SharedPreferences
+  (`copyOffered.<sha256(origin)>`, demo under `demo:<origin>`; `ls_reset` clears it). Add saves them
+  oldest first (`brn:` / `url:` refs load their record for the bib IRN) and says "Added N books to My
+  Picks" (+ " · M couldn't be added").
+- **Demo:** `core/DemoPicks.kt`, in memory, seeded with The Midnight Library (a work, three chips) and
+  The Thursday Murder Club's Book (edition-level, no chip). Never call these against a real library
+  while developing (docs §2).
+
+```sh
+# Demo My Picks; with local favourites seeded for the copy offer (sign out, then sign in demo / demo)
+adb -s emulator-5556 shell am start -S -n com.librespydus.app/.MainActivity --ez ls_reset true \
+  --es ls_origin https://canning.spydus.com --ez ls_demo true --ez ls_seed_favourites true --es ls_route favourites
+```
+
 ## Code map (`app/src/main/java/com/librespydus/app/`)
 
 | path | owner | what |
@@ -276,11 +308,12 @@ adb -s emulator-5556 shell am start -S -n com.librespydus.app/.MainActivity --es
 | `core/UserFacingError.kt`, `core/Formatting.kt` | A1 | §5.7 messages; author, due date and greeting helpers |
 | `core/CoreHelpers.kt` | A1 | seams for the P helpers (`userAgent`, `isDigitalFormat`, `availabilitySummary`, `homeGenres`, `homeShelves`) and `LibraryDirectory` |
 | `core/LaunchOptions.kt` | A1 | DEBUG intent extras |
+| `core/PicksStore.kt`, `core/DemoPicks.kt` | A10 | My Picks (§5.11): `PicksStore` (set, list, save/remove, copy offer, notices), `PickIrn`, `PicksText`, `PicksOfferStore`; the demo Pick list |
 | `core/Alerts.kt`, `core/AlertsContent.kt`, `core/AlertsAndroid.kt`, `core/MorningCheckWorker.kt` | A7 | ready-to-collect alerts and due-date reminders (§5.8): processor + stores, wording and 07:45 maths, channels/permission/tap intent, the WorkManager morning check |
 | `ui/theme/` | A1 | `design/tokens.json` as `LsColors`, `LsType`, `LsRadius`, `LsSpacing`, `LsCover`, `LsTabBar`; `LsIcons` |
 | `ui/components/` | A1 | `CoverImage`, `ShelfCover`, `BookRowCard`, `SectionHeader`, `SearchField`, `PrimaryPillButton`, `SecondaryPillButton`, `CircleIconButton`, `LsTopBar`, `GenreTile`, `Chip`, `SegmentedToggle`, `LoadingView`, `EmptyStateView`, `ErrorStateView`, `PlaceholderScreen`, `LsTabBar`, `ComponentGallery` |
 | `ui/nav/` | A1 | `LibreSpydusRoot` (splash, onboarding, tabs, AppState-driven sheets), one `NavHost` per tab, `AppNavigator`, `LocalAppState` |
-| `feature/onboarding/`, `feature/profile/`, `feature/borrowed/`, `feature/favourites/` | A2 | `LibraryPickerScreen`, `LoginSheet`, `VerificationScreen`, `ProfileScreen` (+ A7 `NotificationsSection`), `BorrowedScreen`, `FavouritesScreen` |
+| `feature/onboarding/`, `feature/profile/`, `feature/borrowed/`, `feature/favourites/` | A2 (+ A10) | `LibraryPickerScreen`, `LoginSheet`, `VerificationScreen`, `ProfileScreen` (+ A7 `NotificationsSection`), `BorrowedScreen`, `FavouritesScreen` (+ A10 `MyPicksScreen`, `MyPicksLogic`, `PicksOverlays`) |
 | `feature/home/`, `feature/search/`, `feature/detail/` | A3 (+ A9) | `HomeScreen`, `SearchScreen`, `SearchResultsScreen` (+ `ListResultsScreen`), `BookDetailScreen` (+ the edition-level "Copies" list) |
 | `feature/featured/` | A9 | Featured collections (§5.10): `FeaturedRow` (Home section + tiles), `HomeFeaturedModel`, `CollectionScreen` / `CollectionModel`, `FeaturedLogic` (icon mapping, routing, `EditionLevel`, `CopyRow`), `FeaturedIcons`, `InAppBrowser` |
 | `feature/mycard/` | A8 | My card (§5.9): `MyCardButton` (Home header), `MyCardSheet` (card, entry form, `BarcodeView`, brightness), `MyCardLogic` (content, `BarcodeLayout`, `CardSymbologies`, `BrightnessBoost`) |
