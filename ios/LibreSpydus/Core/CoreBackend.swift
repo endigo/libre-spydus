@@ -98,6 +98,18 @@ final class CoreBackend: LibraryBackend {
         try await timed("editReservation") { try await client.editReservation(url: url, session: session, overrides: overrides) }
     }
 
+    func picks(session: String, url: String?) async throws -> SearchResults {
+        try await timed("picks") { try await client.picks(session: session, url: url) }
+    }
+
+    func savePick(irn: String, session: String) async throws -> Int64 {
+        try await timed("savePick") { try await client.savePick(irn: irn, session: session) }
+    }
+
+    func removePick(irn: String, session: String) async throws -> Int64 {
+        try await timed("removePick") { try await client.removePick(irn: irn, session: session) }
+    }
+
     /// Times `call` for the debug timing log (`TimingLog`).
     private func timed<T>(_ operation: String, _ call: () async throws -> T) async rethrows -> T {
         #if DEBUG

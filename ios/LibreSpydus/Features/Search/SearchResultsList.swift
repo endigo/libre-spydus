@@ -116,24 +116,36 @@ struct SearchResultRow: View {
 
     var body: some View {
         NavigationLink(value: Route.detail(item.ref)) {
-            BookRowCard(item.ref, meta: item.ref.year, chips: chips)
-                .contentShape(RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
+            SearchResultCard(item: item)
         }
         .buttonStyle(PressScaleStyle())
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(accessibilityText)
+        .accessibilityLabel(SearchResultCard.accessibilityText(item))
         .accessibilityAddTraits(.isButton)
+    }
+}
+
+/// What a result row draws, without its link: My Picks' list (a `List`, which adds a chevron to
+/// any navigation link in a row) opens the book page itself.
+struct SearchResultCard: View {
+    let item: SearchResultItem
+
+    var body: some View {
+        BookRowCard(item.ref, meta: item.ref.year, chips: chips)
+            .contentShape(RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
     }
 
     private var chips: [Chip] {
-        var chips = item.formats.prefix(Self.maxChips).map { Chip(format: $0) }
-        if item.formats.count > Self.maxChips {
-            chips.append(Chip(text: "+\(item.formats.count - Self.maxChips)"))
+        let maxChips = SearchResultRow.maxChips
+        var chips = item.formats.prefix(maxChips).map { Chip(format: $0) }
+        if item.formats.count > maxChips {
+            chips.append(Chip(text: "+\(item.formats.count - maxChips)"))
         }
         return chips
     }
 
-    private var accessibilityText: String {
+    /// Title, byline, year and formats, for the row as one VoiceOver element.
+    static func accessibilityText(_ item: SearchResultItem) -> String {
         var parts = [item.ref.title]
         if let byline = Formatting.byline(item.ref.author) { parts.append(byline) }
         if let year = item.ref.year { parts.append(year) }

@@ -6,7 +6,8 @@ import Foundation
 ///     -LSRoute detail:<url> -LSDetailAction format:EBK,favourite
 ///
 /// Applied once, to the first detail screen, after its record loads. Actions (comma-separated):
-/// `format:<code>` selects a format, `favourite` saves the book, `related` scrolls to the
+/// `format:<code>` selects a format, `favourite` saves the book (signed in: to My Picks, demo mode
+/// only), `related` scrolls to the
 /// carousels, `bottom` to the end, `copies` to an edition-level item's "Copies" list once it has
 /// loaded, `open-related` opens the first related item, `reserve` opens the reserve sheet and
 /// `confirm` also confirms it (demo mode only).

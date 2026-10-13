@@ -93,9 +93,12 @@ struct DemoCatalogue: Sendable {
                              nextPageUrl: nil, prevPageUrl: nil, noResults: false, records: ranked)
     }
 
-    /// A demo format's availability; nil for any other URL.
+    /// A demo format's availability (an edition-level card's `…/BIBENQ?SETLVL=&IRN=<irn>&FMT=RECFMT`
+    /// too, as My Picks lists one); nil for any other URL.
     func availability(url: String) -> Availability? {
-        editionsByAvailabilityURL[url]?.availability
+        if let edition = editionsByAvailabilityURL[url] { return edition.availability }
+        guard url.range(of: "FMT=RECFMT", options: .caseInsensitive) != nil, let irn = Self.sessionFreeIrn(url) else { return nil }
+        return editionsByIrn[irn]?.availability
     }
 
     /// A demo edition's record, an empty record for a patron row's session-set link, nil otherwise.

@@ -1,9 +1,39 @@
 import SwiftUI
 
-/// Favourites (docs/native-apps.md §6): this library's saved books, newest first, as a two-column
+/// The Favourites tab (docs/native-apps.md §5.11, §6): signed in, My Picks (the Pick list on the
+/// library account, `MyPicksView`); signed out, the books saved on this device
+/// (`LocalFavouritesView`).
+struct FavouritesView: View {
+    @Environment(AppModel.self) private var model
+
+    var body: some View {
+        switch Content(model) {
+        case .myPicks: MyPicksView()
+        case .local: LocalFavouritesView()
+        }
+    }
+
+    /// Which list the tab shows.
+    enum Content: Equatable {
+        case myPicks
+        case local
+
+        @MainActor
+        init(_ model: AppModel) {
+            self = model.isSignedIn ? .myPicks : .local
+        }
+    }
+
+    /// Two columns across the screen's gutters.
+    static func columnWidth(for width: CGFloat) -> CGFloat {
+        max(80, ((width - Theme.Spacing.l * 3) / 2).rounded(.down))
+    }
+}
+
+/// Favourites while signed out (§5.3, §6): this library's saved books, newest first, as a two-column
 /// cover grid. Tap → detail; remove from the context menu or in Edit mode. Favourites are local
 /// and per library, so switching library shows that library's list.
-struct FavouritesView: View {
+struct LocalFavouritesView: View {
     @Environment(AppModel.self) private var model
     /// `-LSFavouritesEditing YES` (DEBUG) opens in Edit mode, for screenshots.
     @State private var isEditing = Self.startsEditing
@@ -20,7 +50,7 @@ struct FavouritesView: View {
                     if items.isEmpty {
                         empty
                     } else {
-                        grid(items, columnWidth: Self.columnWidth(for: proxy.size.width))
+                        grid(items, columnWidth: FavouritesView.columnWidth(for: proxy.size.width))
                     }
                 }
                 .padding(.horizontal, Theme.Spacing.l)
@@ -129,10 +159,5 @@ struct FavouritesView: View {
         #else
         false
         #endif
-    }
-
-    /// Two columns across the screen's gutters.
-    static func columnWidth(for width: CGFloat) -> CGFloat {
-        max(80, ((width - Theme.Spacing.l * 3) / 2).rounded(.down))
     }
 }

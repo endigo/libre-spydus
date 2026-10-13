@@ -118,8 +118,7 @@ struct BookDetailView: View {
     }
 
     private var actions: some View {
-        let isFavourite = app.favourites.contains(id: model.ref.id)
-        return HStack(spacing: Theme.Spacing.m) {
+        HStack(spacing: Theme.Spacing.m) {
             if let held {
                 HeldStatusPill(status: held) { app.openYourBooks(on: held.segment) }
             } else if let format = model.reservableFormat {
@@ -133,14 +132,40 @@ struct BookDetailView: View {
             } else {
                 Spacer(minLength: 0)
             }
-            CircleIconButton(systemImage: isFavourite ? "bookmark.fill" : "bookmark",
-                             accessibilityLabel: isFavourite ? "Remove from favourites" : "Add to favourites") {
-                app.favourites.toggle(model.favouriteRef)
+            if app.isSignedIn {
+                pickButton
+            } else {
+                favouriteButton
             }
-            .accessibilityAddTraits(isFavourite ? .isSelected : [])
-            .sensoryFeedback(.selection, trigger: isFavourite)
         }
         .padding(.horizontal, Theme.Spacing.xl)
+    }
+
+    /// Signed out: the local favourites (§5.3).
+    private var favouriteButton: some View {
+        let isFavourite = app.favourites.contains(id: model.ref.id)
+        return CircleIconButton(systemImage: isFavourite ? "bookmark.fill" : "bookmark",
+                                accessibilityLabel: isFavourite ? "Remove from favourites" : "Add to favourites") {
+            app.favourites.toggle(model.favouriteRef)
+        }
+        .accessibilityAddTraits(isFavourite ? .isSelected : [])
+        .sensoryFeedback(.selection, trigger: isFavourite)
+    }
+
+    /// Signed in: My Picks on the library account (§5.11). Flips at once; the store flips it back
+    /// if the library refuses. Waits (disabled) until the book's IRN is known.
+    private var pickButton: some View {
+        let irn = model.pickIrn
+        let isPicked = irn.map(app.picks.contains) ?? false
+        return CircleIconButton(systemImage: isPicked ? "bookmark.fill" : "bookmark",
+                                accessibilityLabel: isPicked ? PicksText.remove : PicksText.save) {
+            guard let irn, !app.picks.isChanging(irn) else { return }
+            Task { await app.picks.setPicked(!isPicked, irn: irn) }
+        }
+        .disabled(irn == nil)
+        .opacity(irn == nil ? 0.5 : 1)
+        .accessibilityAddTraits(isPicked ? .isSelected : [])
+        .sensoryFeedback(.selection, trigger: isPicked)
     }
 
     /// "Reserve the book" / "Sign in to reserve the book"; an edition-level item's format has no
@@ -204,8 +229,13 @@ struct BookDetailView: View {
            let index = model.formats.firstIndex(where: { $0.code.caseInsensitiveCompare(code) == .orderedSame }) {
             model.select(formatAt: index)
         }
-        if actions.favourite, !app.favourites.contains(id: model.ref.id) {
-            app.favourites.toggle(model.favouriteRef)
+        if actions.favourite {
+            if !app.isSignedIn {
+                if !app.favourites.contains(id: model.ref.id) { app.favourites.toggle(model.favouriteRef) }
+            } else if app.isDemo, let irn = model.pickIrn, !app.picks.contains(irn) {
+                // Demo only: never saves to a real account's My Picks.
+                await app.picks.setPicked(true, irn: irn)
+            }
         }
         if actions.scrollToRelated || actions.scrollToBottom || actions.openRelated {
             model.startRelated(backend: app.backend)
