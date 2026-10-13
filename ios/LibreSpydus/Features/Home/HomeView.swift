@@ -1,13 +1,17 @@
 import LibreSpydusCore
 import SwiftUI
 
-/// Home: library logo (→ Profile), greeting, search field (→ Search tab), "New arrivals",
+/// Home: library logo (→ Profile), greeting with "My card" while signed in (→ the card sheet,
+/// §5.9), search field (→ Search tab), "New arrivals",
 /// "Popular genres" and "Your borrowed books". New arrivals loads with its own skeleton and error;
 /// the loans come from the saved account, shown at once and fetched again in the background when
 /// out of date. Pull to refresh; reloads on library, verification and sign-in changes.
 struct HomeView: View {
     @Environment(AppModel.self) private var model
     @State private var home = HomeViewModel()
+    @State private var showingCard = false
+    /// The card sheet opens on its entry form (DEBUG `-LSMyCard edit`).
+    @State private var cardStartsEditing = false
     #if DEBUG
     @State private var appliedDebugHook = false
     #endif
@@ -47,6 +51,18 @@ struct HomeView: View {
             Task { await model.refreshAccount(force: false) }
         }
         .toolbar(.hidden, for: .navigationBar)
+        .onChange(of: showingCard) { _, showing in
+            // Root sheets (login after an expired session) wait until the card has gone.
+            if showing { model.isPresentingFeatureSheet = true }
+        }
+        .sheet(isPresented: $showingCard, onDismiss: {
+            model.isPresentingFeatureSheet = false
+            cardStartsEditing = false
+        }) {
+            MyCardSheet(cardNumber: model.cardNumber, knownSymbology: model.knownCardSymbology,
+                        editing: cardStartsEditing)
+                .environment(model)
+        }
     }
 
     private static let loansID = "home.loans"
@@ -63,14 +79,20 @@ struct HomeView: View {
             .buttonStyle(PressScaleStyle())
             .accessibilityLabel("\(model.libraryName) profile")
             .accessibilityHint("Opens Profile")
-            VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
-                Text(HomeGreeting.title(accountName: model.accountName))
-                    .themeFont(.greeting)
-                    .foregroundStyle(Theme.Colors.textPrimary)
-                    .accessibilityAddTraits(.isHeader)
-                Text(model.libraryName)
-                    .themeFont(.body)
-                    .foregroundStyle(Theme.Colors.textSecondary)
+            HStack(alignment: .center, spacing: Theme.Spacing.m) {
+                VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+                    Text(HomeGreeting.title(accountName: model.accountName))
+                        .themeFont(.greeting)
+                        .foregroundStyle(Theme.Colors.textPrimary)
+                        .accessibilityAddTraits(.isHeader)
+                    Text(model.libraryName)
+                        .themeFont(.body)
+                        .foregroundStyle(Theme.Colors.textSecondary)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                if model.isSignedIn {
+                    MyCardButton { showingCard = true }
+                }
             }
         }
         .padding(.horizontal, Theme.Spacing.l)
@@ -158,7 +180,8 @@ struct HomeView: View {
 
     #if DEBUG
     /// Evidence hooks: `-LSHomeOpen arrivals` / `-LSHomeOpen genre:<key>` opens that list as if
-    /// tapped; `-LSHomeScrollTo loans` scrolls down to "Your borrowed books".
+    /// tapped; `-LSHomeScrollTo loans` scrolls down to "Your borrowed books"; `-LSMyCard open|edit`
+    /// opens the card sheet (on its entry form), after `-LSDemoCardNumber` (`MyCardDebugHooks`).
     private func applyDebugHooks(_ proxy: ScrollViewProxy) async {
         guard !appliedDebugHook else { return }
         appliedDebugHook = true
@@ -169,6 +192,10 @@ struct HomeView: View {
             } else if hook.hasPrefix("genre:"), let genre = home.genres.first(where: { $0.key == hook.dropFirst(6) }) {
                 model.push(HomeViewModel.route(for: genre), on: .home)
             }
+        }
+        if let open = MyCardDebugHooks.apply(model) {
+            cardStartsEditing = open == .edit
+            showingCard = true
         }
         if defaults.string(forKey: "LSHomeScrollTo") == "loans" {
             try? await Task.sleep(for: .milliseconds(1500))

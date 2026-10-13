@@ -112,6 +112,8 @@ Pass them as launch arguments (docs/native-apps.md §5.6):
 | `-LSMorningCheckNow YES` | run the alerts' morning check once the launch refresh has settled, instead of waiting for 07:45 (see "Alerts") |
 | `-LSDemoNewReady YES` | with `-LSDemo YES`: "Hollow bones" (pending, Riverton) is ready to collect from the demo account's second refresh on, so a "Ready to collect" alert can be shown |
 | `-LSAlertTime HH:mm` | due reminders show, and the morning check is scheduled, at this time instead of 07:45, to watch a reminder arrive |
+| `-LSMyCard open` / `-LSMyCard edit` | while signed in: Home opens the "My card" sheet (`edit`: on its entry form, filled in) |
+| `-LSDemoCardNumber <number>` | with `-LSDemo YES`: the demo card number instead of `DEMO0012345`; `none` leaves no number, so the sheet asks for one |
 
 `gallery` opens the **components gallery**, which shows every DesignSystem component on one
 screen. Example:
@@ -267,6 +269,21 @@ Only a person may do this. It needs the Search screen (I3) merged.
   shows banners while the app is open. The copy and timing are in `AlertContent`; the notification
   centre and `BGTaskScheduler` sit behind `NotificationScheduling` / `MorningCheckScheduling`, so
   the tests use fakes (`AlertCenterTests`, `AlertContentTests`).
+- **My card** (docs/native-apps.md §5.9): Home's "My card" capsule (signed in) opens
+  `MyCardSheet`, the library card as a barcode on a white card. `AppModel.cardNumber` is the number
+  entered on the sheet (`setCardNumber`, Keychain service `com.librespydus.card`, account = origin;
+  in memory in demo mode, where it starts as `DEMO0012345`), else `accountCardNumber`, the
+  account's own number, which is nil until the core reads it from the library's Personal details.
+  Signing in saves nothing (the sign-in ID may be a username); sign-out deletes the library's
+  number, an expired session keeps it. The symbology is `LibraryBackend.cardBarcodeSymbology()`
+  (`CoreBackend` and `DemoBackend` ask the library: a public GET, cached in the core; test fakes get
+  Code 128), remembered per origin by `AppModel.knownCardSymbology`, so only a library's first open
+  shows a spinner. `cardBarcode(cardNumber:symbology:)` gives the modules; `BarcodeView` draws them
+  in a `Canvas` without antialiasing, snapped to the pixel grid, with `BarcodeLayout`'s whole device
+  pixels per module (floor(pixels / (modules + 20)), at least 1) and 10-module quiet zones, centred
+  across the card's full width. The screen goes to full brightness while the sheet is up
+  (`BrightnessBoost`, restored on close and when the app leaves the foreground; DEBUG prints
+  `🔆 card brightness …`).
 - **Morning check:** the `BGAppRefreshTask` `com.librespydus.morning-check` (Info.plist
   `BGTaskSchedulerPermittedIdentifiers`, `UIBackgroundModes` `fetch`), handled by
   `.backgroundTask(.appRefresh(…))` on the app's scene. `earliestBeginDate` is the next 07:45; it's
@@ -298,6 +315,7 @@ the core's `SearchSort`); `SearchResults.isNoResults` → the core's `noResults`
 `DueDate.parse` → `parseDueDate(text:)`; `BookRef(PatronItem)` → `patronItemRecordUrl(item:)`;
 `BookDetailModel.holding(in:)` → `accountHolding(snapshot:bibIrns:)`; `AlertCenter` →
 `readyAlerts(snapshot:alertedKeys:)`, `dueReminders(snapshot:today:daysBefore:)` and
-`patronItemKey(item:)`. Use `availabilitySummary(availability:)` for availability
+`patronItemKey(item:)`; `MyCardModel` → `cardBarcode(cardNumber:symbology:)` and
+`CoreBackend.cardBarcodeSymbology` → `client.cardBarcodeSymbology()`. Use `availabilitySummary(availability:)` for availability
 labels and `homeShelves()` / `homeGenres()` for Home. "Reserve" depends on a format's
 `reserveUrl` only — some libraries (Brazoria County) accept holds on ebooks.

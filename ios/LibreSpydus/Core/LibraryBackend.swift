@@ -31,6 +31,9 @@ protocol LibraryBackend: Sendable {
     func record(url: String) async throws -> RecordDetail
     /// One of `RecordDetail.related.*`.
     func related(url: String) async throws -> RelatedList
+    /// The symbology the library's card scanners read (§5.9): its mobile config's `barcodeType`,
+    /// Code 128 when it has none or it can't be read. Never throws; cached in the core.
+    func cardBarcodeSymbology() async -> BarcodeSymbology
 
     // MARK: Account (needs a session from `login`)
 
@@ -46,6 +49,11 @@ protocol LibraryBackend: Sendable {
     func cancelReservation(url: String, session: String) async throws -> ReserveResult
     func editOptions(url: String, session: String) async throws -> EditOptions
     func editReservation(url: String, session: String, overrides: EditOverrides) async throws -> ReserveResult
+}
+
+extension LibraryBackend {
+    /// Code 128, the core's default, for a backend that doesn't ask the library (test fakes).
+    func cardBarcodeSymbology() async -> BarcodeSymbology { .code128 }
 }
 
 /// Result ordering for search / `Route.results`; `newest` = most recently added to the catalogue.
