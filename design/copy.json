@@ -1,0 +1,593 @@
+{
+  "_about": "Every word a reader sees or hears in LibreSpydus (iOS and Android), applying docs/native-apps.md §7.1. Edit here, then run design/scripts/gen_copy.py. A leaf is a string with {named} placeholders, {\"one\", \"other\"} for a plural on {count}, or {\"ios\", \"android\"} where the platform convention differs. {count} is an Int (shown with the locale's digit grouping); every other placeholder is a String. Keys starting with _ are notes, not copy.",
+
+  "common": {
+    "retry": "Retry",
+    "close": "Close",
+    "done": "Done",
+    "cancel": "Cancel",
+    "save": "Save",
+    "edit": "Edit",
+    "remove": "Remove",
+    "open": "Open",
+    "add": "Add",
+    "notNow": "Not now",
+    "clear": "Clear",
+    "back": "Back",
+    "viewAll": "View All",
+    "loading": "Loading",
+    "selected": "Selected",
+    "moreOptions": "More options",
+    "dismiss": "Dismiss",
+    "openWebsite": "Open website",
+    "untitled": "Untitled",
+    "separator": " · ",
+    "yourLibrary": "your library",
+    "_notes": {
+      "viewAll": "The one title-case exception besides the names (§7.1 style).",
+      "loading": "Screen-reader label of a spinner or skeleton with no visible text.",
+      "selected": "Screen-reader label of the checkmark on a chosen menu item (Android menus).",
+      "moreOptions": "Android long-press action label on a row with a menu (onLongClickLabel).",
+      "dismiss": "Action label on a tappable banner or toast (Android onClickLabel).",
+      "openWebsite": "Featured collection without sections; verification that keeps failing (Android 'Open the website').",
+      "untitled": "A book's title when the library gives none (BookRef).",
+      "separator": "Between parts of one line: 'Due 27 Oct · 3 days left'. Join parts with this, never a literal.",
+      "yourLibrary": "Stand-in for {library} when the library's name is unknown. Capitalise the first letter when it starts a sentence."
+    }
+  },
+
+  "account": {
+    "signIn": "Sign in",
+    "signOut": "Sign out",
+    "signedIn": "Signed in",
+    "signingIn": "Signing in…"
+  },
+
+  "tabs": {
+    "home": "Home",
+    "yourBooks": "Your Books",
+    "search": "Search",
+    "myPicks": "My Picks",
+    "profile": "Profile",
+    "_notes": {
+      "myPicks": "Was 'Favourites' in both apps' tab bar."
+    }
+  },
+
+  "a11y": {
+    "coverOf": "Cover of {title}",
+    "viewAllSection": "View All {section}",
+    "labelAndHint": "{label}. {hint}",
+    "updating": "Updating",
+    "refreshing": "{status}. Refreshing",
+    "dismissHint": "Dismisses this message",
+    "_notes": {
+      "viewAllSection": "Screen-reader label of a section's View All button: 'View All New arrivals'.",
+      "labelAndHint": "Android only. Compose has no hint, and TalkBack reads an onClickLabel as 'Double-tap to <label>', so a third-person hint ('Opens Profile') goes after the label in contentDescription, as FeaturedRow already does. Use onClickLabel / customActions only for imperative action names (Edit reservation, Remove from My Picks, More options).",
+      "updating": "Appended to a reservation card's label while its cancel/edit runs.",
+      "refreshing": "Your Books status line while a refresh runs: 'Updated 3 min ago. Refreshing'."
+    }
+  },
+
+  "errors": {
+    "cantConnectTitle": "Can’t connect",
+    "verificationNeededTitle": "Verification needed",
+    "libraryUnavailableTitle": "Library unavailable",
+    "signedOutTitle": "Signed out",
+    "signInFailedTitle": "Sign-in failed",
+    "unexpectedTitle": "Something went wrong",
+    "network": "Can’t reach {library}. Check your connection.",
+    "verification": "{library} asks you to confirm you’re human.",
+    "signInAgain": "Please sign in again.",
+    "credentialsRejected": "Card number or PIN not recognised.",
+    "unexpected": "The library site returned something unexpected.",
+    "libraryUnavailable": "{library} can’t be used from the app right now. Try its website instead.",
+    "details": "Details",
+    "_notes": {
+      "network": "§5.7 / §7.1 glossary. {library} = the library's name, else common.yourLibrary (was 'the library' on both).",
+      "details": "The disclosure under an error that shows the core's technical text."
+    }
+  },
+
+  "home": {
+    "greeting": "Hello {name}!",
+    "greetingSignedOut": "Hello!",
+    "profileButton": "{library} profile",
+    "profileButtonHint": "Opens Profile",
+    "searchField": "Search",
+    "searchFieldHint": "Opens Search",
+    "newArrivals": "New arrivals",
+    "nothingNewTitle": "Nothing new right now",
+    "nothingNewMessage": "Check back soon for the latest additions.",
+    "popularGenres": "Popular genres",
+    "genreHint": "Shows {genre} books",
+    "yourLoans": "Your loans",
+    "noLoansTitle": "No loans right now",
+    "noLoansMessage": "Books on loan show up here with their due dates.",
+    "signInCardTitle": "See your loans here",
+    "signInCardMessage": "Sign in with your {library} card.",
+    "_notes": {
+      "greeting": "{name} = the borrower's first name.",
+      "profileButton": "Screen-reader label of the library logo button in Home's header.",
+      "searchField": "Screen-reader label of Home's search field (a button that opens the Search tab); the visible placeholder is search.placeholder.",
+      "newArrivals": "Fallback only: the core's first home shelf title is used when present.",
+      "yourLoans": "§7.1: Home's loans shelf (was 'Your borrowed books').",
+      "signInCardTitle": "Signed-out card in the Your loans section; its button is account.signIn."
+    }
+  },
+
+  "myCard": {
+    "button": "My card",
+    "buttonHint": "Shows your library card’s barcode",
+    "title": "My card",
+    "showAtDesk": "Show this at the library desk or self-checkout.",
+    "editNumber": "Edit card number",
+    "numberLabel": "Library card number",
+    "numberPlaceholder": "Card number",
+    "numberNote": "Enter the number on your library card or in your library account’s Personal details (e.g. CL114D…).",
+    "libraryCard": "Library card",
+    "loadingBarcode": "Loading barcode for card {number}",
+    "barcode": "Barcode for card {number}",
+    "cannotEncode": "This number can’t be shown as a barcode.",
+    "expires": "Expires {date}",
+    "_notes": {
+      "libraryCard": "Caption under the library's name on the card (Android: the card's title when the library has no name).",
+      "barcode": "The barcode is one screen-reader element (§5.9).",
+      "expires": "{date} = cardExpires as the library writes it."
+    }
+  },
+
+  "featured": {
+    "title": "Featured",
+    "collectionHint": "Shows this collection",
+    "websiteHint": "Opens the library’s website",
+    "websiteOnly": "This collection is on the library’s website.",
+    "emptyTitle": "Nothing here right now",
+    "emptyMessage": "Check back soon, or open the collection on the library’s website.",
+    "_notes": {
+      "collectionHint": "Tile hint for .collection and .search links, unless the link has its own description.",
+      "websiteOnly": "Collection page without sections; its button is common.openWebsite."
+    }
+  },
+
+  "search": {
+    "title": "Search",
+    "placeholder": "Search by title, author, etc.",
+    "clearSearch": "Clear search",
+    "sort": "Sort",
+    "sortResults": "Sort results",
+    "relevance": "Relevance",
+    "newest": "Newest",
+    "introTitle": "Search {library}",
+    "introMessage": "Find books, eBooks, audiobooks and more by title, author or subject.",
+    "recentSearches": "Recent searches",
+    "recentSearchHint": "Searches again",
+    "searchAgain": "Search again",
+    "results": {
+      "one": "1 result",
+      "other": "{count} results"
+    },
+    "noResultsTitle": "No results for “{query}”",
+    "noResultsMessage": "Check the spelling, or try fewer or different words.",
+    "listEmptyTitle": "Nothing in “{title}” right now",
+    "listEmptyMessage": "Check back soon.",
+    "endOfResults": "End of results",
+    "loadingResults": "Loading results",
+    "loadingMore": "Loading more results",
+    "retryLoadingMoreHint": "Loads more results",
+    "moreFormats": "+{count}",
+    "_notes": {
+      "sort": "Label of the sort picker (iOS Picker title).",
+      "recentSearchHint": "Hint on a recent search row; its label is the query as shown (was the label 'Search again for {query}', which Voice Control can't match to what's on screen).",
+      "searchAgain": "Android onClickLabel of a recent search row ('Double-tap to search again'), used instead of recentSearchHint; its long-press action is common.remove.",
+      "listEmptyTitle": "A results list opened from a URL (Home View All, genre tile, Featured search link) that came back empty.",
+      "moreFormats": "Chip after the first format chips: '+2'."
+    }
+  },
+
+  "detail": {
+    "byline": "By {author}",
+    "reserve": "Reserve",
+    "reserveFormatHint": "Reserves the {format}",
+    "reserveItemHint": "Reserves this item",
+    "signInToReserveFormatHint": "Asks you to sign in, then reserves the {format}",
+    "signInToReserveItemHint": "Asks you to sign in, then reserves this item",
+    "availableOnline": "Available online",
+    "askLibrary": "Ask the library about availability",
+    "availability": "Availability: {status}",
+    "availabilityFailed": "Couldn’t check availability",
+    "lookupFailed": "Couldn’t look up availability",
+    "checkWebsite": "Check availability on the library’s website",
+    "retryAvailabilityHint": "Checks availability again",
+    "retryLookupHint": "Looks up availability again",
+    "findingFormats": "Finding formats…",
+    "checkingAvailability": "Checking availability…",
+    "noRecordLink": "This book has no link to the library’s record.",
+    "formats": "Formats",
+    "formatHint": "Shows availability for this format",
+    "synopsis": "Synopsis",
+    "more": "More",
+    "less": "Less",
+    "moreHint": "Shows the rest of the synopsis",
+    "lessHint": "Shows less of the synopsis",
+    "noMoreDetails": "The library has no more details for this title.",
+    "loadingDetails": "Loading details…",
+    "subjects": "Subjects",
+    "subjectHint": "Searches the catalogue for this subject",
+    "details": "Details",
+    "copies": "Copies",
+    "loadingCopies": "Loading copies…",
+    "copiesFailed": "Couldn’t load copies",
+    "retryCopiesHint": "Loads the copies again",
+    "copy": "Copy",
+    "callNumber": "Call number {number}",
+    "similarBooks": "Similar books",
+    "moreByAuthor": "More by this author",
+    "inThisSeries": "In this series",
+    "otherEditions": "Other editions",
+    "loadingPanel": "Loading {panel}",
+    "onLoan": "On loan",
+    "onLoanDue": "On loan · Due {date}",
+    "onLoanOverdue": "On loan · Overdue",
+    "onLoanDueLabel": "On loan, due {date}",
+    "onLoanOverdueLabel": "On loan, overdue, was due {date}",
+    "readyToCollect": "Ready to collect",
+    "readyToCollectAt": "Ready to collect · {branch}",
+    "readyToCollectAtLabel": "Ready to collect at {branch}",
+    "reserved": "Reserved",
+    "reservedAt": "Reserved · {branch}",
+    "reservedAtLabel": "Reserved, collect from {branch}",
+    "reservedQueue": "Reserved · #{place} in queue",
+    "reservedQueueLabel": "Reserved, number {place} in the queue",
+    "reservedQueueText": "Reserved · {place} in queue",
+    "reservedQueueTextLabel": "Reserved, {place} in the queue",
+    "heldHint": "Opens Your Books",
+    "_notes": {
+      "reserveFormatHint": "Hint on the Reserve pill. {format} = the format's label, lower-cased ('book', 'large print'). An edition-level item (no label) uses reserveItemHint.",
+      "signInToReserveFormatHint": "Signed out, the Reserve pill opens sign-in first.",
+      "availability": "Screen-reader label of the availability line; {status} = the visible text (core summary label or availableOnline / askLibrary).",
+      "retryAvailabilityHint": "Hint on the Retry next to availabilityFailed (its label stays common.retry; was the label 'Retry: Couldn’t check availability'). retryLookupHint goes with lookupFailed.",
+      "moreHint": "The synopsis's More / Less button keeps its visible text as its label (was 'Show more of the synopsis' / 'Show less of the synopsis').",
+      "copy": "A Copies row whose holding has no location or collection.",
+      "loadingPanel": "Screen-reader label of a related carousel while it loads; {panel} = its title, lower-cased.",
+      "onLoanDue": "Already-yours pill (§6, I8/A6). {date} = '14 Oct' (loans.shortDate style), or the library's text when unreadable.",
+      "onLoanDueLabel": "Spoken: {date} written out ('14 October').",
+      "readyToCollectAt": "§7.1: Ready to collect (+ ' at {branch}' when spoken); the visible pill joins with ' · ' (§6).",
+      "reservedAtLabel": "§7.1 glossary: 'collect from' (was 'pick up at').",
+      "reservedQueue": "Numeric queue place.",
+      "reservedQueueText": "A queue place the library writes as text ('1 of 3'). §7.1 bans 'rank' (was 'Reserved · Rank {n}').",
+      "heldHint": "The already-yours pill opens Your Books on the right list."
+    }
+  },
+
+  "reserve": {
+    "title": "Reserve",
+    "checkingOptions": "Checking reservation options…",
+    "cantReserve": "This title can’t be reserved right now.",
+    "notFromApp": "This format can’t be reserved from the app.",
+    "confirm": "Confirm reservation",
+    "collectFrom": "Collect from",
+    "usualBranch": "Your usual branch",
+    "availability": "Availability",
+    "notNeededAfter": "Not needed after",
+    "chooseNotNeededAfter": "Choose when it’s no longer needed",
+    "placed": "Reservation placed",
+    "placeFailed": "The library couldn’t place this reservation.",
+    "_notes": {
+      "collectFrom": "§7.1 glossary: the branch row (was 'Pick up at').",
+      "usualBranch": "Value of the Collect from row when the library doesn't name a branch (§7.1: 'branch' for a branch; was 'Your usual library').",
+      "chooseNotNeededAfter": "Android onClickLabel of the Not needed after dropdown.",
+      "placed": "Result banner when the library's own message is empty. A toast-style confirmation: no full stop (§7.1).",
+      "placeFailed": "Result banner when the library refused and gave no message."
+    }
+  },
+
+  "loans": {
+    "dueOn": "Due {date}",
+    "dueToday": "Due today",
+    "dueTomorrow": "Due tomorrow",
+    "daysLeft": {
+      "one": "1 day left",
+      "other": "{count} days left"
+    },
+    "daysOverdue": {
+      "one": "1 day overdue",
+      "other": "{count} days overdue"
+    },
+    "lineDays": "Due {date} · {days}",
+    "lineToday": "Due today · {date}",
+    "lineTomorrow": "Due tomorrow · {date}",
+    "overdue": "Overdue",
+    "_notes": {
+      "dueOn": "{date} = '27 Oct' (day + short month; + year only when it isn't this year). Due-date notifications pass the weekday too: 'Due Thursday 16 Oct'. A date the core can't read is shown as the library wrote it.",
+      "daysOverdue": "§7.1 glossary (Android's unused Formatting.daysLeftLabel said 'Overdue by {n} days').",
+      "lineDays": "Your Books loan card meta line: 'Due 27 Oct · 3 days left' / 'Due 10 Oct · 2 days overdue'; {days} = daysLeft / daysOverdue.",
+      "lineToday": "Your Books loan due today: 'Due today · 12 Oct'.",
+      "overdue": "Chip on an overdue loan card and part of its screen-reader label."
+    }
+  },
+
+  "yourBooks": {
+    "title": "Your Books",
+    "loans": "Loans",
+    "reservations": "Reservations",
+    "loansCount": "Loans ({count})",
+    "reservationsCount": "Reservations ({count})",
+    "show": "Show",
+    "loadingLoans": "Loading your loans…",
+    "loadingReservations": "Loading your reservations…",
+    "noLoansTitle": "No loans right now",
+    "noLoansMessage": "Books on loan from {library} show up here with their due dates.",
+    "renewalsSoon": "Renewals coming soon",
+    "noReservationsTitle": "No reservations",
+    "noReservationsMessage": "Tap Reserve on any book and follow it here until it’s ready to collect.",
+    "readyToCollect": "Ready to collect",
+    "pending": "Pending",
+    "collectFrom": "Collect from {branch}",
+    "collectFromBy": "Collect from {branch} by {date}",
+    "collectBy": "Collect by {date}",
+    "queuePlace": "#{place} in queue",
+    "queuePlaceText": "{place} in queue",
+    "queuePlaceLabel": "number {place} in the queue",
+    "queuePlaceTextLabel": "{place} in the queue",
+    "placed": "Placed {date}",
+    "swipeHint": "Swipe left on a reservation to change or cancel it.",
+    "touchAndHoldHint": "Touch and hold a reservation to change or cancel it.",
+    "editReservation": "Edit reservation",
+    "cancelReservation": "Cancel reservation",
+    "showActions": "Show reservation actions",
+    "signedOutTitle": "Sign in to see your books",
+    "signedOutMessage": "Your loans and reservations at {library} appear here.",
+    "cancelled": "Reservation cancelled",
+    "cancelFailed": "The library didn’t cancel this reservation.",
+    "updated": "Reservation updated",
+    "cancelTitle": "Cancel this reservation?",
+    "cancelReadyMessage": "“{title}” is waiting for you at {branch}. Cancelling releases it to the next person.",
+    "cancelReadyMessageNoBranch": "“{title}” is waiting for you. Cancelling releases it to the next person.",
+    "cancelPendingMessage": "“{title}” will be removed from your reservations and you’ll lose your place in the queue.",
+    "keepReservation": "Keep reservation",
+    "updatedJustNow": "Updated just now",
+    "updatedMinutesAgo": {
+      "one": "Updated 1 min ago",
+      "other": "Updated {count} min ago"
+    },
+    "updatedToday": "Updated today at {time}",
+    "updatedYesterday": "Updated yesterday at {time}",
+    "updatedOn": "Updated {day} at {time}",
+    "refreshFailed": "Couldn’t refresh · Showing the saved list",
+    "refreshHint": "Fetches your loans and reservations again",
+    "_notes": {
+      "show": "Label of the Loans | Reservations picker (read by screen readers, not shown).",
+      "readyToCollect": "Section header and the ready card's status chip (§7.1; was 'Ready for pickup'). Pending cards show the library's own status, else 'Pending'.",
+      "collectFrom": "Card meta line (§7.1; was 'Pick up at {branch}'). {branch} title-cased when the library shouts it.",
+      "collectBy": "Ready card with no branch: 'Collect by 17 Oct' (was 'Pick up by …').",
+      "queuePlace": "Pending card meta: '#4 in queue · Placed 2 Oct'.",
+      "queuePlaceText": "A queue place the library writes as text (was 'Rank {n}'; §7.1 bans 'rank').",
+      "queuePlaceLabel": "The card's screen-reader label says the queue place this way (§7.1 glossary); queuePlaceTextLabel for a place written as text.",
+      "swipeHint": "Footnote under the reservations where cards swipe (iOS 18+, Android). Hidden from screen readers: they get the actions on each card.",
+      "touchAndHoldHint": "The same footnote on iOS 17, where cards don't swipe (long-press menu only).",
+      "editReservation": "Long-press menu item and screen-reader action (Edit / common.cancel are the swipe tiles).",
+      "cancelReservation": "Menu item, screen-reader action and the confirmation's destructive button (iOS said 'Cancel Reservation').",
+      "showActions": "Android onLongClickLabel of a reservation card.",
+      "cancelled": "Banner after a cancel when the library's message is empty. Toast-style: no full stop.",
+      "cancelFailed": "Error banner when the library refused with no message.",
+      "updatedOn": "{day} = weekday within a week (Android) or '3 Oct' / '3 Oct 2025'; {time} in the device's 12/24-hour style.",
+      "refreshFailed": "§5.2a 'Couldn't refresh' note, with common.retry and refreshHint (was 'Couldn't refresh — showing saved data'; the same words as onboarding.savedList)."
+    }
+  },
+
+  "editReservation": {
+    "title": "Edit reservation",
+    "loading": "Loading reservation…",
+    "cantEditTitle": "Can’t edit this reservation",
+    "cantEditMessage": "This reservation can’t be edited right now.",
+    "collectFrom": "Collect from",
+    "chooseBranch": "Choose a branch",
+    "delayUntil": "Delay until",
+    "delayFooter": "The library won’t fill the reservation before this date.",
+    "notNeededAfter": "Not needed after",
+    "notNeededFooter": "The reservation lapses if it isn’t ready by this date.",
+    "clearedFooter": "Cleared when you save. {footer}",
+    "saveChanges": "Save changes",
+    "changeFailed": "The library didn’t accept the change.",
+    "date": "Date",
+    "dateLabel": "{field} date",
+    "setDate": "Set date",
+    "changeDate": "Change {field} date",
+    "setFieldDate": "Set {field} date",
+    "clearField": "Clear {field}",
+    "_notes": {
+      "collectFrom": "§7.1 glossary (was 'Pickup location'); the same words as the Reserve sheet.",
+      "notNeededAfter": "One term with the Reserve sheet's expiry picker (was 'Not required after').",
+      "date": "iOS DatePicker title (hidden; its screen-reader label is dateLabel).",
+      "dateLabel": "Screen-reader label of a date row: 'Delay until date'; Android reads the date as its state.",
+      "changeDate": "Android onClickLabel of a set date; setFieldDate when the date is off; clearField on its clear button. {field} is the row's title lower-cased mid-sentence: 'Change delay until date', 'Clear not needed after'."
+    }
+  },
+
+  "picks": {
+    "title": "My Picks",
+    "subtitleAccount": "Saved on your library account",
+    "subtitlePhone": "Saved on this phone",
+    "save": "Save to My Picks",
+    "remove": "Remove from My Picks",
+    "saved": "Saved to My Picks",
+    "removed": "Removed from My Picks",
+    "updateFailed": "Couldn’t update My Picks",
+    "emptyTitle": "No picks yet",
+    "emptyAccountMessage": "Tap the bookmark on a book to save it to your library account.",
+    "emptyPhoneMessage": "Tap the bookmark on a book to save it on this phone.",
+    "findABook": "Find a book",
+    "editHint": "Lets you remove books from My Picks",
+    "doneEditingHint": "Finishes editing My Picks",
+    "removeTitle": "Remove {title} from My Picks",
+    "removedTitle": "Removed {title} from My Picks",
+    "loadingMore": "Loading more picks",
+    "retryLoadingMoreHint": "Loads more picks",
+    "loadFailed": "Couldn’t load My Picks from this phone.",
+    "saveFailed": "Couldn’t save My Picks on this phone.",
+    "offerTitle": "Add this phone’s picks to your library account?",
+    "offerMessage": {
+      "one": "1 book saved on this phone can be added to My Picks on your library account.",
+      "other": "{count} books saved on this phone can be added to My Picks on your library account."
+    },
+    "adding": {
+      "one": "Adding 1 book to My Picks…",
+      "other": "Adding {count} books to My Picks…"
+    },
+    "added": {
+      "one": "Added 1 book to My Picks",
+      "other": "Added {count} books to My Picks"
+    },
+    "notAdded": {
+      "one": "1 couldn’t be added",
+      "other": "{count} couldn’t be added"
+    },
+    "_notes": {
+      "title": "§7.1: the tab, the screen title (signed in and out), the bookmark and the toasts. Never Favourites.",
+      "subtitlePhone": "Signed out (was '{n} saved for {library}' / 'Saved on this device for {library}').",
+      "save": "Bookmark button's screen-reader label (book page and anywhere else a toggle appears), signed in or out (was 'Add to favourites').",
+      "remove": "Bookmark label when saved; also the row's remove action / menu item (was 'Remove from Favourites').",
+      "saved": "Toast after a save (§5.11).",
+      "updateFailed": "Error toast (§5.11 had a full stop; §7.1: never on toasts).",
+      "emptyPhoneMessage": "Signed out (was 'Tap the bookmark on any book to save it here.'); its button is findABook.",
+      "editHint": "Hint on the signed-out list's Edit button (its label is the visible common.edit; was the label 'Edit favourites'); doneEditingHint goes with common.done.",
+      "removeTitle": "Screen-reader label of a row's remove button in edit mode.",
+      "removedTitle": "Screen-reader announcement after a remove on the signed-out list.",
+      "loadFailed": "iOS banner when the phone's list can't be read (was 'Couldn't read favourites: <system error>').",
+      "offerTitle": "§5.11 copy-once alert; buttons common.add / common.notNow.",
+      "adding": "Toast while the copy runs (iOS has it; Android should gain it).",
+      "added": "Toast when the copy ends; when some failed, join notAdded with common.separator: 'Added 3 books to My Picks · 1 couldn’t be added'."
+    }
+  },
+
+  "profile": {
+    "title": "Profile",
+    "noLibraryTitle": "No library selected",
+    "noLibraryMessage": "Choose your library to search its catalogue and sign in.",
+    "chooseLibrary": "Choose library",
+    "changeLibrary": "Change library",
+    "account": "Account",
+    "loadingAccount": "Loading your account…",
+    "signedInTo": "Signed in to {library}",
+    "accountFailed": "Couldn’t load your account details",
+    "signOutTitle": "Sign out of {library}?",
+    "signOutMessage": "You can sign in again at any time.",
+    "notSignedInTitle": "You’re not signed in",
+    "notSignedInMessage": "Sign in with your library card to see your loans and reservations.",
+    "humanVerification": "Human verification",
+    "verified": "Verified on this device",
+    "verifiedMessage": "{library} asked you to confirm you’re human. The app sends the library’s verification cookie with its requests.",
+    "clearVerification": "Clear verification",
+    "clearVerificationTitle": "Clear verification?",
+    "clearVerificationMessage": "{library} will ask you to confirm you’re human again.",
+    "about": "About",
+    "appName": "LibreSpydus",
+    "version": "Version {version} ({build})",
+    "notAffiliated": "LibreSpydus is not affiliated with Civica or your library.",
+    "_notes": {
+      "account": "Section header; the signed-in row says account.signedIn and its button account.signOut.",
+      "accountFailed": "Inline status line next to common.retry, like detail.copiesFailed: no full stop.",
+      "signOutTitle": "Confirmation; its destructive button is account.signOut, the other common.cancel.",
+      "clearVerificationTitle": "Confirmation; its destructive button is clearVerification, the other common.cancel."
+    }
+  },
+
+  "notifications": {
+    "section": "Notifications",
+    "readyTitle": "Ready to collect",
+    "readySubtitle": "Checked each morning and when you open the app",
+    "dueTitle": "Due-date reminders",
+    "dueSubtitle": "2 days before books are due, at 7:45",
+    "blocked": "Notifications are turned off for LibreSpydus.",
+    "openSettings": "Open Settings",
+    "_notes": {
+      "section": "Profile section while signed in (§5.8).",
+      "openSettings": "'Settings' is the system app's name, so it keeps its capital."
+    }
+  },
+
+  "alerts": {
+    "readyTitle": "Ready to collect",
+    "readyBody": "{title} · {branch}",
+    "untitledReservation": "A reservation",
+    "untitledLoan": "A loan",
+    "dueTwo": "{first} and {second}",
+    "dueMore": {
+      "one": "{first} and 1 more",
+      "other": "{first} and {count} more"
+    },
+    "readyChannel": "Ready to collect",
+    "dueChannel": "Due-date reminders",
+    "_notes": {
+      "readyTitle": "Local notification (§5.8); the body is readyBody, or just the title when the branch is unknown.",
+      "untitledReservation": "Stands in for a missing title in readyBody.",
+      "dueTwo": "Due-reminder body for two loans; one loan is just its title; three or more use dueMore. The title is loans.dueOn / dueToday / dueTomorrow with the weekday date ('Due Thursday 16 Oct').",
+      "readyChannel": "Android notification channel names."
+    }
+  },
+
+  "onboarding": {
+    "title": "Choose your library",
+    "intro": "LibreSpydus works with libraries that use Spydus. You can change this later in Profile.",
+    "changeTitle": "Change library",
+    "searchPlaceholder": "Search by library or country",
+    "loading": "Loading libraries…",
+    "emptyTitle": "No libraries listed",
+    "emptyMessage": "Civica’s directory came back empty. Try again later.",
+    "noMatchesTitle": "No libraries match “{query}”",
+    "noMatchesMessage": "Try a library name or a country.",
+    "savedList": "{error} Showing the saved list.",
+    "directoryNetwork": "Can’t reach the library directory. Check your connection.",
+    "directoryUnexpected": "The library directory returned something unexpected.",
+    "libraries": {
+      "one": "1 library",
+      "other": "{count} libraries"
+    },
+    "currentLibrary": "Current library",
+    "selectHint": "Selects this library",
+    "regionAU": "Australia",
+    "regionNZ": "New Zealand",
+    "regionUS": "United States",
+    "regionUK": "United Kingdom",
+    "regionSG": "Singapore",
+    "regionOther": "Other",
+    "noteUK": "Asks you to verify you’re human",
+    "noteSG": "May be unreachable outside school networks",
+    "_notes": {
+      "changeTitle": "The picker's title when opened from Profile (profile.changeLibrary is the row).",
+      "savedList": "Banner when a refresh failed but a saved list is shown; {error} = directoryNetwork / directoryUnexpected.",
+      "libraries": "Screen-reader label of a region's count (iOS said '1 libraries').",
+      "currentLibrary": "Screen-reader value of the selected row (and Android's checkmark).",
+      "selectHint": "Hint on the other rows (iOS said 'Select this library'; Android's onClickLabel 'Select this library' / 'Keep this library').",
+      "regionAU": "Section titles, and the Profile place chip when the directory has no country.",
+      "noteUK": "Row notes (§6)."
+    }
+  },
+
+  "login": {
+    "title": "Sign in",
+    "cardLabel": "Library card number",
+    "cardPlaceholder": "Card number",
+    "pinLabel": "PIN / password",
+    "pinPlaceholder": "PIN or password",
+    "privacyNote": "LibreSpydus signs in directly with {library} and doesn’t store your PIN.",
+    "_notes": {
+      "title": "The sheet's title; its button is account.signIn (account.signingIn while it runs) and its close button common.close."
+    }
+  },
+
+  "verification": {
+    "title": "Verify you’re human",
+    "message": "{library} asks you to confirm you’re human. Complete the check below.",
+    "closesByItself": "This closes by itself once the library lets you in.",
+    "opening": "Opening {library}…",
+    "noCheck": "{library} didn’t ask for a check this time. Close this and try again.",
+    "reload": "Reload page",
+    "keepsAsking": "{library} keeps asking to confirm you’re human after the check. Its own website still works in your browser.",
+    "_notes": {
+      "message": "§6 verification sheet copy.",
+      "keepsAsking": "Android shows it with common.openWebsite and common.close when verification keeps failing (iOS shows errors.libraryUnavailable instead)."
+    }
+  }
+}

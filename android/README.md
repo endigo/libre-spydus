@@ -292,6 +292,18 @@ adb -s emulator-5556 shell am start -S -n com.librespydus.app/.MainActivity --ez
   --es ls_origin https://canning.spydus.com --ez ls_demo true --ez ls_seed_favourites true --es ls_route favourites
 ```
 
+## Copy
+
+Every word a reader sees or hears comes from `design/copy.json`, the one wording both apps share
+([docs §7.1](../docs/native-apps.md): glossary and style rules). Use the generated
+`core/Copy.kt` (`Copy.Picks.title`, `Copy.Search.results(count = n)`). Don't edit it by hand.
+Change the JSON, then run `design/scripts/gen_copy.py` (`--check` fails when the file is out of
+date). `design/scripts/check_copy.py` lists every user-facing literal left in app code. Exempt a
+line that has to stay with `// copy-exempt: <reason>`. `if (BuildConfig.DEBUG …) { … }` blocks
+are skipped. TalkBack reads an `onClickLabel` as "Double-tap to …", so a hint goes after the label
+in `contentDescription` through `Copy.A11y.labelAndHint`. How each conflict was settled is in
+`design/copy-decisions.md`.
+
 ## Code map (`app/src/main/java/com/librespydus/app/`)
 
 | path | owner | what |
