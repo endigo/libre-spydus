@@ -2,6 +2,7 @@ package com.librespydus.app.feature.home
 
 import androidx.lifecycle.ViewModel
 import com.librespydus.app.core.BookRef
+import com.librespydus.app.core.Copy
 import com.librespydus.app.core.CoreHelpers
 import com.librespydus.app.core.Formatting
 import com.librespydus.app.core.Genre
@@ -118,7 +119,7 @@ class HomeModel(
 }
 
 /**
- * "Your borrowed books" from the account store (§5.2a): the snapshot's loans (saved or fresh) as
+ * "Your loans" from the account store (§5.2a): the snapshot's loans (saved or fresh) as
  * soon as there is one; a skeleton until then, or the error when the refresh failed without one.
  */
 object HomeLoans {
@@ -133,7 +134,7 @@ object HomeLoans {
 /** "Hello {first name}!" from `AppState.accountName`. */
 object HomeGreeting {
     /** "Hello Jane!", or "Hello!" when there's no usable first name (signed out, still loading). */
-    fun title(accountName: String?): String = firstName(accountName)?.let { "Hello $it!" } ?: "Hello!"
+    fun title(accountName: String?): String = firstName(accountName)?.let(Copy.Home::greeting) ?: Copy.Home.greetingSignedOut
 
     /**
      * The given name from an account name as libraries write it: "Smith, Jane" (surname first) or
@@ -193,18 +194,21 @@ data class LoanShelfItem(
         // Library dates are Gregorian whatever the device calendar is.
         private val SHORT_DATE: DateTimeFormatter =
             DateTimeFormatter.ofPattern("d MMM", Locale.getDefault()).withChronology(IsoChronology.INSTANCE)
+        private val SHORT_DATE_YEAR: DateTimeFormatter =
+            DateTimeFormatter.ofPattern("d MMM yyyy", Locale.getDefault()).withChronology(IsoChronology.INSTANCE)
 
         fun from(item: PatronItem, today: LocalDate = LocalDate.now()): LoanShelfItem {
             val ref = BookRef.from(item)
             val dueText = item.fields["Due"].trimmedOrNull()
             val due = Formatting.parseDueDate(dueText)
-                ?: return LoanShelfItem(ref, dueText?.let { "Due $it" }, Tone.NORMAL, null)
+                ?: return LoanShelfItem(ref, dueText?.let(Copy.Loans::dueOn), Tone.NORMAL, null)
             val days = Formatting.daysUntil(due, today)
             return when {
                 days < 0 -> LoanShelfItem(ref, daysText(days), Tone.OVERDUE, due)
                 else -> LoanShelfItem(
                     ref = ref,
-                    caption = if (days <= COUNTDOWN_DAYS) daysText(days) else "Due ${SHORT_DATE.format(due)}",
+                    caption = if (days <= COUNTDOWN_DAYS) daysText(days)
+                    else Copy.Loans.dueOn((if (due.year == today.year) SHORT_DATE else SHORT_DATE_YEAR).format(due)),
                     tone = if (days <= SOON_DAYS) Tone.SOON else Tone.NORMAL,
                     dueDate = due,
                 )
@@ -219,11 +223,9 @@ data class LoanShelfItem(
 
         /** "3 days left", "1 day left", "Due today", "1 day overdue", "2 days overdue". */
         fun daysText(days: Long): String = when {
-            days < -1 -> "${-days} days overdue"
-            days == -1L -> "1 day overdue"
-            days == 0L -> "Due today"
-            days == 1L -> "1 day left"
-            else -> "$days days left"
+            days < 0 -> Copy.Loans.daysOverdue((-days).toInt())
+            days == 0L -> Copy.Loans.dueToday
+            else -> Copy.Loans.daysLeft(days.toInt())
         }
     }
 }

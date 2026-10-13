@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.librespydus.app.core.AppState
+import com.librespydus.app.core.Copy
 import com.librespydus.app.core.NotificationAccess
 import com.librespydus.app.feature.onboarding.AccountCard
 import com.librespydus.app.feature.onboarding.AccountDivider
@@ -39,17 +40,6 @@ import com.librespydus.app.ui.theme.LsColors
 import com.librespydus.app.ui.theme.LsSpacing
 import com.librespydus.app.ui.theme.LsType
 import kotlinx.coroutines.launch
-
-/** Profile's Notifications copy (docs/native-apps.md §5.8), the same words as iOS. */
-object NotificationsText {
-    const val SECTION = "Notifications"
-    const val READY_TITLE = "Ready to collect"
-    const val READY_SUBTITLE = "Checked each morning and when you open the app"
-    const val DUE_TITLE = "Due-date reminders"
-    const val DUE_SUBTITLE = "2 days before books are due, at 7:45"
-    const val BLOCKED = "Notifications are turned off for LibreSpydus."
-    const val OPEN_SETTINGS = "Open Settings"
-}
 
 private enum class AlertSwitch { READY, DUE }
 
@@ -115,23 +105,23 @@ internal fun NotificationsSection(appState: AppState) {
     }
 
     Column(verticalArrangement = Arrangement.spacedBy(LsSpacing.m)) {
-        AccountSectionHeader(NotificationsText.SECTION)
+        AccountSectionHeader(Copy.Notifications.section)
         AccountCard {
-            AlertSwitchRow(NotificationsText.READY_TITLE, NotificationsText.READY_SUBTITLE, readyOn) { toggle(AlertSwitch.READY, it) }
+            AlertSwitchRow(Copy.Notifications.readyTitle, Copy.Notifications.readySubtitle, readyOn) { toggle(AlertSwitch.READY, it) }
             AccountDivider()
-            AlertSwitchRow(NotificationsText.DUE_TITLE, NotificationsText.DUE_SUBTITLE, dueOn) { toggle(AlertSwitch.DUE, it) }
+            AlertSwitchRow(Copy.Notifications.dueTitle, Copy.Notifications.dueSubtitle, dueOn) { toggle(AlertSwitch.DUE, it) }
         }
         if (refused || ((readyOn || dueOn) && !allowed)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    NotificationsText.BLOCKED,
+                    Copy.Notifications.blocked,
                     style = LsType.caption,
                     color = LsColors.warning,
                     modifier = Modifier.weight(1f),
                 )
                 Spacer(Modifier.width(LsSpacing.m))
                 SecondaryPillButton(
-                    NotificationsText.OPEN_SETTINGS,
+                    Copy.Notifications.openSettings,
                     onClick = {
                         try {
                             context.startActivity(NotificationAccess.settingsIntent(context))

@@ -47,6 +47,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.librespydus.app.core.AppState
+import com.librespydus.app.core.Copy
 import com.librespydus.app.core.ResultsSort
 import com.librespydus.app.ui.components.EmptyStateView
 import com.librespydus.app.ui.components.SearchField
@@ -151,7 +152,7 @@ fun SearchScreen(appState: AppState, navigator: AppNavigator, modifier: Modifier
             verticalArrangement = Arrangement.spacedBy(LsSpacing.m),
         ) {
             Text(
-                "Search",
+                Copy.Search.title,
                 style = LsType.title,
                 color = LsColors.textPrimary,
                 modifier = Modifier
@@ -176,7 +177,7 @@ fun SearchScreen(appState: AppState, navigator: AppNavigator, modifier: Modifier
                     onSelect = { sort = ResultsSort.entries[it] },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .semantics { contentDescription = "Sort results" },
+                        .semantics { contentDescription = Copy.Search.sortResults },
                 )
             }
         }
@@ -195,7 +196,7 @@ fun SearchScreen(appState: AppState, navigator: AppNavigator, modifier: Modifier
         } else {
             RecentSearches(
                 items = recentItems,
-                libraryName = library?.name ?: "the library",
+                libraryName = library?.name ?: Copy.Common.yourLibrary,
                 onRun = { recent ->
                     text = recent
                     submit()
@@ -221,8 +222,8 @@ private fun RecentSearches(
 ) {
     if (items.isEmpty()) {
         EmptyStateView(
-            title = "Search $libraryName",
-            message = "Find books, eBooks, audiobooks and more by title, author or subject.",
+            title = Copy.Search.introTitle(libraryName),
+            message = Copy.Search.introMessage,
             icon = BrowseIcons.MenuBook,
             modifier = modifier.padding(bottom = BrowseBottomClearance),
         )
@@ -233,7 +234,7 @@ private fun RecentSearches(
         contentPadding = PaddingValues(start = LsSpacing.l, end = LsSpacing.l, top = LsSpacing.s, bottom = BrowseBottomClearance),
     ) {
         item(key = "header") {
-            SectionHeader("Recent searches", actionLabel = "Clear", onAction = onClear, modifier = Modifier.padding(bottom = LsSpacing.s))
+            SectionHeader(Copy.Search.recentSearches, actionLabel = Copy.Common.clear, onAction = onClear, modifier = Modifier.padding(bottom = LsSpacing.s))
         }
         items(items, key = { it }) { query ->
             var menuOpen by remember { mutableStateOf(false) }
@@ -242,12 +243,13 @@ private fun RecentSearches(
                     Modifier
                         .fillMaxWidth()
                         .combinedClickable(
-                            onClickLabel = "Search again",
-                            onLongClickLabel = "Remove",
+                            onClickLabel = Copy.Search.searchAgain,
+                            onLongClickLabel = Copy.Common.remove,
                             onLongClick = { menuOpen = true },
                             onClick = { onRun(query) },
                         )
-                        .semantics(mergeDescendants = true) { contentDescription = "Search again for $query" }
+                        // The label is the query as shown; the action says what a tap does.
+                        .semantics(mergeDescendants = true) {}
                         .padding(vertical = LsSpacing.m),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
@@ -259,7 +261,7 @@ private fun RecentSearches(
                 }
                 DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
                     DropdownMenuItem(
-                        text = { Text("Remove", color = LsColors.danger) },
+                        text = { Text(Copy.Common.remove, color = LsColors.danger) },
                         leadingIcon = { Icon(LsIcons.Close, contentDescription = null, tint = LsColors.danger) },
                         onClick = {
                             menuOpen = false

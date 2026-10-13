@@ -41,6 +41,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.librespydus.app.core.BookRef
+import com.librespydus.app.core.Copy
 import com.librespydus.app.core.Formatting
 import com.librespydus.app.feature.featured.CopyRow
 import com.librespydus.app.feature.search.BrowseBottomClearance
@@ -77,7 +78,7 @@ fun DetailSheetContent(
         verticalArrangement = Arrangement.spacedBy(LsSpacing.xl),
     ) {
         when (val record = state.record) {
-            BrowseLoadable.Idle, BrowseLoadable.Loading -> SheetLoading("Loading details…")
+            BrowseLoadable.Idle, BrowseLoadable.Loading -> SheetLoading(Copy.Detail.loadingDetails)
             is BrowseLoadable.Failed -> ErrorStateView(
                 error = record.error,
                 onRetry = onRetry.takeIf { record.error.isRetryable },
@@ -106,13 +107,13 @@ private fun LoadedSheet(
     val gutter = Modifier.padding(horizontal = LsSpacing.xl)
     if (summary != null) {
         Column(gutter, verticalArrangement = Arrangement.spacedBy(LsSpacing.s)) {
-            SectionHeader("Synopsis", color = LsColors.onSheet)
+            SectionHeader(Copy.Detail.synopsis, color = LsColors.onSheet)
             ExpandableText(summary)
         }
     }
     if (subjects.isNotEmpty()) {
         FlowRow(
-            gutter.semantics { contentDescription = "Subjects" },
+            gutter.semantics { contentDescription = Copy.Detail.subjects },
             horizontalArrangement = Arrangement.spacedBy(LsSpacing.s),
             verticalArrangement = Arrangement.spacedBy(LsSpacing.s),
         ) {
@@ -121,7 +122,9 @@ private fun LoadedSheet(
                     text = subject.label,
                     onSheet = true,
                     onClick = { onOpenSubject(subject) },
-                    modifier = Modifier.widthIn(max = 280.dp),
+                    modifier = Modifier
+                        .widthIn(max = 280.dp)
+                        .semantics { contentDescription = Copy.A11y.labelAndHint(subject.label, Copy.Detail.subjectHint) },
                 )
             }
         }
@@ -144,7 +147,7 @@ private fun LoadedSheet(
     }
     if (summary == null && subjects.isEmpty() && copies == null && facts.isEmpty() && !hasRelated) {
         Text(
-            "The library has no more details for this title.",
+            Copy.Detail.noMoreDetails,
             style = LsType.body,
             color = LsColors.onSheetSecondary,
             modifier = gutter,
@@ -152,7 +155,7 @@ private fun LoadedSheet(
     }
 }
 
-/** Text clamped to [lineLimit] lines with a "More" / "Less" toggle when it doesn't fit. */
+/** Text clamped to [lineLimit] lines with a More / Less toggle when it doesn't fit. */
 @Composable
 private fun ExpandableText(text: String, lineLimit: Int = 5) {
     var expanded by rememberSaveable { mutableStateOf(false) }
@@ -167,14 +170,17 @@ private fun ExpandableText(text: String, lineLimit: Int = 5) {
             onTextLayout = { if (!expanded) overflows = it.hasVisualOverflow },
         )
         if (expanded || overflows) {
+            val toggle = if (expanded) Copy.Detail.less else Copy.Detail.more
             Text(
-                if (expanded) "Less" else "More",
+                toggle,
                 style = LsType.bodyStrong,
                 color = LsColors.primary,
                 modifier = Modifier
                     .clip(RoundedCornerShape(LsRadius.pill))
                     .clickable(role = Role.Button) { expanded = !expanded }
-                    .semantics { contentDescription = if (expanded) "Show less of the synopsis" else "Show more of the synopsis" }
+                    .semantics {
+                        contentDescription = Copy.A11y.labelAndHint(toggle, if (expanded) Copy.Detail.lessHint else Copy.Detail.moreHint)
+                    }
                     .padding(vertical = LsSpacing.xs),
             )
         }
@@ -185,7 +191,7 @@ private fun ExpandableText(text: String, lineLimit: Int = 5) {
 private fun DetailFactsList(facts: List<DetailFact>, modifier: Modifier) {
     val stacked = LocalDensity.current.fontScale >= 1.3f
     Column(modifier, verticalArrangement = Arrangement.spacedBy(LsSpacing.s)) {
-        SectionHeader("Details", color = LsColors.onSheet)
+        SectionHeader(Copy.Detail.details, color = LsColors.onSheet)
         Column {
             facts.forEachIndexed { index, fact ->
                 val rowModifier = Modifier
@@ -229,7 +235,7 @@ private fun DetailFactsList(facts: List<DetailFact>, modifier: Modifier) {
 @Composable
 private fun CopiesList(copies: BrowseLoadable<List<CopyRow>>, onRetry: () -> Unit, modifier: Modifier) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(LsSpacing.s)) {
-        SectionHeader("Copies", color = LsColors.onSheet)
+        SectionHeader(Copy.Detail.copies, color = LsColors.onSheet)
         when (copies) {
             BrowseLoadable.Idle, BrowseLoadable.Loading -> Row(
                 Modifier
@@ -238,19 +244,20 @@ private fun CopiesList(copies: BrowseLoadable<List<CopyRow>>, onRetry: () -> Uni
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 CircularProgressIndicator(color = LsColors.onSheetSecondary, strokeWidth = 2.dp, modifier = Modifier.size(14.dp))
-                Text("Loading copies…", style = LsType.caption, color = LsColors.onSheetSecondary, modifier = Modifier.padding(start = LsSpacing.s))
+                Text(Copy.Detail.loadingCopies, style = LsType.caption, color = LsColors.onSheetSecondary, modifier = Modifier.padding(start = LsSpacing.s))
             }
             is BrowseLoadable.Failed -> Row(Modifier.padding(vertical = LsSpacing.s), verticalAlignment = Alignment.CenterVertically) {
-                Text("Couldn't load copies", style = LsType.caption, color = LsColors.onSheetSecondary, modifier = Modifier.weight(1f, fill = false))
+                Text(Copy.Detail.copiesFailed, style = LsType.caption, color = LsColors.onSheetSecondary, modifier = Modifier.weight(1f, fill = false))
                 if (copies.error.isRetryable) {
                     Text(
-                        "Retry",
+                        Copy.Common.retry,
                         style = LsType.caption.copy(fontWeight = LsType.bodyStrong.fontWeight),
                         color = LsColors.primary,
                         modifier = Modifier
                             .padding(start = LsSpacing.xs)
                             .clip(RoundedCornerShape(LsRadius.pill))
-                            .clickable(role = Role.Button, onClickLabel = "Retry loading copies", onClick = onRetry)
+                            .clickable(role = Role.Button, onClick = onRetry)
+                            .semantics { contentDescription = Copy.A11y.labelAndHint(Copy.Common.retry, Copy.Detail.retryCopiesHint) }
                             .padding(horizontal = LsSpacing.s, vertical = LsSpacing.xs),
                     )
                 }
@@ -281,7 +288,8 @@ private fun CopyRowView(copy: CopyRow) {
             .clearAndSetSemantics { contentDescription = copy.accessibilityLabel },
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
-        copy.location?.let { Text(it, style = LsType.bodyStrong, color = LsColors.onSheet) }
+        // A holding with no branch is still a row: "Copy" stands in for its title.
+        Text(copy.location ?: Copy.Detail.copy, style = LsType.bodyStrong, color = LsColors.onSheet)
         copy.status?.let { Text(it, style = LsType.body, color = if (copy.available) LsColors.success else LsColors.onSheet) }
         copy.description?.let { Text(it, style = LsType.body, color = LsColors.onSheetSecondary) }
         copy.callNumber?.let { Text(it, style = LsType.caption, color = LsColors.onSheetSecondary) }
@@ -298,7 +306,7 @@ private fun RelatedCarousel(panel: RelatedPanel, state: BrowseLoadable<List<Book
         LazyRow(
             contentPadding = PaddingValues(horizontal = LsSpacing.xl, vertical = LsSpacing.s),
             horizontalArrangement = Arrangement.spacedBy(LsSpacing.l),
-            modifier = Modifier.semantics { contentDescription = if (refs == null) "Loading ${panel.title.lowercase()}" else panel.title },
+            modifier = Modifier.semantics { contentDescription = if (refs == null) Copy.Detail.loadingPanel(panel.title.lowercase()) else panel.title },
         ) {
             if (refs != null) {
                 items(refs, key = { it.id }) { ref ->

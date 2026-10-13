@@ -46,7 +46,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.librespydus.app.core.AppState
-import com.librespydus.app.core.PicksText
+import com.librespydus.app.core.Copy
 import com.librespydus.app.core.UserFacingError
 import com.librespydus.app.feature.onboarding.AccountIcons
 import com.librespydus.app.feature.search.SearchResultRow
@@ -63,7 +63,7 @@ import com.librespydus.app.ui.theme.LsType
 /**
  * Favourites while signed in (§5.11): the reader's Pick list on the library account, "My Picks".
  * Rows are the search results row (tap → book page); a row's filled bookmark, its long-press menu
- * or the screen reader's action removes it at once (back, with "Couldn't update My Picks.", on
+ * or the screen reader's action removes it at once (back, with "Couldn’t update My Picks", on
  * failure). Pull to refresh; pages past the first ten load as the list scrolls.
  */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -107,8 +107,8 @@ internal fun MyPicksScreen(appState: AppState, navigator: AppNavigator, modifier
                 }
                 MyPicksContent.Empty -> item(key = "empty") {
                     EmptyStateView(
-                        title = PicksText.EMPTY_TITLE,
-                        message = PicksText.EMPTY_MESSAGE,
+                        title = Copy.Picks.emptyTitle,
+                        message = FavouritesMode.MY_PICKS.emptyMessage,
                         icon = LsIcons.Bookmark,
                         modifier = Modifier.fillMaxWidth().heightIn(min = 420.dp),
                     )
@@ -141,8 +141,8 @@ private fun PicksHeader() {
             .fillMaxWidth()
             .padding(start = LsSpacing.l, end = LsSpacing.l, top = LsSpacing.l, bottom = LsSpacing.xs),
     ) {
-        Text(PicksText.TITLE, style = LsType.greeting, color = LsColors.textPrimary, modifier = Modifier.semantics { heading() })
-        Text(PicksText.SUBTITLE, style = LsType.caption, color = LsColors.textSecondary)
+        Text(FavouritesMode.MY_PICKS.title, style = LsType.greeting, color = LsColors.textPrimary, modifier = Modifier.semantics { heading() })
+        Text(FavouritesMode.MY_PICKS.subtitle, style = LsType.caption, color = LsColors.textSecondary)
     }
 }
 
@@ -160,7 +160,7 @@ private fun PickRowView(row: PickRow, busy: Boolean, onOpen: () -> Unit, onRemov
                 haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                 menu = true
             },
-            actions = if (canRemove) listOf(CustomAccessibilityAction(PicksText.REMOVE_LABEL) { onRemove(); true }) else emptyList(),
+            actions = if (canRemove) listOf(CustomAccessibilityAction(Copy.Picks.remove) { onRemove(); true }) else emptyList(),
             trailing = if (canRemove) {
                 {
                     Box(
@@ -168,7 +168,7 @@ private fun PickRowView(row: PickRow, busy: Boolean, onOpen: () -> Unit, onRemov
                             .size(40.dp)
                             .clip(CircleShape)
                             .clickable(enabled = !busy, role = Role.Button, onClick = onRemove)
-                            .semantics { contentDescription = PicksText.REMOVE_LABEL },
+                            .semantics { contentDescription = Copy.Picks.remove },
                         contentAlignment = Alignment.Center,
                     ) {
                         Icon(LsIcons.BookmarkFilled, contentDescription = null, tint = LsColors.accent, modifier = Modifier.size(24.dp))
@@ -184,7 +184,7 @@ private fun PickRowView(row: PickRow, busy: Boolean, onOpen: () -> Unit, onRemov
             containerColor = LsColors.surfaceElevated,
         ) {
             DropdownMenuItem(
-                text = { Text("Open", color = LsColors.textPrimary) },
+                text = { Text(Copy.Common.open, color = LsColors.textPrimary) },
                 leadingIcon = { Icon(LsIcons.Book, contentDescription = null, tint = LsColors.textSecondary) },
                 onClick = {
                     menu = false
@@ -193,7 +193,7 @@ private fun PickRowView(row: PickRow, busy: Boolean, onOpen: () -> Unit, onRemov
             )
             if (canRemove) {
                 DropdownMenuItem(
-                    text = { Text(PicksText.REMOVE_LABEL, color = LsColors.danger) },
+                    text = { Text(Copy.Picks.remove, color = LsColors.danger) },
                     leadingIcon = { Icon(AccountIcons.BookmarkRemove, contentDescription = null, tint = LsColors.danger) },
                     enabled = !busy,
                     onClick = {
@@ -223,7 +223,7 @@ private fun PicksFooter(footer: MyPicksContent.Footer, onLoadMore: () -> Unit, o
                     strokeWidth = 2.dp,
                     modifier = Modifier
                         .size(24.dp)
-                        .semantics { contentDescription = "Loading more picks" },
+                        .semantics { contentDescription = Copy.Picks.loadingMore },
                 )
             }
             is MyPicksContent.Footer.Failed -> FooterRetry(footer.error, onRetry)
@@ -240,13 +240,13 @@ private fun FooterRetry(error: UserFacingError, onRetry: () -> Unit) {
                 Modifier
                     .clip(RoundedCornerShape(LsRadius.pill))
                     .clickable(role = Role.Button, onClick = onRetry)
-                    .semantics(mergeDescendants = true) { contentDescription = "Retry loading more picks" }
+                    .semantics(mergeDescendants = true) { contentDescription = Copy.A11y.labelAndHint(Copy.Common.retry, Copy.Picks.retryLoadingMoreHint) }
                     .padding(horizontal = LsSpacing.m, vertical = LsSpacing.xs),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Icon(LsIcons.Refresh, contentDescription = null, tint = LsColors.primary, modifier = Modifier.size(18.dp))
                 Spacer(Modifier.width(LsSpacing.xs))
-                Text("Retry", style = LsType.bodyStrong, color = LsColors.primary)
+                Text(Copy.Common.retry, style = LsType.bodyStrong, color = LsColors.primary)
             }
         }
     }

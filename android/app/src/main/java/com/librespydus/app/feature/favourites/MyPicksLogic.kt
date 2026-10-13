@@ -1,16 +1,26 @@
 package com.librespydus.app.feature.favourites
 
+import com.librespydus.app.core.Copy
 import com.librespydus.app.core.PickIrn
 import com.librespydus.app.core.PicksList
 import com.librespydus.app.core.UserFacingError
 import com.librespydus.app.feature.search.SearchResultItem
 import com.librespydus.app.feature.search.SearchResultsModel
 
-/** Which list the Favourites tab shows (§5.11): My Picks while signed in, else this phone's own. */
+/** Which list the My Picks tab shows (§5.11): My Picks while signed in, else this phone's own. */
 enum class FavouritesMode {
     MY_PICKS,
     LOCAL,
     ;
+
+    /** The screen's title: "My Picks" either way (§7.1). */
+    val title: String get() = Copy.Picks.title
+
+    /** Where the list is kept: "Saved on your library account" / "Saved on this phone". */
+    val subtitle: String get() = if (this == MY_PICKS) Copy.Picks.subtitleAccount else Copy.Picks.subtitlePhone
+
+    /** The empty list's message, with [Copy.Picks.emptyTitle]. */
+    val emptyMessage: String get() = if (this == MY_PICKS) Copy.Picks.emptyAccountMessage else Copy.Picks.emptyPhoneMessage
 
     companion object {
         fun of(signedIn: Boolean): FavouritesMode = if (signedIn) MY_PICKS else LOCAL

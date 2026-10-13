@@ -201,7 +201,8 @@ class DemoBackend(
                 ),
             )
         }
-        return ReserveResult(ok = true, message = "Reservation placed.")
+        // The core's own messages, in the words it gives the apps (core/src/messages.rs).
+        return ReserveResult(ok = true, message = "Reservation placed")
     }
 
     override suspend fun cancelReservation(url: String, session: String): ReserveResult {
@@ -210,8 +211,8 @@ class DemoBackend(
         val removed = mutex.withLock {
             readyItems.removeAll { it.hasAction(url) } or pendingItems.removeAll { it.hasAction(url) }
         }
-        return if (removed) ReserveResult(ok = true, message = "Reservation cancelled.")
-        else ReserveResult(ok = false, message = "This reservation can't be cancelled.")
+        return if (removed) ReserveResult(ok = true, message = "Reservation cancelled")
+        else ReserveResult(ok = false, message = "This reservation can’t be cancelled right now.")
     }
 
     override suspend fun editOptions(url: String, session: String): EditOptions {
@@ -233,8 +234,8 @@ class DemoBackend(
                 true
             }
         }
-        return if (edited) ReserveResult(ok = true, message = "Reservation updated.")
-        else ReserveResult(ok = false, message = "This reservation can't be changed.")
+        return if (edited) ReserveResult(ok = true, message = "Reservation updated")
+        else ReserveResult(ok = false, message = "This reservation can’t be edited right now.")
     }
 
     /**

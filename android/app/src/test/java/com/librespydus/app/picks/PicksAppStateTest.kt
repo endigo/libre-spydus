@@ -102,7 +102,7 @@ class PicksAppStateTest {
         advanceUntilIdle()
         val offer = f.state.picks.offer.value!!
         assertEquals(canning.origin, offer.scope)
-        assertEquals("2 books saved on this phone can be added to your library account.", offer.message)
+        assertEquals("2 books saved on this phone can be added to My Picks on your library account.", offer.message)
         assertEquals(setOf("1", "2", "3"), f.state.picks.irns.value)
 
         f.state.picks.answerOffer(add = true)

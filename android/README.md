@@ -102,7 +102,7 @@ Intent extras read by `MainActivity` (`core/LaunchOptions.kt`, docs §5.6):
 | `--ez ls_demo true` | demo mode, already signed in as "Test Borrower" |
 | `--ez ls_reset true` | clear persisted library, sessions, verification cookies, favourites and saved accounts first |
 | `--ez ls_demo_persist true` | with `ls_demo`: save the demo account on the device like a real one (under its own key), so a cold relaunch shows it at once |
-| `--ez ls_demo_refresh_fails true` | with `ls_demo`: every demo account refresh fails like an unreachable library ("Couldn't refresh — showing saved data" over a saved demo account) |
+| `--ez ls_demo_refresh_fails true` | with `ls_demo`: every demo account refresh fails like an unreachable library ("Couldn’t refresh · Showing the saved list" over a saved demo account) |
 | `--ez ls_morning_check_now true` | run the 07:45 morning check (docs §5.8) through WorkManager now, once the launch's own account refresh has settled |
 | `--ez ls_demo_new_ready true` | with `ls_demo`: the "In transit" reservation (Baby-sitters club) becomes ready at Riverton Library from the demo account's second refresh on, so a "Ready to collect" alert can be shown |
 | `--ez ls_open_card true` | with `ls_demo`: Home opens My card once (`feature/mycard/MyCardDebugHooks.kt`) |
@@ -147,7 +147,7 @@ checks. Add `-S` to `am start` to force-stop first (launch options apply on a fr
 ## Saved account (docs §5.2a)
 
 `AppState.account` (`core/AccountStore.kt`) holds the signed-in borrower's `AccountSnapshot` (name,
-loans, both reservation lists). Your Books, Home's "Your borrowed books" shelf, the Home greeting
+loans, both reservation lists). Your Books, Home's "Your loans" shelf, the Home greeting
 and Profile's name all read it; no screen calls `loans()` / `reservations()` any more.
 
 - Saved per library in `noBackupFilesDir/account-cache/<sha256(origin)>.json`
@@ -158,7 +158,7 @@ and Profile's name all read it; no screen calls `loans()` / `reservations()` any
 - Refreshed in the background (one at a time; a result for an older library/session is dropped):
   at launch with a session, on sign-in, on `onStart` and when Your Books or Home opens if it is over
   two minutes old, on pull to refresh, and after a reserve / cancel / edit.
-- A failed refresh keeps the data ("Couldn't refresh — showing saved data" + Retry on Your Books).
+- A failed refresh keeps the data ("Couldn’t refresh · Showing the saved list" + Retry on Your Books).
   Sign-out and an expired session delete that library's file; other libraries keep theirs.
 
 Never sign in with real credentials while developing (docs §2). Account screens are built and
@@ -223,7 +223,7 @@ adb -s emulator-5556 shell am start -S -n com.librespydus.app/.MainActivity \
 
 ## Featured collections (docs §5.10)
 
-Home shows a "Featured" row between "Popular genres" and "Your borrowed books" for libraries
+Home shows a "Featured" row between "Popular genres" and "Your loans" for libraries
 whose OPAC home page has a Featured list (Canning: What's New, Coming Soon, eLibrary, First Nations,
 Languages Other Than English, Library of Things, Local History, More to Celebrate). It loads on its
 own (`HomeFeaturedModel`, once per library and verification, again on pull to refresh) and is
@@ -262,26 +262,27 @@ adb -s emulator-5556 shell am start -S -n com.librespydus.app/.MainActivity --es
 
 ## My Picks (docs §5.11)
 
-Signed in, Favourites is the reader's Pick list on the library account ("My Picks" on the website)
-and the bookmark saves to it; signed out, both are this phone's own favourites, unchanged.
+The tab is "My Picks" signed in or out. Signed in, it is the reader's Pick list on the library
+account ("Saved on your library account") and the bookmark saves to it; signed out, both are this
+phone's own list ("Saved on this phone", the local favourites store).
 
 - **`AppState.picks`** (`core/PicksStore.kt`), bound to the library and session next to the account:
   the picked set (`irns`, the `workIrn` of every record on the first 10 pages), loaded after sign-in,
-  at launch while signed in and when Favourites refreshes; cleared on sign-out, session expiry and
+  at launch while signed in and when My Picks refreshes; cleared on sign-out, session expiry and
   library switch. `PickIrn`: a results card's `workIrn`; a ref keyed `work:` / `bib:` → that IRN;
   otherwise the loaded record's `bibIrn` (the bookmark is disabled until then).
 - **Bookmark** (book page): flips at once, then `savePick` / `removePick`; a failure flips back with
-  "Couldn't update My Picks.", `NotLoggedIn` signs out as anywhere else. "Saved to My Picks" /
+  "Couldn’t update My Picks", `NotLoggedIn` signs out as anywhere else. "Saved to My Picks" /
   "Removed from My Picks" show in a pill above the tab bar (`feature/favourites/PicksOverlays.kt`,
   hosted by `LibreSpydusRoot`).
-- **Favourites** (`MyPicksScreen`): "My Picks" / "Saved on your library account", the search results
+- **My Picks** (`MyPicksScreen`): "My Picks" / "Saved on your library account", the search results
   row (`SearchResultRow` with a filled bookmark, a long-press menu and a TalkBack action, each of which
   removes the row at once), pull to refresh, paging past 10 pages, "No picks yet".
-- **Copy once:** after an interactive sign-in with local favourites, "Add your saved books to My
-  Picks?" (Add / Not now), remembered per library in the `picks` SharedPreferences
-  (`copyOffered.<sha256(origin)>`, demo under `demo:<origin>`; `ls_reset` clears it). Add saves them
-  oldest first (`brn:` / `url:` refs load their record for the bib IRN) and says "Added N books to My
-  Picks" (+ " · M couldn't be added").
+- **Copy once:** after an interactive sign-in with local favourites, "Add this phone’s picks to your
+  library account?" (Add / Not now), remembered per library in the `picks` SharedPreferences
+  (`copyOffered.<sha256(origin)>`, demo under `demo:<origin>`; `ls_reset` clears it). Add says "Adding N books to My Picks…",
+  saves them oldest first (`brn:` / `url:` refs load their record for the bib IRN) and says "Added N
+  books to My Picks" (+ " · M couldn’t be added").
 - **Demo:** `core/DemoPicks.kt`, in memory, seeded with The Midnight Library (a work, three chips) and
   The Thursday Murder Club's Book (edition-level, no chip). Never call these against a real library
   while developing (docs §2).

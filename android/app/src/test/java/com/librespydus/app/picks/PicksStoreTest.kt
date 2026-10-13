@@ -4,6 +4,7 @@ import com.librespydus.app.core.BookRef
 import com.librespydus.app.core.InMemoryPicksOfferStore
 import com.librespydus.app.core.PicksList
 import com.librespydus.app.core.PicksStore
+import com.librespydus.app.core.Copy
 import com.librespydus.app.core.PicksText
 import com.librespydus.app.core.UserFacingError
 import com.librespydus.app.feature.favourites.MyPicksContent
@@ -186,14 +187,14 @@ class PicksStoreTest {
         assertEquals(setOf("7"), f.store.pending.value)
         advanceUntilIdle()
         assertEquals(listOf("7"), f.backend.saved)
-        assertEquals(PicksText.SAVED, f.store.notice.value!!.message)
+        assertEquals(Copy.Picks.saved, f.store.notice.value!!.message)
         assertTrue(f.store.pending.value.isEmpty())
 
         f.store.toggle("7")
         assertFalse(f.store.isPicked("7"))
         advanceUntilIdle()
         assertEquals(listOf("7"), f.backend.removed)
-        assertEquals(PicksText.REMOVED, f.store.notice.value!!.message)
+        assertEquals(Copy.Picks.removed, f.store.notice.value!!.message)
         assertFalse(f.store.notice.value!!.isError)
     }
 
@@ -207,7 +208,7 @@ class PicksStoreTest {
         assertTrue(f.store.isPicked("7"))
         advanceUntilIdle()
         assertFalse(f.store.isPicked("7"))
-        assertEquals(PicksText.FAILED, f.store.notice.value!!.message)
+        assertEquals(Copy.Picks.updateFailed, f.store.notice.value!!.message)
         assertTrue(f.store.notice.value!!.isError)
         assertTrue(f.reported.isEmpty())
 
@@ -216,7 +217,7 @@ class PicksStoreTest {
         assertFalse(f.store.isPicked("2"))
         advanceUntilIdle()
         assertTrue(f.store.isPicked("2"))
-        assertEquals("Couldn't update My Picks.", f.store.notice.value!!.message)
+        assertEquals(Copy.Picks.updateFailed, f.store.notice.value!!.message)
     }
 
     @Test
@@ -256,13 +257,13 @@ class PicksStoreTest {
         advanceUntilIdle()
         assertEquals(listOf("1", "2", "3"), f.store.list.value.records.map { it.workIrn })
         assertTrue(f.store.isPicked("2"))
-        assertEquals(PicksText.FAILED, f.store.notice.value!!.message)
+        assertEquals(Copy.Picks.updateFailed, f.store.notice.value!!.message)
 
         f.backend.removeFails = null
         f.store.remove("2")
         advanceUntilIdle()
         assertEquals(listOf("1", "3"), f.store.list.value.records.map { it.workIrn })
-        assertEquals(PicksText.REMOVED, f.store.notice.value!!.message)
+        assertEquals(Copy.Picks.removed, f.store.notice.value!!.message)
 
         f.store.remove("1")
         f.store.remove("3")
@@ -312,7 +313,7 @@ class PicksStoreTest {
         val favourites = listOf(ref("work:1", 2), ref("bib:2", 1))
         f.store.offerAfterSignIn("lib", favourites)
         val offer = f.store.offer.value!!
-        assertEquals("2 books saved on this phone can be added to your library account.", offer.message)
+        assertEquals("2 books saved on this phone can be added to My Picks on your library account.", offer.message)
 
         assertNull(f.store.answerOffer(add = false))
         assertNull(f.store.offer.value)
@@ -340,11 +341,12 @@ class PicksStoreTest {
         )
         f.store.offerAfterSignIn("lib", favourites)
         f.store.answerOffer(add = true)
+        assertEquals("Adding 5 books to My Picks…", f.store.notice.value!!.message)
         advanceUntilIdle()
 
         assertEquals(listOf("200", "900", "100"), f.backend.saved)
         assertEquals(listOf("$origin/loan", "$origin/related"), f.backend.recordRequests)
-        assertEquals("Added 3 books to My Picks · 2 couldn't be added", f.store.notice.value!!.message)
+        assertEquals("Added 3 books to My Picks · 2 couldn’t be added", f.store.notice.value!!.message)
         assertTrue(f.offers.wasAsked("lib"))
         // The set is reloaded from the list.
         assertEquals(setOf("100", "200", "900"), f.store.irns.value)
@@ -358,15 +360,16 @@ class PicksStoreTest {
         f.store.offerAfterSignIn("lib", listOf(ref("work:1", 1)))
         f.store.answerOffer(add = true)
         advanceUntilIdle()
-        assertEquals("Added 0 books to My Picks · 1 couldn't be added", f.store.notice.value!!.message)
+        assertEquals("Added 0 books to My Picks · 1 couldn’t be added", f.store.notice.value!!.message)
         assertTrue(f.store.notice.value!!.isError)
     }
 
     @Test
     fun oneBookIsSingular() {
-        assertEquals("1 book saved on this phone can be added to your library account.", PicksText.offerMessage(1))
+        assertEquals("1 book saved on this phone can be added to My Picks on your library account.", Copy.Picks.offerMessage(1))
+        assertEquals("Adding 1 book to My Picks…", Copy.Picks.adding(1))
         assertEquals("Added 1 book to My Picks", PicksText.copied(1, 0))
-        assertEquals("Added 2 books to My Picks · 1 couldn't be added", PicksText.copied(2, 1))
+        assertEquals("Added 2 books to My Picks · 1 couldn’t be added", PicksText.copied(2, 1))
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.librespydus.app.feature.mycard
 
+import com.librespydus.app.core.Copy
 import com.librespydus.app.core.LibraryBackend
 import uniffi.librespydus_core.BarcodeSymbology
 import uniffi.librespydus_core.CardBarcode
@@ -40,13 +41,7 @@ object MyCardLogic {
     }
 
     /** TalkBack reads the barcode as one element. */
-    fun barcodeDescription(number: String) = "Barcode for card $number"
-
-    fun symbologyName(symbology: BarcodeSymbology) = when (symbology) {
-        BarcodeSymbology.CODE128 -> "Code 128"
-        BarcodeSymbology.CODE39 -> "Code 39"
-        BarcodeSymbology.CODABAR -> "Codabar"
-    }
+    fun barcodeDescription(number: String) = Copy.MyCard.barcode(number)
 }
 
 /**

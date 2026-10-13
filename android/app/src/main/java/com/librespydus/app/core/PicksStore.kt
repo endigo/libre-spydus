@@ -39,29 +39,11 @@ object PickIrn {
     private const val BIB = "bib:"
 }
 
-/** My Picks' wording (§5.11), the same on iOS. */
+/** My Picks' composed wording (§5.11); every piece comes from [Copy.Picks]. */
 object PicksText {
-    const val TITLE = "My Picks"
-    const val SUBTITLE = "Saved on your library account"
-    const val SAVED = "Saved to My Picks"
-    const val REMOVED = "Removed from My Picks"
-    const val FAILED = "Couldn't update My Picks."
-    const val SAVE_LABEL = "Save to My Picks"
-    const val REMOVE_LABEL = "Remove from My Picks"
-    const val EMPTY_TITLE = "No picks yet"
-    const val EMPTY_MESSAGE = "Tap the bookmark on a book to save it to your library account."
-    const val OFFER_TITLE = "Add your saved books to My Picks?"
-    const val OFFER_ADD = "Add"
-    const val OFFER_NOT_NOW = "Not now"
-
-    /** "3 books saved on this phone can be added to your library account." */
-    fun offerMessage(count: Int): String = "$count ${books(count)} saved on this phone can be added to your library account."
-
-    /** "Added 3 books to My Picks", plus " · 1 couldn't be added" when some failed or had no IRN. */
+    /** "Added 3 books to My Picks", plus " · 1 couldn’t be added" when some failed or had no IRN. */
     fun copied(added: Int, failed: Int): String =
-        "Added $added ${books(added)} to My Picks" + if (failed > 0) " · $failed couldn't be added" else ""
-
-    private fun books(count: Int) = if (count == 1) "book" else "books"
+        if (failed > 0) Copy.Picks.added(added) + Copy.Common.separator + Copy.Picks.notAdded(failed) else Copy.Picks.added(added)
 }
 
 /** A short message over the tabs: a bookmark's confirmation, a failure, the copy's summary. */
@@ -74,7 +56,7 @@ data class PicksOffer(
     /** The library's local favourites when the reader signed in, newest first. */
     val books: List<BookRef>,
 ) {
-    val message: String get() = PicksText.offerMessage(books.size)
+    val message: String get() = Copy.Picks.offerMessage(books.size)
 }
 
 /** The Pick list as Favourites shows it while signed in. */
@@ -146,7 +128,7 @@ class SharedPreferencesPicksOfferStore(private val prefs: SharedPreferences) : P
  *   loaded by [reload] (after sign-in, at launch while signed in, when Favourites refreshes) and
  *   updated by every save and remove.
  * - [list]: those pages as Favourites shows them, paged further by [loadMore].
- * - [toggle] / [remove]: optimistic; a failure flips back with "Couldn't update My Picks.", and
+ * - [toggle] / [remove]: optimistic; a failure flips back with "Couldn’t update My Picks", and
  *   `NotLoggedIn` goes to [report] (AppState's session-expired path).
  * - [offer]: after an interactive sign-in, the once-per-library offer to copy local favourites.
  *
@@ -373,7 +355,7 @@ class PicksStore(
                 if (save) backend.savePick(irn, session) else backend.removePick(irn, session)
                 if (generation != this@PicksStore.generation) return@launch
                 if (save) stale = true
-                post(if (save) PicksText.SAVED else PicksText.REMOVED)
+                post(if (save) Copy.Picks.saved else Copy.Picks.removed)
             } catch (e: CancellationException) {
                 if (generation == this@PicksStore.generation) revert()
                 throw e
@@ -384,7 +366,7 @@ class PicksStore(
                     report(e)
                 } else {
                     if (e is SpydusException.HumanVerificationRequired) report(e)
-                    post(PicksText.FAILED, isError = true)
+                    post(Copy.Picks.updateFailed, isError = true)
                 }
             } finally {
                 if (generation == this@PicksStore.generation) {
@@ -425,45 +407,51 @@ class PicksStore(
         val session = session ?: return null
         val generation = generation
         val oldestFirst = books.sortedBy { it.savedAt ?: 0L }
+        // Until the summary replaces it; gone too when the copy stops early (signed out, another library).
+        val adding = post(Copy.Picks.adding(oldestFirst.size))
         val job = scope.launch {
-            var added = 0
-            var failed = 0
-            for ((index, book) in oldestFirst.withIndex()) {
-                val irn = try {
-                    PickIrn.of(book) ?: book.url?.trim()?.takeIf { it.isNotEmpty() }?.let { PickIrn.of(book, backend.record(it)) }
-                } catch (e: CancellationException) {
-                    throw e
-                } catch (e: Exception) {
-                    null
-                }
-                if (generation != this@PicksStore.generation) return@launch
-                if (irn == null) {
-                    failed++
-                    continue
-                }
-                try {
-                    backend.savePick(irn, session)
-                    if (generation != this@PicksStore.generation) return@launch
-                    added++
-                    _irns.update { it + irn }
-                } catch (e: CancellationException) {
-                    throw e
-                } catch (e: SpydusException.NotLoggedIn) {
-                    if (generation == this@PicksStore.generation) report(e)
-                    return@launch
-                } catch (e: Exception) {
-                    if (generation != this@PicksStore.generation) return@launch
-                    if (e is SpydusException.HumanVerificationRequired) {
-                        report(e)
-                        failed += oldestFirst.size - index
-                        break
+            try {
+                var added = 0
+                var failed = 0
+                for ((index, book) in oldestFirst.withIndex()) {
+                    val irn = try {
+                        PickIrn.of(book) ?: book.url?.trim()?.takeIf { it.isNotEmpty() }?.let { PickIrn.of(book, backend.record(it)) }
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        null
                     }
-                    failed++
+                    if (generation != this@PicksStore.generation) return@launch
+                    if (irn == null) {
+                        failed++
+                        continue
+                    }
+                    try {
+                        backend.savePick(irn, session)
+                        if (generation != this@PicksStore.generation) return@launch
+                        added++
+                        _irns.update { it + irn }
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: SpydusException.NotLoggedIn) {
+                        if (generation == this@PicksStore.generation) report(e)
+                        return@launch
+                    } catch (e: Exception) {
+                        if (generation != this@PicksStore.generation) return@launch
+                        if (e is SpydusException.HumanVerificationRequired) {
+                            report(e)
+                            failed += oldestFirst.size - index
+                            break
+                        }
+                        failed++
+                    }
                 }
+                post(PicksText.copied(added, failed), isError = added == 0)
+                stale = true
+                reload()
+            } finally {
+                dismissNotice(adding)
             }
-            post(PicksText.copied(added, failed), isError = added == 0)
-            stale = true
-            reload()
         }
         copyJob = job
         return job
@@ -476,8 +464,10 @@ class PicksStore(
         if (_notice.value?.id == id) _notice.value = null
     }
 
-    private fun post(message: String, isError: Boolean = false) {
+    /** Shows [message]; returns its id (for [dismissNotice]). */
+    private fun post(message: String, isError: Boolean = false): Long {
         _notice.value = PicksNotice(++noticeId, message, isError)
+        return noticeId
     }
 
     // endregion

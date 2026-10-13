@@ -1,5 +1,6 @@
 package com.librespydus.app.feature.onboarding
 
+import com.librespydus.app.core.Copy
 import com.librespydus.app.core.Formatting
 import uniffi.librespydus_core.LibraryInfo
 import java.net.URI
@@ -23,8 +24,8 @@ enum class PickerRegion(val code: String) {
     /** What a row in this region warns about (core/README.md "Current regional support"). */
     val caveat: String?
         get() = when (this) {
-            UK -> "Asks you to verify you're human"
-            SG -> "May be unreachable outside school networks"
+            UK -> Copy.Onboarding.noteUK
+            SG -> Copy.Onboarding.noteSG
             AU, NZ, US, OTHER -> null
         }
 

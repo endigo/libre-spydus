@@ -14,8 +14,8 @@ import java.util.Locale
 
 /** The two kinds of alert (docs/native-apps.md §5.8), one notification channel each. */
 enum class AlertKind(val channelId: String, val channelName: String, val opens: BorrowedSegment) {
-    READY("ready", "Ready to collect", BorrowedSegment.RESERVATIONS),
-    DUE("due", "Due-date reminders", BorrowedSegment.LOANS),
+    READY("ready", Copy.Alerts.readyChannel, BorrowedSegment.RESERVATIONS),
+    DUE("due", Copy.Alerts.dueChannel, BorrowedSegment.LOANS),
 }
 
 /**
@@ -30,15 +30,8 @@ data class AlertNotification(val id: String, val kind: AlertKind, val title: Str
  * (AlertsContentTest). Dates are java.time (Gregorian) in English, like the rest of Your Books.
  */
 object AlertText {
-    const val READY_TITLE = "Ready to collect"
-
-    /** A ready reservation without a title. */
-    const val UNTITLED_RESERVATION = "A reservation"
-
-    /** A loan without a title (§5.8 doesn't name one; the same words as iOS). */
-    const val UNTITLED_LOAN = "A loan"
-
     private val WEEKDAY_DATE: DateTimeFormatter = DateTimeFormatter.ofPattern("EEEE d MMM", Locale.ENGLISH)
+    private val WEEKDAY_DATE_YEAR: DateTimeFormatter = DateTimeFormatter.ofPattern("EEEE d MMM yyyy", Locale.ENGLISH)
 
     /**
      * "Tomorrow, and tomorrow, and tomorrow · Riverton Library": the branch is the one Your Books
@@ -46,31 +39,31 @@ object AlertText {
      * title when there is none.
      */
     fun readyBody(item: PatronItem): String {
-        val title = item.title.nonBlank() ?: UNTITLED_RESERVATION
+        val title = item.title.nonBlank() ?: Copy.Alerts.untitledReservation
         val branch = ReservationRow.of(item, ReservationRow.Kind.READY).pickup
-        return if (branch != null) "$title · $branch" else title
+        return if (branch != null) Copy.Alerts.readyBody(title, branch) else title
     }
 
-    /** "Due today", "Due tomorrow", else "Due Thursday 16 Oct". */
+    /** "Due today", "Due tomorrow", else "Due Thursday 16 Oct" (the year only when it isn't this one). */
     fun dueTitle(due: LocalDate, today: LocalDate): String = when (ChronoUnit.DAYS.between(today, due)) {
-        0L -> "Due today"
-        1L -> "Due tomorrow"
-        else -> "Due ${WEEKDAY_DATE.format(due)}"
+        0L -> Copy.Loans.dueToday
+        1L -> Copy.Loans.dueTomorrow
+        else -> Copy.Loans.dueOn((if (due.year == today.year) WEEKDAY_DATE else WEEKDAY_DATE_YEAR).format(due))
     }
 
     /** "Project Hail Mary", "Project Hail Mary and Lessons in chemistry", "Project Hail Mary and 2 more". */
     fun dueBody(items: List<PatronItem>): String {
-        val titles = items.map { it.title.nonBlank() ?: UNTITLED_LOAN }
+        val titles = items.map { it.title.nonBlank() ?: Copy.Alerts.untitledLoan }
         return when (titles.size) {
             0 -> ""
             1 -> titles[0]
-            2 -> "${titles[0]} and ${titles[1]}"
-            else -> "${titles[0]} and ${titles.size - 1} more"
+            2 -> Copy.Alerts.dueTwo(titles[0], titles[1])
+            else -> Copy.Alerts.dueMore(titles.size - 1, titles[0])
         }
     }
 
     fun ready(originHash: String, key: String, item: PatronItem) =
-        AlertNotification("ready:$originHash:$key", AlertKind.READY, READY_TITLE, readyBody(item))
+        AlertNotification("ready:$originHash:$key", AlertKind.READY, Copy.Alerts.readyTitle, readyBody(item))
 
     fun due(originHash: String, reminder: DueReminder, today: LocalDate): AlertNotification {
         val due = reminder.due.toLocalDate()

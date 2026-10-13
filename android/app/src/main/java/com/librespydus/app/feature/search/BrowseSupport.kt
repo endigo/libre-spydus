@@ -2,6 +2,7 @@ package com.librespydus.app.feature.search
 
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.librespydus.app.core.AppState
+import com.librespydus.app.core.Copy
 import com.librespydus.app.core.FormatRef
 import com.librespydus.app.core.UserFacingError
 import com.librespydus.app.ui.theme.LsIcons
@@ -36,14 +37,14 @@ internal fun String?.trimmedOrNull(): String? = this?.trim()?.takeIf { it.isNotE
 /** A format's chip text: its label, else its code. */
 internal val FormatRef.displayLabel: String get() = label.trimmedOrNull() ?: code
 
-/** Short heading for an error card ("Can't connect"). */
+/** Short heading for an error card ("Can’t connect"). */
 val UserFacingError.browseTitle: String
     get() = when (kind) {
-        UserFacingError.Kind.NETWORK -> "Can't connect"
-        UserFacingError.Kind.VERIFICATION -> "Verification needed"
-        UserFacingError.Kind.SIGN_IN_AGAIN -> "Signed out"
-        UserFacingError.Kind.CREDENTIALS -> "Sign-in failed"
-        UserFacingError.Kind.UNEXPECTED -> "Something went wrong"
+        UserFacingError.Kind.NETWORK -> Copy.Errors.cantConnectTitle
+        UserFacingError.Kind.VERIFICATION -> Copy.Errors.verificationNeededTitle
+        UserFacingError.Kind.SIGN_IN_AGAIN -> Copy.Errors.signedOutTitle
+        UserFacingError.Kind.CREDENTIALS -> Copy.Errors.signInFailedTitle
+        UserFacingError.Kind.UNEXPECTED -> Copy.Errors.unexpectedTitle
     }
 
 val UserFacingError.browseIcon: ImageVector

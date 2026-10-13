@@ -1,5 +1,6 @@
 package com.librespydus.app.core
 
+import com.librespydus.app.feature.borrowed.LoanRow
 import kotlinx.coroutines.test.currentTime
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -72,7 +73,7 @@ class DemoBackendTest {
         val loans = b.loans(signedIn(b)).items
         assertEquals(4, loans.size)
         assertEquals(listOf("14 Oct 2026", "21 Oct 2026", "28 Oct 2026", "11 Oct 2026"), loans.map { it.fields["Due"] })
-        assertEquals("Due 14 Oct · 2 days left", Formatting.dueLine(loans[0].fields["Due"], today))
+        assertEquals("Due 14 Oct · 2 days left", LoanRow.of(loans[0], today).meta)
         assertTrue(Formatting.isDueSoon(loans[3].fields["Due"], today))
     }
 
@@ -88,7 +89,7 @@ class DemoBackendTest {
         val result = b.cancelReservation(cancel, session)
         assertTrue(currentTime - start >= 600)
         assertTrue(result.ok)
-        assertEquals("Reservation cancelled.", result.message)
+        assertEquals("Reservation cancelled", result.message)
         val after = b.reservations(session)
         assertFalse(after.ready.items.any { it.irn == target.irn })
         assertEquals(before.pending.items, after.pending.items)

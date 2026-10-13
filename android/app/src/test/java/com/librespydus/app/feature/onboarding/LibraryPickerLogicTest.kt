@@ -91,7 +91,7 @@ class LibraryPickerLogicTest {
 
     @Test
     fun regionCaveats() {
-        assertEquals("Asks you to verify you're human", PickerRegion.UK.caveat)
+        assertEquals("Asks you to confirm you’re human", PickerRegion.UK.caveat)
         assertEquals("May be unreachable outside school networks", PickerRegion.SG.caveat)
         for (region in listOf(PickerRegion.AU, PickerRegion.NZ, PickerRegion.US, PickerRegion.OTHER)) assertNull(region.caveat)
     }

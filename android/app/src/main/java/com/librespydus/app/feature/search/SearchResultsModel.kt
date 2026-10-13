@@ -194,7 +194,7 @@ class SearchResultsModel : ViewModel() {
         val UNRECOGNISED_PAGE = UserFacingError(
             kind = UserFacingError.Kind.UNEXPECTED,
             message = UserFacingError.UNEXPECTED,
-            detail = "The results page wasn't recognised (no records and no \"did not find any records\" message).",
+            detail = "The results page wasn't recognised (no records and no \"did not find any records\" message).", // copy-exempt: technical detail under Details
         )
 
         /** [existing] followed by the records of [incoming] not already listed, in order. */

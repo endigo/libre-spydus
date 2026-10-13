@@ -314,15 +314,16 @@ class ReserveModelTest {
     fun aFormatWithoutAReserveUrlCantBeReserved() = runTest {
         val model = ReserveModel()
         model.loadOptions(null, DetailBackend(), DemoBackend.SESSION, "Canning") { error("no root sheet expected") }
-        assertEquals("This format can't be reserved from the app.", model.state.value.options.errorOrNull?.message)
+        assertEquals("This format can’t be reserved from the app.", model.state.value.options.errorOrNull?.message)
     }
 
     @Test
     fun pickupNamesAndMessagesReadNaturally() {
         assertEquals("Riverton Library", ReserveModel.titleCased("RIVERTON LIBRARY"))
         assertEquals("McKenzie Library", ReserveModel.titleCased("McKenzie Library"))
-        assertEquals("Reservation placed.", ReserveModel.message(ReserveResult(true, null)))
+        // The core's (or library's) own words are shown as they are; these stand in when it gives none.
+        assertEquals("Reservation placed", ReserveModel.message(ReserveResult(true, null)))
         assertEquals("Already reserved.", ReserveModel.message(ReserveResult(false, "Already reserved.")))
-        assertEquals("The library couldn't place this reservation.", ReserveModel.message(ReserveResult(false, " ")))
+        assertEquals("The library couldn’t place this reservation.", ReserveModel.message(ReserveResult(false, " ")))
     }
 }

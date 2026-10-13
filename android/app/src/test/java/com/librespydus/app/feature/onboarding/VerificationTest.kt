@@ -217,7 +217,7 @@ class VerificationSessionTest {
         assertFalse(session.isLoading)
         session.didFailLoading("net::ERR_INTERNET_DISCONNECTED")
         assertEquals(UserFacingError.Kind.NETWORK, session.loadError?.kind)
-        assertEquals("Can't reach Aberdeen City Libraries. Check your connection.", session.loadError?.message)
+        assertEquals("Can’t reach Aberdeen City Libraries. Check your connection.", session.loadError?.message)
         assertEquals("net::ERR_INTERNET_DISCONNECTED", session.loadError?.detail)
         session.didStartLoading()
         assertNull(session.loadError)

@@ -1,6 +1,7 @@
 package com.librespydus.app.feature.detail
 
 import com.librespydus.app.core.BookRef
+import com.librespydus.app.core.Copy
 import com.librespydus.app.core.FormatRef
 import com.librespydus.app.core.LibraryBackend
 import com.librespydus.app.core.UserFacingError
@@ -56,7 +57,7 @@ class ReserveModel {
         needsRootSheet: (Throwable) -> Unit,
     ) {
         val reserveUrl = url.trimmedOrNull() ?: run {
-            val error = UserFacingError(UserFacingError.Kind.UNEXPECTED, "This format can't be reserved from the app.")
+            val error = UserFacingError(UserFacingError.Kind.UNEXPECTED, Copy.Reserve.notFromApp)
             _state.update { it.copy(options = BrowseLoadable.Failed(error)) }
             return
         }
@@ -121,7 +122,7 @@ class ReserveModel {
         }
 
         fun message(result: ReserveResult): String =
-            result.message.trimmedOrNull() ?: if (result.ok) "Reservation placed." else "The library couldn't place this reservation."
+            result.message.trimmedOrNull() ?: if (result.ok) Copy.Reserve.placed else Copy.Reserve.placeFailed
 
         private fun requiresRootSheet(error: UserFacingError): Boolean =
             error.kind == UserFacingError.Kind.SIGN_IN_AGAIN || error.kind == UserFacingError.Kind.VERIFICATION

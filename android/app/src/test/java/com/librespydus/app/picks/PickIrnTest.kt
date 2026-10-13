@@ -2,10 +2,10 @@ package com.librespydus.app.picks
 
 import com.librespydus.app.alerts.FakePreferences
 import com.librespydus.app.core.BookRef
+import com.librespydus.app.core.Copy
 import com.librespydus.app.core.FakeBackend
 import com.librespydus.app.core.PickIrn
 import com.librespydus.app.core.PicksList
-import com.librespydus.app.core.PicksText
 import com.librespydus.app.core.SharedPreferencesPicksOfferStore
 import com.librespydus.app.feature.detail.DetailBookmark
 import com.librespydus.app.feature.favourites.FavouritesMode
@@ -63,13 +63,13 @@ class PickIrnTest {
         assertTrue(saved.saved)
         assertEquals("Remove from My Picks", saved.label)
 
-        assertEquals(DetailBookmark(saved = false, enabled = true, label = PicksText.SAVE_LABEL), DetailBookmark.myPicks("2", setOf("1")))
+        assertEquals(DetailBookmark(saved = false, enabled = true, label = Copy.Picks.save), DetailBookmark.myPicks("2", setOf("1")))
     }
 
     @Test
-    fun theBookmarkSignedOutIsUnchanged() {
-        assertEquals(DetailBookmark(true, true, "Remove from favourites"), DetailBookmark.local(true))
-        assertEquals(DetailBookmark(false, true, "Add to favourites"), DetailBookmark.local(false))
+    fun theBookmarkSignedOutSaysMyPicksToo() {
+        assertEquals(DetailBookmark(true, true, "Remove from My Picks"), DetailBookmark.local(true))
+        assertEquals(DetailBookmark(false, true, "Save to My Picks"), DetailBookmark.local(false))
     }
 
     @Test

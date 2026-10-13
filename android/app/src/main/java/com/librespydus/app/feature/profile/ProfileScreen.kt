@@ -45,6 +45,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.librespydus.app.BuildConfig
 import com.librespydus.app.core.AppState
+import com.librespydus.app.core.Copy
 import com.librespydus.app.core.UserFacingError
 import com.librespydus.app.feature.onboarding.AccountCard
 import com.librespydus.app.feature.onboarding.AccountDivider
@@ -70,7 +71,7 @@ import uniffi.librespydus_core.LibraryInfo
 object ProfileText {
     /** "Version 0.1.0 (1)". */
     fun versionText(versionName: String? = BuildConfig.VERSION_NAME, versionCode: Int = BuildConfig.VERSION_CODE): String =
-        "Version ${versionName ?: "?"} ($versionCode)"
+        Copy.Profile.version(versionName ?: "?", versionCode.toString())
 
     /** Initials for the account avatar; library names often come as "Surname, Given". */
     fun initials(accountName: String?): String {
@@ -86,6 +87,9 @@ object ProfileText {
 }
 
 private enum class AccountLoad { IDLE, LOADING, FAILED }
+
+/** "your library will ask…" → "Your library will ask…": the stand-in name can start a sentence. */
+private fun String.sentenceStart(): String = replaceFirstChar { it.uppercaseChar() }
 
 /**
  * Profile (docs/native-apps.md §6): the library card + Change library, the account (Sign in /
@@ -106,7 +110,7 @@ fun ProfileScreen(appState: AppState, navigator: AppNavigator, modifier: Modifie
     var loadingName by remember { mutableStateOf(false) }
     var confirmingSignOut by rememberSaveable { mutableStateOf(false) }
     var confirmingClear by rememberSaveable { mutableStateOf(false) }
-    val libraryName = library?.name ?: "your library"
+    val libraryName = library?.name ?: Copy.Common.yourLibrary
 
     // The name comes with the account snapshot (§5.2a). Only when a refresh failed on something
     // unexpected before any snapshot arrived (e.g. an unreadable loans page) is the name asked for
@@ -140,7 +144,7 @@ fun ProfileScreen(appState: AppState, navigator: AppNavigator, modifier: Modifie
         verticalArrangement = Arrangement.spacedBy(LsSpacing.xl),
     ) {
         Text(
-            "Profile",
+            Copy.Profile.title,
             style = LsType.greeting,
             color = LsColors.textPrimary,
             modifier = Modifier
@@ -163,10 +167,10 @@ fun ProfileScreen(appState: AppState, navigator: AppNavigator, modifier: Modifie
             if (verified) VerificationSection(libraryName, onClear = { confirmingClear = true })
         } else {
             EmptyStateView(
-                title = "No library selected",
-                message = "Choose your library to search its catalogue and sign in.",
+                title = Copy.Profile.noLibraryTitle,
+                message = Copy.Profile.noLibraryMessage,
                 icon = AccountIcons.Place,
-                actionLabel = "Choose library",
+                actionLabel = Copy.Profile.chooseLibrary,
                 onAction = appState::showLibraryPicker,
                 modifier = Modifier.height(360.dp),
             )
@@ -178,15 +182,15 @@ fun ProfileScreen(appState: AppState, navigator: AppNavigator, modifier: Modifie
     if (confirmingSignOut) {
         AlertDialog(
             onDismissRequest = { confirmingSignOut = false },
-            title = { Text("Sign out of $libraryName?") },
-            text = { Text("You can sign in again at any time.") },
+            title = { Text(Copy.Profile.signOutTitle(libraryName)) },
+            text = { Text(Copy.Profile.signOutMessage) },
             confirmButton = {
                 TextButton(onClick = {
                     confirmingSignOut = false
                     scope.launch { appState.signOut() }
-                }) { Text("Sign out", color = LsColors.danger) }
+                }) { Text(Copy.Account.signOut, color = LsColors.danger) }
             },
-            dismissButton = { TextButton(onClick = { confirmingSignOut = false }) { Text("Cancel", color = LsColors.textPrimary) } },
+            dismissButton = { TextButton(onClick = { confirmingSignOut = false }) { Text(Copy.Common.cancel, color = LsColors.textPrimary) } },
             containerColor = LsColors.surfaceElevated,
             titleContentColor = LsColors.textPrimary,
             textContentColor = LsColors.textSecondary,
@@ -195,8 +199,8 @@ fun ProfileScreen(appState: AppState, navigator: AppNavigator, modifier: Modifie
     if (confirmingClear) {
         AlertDialog(
             onDismissRequest = { confirmingClear = false },
-            title = { Text("Clear verification?") },
-            text = { Text("$libraryName will ask you to confirm you're human again.") },
+            title = { Text(Copy.Profile.clearVerificationTitle) },
+            text = { Text(Copy.Profile.clearVerificationMessage(libraryName).sentenceStart()) },
             confirmButton = {
                 TextButton(onClick = {
                     confirmingClear = false
@@ -205,9 +209,9 @@ fun ProfileScreen(appState: AppState, navigator: AppNavigator, modifier: Modifie
                         appState.clearVerification()
                         origin?.let(VerificationWebCookies::clear)
                     }
-                }) { Text("Clear verification", color = LsColors.danger) }
+                }) { Text(Copy.Profile.clearVerification, color = LsColors.danger) }
             },
-            dismissButton = { TextButton(onClick = { confirmingClear = false }) { Text("Cancel", color = LsColors.textPrimary) } },
+            dismissButton = { TextButton(onClick = { confirmingClear = false }) { Text(Copy.Common.cancel, color = LsColors.textPrimary) } },
             containerColor = LsColors.surfaceElevated,
             titleContentColor = LsColors.textPrimary,
             textContentColor = LsColors.textSecondary,
@@ -237,7 +241,7 @@ private fun LibraryCard(library: LibraryInfo, onChange: () -> Unit) {
             }
         }
         AccountDivider()
-        AccountRowButton("Change library", AccountIcons.SwapHoriz, onChange)
+        AccountRowButton(Copy.Profile.changeLibrary, AccountIcons.SwapHoriz, onChange)
     }
 }
 
@@ -267,7 +271,7 @@ private fun AccountSection(
     onSignOut: () -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(LsSpacing.m)) {
-        AccountSectionHeader("Account")
+        AccountSectionHeader(Copy.Profile.account)
         AccountCard {
             if (signedIn) {
                 Row(Modifier.semantics(mergeDescendants = true) {}, verticalAlignment = Alignment.CenterVertically) {
@@ -288,23 +292,23 @@ private fun AccountSection(
                             load == AccountLoad.LOADING -> Row(verticalAlignment = Alignment.CenterVertically) {
                                 CircularProgressIndicator(color = LsColors.textSecondary, strokeWidth = 2.dp, modifier = Modifier.size(16.dp))
                                 Spacer(Modifier.width(LsSpacing.s))
-                                Text("Loading your account…", style = LsType.body, color = LsColors.textSecondary)
+                                Text(Copy.Profile.loadingAccount, style = LsType.body, color = LsColors.textSecondary)
                             }
-                            else -> Text("Signed in", style = LsType.bodyStrong, color = LsColors.textPrimary)
+                            else -> Text(Copy.Account.signedIn, style = LsType.bodyStrong, color = LsColors.textPrimary)
                         }
-                        Text("Signed in to $libraryName", style = LsType.caption, color = LsColors.textSecondary)
+                        Text(Copy.Profile.signedInTo(libraryName), style = LsType.caption, color = LsColors.textSecondary)
                     }
                 }
                 if (load == AccountLoad.FAILED && accountName == null) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
-                            "Couldn't load your account details.",
+                            Copy.Profile.accountFailed,
                             style = LsType.caption,
                             color = LsColors.warning,
                             modifier = Modifier.weight(1f),
                         )
                         Text(
-                            "Retry",
+                            Copy.Common.retry,
                             style = LsType.bodyStrong,
                             color = LsColors.primary,
                             modifier = Modifier
@@ -315,21 +319,21 @@ private fun AccountSection(
                     }
                 }
                 AccountDivider()
-                AccountRowButton("Sign out", AccountIcons.Logout, onSignOut, tint = LsColors.danger)
+                AccountRowButton(Copy.Account.signOut, AccountIcons.Logout, onSignOut, tint = LsColors.danger)
             } else {
                 Row(Modifier.semantics(mergeDescendants = true) {}, verticalAlignment = Alignment.Top) {
                     Icon(AccountIcons.AccountCircle, contentDescription = null, tint = LsColors.textMuted, modifier = Modifier.size(44.dp))
                     Spacer(Modifier.width(LsSpacing.l))
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(LsSpacing.xs)) {
-                        Text("You're not signed in", style = LsType.bodyStrong, color = LsColors.textPrimary)
+                        Text(Copy.Profile.notSignedInTitle, style = LsType.bodyStrong, color = LsColors.textPrimary)
                         Text(
-                            "Sign in with your library card to see your loans and reservations.",
+                            Copy.Profile.notSignedInMessage,
                             style = LsType.caption,
                             color = LsColors.textSecondary,
                         )
                     }
                 }
-                PrimaryPillButton("Sign in", onClick = onSignIn, modifier = Modifier.fillMaxWidth().padding(top = LsSpacing.xs))
+                PrimaryPillButton(Copy.Account.signIn, onClick = onSignIn, modifier = Modifier.fillMaxWidth().padding(top = LsSpacing.xs))
             }
         }
     }
@@ -338,22 +342,22 @@ private fun AccountSection(
 @Composable
 private fun VerificationSection(libraryName: String, onClear: () -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(LsSpacing.m)) {
-        AccountSectionHeader("Human verification")
+        AccountSectionHeader(Copy.Profile.humanVerification)
         AccountCard {
             Row(Modifier.semantics(mergeDescendants = true) {}, verticalAlignment = Alignment.Top) {
                 Icon(AccountIcons.VerifiedUser, contentDescription = null, tint = LsColors.success, modifier = Modifier.size(28.dp))
                 Spacer(Modifier.width(LsSpacing.l))
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(LsSpacing.xs)) {
-                    Text("Verified on this device", style = LsType.bodyStrong, color = LsColors.textPrimary)
+                    Text(Copy.Profile.verified, style = LsType.bodyStrong, color = LsColors.textPrimary)
                     Text(
-                        "$libraryName asked you to confirm you're human. The app sends the library's verification cookie with its requests.",
+                        Copy.Profile.verifiedMessage(libraryName).sentenceStart(),
                         style = LsType.caption,
                         color = LsColors.textSecondary,
                     )
                 }
             }
             AccountDivider()
-            AccountRowButton("Clear verification", AccountIcons.ShieldOff, onClear)
+            AccountRowButton(Copy.Profile.clearVerification, AccountIcons.ShieldOff, onClear)
         }
     }
 }
@@ -361,44 +365,47 @@ private fun VerificationSection(libraryName: String, onClear: () -> Unit) {
 @Composable
 private fun AboutSection() {
     Column(verticalArrangement = Arrangement.spacedBy(LsSpacing.m)) {
-        AccountSectionHeader("About")
+        AccountSectionHeader(Copy.Profile.about)
         AccountCard {
             Row(Modifier.semantics(mergeDescendants = true) {}, verticalAlignment = Alignment.CenterVertically) {
-                Text("LibreSpydus", style = LsType.bodyStrong, color = LsColors.textPrimary, modifier = Modifier.weight(1f))
+                Text(Copy.Profile.appName, style = LsType.bodyStrong, color = LsColors.textPrimary, modifier = Modifier.weight(1f))
                 Text(ProfileText.versionText(), style = LsType.caption, color = LsColors.textSecondary)
             }
             AccountDivider()
-            Text("LibreSpydus is not affiliated with Civica or your library.", style = LsType.caption, color = LsColors.textSecondary)
+            Text(Copy.Profile.notAffiliated, style = LsType.caption, color = LsColors.textSecondary)
         }
     }
 }
 
 @Composable
 private fun DeveloperSection(demo: Boolean) {
-    Column(verticalArrangement = Arrangement.spacedBy(LsSpacing.m)) {
-        AccountSectionHeader("Developer")
-        AccountCard {
-            Row(Modifier.semantics(mergeDescendants = true) {}, verticalAlignment = Alignment.CenterVertically) {
-                Icon(AccountIcons.Build, contentDescription = null, tint = LsColors.textPrimary, modifier = Modifier.size(20.dp))
-                Spacer(Modifier.width(LsSpacing.m))
-                Text("Demo mode", style = LsType.bodyStrong, color = LsColors.textPrimary, modifier = Modifier.weight(1f))
-                val tint = if (demo) LsColors.success else LsColors.textSecondary
+    // Debug builds only: never shown to readers, so its words aren't in the copy catalogue.
+    if (BuildConfig.DEBUG) {
+        Column(verticalArrangement = Arrangement.spacedBy(LsSpacing.m)) {
+            AccountSectionHeader("Developer")
+            AccountCard {
+                Row(Modifier.semantics(mergeDescendants = true) {}, verticalAlignment = Alignment.CenterVertically) {
+                    Icon(AccountIcons.Build, contentDescription = null, tint = LsColors.textPrimary, modifier = Modifier.size(20.dp))
+                    Spacer(Modifier.width(LsSpacing.m))
+                    Text("Demo mode", style = LsType.bodyStrong, color = LsColors.textPrimary, modifier = Modifier.weight(1f))
+                    val tint = if (demo) LsColors.success else LsColors.textSecondary
+                    Text(
+                        if (demo) "On" else "Off",
+                        style = LsType.caption,
+                        color = tint,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(LsRadius.pill))
+                            .background(tint.copy(alpha = 0.18f))
+                            .padding(horizontal = LsSpacing.m, vertical = 6.dp),
+                    )
+                }
                 Text(
-                    if (demo) "On" else "Off",
+                    if (demo) "Account data is sample data and never reaches the library. Sign in with demo / demo. Relaunch without ls_demo to turn it off."
+                    else "Relaunch with --ez ls_demo true to use sample account data (debug builds only).",
                     style = LsType.caption,
-                    color = tint,
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(LsRadius.pill))
-                        .background(tint.copy(alpha = 0.18f))
-                        .padding(horizontal = LsSpacing.m, vertical = 6.dp),
+                    color = LsColors.textSecondary,
                 )
             }
-            Text(
-                if (demo) "Account data is sample data and never reaches the library. Sign in with demo / demo. Relaunch without ls_demo to turn it off."
-                else "Relaunch with --ez ls_demo true to use sample account data (debug builds only).",
-                style = LsType.caption,
-                color = LsColors.textSecondary,
-            )
         }
     }
 }

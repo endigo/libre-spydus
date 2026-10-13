@@ -60,7 +60,7 @@ class AlertsContentTest {
         assertEquals("Due Thursday 15 Oct", AlertText.dueTitle(today.plusDays(2), today))
         assertEquals("Due Friday 16 Oct", AlertText.dueTitle(today.plusDays(3), today))
         assertEquals("Due Monday 2 Nov", AlertText.dueTitle(LocalDate.of(2026, 11, 2), today))
-        assertEquals("Due Friday 1 Jan", AlertText.dueTitle(LocalDate.of(2027, 1, 1), today))
+        assertEquals("Due Friday 1 Jan 2027", AlertText.dueTitle(LocalDate.of(2027, 1, 1), today))
     }
 
     @Test

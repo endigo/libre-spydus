@@ -32,18 +32,18 @@ data class UserFacingError(
     val isRetryable: Boolean get() = kind == Kind.NETWORK || kind == Kind.UNEXPECTED || kind == Kind.VERIFICATION
 
     companion object {
-        /** [libraryName] fills "Can't reach {library}"; falls back to "the library". */
+        /** [libraryName] fills "Can’t reach {library}"; falls back to "your library". */
         fun from(error: Throwable, libraryName: String? = null): UserFacingError {
-            val library = libraryName?.takeIf { it.isNotBlank() } ?: "the library"
+            val library = libraryName?.takeIf { it.isNotBlank() } ?: Copy.Common.yourLibrary
             return when (error) {
                 is SpydusException.Network ->
-                    UserFacingError(Kind.NETWORK, "Can't reach $library. Check your connection.", error.message)
+                    UserFacingError(Kind.NETWORK, Copy.Errors.network(library), error.message)
                 is SpydusException.HumanVerificationRequired ->
-                    UserFacingError(Kind.VERIFICATION, "$library asks you to confirm you're human.".capitalised(), error.message)
+                    UserFacingError(Kind.VERIFICATION, Copy.Errors.verification(library).capitalised(), error.message)
                 is SpydusException.NotLoggedIn ->
-                    UserFacingError(Kind.SIGN_IN_AGAIN, "Please sign in again.", error.message)
+                    UserFacingError(Kind.SIGN_IN_AGAIN, Copy.Errors.signInAgain, error.message)
                 is SpydusException.CredentialsRejected ->
-                    UserFacingError(Kind.CREDENTIALS, "Card number or PIN not recognised.", error.message)
+                    UserFacingError(Kind.CREDENTIALS, Copy.Errors.credentialsRejected, error.message)
                 is SpydusException ->
                     UserFacingError(Kind.UNEXPECTED, UNEXPECTED, error.message)
                 else ->
@@ -51,7 +51,7 @@ data class UserFacingError(
             }
         }
 
-        const val UNEXPECTED = "The library site returned something unexpected."
+        const val UNEXPECTED = Copy.Errors.unexpected
 
         private fun String.capitalised() = replaceFirstChar { it.uppercaseChar() }
     }

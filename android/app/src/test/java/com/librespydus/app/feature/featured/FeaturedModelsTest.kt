@@ -1,5 +1,6 @@
 package com.librespydus.app.feature.featured
 
+import com.librespydus.app.core.Copy
 import com.librespydus.app.core.ResultsSort
 import com.librespydus.app.core.UserFacingError
 import com.librespydus.app.feature.home.HomeReloadKey
@@ -193,7 +194,7 @@ class CollectionModelTest {
         val model = CollectionModel("${f.ORIGIN}/cgi-bin/spydus.exe/MSGTRNGEN/OPAC/ELIBRARY?HOMEPRMS=UD_ELIBRARY")
         model.load(request, backend, report)
         assertTrue(model.state.value.hasNoSections)
-        assertEquals("This collection is on the library's website.", WEBSITE_ONLY)
+        assertEquals("This collection is on the library’s website.", Copy.Featured.websiteOnly)
     }
 
     @Test

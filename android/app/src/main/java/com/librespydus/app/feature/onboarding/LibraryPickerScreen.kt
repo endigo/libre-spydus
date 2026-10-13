@@ -44,13 +44,18 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.librespydus.app.core.AppState
+import com.librespydus.app.core.Copy
 import com.librespydus.app.core.Tab
 import com.librespydus.app.ui.components.EmptyStateView
 import com.librespydus.app.ui.components.ErrorStateView
@@ -118,7 +123,7 @@ fun LibraryPickerScreen(appState: AppState, onDismiss: (() -> Unit)?, modifier: 
         SearchField(
             value = query,
             onValueChange = picker::setQuery,
-            placeholder = "Search by library or country",
+            placeholder = Copy.Onboarding.searchPlaceholder,
             onSearch = { focus.clearFocus() },
             modifier = Modifier
                 .padding(horizontal = LsSpacing.l)
@@ -126,21 +131,21 @@ fun LibraryPickerScreen(appState: AppState, onDismiss: (() -> Unit)?, modifier: 
         )
         Box(Modifier.fillMaxWidth().weight(1f)) {
             when {
-                libraries.isEmpty() && (fetching || !loaded) -> LoadingView(message = "Loading libraries…")
+                libraries.isEmpty() && (fetching || !loaded) -> LoadingView(message = Copy.Onboarding.loading)
                 libraries.isEmpty() && loadError != null ->
                     ErrorStateView(loadError!!, onRetry = { scope.launch { picker.retry() } })
                 libraries.isEmpty() -> EmptyStateView(
-                    title = "No libraries listed",
-                    message = "Civica's directory came back empty. Try again later.",
+                    title = Copy.Onboarding.emptyTitle,
+                    message = Copy.Onboarding.emptyMessage,
                     icon = AccountIcons.Place,
-                    actionLabel = "Retry",
+                    actionLabel = Copy.Common.retry,
                     onAction = { scope.launch { picker.retry() } },
                 )
                 else -> PickerList(
                     libraries = libraries,
                     query = query,
                     refreshing = fetching,
-                    refreshMessage = refreshError?.let { it.message + " Showing the saved list." },
+                    refreshMessage = refreshError?.let { Copy.Onboarding.savedList(it.message) },
                     currentOrigin = appState.library.value?.origin,
                     scrollToCurrent = !onboarding,
                     onRefresh = { scope.launch { picker.refresh() } },
@@ -162,9 +167,9 @@ private fun PickerHeader(onboarding: Boolean, onClose: (() -> Unit)?) {
             verticalArrangement = Arrangement.spacedBy(LsSpacing.s),
         ) {
             Icon(LsIcons.Library, contentDescription = null, tint = LsColors.primary, modifier = Modifier.size(36.dp))
-            Text("Choose your library", style = LsType.greeting, color = LsColors.textPrimary, modifier = Modifier.semantics { heading() })
+            Text(Copy.Onboarding.title, style = LsType.greeting, color = LsColors.textPrimary, modifier = Modifier.semantics { heading() })
             Text(
-                "LibreSpydus works with libraries that use Spydus. You can change this later in Profile.",
+                Copy.Onboarding.intro,
                 style = LsType.body,
                 color = LsColors.textSecondary,
             )
@@ -177,14 +182,14 @@ private fun PickerHeader(onboarding: Boolean, onClose: (() -> Unit)?) {
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                "Change library",
+                Copy.Onboarding.changeTitle,
                 style = LsType.title,
                 color = LsColors.textPrimary,
                 modifier = Modifier.weight(1f).semantics { heading() },
             )
             if (onClose != null) {
                 Text(
-                    "Close",
+                    Copy.Common.close,
                     style = LsType.bodyStrong,
                     color = LsColors.primary,
                     modifier = Modifier
@@ -253,8 +258,8 @@ private fun PickerList(
             if (sections.isEmpty()) {
                 item(key = "no-match") {
                     EmptyStateView(
-                        title = "No libraries match “${query.trim()}”",
-                        message = "Try a library name or a country.",
+                        title = Copy.Onboarding.noMatchesTitle(query.trim()),
+                        message = Copy.Onboarding.noMatchesMessage,
                         icon = LsIcons.Search,
                         modifier = Modifier.padding(top = LsSpacing.xl),
                     )
@@ -296,7 +301,7 @@ private fun SectionTitle(section: PickerSection) {
             "$count",
             style = LsType.caption,
             color = LsColors.textMuted,
-            modifier = Modifier.semantics { contentDescription = if (count == 1) "1 library" else "$count libraries" },
+            modifier = Modifier.semantics { contentDescription = Copy.Onboarding.libraries(count) },
         )
     }
 }
@@ -312,12 +317,16 @@ private fun LibraryRow(library: LibraryInfo, region: PickerRegion, isCurrent: Bo
             .clip(shape)
             .background(if (isCurrent) LsColors.surfaceElevated else LsColors.surface)
             .then(if (isCurrent) Modifier.border(1.5.dp, LsColors.primary.copy(alpha = 0.7f), shape) else Modifier)
-            .clickable(
-                role = Role.Button,
-                onClickLabel = if (isCurrent) "Keep this library" else "Select this library",
-                onClick = onClick,
-            )
-            .semantics(mergeDescendants = true) { selected = isCurrent }
+            .clickable(role = Role.Button, onClick = onClick)
+            .clearAndSetSemantics {
+                // The name, country and caveat; the current one says so, the others what a tap does.
+                val label = listOfNotNull(library.name, library.country?.takeIf { it.isNotBlank() }, region.caveat).joinToString(", ")
+                contentDescription = if (isCurrent) label else Copy.A11y.labelAndHint(label, Copy.Onboarding.selectHint)
+                if (isCurrent) stateDescription = Copy.Onboarding.currentLibrary
+                selected = isCurrent
+                role = Role.Button
+                onClick { onClick(); true }
+            }
             .padding(LsSpacing.m),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -345,7 +354,7 @@ private fun LibraryRow(library: LibraryInfo, region: PickerRegion, isCurrent: Bo
             Spacer(Modifier.width(LsSpacing.s))
             Icon(
                 AccountIcons.CheckCircle,
-                contentDescription = "Current library",
+                contentDescription = Copy.Onboarding.currentLibrary,
                 tint = LsColors.primary,
                 modifier = Modifier.size(24.dp),
             )

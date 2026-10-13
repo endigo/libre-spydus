@@ -1,6 +1,7 @@
 package com.librespydus.app.feature.detail
 
 import com.librespydus.app.core.BorrowedSegment
+import com.librespydus.app.core.Copy
 import com.librespydus.app.core.CoreHelpers
 import com.librespydus.app.feature.borrowed.BorrowedDates
 import com.librespydus.app.feature.borrowed.LoanRow
@@ -30,10 +31,15 @@ data class HeldStatus(
     enum class Tone { LOAN, OVERDUE, READY, RESERVED }
 
     companion object {
-        /** The pill's click label: TalkBack reads "Double-tap to open Your Books". */
-        const val ACTION = "Open Your Books"
+        /** The pill's hint, read after [accessibilityLabel] ("On loan, due 14 October. Opens Your Books"). */
+        const val HINT = Copy.Detail.heldHint
 
         private val LONG_DATE: DateTimeFormatter = DateTimeFormatter.ofPattern("d MMMM", Locale.ENGLISH)
+        private val LONG_DATE_YEAR: DateTimeFormatter = DateTimeFormatter.ofPattern("d MMMM yyyy", Locale.ENGLISH)
+
+        /** "14 October", with the year only when it isn't [today]'s. */
+        private fun longDate(date: LocalDate, today: LocalDate): String =
+            (if (date.year == today.year) LONG_DATE else LONG_DATE_YEAR).format(date)
 
         /**
          * The loan or reservation of [bibIrns] in the saved account, or null (signed out, no
@@ -56,37 +62,37 @@ data class HeldStatus(
             val raw = row.dueText
             return when {
                 due != null && due.isOverdue -> HeldStatus(
-                    "On loan · Overdue",
-                    "On loan, overdue, was due ${LONG_DATE.format(due.dueDate)}",
+                    Copy.Detail.onLoanOverdue,
+                    Copy.Detail.onLoanOverdueLabel(longDate(due.dueDate, today)),
                     Tone.OVERDUE,
                     BorrowedSegment.LOANS,
                 )
                 due != null -> HeldStatus(
-                    "On loan · Due ${BorrowedDates.short(due.dueDate)}",
-                    "On loan, due ${LONG_DATE.format(due.dueDate)}",
+                    Copy.Detail.onLoanDue(BorrowedDates.short(due.dueDate, today)),
+                    Copy.Detail.onLoanDueLabel(longDate(due.dueDate, today)),
                     Tone.LOAN,
                     BorrowedSegment.LOANS,
                 )
                 // A date the core can't read is shown as the library wrote it.
-                raw != null -> HeldStatus("On loan · Due $raw", "On loan, due $raw", Tone.LOAN, BorrowedSegment.LOANS)
-                else -> HeldStatus("On loan", "On loan", Tone.LOAN, BorrowedSegment.LOANS)
+                raw != null -> HeldStatus(Copy.Detail.onLoanDue(raw), Copy.Detail.onLoanDueLabel(raw), Tone.LOAN, BorrowedSegment.LOANS)
+                else -> HeldStatus(Copy.Detail.onLoan, Copy.Detail.onLoan, Tone.LOAN, BorrowedSegment.LOANS)
             }
         }
 
         private fun ready(item: PatronItem): HeldStatus {
             val pickup = ReservationRow.of(item, ReservationRow.Kind.READY).pickup
-                ?: return HeldStatus("Ready to collect", "Ready to collect", Tone.READY, BorrowedSegment.RESERVATIONS)
-            return HeldStatus("Ready to collect · $pickup", "Ready to collect at $pickup", Tone.READY, BorrowedSegment.RESERVATIONS)
+                ?: return HeldStatus(Copy.Detail.readyToCollect, Copy.Detail.readyToCollect, Tone.READY, BorrowedSegment.RESERVATIONS)
+            return HeldStatus(Copy.Detail.readyToCollectAt(pickup), Copy.Detail.readyToCollectAtLabel(pickup), Tone.READY, BorrowedSegment.RESERVATIONS)
         }
 
         private fun pending(item: PatronItem): HeldStatus {
             val row = ReservationRow.of(item, ReservationRow.Kind.PENDING)
             val rank = row.rank
             val (text, spoken) = when {
-                row.pickup != null -> "Reserved · ${row.pickup}" to "Reserved, pick up at ${row.pickup}"
-                rank != null && rank.toIntOrNull() != null -> "Reserved · #$rank in queue" to "Reserved, number $rank in the queue"
-                rank != null -> "Reserved · Rank $rank" to "Reserved, rank $rank"
-                else -> "Reserved" to "Reserved"
+                row.pickup != null -> Copy.Detail.reservedAt(row.pickup) to Copy.Detail.reservedAtLabel(row.pickup)
+                rank != null && rank.toIntOrNull() != null -> Copy.Detail.reservedQueue(rank) to Copy.Detail.reservedQueueLabel(rank)
+                rank != null -> Copy.Detail.reservedQueueText(rank) to Copy.Detail.reservedQueueTextLabel(rank)
+                else -> Copy.Detail.reserved to Copy.Detail.reserved
             }
             return HeldStatus(text, spoken, Tone.RESERVED, BorrowedSegment.RESERVATIONS)
         }

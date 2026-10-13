@@ -29,6 +29,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import com.librespydus.app.core.Copy
 import com.librespydus.app.ui.theme.LsColors
 import com.librespydus.app.ui.theme.LsIcons
 import com.librespydus.app.ui.theme.LsRadius
@@ -71,7 +72,7 @@ object AccountIcons {
 /** Banner tones, as on iOS: success (green), info (blue), error (coral). */
 enum class AccountBannerTone { SUCCESS, INFO, ERROR }
 
-/** A tinted message box: login errors, the demo hint, Borrowed results, refresh failures. */
+/** A tinted message box: login errors, the demo hint, Borrowed results, refresh failures. [onClick] dismisses it. */
 @Composable
 fun AccountBanner(
     message: String,
@@ -96,7 +97,7 @@ fun AccountBanner(
             .clip(shape)
             .background(color.copy(alpha = 0.22f))
             .border(1.dp, color.copy(alpha = 0.6f), shape)
-            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
+            .then(if (onClick != null) Modifier.clickable(onClickLabel = Copy.Common.dismiss, onClick = onClick) else Modifier)
             .padding(LsSpacing.m),
         horizontalArrangement = Arrangement.spacedBy(LsSpacing.s),
         verticalAlignment = Alignment.Top,

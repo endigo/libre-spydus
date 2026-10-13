@@ -47,6 +47,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.librespydus.app.core.BookRef
+import com.librespydus.app.core.Copy
 import com.librespydus.app.core.Formatting
 import com.librespydus.app.core.UserFacingError
 import com.librespydus.app.feature.search.BrowseIcons
@@ -108,7 +109,7 @@ fun HomeShelfSkeleton() {
             .fillMaxWidth()
             .horizontalScroll(rememberScrollState(), enabled = false)
             .padding(horizontal = LsSpacing.l)
-            .clearAndSetSemantics { contentDescription = "Loading" },
+            .clearAndSetSemantics { contentDescription = Copy.Common.loading },
         horizontalArrangement = Arrangement.spacedBy(LsSpacing.m),
     ) {
         repeat(4) {
@@ -136,7 +137,7 @@ fun HomeSectionErrorCard(error: UserFacingError, onRetry: () -> Unit) {
         }
         if (error.isRetryable) {
             Text(
-                "Retry",
+                Copy.Common.retry,
                 style = LsType.bodyStrong,
                 color = LsColors.primary,
                 modifier = Modifier
@@ -160,7 +161,7 @@ fun HomeSectionMessageCard(icon: ImageVector, title: String, message: String?) {
     }
 }
 
-/** Signed out, in place of "Your borrowed books". */
+/** Signed out, in place of "Your loans". */
 @Composable
 fun HomeSignInCard(libraryName: String, onSignIn: () -> Unit) {
     HomeCard {
@@ -178,8 +179,8 @@ fun HomeSignInCard(libraryName: String, onSignIn: () -> Unit) {
                 .semantics(mergeDescendants = true) {},
             verticalArrangement = Arrangement.spacedBy(LsSpacing.xs),
         ) {
-            Text("See your loans here", style = LsType.bodyStrong, color = LsColors.textPrimary)
-            Text("Sign in with your $libraryName card.", style = LsType.caption, color = LsColors.textSecondary)
+            Text(Copy.Home.signInCardTitle, style = LsType.bodyStrong, color = LsColors.textPrimary)
+            Text(Copy.Home.signInCardMessage(libraryName), style = LsType.caption, color = LsColors.textSecondary)
         }
         Box(
             Modifier
@@ -188,7 +189,7 @@ fun HomeSignInCard(libraryName: String, onSignIn: () -> Unit) {
                 .clickable(role = Role.Button, onClick = onSignIn)
                 .padding(horizontal = LsSpacing.l, vertical = LsSpacing.s),
         ) {
-            Text("Sign in", style = LsType.bodyStrong, color = LsColors.onPrimary, maxLines = 1)
+            Text(Copy.Account.signIn, style = LsType.bodyStrong, color = LsColors.onPrimary, maxLines = 1)
         }
     }
 }
@@ -220,8 +221,8 @@ fun HomeLibraryLogo(name: String, logoUrl: String?, onClick: () -> Unit, modifie
             .shadow(6.dp, shape)
             .clip(shape)
             .background(Color.White)
-            .clickable(role = Role.Button, onClickLabel = "Open Profile", onClick = onClick)
-            .semantics { contentDescription = "$name profile" },
+            .clickable(role = Role.Button, onClick = onClick)
+            .semantics { contentDescription = Copy.A11y.labelAndHint(Copy.Home.profileButton(name), Copy.Home.profileButtonHint) },
         contentAlignment = Alignment.Center,
     ) {
         if (!loaded) {

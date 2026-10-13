@@ -66,7 +66,7 @@ data class BookRef(
     )
 
     companion object {
-        const val UNTITLED = "Untitled"
+        const val UNTITLED = Copy.Common.untitled
 
         fun from(record: SearchRecord): BookRef = BookRef(
             id = stableId(bibIrn = null, brn = null, workIrn = record.workIrn, url = record.detailUrl)

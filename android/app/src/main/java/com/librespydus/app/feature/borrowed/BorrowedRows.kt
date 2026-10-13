@@ -1,6 +1,7 @@
 package com.librespydus.app.feature.borrowed
 
 import com.librespydus.app.core.BookRef
+import com.librespydus.app.core.Copy
 import com.librespydus.app.core.Formatting
 import uniffi.librespydus_core.PatronItem
 import uniffi.librespydus_core.Reservations
@@ -31,8 +32,10 @@ private fun String?.nonBlank(): String? = this?.trim()?.takeIf { it.isNotEmpty()
 /** Borrowed's date wording ("10 Oct"), as the library's own dates are English. */
 internal object BorrowedDates {
     private val SHORT: DateTimeFormatter = DateTimeFormatter.ofPattern("d MMM", Locale.ENGLISH)
+    private val SHORT_YEAR: DateTimeFormatter = DateTimeFormatter.ofPattern("d MMM yyyy", Locale.ENGLISH)
 
-    fun short(date: LocalDate): String = SHORT.format(date)
+    /** "10 Oct", with the year only when it isn't [today]'s ("10 Jan 2027", §7.1). */
+    fun short(date: LocalDate, today: LocalDate): String = (if (date.year == today.year) SHORT else SHORT_YEAR).format(date)
 }
 
 /** A loan's due date relative to today. */
@@ -67,7 +70,7 @@ data class LoanRow(
         get() {
             due?.let { return dueLine(it) }
             val text = dueText ?: return null
-            return if (text.contains("due", ignoreCase = true)) text else "Due $text"
+            return if (text.contains("due", ignoreCase = true)) text else Copy.Loans.dueOn(text)
         }
 
     val isUrgent: Boolean get() = due?.isUrgent ?: false
@@ -87,13 +90,12 @@ data class LoanRow(
 
         /** "Due 27 Oct · 3 days left", "Due tomorrow · 13 Oct", "Due today · 12 Oct", "Due 10 Oct · 2 days overdue". */
         fun dueLine(due: DueStatus): String {
-            val date = BorrowedDates.short(due.dueDate)
+            val date = BorrowedDates.short(due.dueDate, today = due.dueDate.minusDays(due.daysLeft))
             return when {
-                due.daysLeft < -1 -> "Due $date · ${-due.daysLeft} days overdue"
-                due.daysLeft == -1L -> "Due $date · 1 day overdue"
-                due.daysLeft == 0L -> "Due today · $date"
-                due.daysLeft == 1L -> "Due tomorrow · $date"
-                else -> "Due $date · ${due.daysLeft} days left"
+                due.daysLeft < 0 -> Copy.Loans.lineDays(date, Copy.Loans.daysOverdue((-due.daysLeft).toInt()))
+                due.daysLeft == 0L -> Copy.Loans.lineToday(date)
+                due.daysLeft == 1L -> Copy.Loans.lineTomorrow(date)
+                else -> Copy.Loans.lineDays(date, Copy.Loans.daysLeft(due.daysLeft.toInt()))
             }
         }
 
@@ -113,7 +115,7 @@ data class LoanRow(
     }
 }
 
-/** One reservation card, ready for pickup or pending. */
+/** One reservation card, ready to collect or pending. */
 data class ReservationRow(
     /** The reservation's IRN, else its cancel/edit link (unique within [ReservationSections]). */
     val id: String,
@@ -132,37 +134,49 @@ data class ReservationRow(
     val editHref: String?,
     /** Ready reservations: the last day to collect, as the library wrote it ("17 Oct 2026"). */
     val pickupBy: String? = null,
+    /** For the dates in [meta]: the year only when it isn't this one. */
+    val today: LocalDate = LocalDate.now(),
 ) {
     enum class Kind { READY, PENDING }
 
     val isReady: Boolean get() = kind == Kind.READY
 
-    /** The status chip: "Ready for pickup", or the library's own pending status. */
-    val statusLabel: String get() = if (isReady) "Ready for pickup" else status ?: "Pending"
+    /** The status chip: "Ready to collect", or the library's own pending status. */
+    val statusLabel: String get() = if (isReady) Copy.YourBooks.readyToCollect else status ?: Copy.YourBooks.pending
 
     val isInTransit: Boolean get() = !isReady && statusLabel.contains("transit", ignoreCase = true)
 
     /**
-     * Ready: "Pick up at Riverton Library". Pending: "#4 in queue · Placed 2 Oct" and the pickup
-     * branch on a second line.
+     * Ready: "Collect from Riverton Library by 17 Oct". Pending: "#4 in queue · Placed 2 Oct" and
+     * "Collect from Riverton Library" on a second line.
      */
-    val meta: String?
-        get() {
-            val pickupLine = pickup?.let { "Pick up at $it" }
-            if (isReady) {
-                val by = pickupBy?.let { "by ${Formatting.parseDueDate(it)?.let(BorrowedDates::short) ?: it}" } ?: return pickupLine
-                return pickupLine?.let { "$it $by" } ?: "Pick up $by"
-            }
-            val first = buildList {
-                rank?.let { add(if (it.toIntOrNull() != null) "#$it in queue" else "Rank $it") }
-                placed?.let { add("Placed ${Formatting.parseDueDate(it)?.let(BorrowedDates::short) ?: it}") }
-            }
-            val lines = listOfNotNull(first.takeIf { it.isNotEmpty() }?.joinToString(" · "), pickupLine)
-            return lines.takeIf { it.isNotEmpty() }?.joinToString("\n")
+    val meta: String? get() = metaLines(spoken = false)?.joinToString("\n")
+
+    /** [meta] as a screen reader says it: the queue place as "number 4 in the queue" (§7.1). */
+    val spokenMeta: String? get() = metaLines(spoken = true)?.joinToString(", ")
+
+    private fun metaLines(spoken: Boolean): List<String>? {
+        val pickupLine = pickup?.let(Copy.YourBooks::collectFrom)
+        if (isReady) {
+            val by = pickupBy?.let(::shortDate) ?: return pickupLine?.let(::listOf)
+            return listOf(pickup?.let { Copy.YourBooks.collectFromBy(it, by) } ?: Copy.YourBooks.collectBy(by))
         }
+        val first = buildList {
+            rank?.let { add(queuePlace(it, spoken)) }
+            placed?.let { add(Copy.YourBooks.placed(shortDate(it))) }
+        }
+        val joined = first.takeIf { it.isNotEmpty() }?.joinToString(if (spoken) ", " else Copy.Common.separator)
+        return listOfNotNull(joined, pickupLine).takeIf { it.isNotEmpty() }
+    }
+
+    private fun queuePlace(rank: String, spoken: Boolean): String = when {
+        rank.toIntOrNull() == null -> if (spoken) Copy.YourBooks.queuePlaceTextLabel(rank) else Copy.YourBooks.queuePlaceText(rank)
+        spoken -> Copy.YourBooks.queuePlaceLabel(rank)
+        else -> Copy.YourBooks.queuePlace(rank)
+    }
 
     companion object {
-        fun of(item: PatronItem, kind: Kind): ReservationRow {
+        fun of(item: PatronItem, kind: Kind, today: LocalDate = LocalDate.now()): ReservationRow {
             val ref = BookRef.from(item)
             val statusText = StatusText.parse(item.fields["Status"])
             return ReservationRow(
@@ -177,6 +191,7 @@ data class ReservationRow(
                 cancelHref = item.cancelHref,
                 editHref = item.editHref,
                 pickupBy = statusText.pickupBy,
+                today = today,
             )
         }
 
@@ -215,7 +230,7 @@ data class StatusText(val status: String? = null, val pickup: String? = null, va
     }
 }
 
-/** Reservations split for display: ready for pickup first, then pending. */
+/** Reservations split for display: ready to collect first, then pending. */
 data class ReservationSections(
     val ready: List<ReservationRow> = emptyList(),
     val pending: List<ReservationRow> = emptyList(),
@@ -248,12 +263,16 @@ data class ReservationSections(
 object CancelConfirm {
     fun message(row: ReservationRow): String {
         if (row.isReady) {
-            val place = row.pickup?.let { " at $it" }.orEmpty()
-            return "“${row.ref.title}” is waiting for you$place. Cancelling releases it to the next person."
+            return row.pickup?.let { Copy.YourBooks.cancelReadyMessage(row.ref.title, it) }
+                ?: Copy.YourBooks.cancelReadyMessageNoBranch(row.ref.title)
         }
-        return "“${row.ref.title}” will be removed from your reservations and you'll lose your place in the queue."
+        return Copy.YourBooks.cancelPendingMessage(row.ref.title)
     }
 }
+
+/** A date the library wrote ("17 Oct 2026") as "17 Oct"; unreadable text as written. */
+private fun ReservationRow.shortDate(text: String): String =
+    Formatting.parseDueDate(text)?.let { BorrowedDates.short(it, today) } ?: text
 
 /** Keeps row ids unique within one list: a repeated key gets `#2`, `#3`, …. */
 private class UniqueIds {

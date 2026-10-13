@@ -1,5 +1,6 @@
 package com.librespydus.app.feature.featured
 
+import com.librespydus.app.core.Copy
 import com.librespydus.app.core.FormatRef
 import com.librespydus.app.core.Route
 import com.librespydus.app.feature.detail.ReserveModel
@@ -83,7 +84,7 @@ data class CopyRow(
 ) {
     /** What a screen reader reads for the row. */
     val accessibilityLabel: String
-        get() = listOfNotNull(location, status, description, callNumber?.let { "Call number $it" }).joinToString(", ")
+        get() = listOfNotNull(location ?: Copy.Detail.copy, status, description, callNumber?.let(Copy.Detail::callNumber)).joinToString(", ")
 
     companion object {
         fun from(holding: Holding) = CopyRow(

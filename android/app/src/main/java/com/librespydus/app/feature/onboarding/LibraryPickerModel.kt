@@ -1,5 +1,6 @@
 package com.librespydus.app.feature.onboarding
 
+import com.librespydus.app.core.Copy
 import com.librespydus.app.core.StoredLibrary
 import com.librespydus.app.core.UserFacingError
 import kotlinx.coroutines.CancellationException
@@ -167,13 +168,13 @@ class LibraryPickerModel(
     companion object {
         /** The directory isn't a library, so the §5.7 messages name it instead. */
         fun userFacingError(error: Throwable): UserFacingError {
-            val shown = UserFacingError.from(error, "the library directory")
+            val shown = UserFacingError.from(error)
             return when (shown.kind) {
                 UserFacingError.Kind.NETWORK ->
-                    shown.copy(message = "Can't reach the library directory. Check your connection.")
+                    shown.copy(message = Copy.Onboarding.directoryNetwork)
                 else -> shown.copy(
                     kind = UserFacingError.Kind.UNEXPECTED,
-                    message = "The library directory returned something unexpected.",
+                    message = Copy.Onboarding.directoryUnexpected,
                 )
             }
         }
