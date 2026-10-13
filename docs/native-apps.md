@@ -147,7 +147,10 @@ alertedKeys}` · `dueReminders(snapshot, today: SimpleDate, daysBefore) -> [DueR
 remindOn, items}]` · (I10/A8, §5.9) `cardBarcode(cardNumber, symbology) -> CardBarcode{symbology,
 modules: [Bool], text}?` · `SpydusClient.cardBarcodeSymbology() async -> BarcodeSymbology`
 (`.code128`, `.code39`, `.codabar`) · `AccountSnapshot.cardNumber` / `.cardExpires` and
-`AccountLinks.personalDetailsUrl` (default nil).
+`AccountLinks.personalDetailsUrl` (default nil) · (I11/A9, §5.10) `SpydusClient.featured() ->
+[FeaturedLink{title, description?, icon?, kind: .collection|.search|.web, url}]` ·
+`collection(url) -> FeaturedCollection{title?, sections: [FeaturedSection{title, url}]}` ·
+`holdings(url) -> [Holding{location?, collection?, callNumber?, status?, description?, available}]`.
 Newest = `SORTS=MAIN.CREATED_DATE.DESC]MAIN.CREATED_TIME.DESC` (the OPAC's own new-items RSS order).
 
 ## 5. App architecture (same shape on both platforms)
@@ -309,6 +312,38 @@ The library card as a barcode to scan at the desk or self-checkout, like the off
     shown as a barcode."
   - VoiceOver / TalkBack: the barcode is one element, "Barcode for card <number>".
 
+### 5.10 Featured collections (I11 iOS / A9 Android)
+The library's own collections from the "Featured" list on its OPAC home page (Canning: What's New,
+Coming Soon, eLibrary, First Nations, Languages Other Than English, Library of Things, Local History,
+More to Celebrate). Public data, cached in the core.
+- **Home:** `client.featured()` loads with Home (independent of the other shelves); a section
+  **"Featured"** — a horizontal row of tiles (rounded `surface` card, the icon on a tinted circle,
+  the title under it, two lines max) — between "Popular genres" and "Your borrowed books". Hidden
+  when the list is empty or fails (no error on Home; most libraries have no such list). Icons map
+  the library's Font Awesome name: `book`→book, `balloons`→party/celebration, `computer`→computer,
+  `circle`→circle, `globe`→globe/language, `game-board`→puzzle piece/board game,
+  `map-location-dot`→map, `user-circle`→person in a circle, anything else→sparkles.
+- **Tap:** `.collection` → the **Collection** screen; `.search` → the results list for that URL
+  (title = the link's title); `.web` → the in-app browser (SFSafariViewController / Custom Tabs).
+- **Collection screen** (title = the link's title): `client.collection(url)`; one shelf per
+  section in order — the section title, "View All" → its results list, and a horizontal row of
+  cover cards from the first `page(section.url)` (up to 20). Shelves load when they come into view,
+  at most 3 at a time (What's New has 11). A section that comes back empty is hidden; one that
+  fails shows Retry in its row. A page **without sections** (eLibrary is links to outside
+  services) shows its title, "This collection is on the library's website." and **Open website**
+  (in-app browser). Loading / error(+Retry) states as elsewhere.
+- **Results list by URL:** the existing Search results list, started from a URL (`page(url)`,
+  then `nextPageUrl`) instead of a query, with the given title and no sort toggle.
+- **Edition-level items** (every item in these lists): their `SearchRecord` has one format with an
+  empty `code` and no label (the card's own reserve link; availability counted from its holdings).
+  Rows and the book page show **no format chip/picker** for it; the book page loads the record
+  with `record(format.availabilityUrl)` and counts with `availability(format.availabilityUrl)` as
+  for any format (the core handles both), Reserve uses `format.reserveUrl` as usual, and there is
+  no format re-find search. The book page adds a **"Copies"** list for these items: one row per
+  `client.holdings(availability.holdingsUrl)` entry — location (title case), status (green when
+  `available`), the description in secondary text when present, the call number in caption text.
+  Items without an author show none (Library of Things).
+
 ### 5.7 User-facing errors
 `Network` → "Can't reach {library}. Check your connection." · `HumanVerificationRequired` →
 verification sheet · `NotLoggedIn` → "Please sign in again." (+ login) · `CredentialsRejected` →
@@ -328,7 +363,8 @@ Search tab. Sections (each with "View All"): **"New arrivals"** (first `homeShel
 horizontal cover cards, tap → detail), **"Popular genres"** (`homeGenres()` rounded colour tiles
 with a platform icon per `key`, tap → results), **"Your borrowed books"** (signed in: current
 loans as covers with "N days left"/"Due {date}", overdue in danger colour; signed out: a sign-in
-card). No bell icon. Signed in: a **"My card"** button in the header (§5.9).
+card). No bell icon. Signed in: a **"My card"** button in the header (§5.9). A **"Featured"**
+row of the library's own collections between "Popular genres" and "Your borrowed books" (§5.10).
 
 **Search (I3/A3).** Search field (autofocus from Home), sort toggle Relevance / Newest, result rows
 (cover, title, author, year, format chips; digital formats tinted `digital`), infinite scroll via

@@ -32,6 +32,9 @@ pub const ENCRYPT_JS: &str = "/docs/OPAC/js/encrypt.js";
 /// works on every library tested.
 pub const SEARCH_PATH: &str = "/cgi-bin/spydus.exe/ENQ/OPAC/ALLWRKENQ?ENTRY={q}&ENTRY_NAME=BS&ENTRY_TYPE=K&SORTS={sorts}&GQ={q}";
 
+/// The OPAC home page: its "Featured" list (`SpydusClient::featured`).
+pub const HOME_PATH: &str = "/cgi-bin/spydus.exe/MSGTRN/OPAC/HOME";
+
 /// The Spydus mobile app's public library config (card `barcodeType`, branding). Optional: some
 /// libraries answer 404.
 pub const MOBILE_CONFIG_PATH: &str = "/api/mobile/1.0/general/config?wifiName=";

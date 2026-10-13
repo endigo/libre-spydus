@@ -51,6 +51,10 @@ static YEAR: LazyLock<Regex> = LazyLock::new(|| {
 // search-results.ts:117 (case-sensitive).
 static LANGUAGE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(&format!(r"^[A-Z][a-z]+(?:,{JS_WS}*[A-Z][a-z]+)*$")).unwrap());
+// An edition-level record link: `…/FULL/OPAC/BIBENQ/{set}/{bibIrn},{n}` → the base before
+// `/FULL/` and the bib IRN.
+static EDITION_LINK: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"^(.*)/FULL/OPAC/BIBENQ/[0-9]+/([0-9]+)").unwrap());
 // search-results.ts:66 — `BK-tab-15974354` / `BK-pane-15974354-url`.
 static CODE_FROM_ID: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^(?i-u)([A-Z0-9]+)-(?:tab|pane)-").unwrap());
@@ -94,6 +98,10 @@ struct Draft {
     line_buf: Option<String>,
     line_linked: bool,
     summary_buf: String,
+    /// All of `div.summary`'s text: the blurb of an edition-level card, which has no `.text-html`.
+    summary_any_buf: String,
+    /// An edition-level card's own "Place reservation" link (no format tabs).
+    edition_reserve_url: Option<String>,
     isbn: Option<String>,
     cover_urls: Vec<String>,
     /// Insertion-ordered, like the TS `Map`.
@@ -175,7 +183,17 @@ fn code_from_query(href: Option<&str>) -> Option<String> {
 }
 
 /// search-results.ts `finalize` — derive author / year / language from the detail lines.
+///
+/// Edition-level cards (saved-search and collection lists: `RUNSQRY/OPAC/BIBENQ`, ALLENQ) have no
+/// format tabs (new; no TS counterpart). Their detail lines are just "Lee, Min Jin" / "2026", so a
+/// first line that isn't a year is the author. They get one format with an empty `code` and no
+/// label: the card's own "Place reservation" link and the bib's `FMT=RECFMT` fragment as its
+/// `availability_url` (`SpydusClient::availability` counts that bib's copies).
 fn finalize(d: Draft, origin: &str) -> SearchRecord {
+    let edition = d.formats.is_empty()
+        .then(|| d.detail_url.as_deref().map(decode))
+        .flatten()
+        .and_then(|url| EDITION_LINK.captures(&url).map(|c| (c[1].to_owned(), c[2].to_owned())));
     let mut author = None;
     let mut author_role = None;
     let mut year = None;
@@ -204,7 +222,9 @@ fn finalize(d: Draft, origin: &str) -> SearchRecord {
         if is_first
             && role.is_none()
             && !YEAR.is_match(&line)
-            && (d.detail_linked.get(i).copied().unwrap_or(false) || NAME_WITH_DATES.is_match(&line))
+            && (d.detail_linked.get(i).copied().unwrap_or(false)
+                || NAME_WITH_DATES.is_match(&line)
+                || edition.is_some())
         {
             author = Some(line);
             continue;
@@ -218,7 +238,7 @@ fn finalize(d: Draft, origin: &str) -> SearchRecord {
         }
     }
 
-    let formats = d
+    let mut formats: Vec<RecordFormat> = d
         .formats
         .into_iter()
         .map(|f| RecordFormat {
@@ -228,6 +248,15 @@ fn finalize(d: Draft, origin: &str) -> SearchRecord {
             code: f.code,
         })
         .collect();
+    if let Some((base, irn)) = &edition {
+        formats.push(RecordFormat {
+            code: String::new(),
+            label: None,
+            reserve_url: absolute(origin, d.edition_reserve_url.as_deref()),
+            availability_url: absolute(origin, Some(&format!("{base}/ENQ/OPAC/BIBENQ?SETLVL=&IRN={irn}&FMT=RECFMT"))),
+        });
+    }
+    let summary = non_empty(collapse(&d.summary_buf)).or_else(|| non_empty(collapse(&d.summary_any_buf)));
 
     SearchRecord {
         rank: d.rank,
@@ -239,7 +268,7 @@ fn finalize(d: Draft, origin: &str) -> SearchRecord {
         author_url: absolute(origin, d.author_url.as_deref()),
         year,
         language,
-        summary: non_empty(collapse(&d.summary_buf)),
+        summary,
         isbn: d.isbn,
         cover_urls: d.cover_urls,
         formats,
@@ -395,6 +424,24 @@ pub fn parse_search_results(html: &str, origin: &str, query: Option<&str>) -> Se
             }
             Ok(())
         }))
+        .append_element_content_handler(text!("fieldset.card-list div.summary", |t| {
+            if let Some(d) = st.borrow_mut().current() {
+                d.summary_any_buf.push_str(t.as_str());
+            }
+            Ok(())
+        }))
+        // ---- edition-level card: its own reservation link (no format tabs) ----
+        .append_element_content_handler(element!(
+            r#"fieldset.card-list .availability a[href*="/PGM/OPAC/CCOPT/"]"#,
+            |el| {
+                if let Some(d) = st.borrow_mut().current()
+                    && is_blank(&d.edition_reserve_url)
+                {
+                    d.edition_reserve_url = el.get_attribute("href");
+                }
+                Ok(())
+            }
+        ))
         // ---- cover image + ISBN ----
         .append_element_content_handler(element!("fieldset.card-list img.imgsc", |el| {
             if let Some(d) = st.borrow_mut().current() {

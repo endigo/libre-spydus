@@ -746,9 +746,15 @@ internal object IntegrityCheckingUniffiLib {
     ): Int
     external fun uniffi_librespydus_core_checksum_method_spydusclient_card_barcode_symbology(
     ): Int
+    external fun uniffi_librespydus_core_checksum_method_spydusclient_collection(
+    ): Int
     external fun uniffi_librespydus_core_checksum_method_spydusclient_edit_options(
     ): Int
     external fun uniffi_librespydus_core_checksum_method_spydusclient_edit_reservation(
+    ): Int
+    external fun uniffi_librespydus_core_checksum_method_spydusclient_featured(
+    ): Int
+    external fun uniffi_librespydus_core_checksum_method_spydusclient_holdings(
     ): Int
     external fun uniffi_librespydus_core_checksum_method_spydusclient_loans(
     ): Int
@@ -815,9 +821,15 @@ internal object UniffiLib {
     ): Long
     external fun uniffi_librespydus_core_fn_method_spydusclient_card_barcode_symbology(`ptr`: Long,
     ): Long
+    external fun uniffi_librespydus_core_fn_method_spydusclient_collection(`ptr`: Long,`url`: RustBuffer.ByValue,
+    ): Long
     external fun uniffi_librespydus_core_fn_method_spydusclient_edit_options(`ptr`: Long,`url`: RustBuffer.ByValue,`session`: RustBuffer.ByValue,
     ): Long
     external fun uniffi_librespydus_core_fn_method_spydusclient_edit_reservation(`ptr`: Long,`url`: RustBuffer.ByValue,`session`: RustBuffer.ByValue,`overrides`: RustBuffer.ByValue,
+    ): Long
+    external fun uniffi_librespydus_core_fn_method_spydusclient_featured(`ptr`: Long,
+    ): Long
+    external fun uniffi_librespydus_core_fn_method_spydusclient_holdings(`ptr`: Long,`url`: RustBuffer.ByValue,
     ): Long
     external fun uniffi_librespydus_core_fn_method_spydusclient_loans(`ptr`: Long,`session`: RustBuffer.ByValue,
     ): Long
@@ -1056,7 +1068,7 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
     if ((lib.uniffi_librespydus_core_checksum_method_spydusclient_account_snapshot() and 0xFFFF) != 56033) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if ((lib.uniffi_librespydus_core_checksum_method_spydusclient_availability() and 0xFFFF) != 17964) {
+    if ((lib.uniffi_librespydus_core_checksum_method_spydusclient_availability() and 0xFFFF) != 12540) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if ((lib.uniffi_librespydus_core_checksum_method_spydusclient_cancel_reservation() and 0xFFFF) != 50116) {
@@ -1065,10 +1077,19 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
     if ((lib.uniffi_librespydus_core_checksum_method_spydusclient_card_barcode_symbology() and 0xFFFF) != 26393) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
+    if ((lib.uniffi_librespydus_core_checksum_method_spydusclient_collection() and 0xFFFF) != 20475) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
     if ((lib.uniffi_librespydus_core_checksum_method_spydusclient_edit_options() and 0xFFFF) != 27600) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if ((lib.uniffi_librespydus_core_checksum_method_spydusclient_edit_reservation() and 0xFFFF) != 57767) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_librespydus_core_checksum_method_spydusclient_featured() and 0xFFFF) != 3738) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_librespydus_core_checksum_method_spydusclient_holdings() and 0xFFFF) != 44920) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if ((lib.uniffi_librespydus_core_checksum_method_spydusclient_loans() and 0xFFFF) != 55114) {
@@ -1684,6 +1705,8 @@ public interface SpydusClientInterface {
     
     /**
      * Live counts for one format: a format's `availabilityUrl` (server.ts:81-95). Cached 60 s.
+     * An edition-level format's fragment (collection and saved-search lists) carries no counts:
+     * `copies` and `available` are then counted from the record's holdings.
      */
     suspend fun `availability`(`url`: kotlin.String): Availability
     
@@ -1702,6 +1725,12 @@ public interface SpydusClientInterface {
     suspend fun `cardBarcodeSymbology`(): BarcodeSymbology
     
     /**
+     * A featured collection page (a `FeaturedLink` of kind `Collection`) → its sections, each a
+     * results list for `page`. Cached 10 min.
+     */
+    suspend fun `collection`(`url`: kotlin.String): FeaturedCollection
+    
+    /**
      * The edit-reservation form (pickup choices + current dates) for a reservation row's
      * "Edit" action href (server.ts:248-258). Read-only.
      */
@@ -1713,6 +1742,18 @@ public interface SpydusClientInterface {
      * an existing date.
      */
     suspend fun `editReservation`(`url`: kotlin.String, `session`: kotlin.String, `overrides`: EditOverrides): ReserveResult
+    
+    /**
+     * The library's "Featured" collections, from the "Featured" list on its OPAC home page, in
+     * order (Canning: What's New, Coming Soon, eLibrary, …, Library of Things, …). Empty when the
+     * home page has no such list. Cached 10 min.
+     */
+    suspend fun `featured`(): List<FeaturedLink>
+    
+    /**
+     * Every copy of a record, from its holdings list: an `Availability.holdingsUrl`. Cached 60 s.
+     */
+    suspend fun `holdings`(`url`: kotlin.String): List<Holding>
     
     /**
      * Current loans (server.ts:290-302). No loans link → an empty list.
@@ -1977,6 +2018,8 @@ open class SpydusClient: Disposable, AutoCloseable, SpydusClientInterface
     
     /**
      * Live counts for one format: a format's `availabilityUrl` (server.ts:81-95). Cached 60 s.
+     * An edition-level format's fragment (collection and saved-search lists) carries no counts:
+     * `copies` and `available` are then counted from the record's holdings.
      */
     @Throws(SpydusException::class)
     @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
@@ -2054,6 +2097,32 @@ open class SpydusClient: Disposable, AutoCloseable, SpydusClientInterface
 
     
     /**
+     * A featured collection page (a `FeaturedLink` of kind `Collection`) → its sections, each a
+     * results list for `page`. Cached 10 min.
+     */
+    @Throws(SpydusException::class)
+    @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
+    override suspend fun `collection`(`url`: kotlin.String) : FeaturedCollection {
+        return uniffiRustCallAsync(
+        callWithHandle { uniffiHandle ->
+            UniffiLib.uniffi_librespydus_core_fn_method_spydusclient_collection(
+                uniffiHandle,
+                
+        FfiConverterString.lower(`url`),
+            )
+        },
+        { future, callback, continuation -> UniffiLib.ffi_librespydus_core_rust_future_poll_rust_buffer(future, callback, continuation) },
+        { future, continuation -> UniffiLib.ffi_librespydus_core_rust_future_complete_rust_buffer(future, continuation) },
+        { future -> UniffiLib.ffi_librespydus_core_rust_future_free_rust_buffer(future) },
+        // lift function
+        { FfiConverterTypeFeaturedCollection.lift(it) },
+        // Error FFI converter
+        SpydusException.ErrorHandler,
+    )
+    }
+
+    
+    /**
      * The edit-reservation form (pickup choices + current dates) for a reservation row's
      * "Edit" action href (server.ts:248-258). Read-only.
      */
@@ -2103,6 +2172,57 @@ open class SpydusClient: Disposable, AutoCloseable, SpydusClientInterface
         { future -> UniffiLib.ffi_librespydus_core_rust_future_free_rust_buffer(future) },
         // lift function
         { FfiConverterTypeReserveResult.lift(it) },
+        // Error FFI converter
+        SpydusException.ErrorHandler,
+    )
+    }
+
+    
+    /**
+     * The library's "Featured" collections, from the "Featured" list on its OPAC home page, in
+     * order (Canning: What's New, Coming Soon, eLibrary, …, Library of Things, …). Empty when the
+     * home page has no such list. Cached 10 min.
+     */
+    @Throws(SpydusException::class)
+    @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
+    override suspend fun `featured`() : List<FeaturedLink> {
+        return uniffiRustCallAsync(
+        callWithHandle { uniffiHandle ->
+            UniffiLib.uniffi_librespydus_core_fn_method_spydusclient_featured(
+                uniffiHandle,
+                
+            )
+        },
+        { future, callback, continuation -> UniffiLib.ffi_librespydus_core_rust_future_poll_rust_buffer(future, callback, continuation) },
+        { future, continuation -> UniffiLib.ffi_librespydus_core_rust_future_complete_rust_buffer(future, continuation) },
+        { future -> UniffiLib.ffi_librespydus_core_rust_future_free_rust_buffer(future) },
+        // lift function
+        { FfiConverterSequenceTypeFeaturedLink.lift(it) },
+        // Error FFI converter
+        SpydusException.ErrorHandler,
+    )
+    }
+
+    
+    /**
+     * Every copy of a record, from its holdings list: an `Availability.holdingsUrl`. Cached 60 s.
+     */
+    @Throws(SpydusException::class)
+    @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
+    override suspend fun `holdings`(`url`: kotlin.String) : List<Holding> {
+        return uniffiRustCallAsync(
+        callWithHandle { uniffiHandle ->
+            UniffiLib.uniffi_librespydus_core_fn_method_spydusclient_holdings(
+                uniffiHandle,
+                
+        FfiConverterString.lower(`url`),
+            )
+        },
+        { future, callback, continuation -> UniffiLib.ffi_librespydus_core_rust_future_poll_rust_buffer(future, callback, continuation) },
+        { future, continuation -> UniffiLib.ffi_librespydus_core_rust_future_complete_rust_buffer(future, continuation) },
+        { future -> UniffiLib.ffi_librespydus_core_rust_future_free_rust_buffer(future) },
+        // lift function
+        { FfiConverterSequenceTypeHolding.lift(it) },
         // Error FFI converter
         SpydusException.ErrorHandler,
     )
@@ -3464,6 +3584,170 @@ public object FfiConverterTypeExpiryChoice: FfiConverterRustBuffer<ExpiryChoice>
 
 
 /**
+ * A featured collection page (`SpydusClient::collection`).
+ */
+data class FeaturedCollection (
+    /**
+     * The page's title, e.g. "Library of Things".
+     */
+    var `title`: kotlin.String?
+    , 
+    /**
+     * Its sections in order; none for a page that isn't a set of saved searches (open it on the web).
+     */
+    var `sections`: List<FeaturedSection>
+    
+){
+    
+
+    
+
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeFeaturedCollection: FfiConverterRustBuffer<FeaturedCollection> {
+    override fun read(buf: ByteBuffer): FeaturedCollection {
+        return FeaturedCollection(
+            FfiConverterOptionalString.read(buf),
+            FfiConverterSequenceTypeFeaturedSection.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: FeaturedCollection) = (
+            FfiConverterOptionalString.allocationSize(value.`title`) +
+            FfiConverterSequenceTypeFeaturedSection.allocationSize(value.`sections`)
+    )
+
+    override fun write(value: FeaturedCollection, buf: ByteBuffer) {
+            FfiConverterOptionalString.write(value.`title`, buf)
+            FfiConverterSequenceTypeFeaturedSection.write(value.`sections`, buf)
+    }
+}
+
+
+
+/**
+ * A link in the library's "Featured" list on its OPAC home page.
+ */
+data class FeaturedLink (
+    /**
+     * e.g. "Library of Things".
+     */
+    var `title`: kotlin.String
+    , 
+    /**
+     * The link's tooltip when it says more than the title, e.g. "New Library items available in
+     * the last 2 months".
+     */
+    var `description`: kotlin.String?
+    , 
+    /**
+     * The Font Awesome icon the library picked, without `fa-`: "book", "balloons", "computer",
+     * "circle", "globe", "game-board", "map-location-dot", "user-circle".
+     */
+    var `icon`: kotlin.String?
+    , 
+    var `kind`: FeaturedKind
+    , 
+    /**
+     * `Collection`: the page for `collection`; `Search`: a results list for `page`; `Web`: as is.
+     */
+    var `url`: kotlin.String
+    
+){
+    
+
+    
+
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeFeaturedLink: FfiConverterRustBuffer<FeaturedLink> {
+    override fun read(buf: ByteBuffer): FeaturedLink {
+        return FeaturedLink(
+            FfiConverterString.read(buf),
+            FfiConverterOptionalString.read(buf),
+            FfiConverterOptionalString.read(buf),
+            FfiConverterTypeFeaturedKind.read(buf),
+            FfiConverterString.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: FeaturedLink) = (
+            FfiConverterString.allocationSize(value.`title`) +
+            FfiConverterOptionalString.allocationSize(value.`description`) +
+            FfiConverterOptionalString.allocationSize(value.`icon`) +
+            FfiConverterTypeFeaturedKind.allocationSize(value.`kind`) +
+            FfiConverterString.allocationSize(value.`url`)
+    )
+
+    override fun write(value: FeaturedLink, buf: ByteBuffer) {
+            FfiConverterString.write(value.`title`, buf)
+            FfiConverterOptionalString.write(value.`description`, buf)
+            FfiConverterOptionalString.write(value.`icon`, buf)
+            FfiConverterTypeFeaturedKind.write(value.`kind`, buf)
+            FfiConverterString.write(value.`url`, buf)
+    }
+}
+
+
+
+/**
+ * One section of a collection page: a titled saved search.
+ */
+data class FeaturedSection (
+    /**
+     * e.g. "Musical Instruments".
+     */
+    var `title`: kotlin.String
+    , 
+    /**
+     * Its results list, 20 a page: `SpydusClient::page(url)`.
+     */
+    var `url`: kotlin.String
+    
+){
+    
+
+    
+
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeFeaturedSection: FfiConverterRustBuffer<FeaturedSection> {
+    override fun read(buf: ByteBuffer): FeaturedSection {
+        return FeaturedSection(
+            FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: FeaturedSection) = (
+            FfiConverterString.allocationSize(value.`title`) +
+            FfiConverterString.allocationSize(value.`url`)
+    )
+
+    override fun write(value: FeaturedSection, buf: ByteBuffer) {
+            FfiConverterString.write(value.`title`, buf)
+            FfiConverterString.write(value.`url`, buf)
+    }
+}
+
+
+
+/**
  * A "Popular genres" tile on the home screen. Tapping it runs a relevance `search(query)`.
  */
 data class Genre (
@@ -3514,6 +3798,82 @@ public object FfiConverterTypeGenre: FfiConverterRustBuffer<Genre> {
             FfiConverterString.write(value.`key`, buf)
             FfiConverterString.write(value.`label`, buf)
             FfiConverterString.write(value.`query`, buf)
+    }
+}
+
+
+
+/**
+ * One copy in a record's holdings list (the "View availability" modal, `/XHLD/OPAC/BIBENQ/…`).
+ */
+data class Holding (
+    /**
+     * The branch, e.g. "RIVERTON LIBRARY".
+     */
+    var `location`: kotlin.String?
+    , 
+    /**
+     * e.g. "Library of Things", "Books - Adult Fiction".
+     */
+    var `collection`: kotlin.String?
+    , 
+    var `callNumber`: kotlin.String?
+    , 
+    /**
+     * The copy's status, e.g. "Available", "On loan - Due: 29 Oct 2026".
+     */
+    var `status`: kotlin.String?
+    , 
+    /**
+     * A note on the copy that comes before its status, e.g. "Pink body, teal handle".
+     */
+    var `description`: kotlin.String?
+    , 
+    /**
+     * The status says the copy is on the shelf ("Available …").
+     */
+    var `available`: kotlin.Boolean
+    
+){
+    
+
+    
+
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeHolding: FfiConverterRustBuffer<Holding> {
+    override fun read(buf: ByteBuffer): Holding {
+        return Holding(
+            FfiConverterOptionalString.read(buf),
+            FfiConverterOptionalString.read(buf),
+            FfiConverterOptionalString.read(buf),
+            FfiConverterOptionalString.read(buf),
+            FfiConverterOptionalString.read(buf),
+            FfiConverterBoolean.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: Holding) = (
+            FfiConverterOptionalString.allocationSize(value.`location`) +
+            FfiConverterOptionalString.allocationSize(value.`collection`) +
+            FfiConverterOptionalString.allocationSize(value.`callNumber`) +
+            FfiConverterOptionalString.allocationSize(value.`status`) +
+            FfiConverterOptionalString.allocationSize(value.`description`) +
+            FfiConverterBoolean.allocationSize(value.`available`)
+    )
+
+    override fun write(value: Holding, buf: ByteBuffer) {
+            FfiConverterOptionalString.write(value.`location`, buf)
+            FfiConverterOptionalString.write(value.`collection`, buf)
+            FfiConverterOptionalString.write(value.`callNumber`, buf)
+            FfiConverterOptionalString.write(value.`status`, buf)
+            FfiConverterOptionalString.write(value.`description`, buf)
+            FfiConverterBoolean.write(value.`available`, buf)
     }
 }
 
@@ -4794,6 +5154,53 @@ public object FfiConverterTypeBarcodeSymbology: FfiConverterRustBuffer<BarcodeSy
 
 
 /**
+ * What a featured link opens (`FeaturedLink.kind`).
+ */
+
+enum class FeaturedKind {
+    
+    /**
+     * A collection page: `SpydusClient::collection(url)` → its sections.
+     */
+    COLLECTION,
+    /**
+     * One saved search: `SpydusClient::page(url)` → its results.
+     */
+    SEARCH,
+    /**
+     * Anything else (a page of links to outside services, another site): open it on the web.
+     */
+    WEB;
+
+    
+
+
+    companion object
+}
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeFeaturedKind: FfiConverterRustBuffer<FeaturedKind> {
+    override fun read(buf: ByteBuffer) = try {
+        FeaturedKind.values()[buf.getInt() - 1]
+    } catch (e: IndexOutOfBoundsException) {
+        throw RuntimeException("invalid enum value, something is very wrong!!", e)
+    }
+
+    override fun allocationSize(value: FeaturedKind) = 4UL
+
+    override fun write(value: FeaturedKind, buf: ByteBuffer) {
+        buf.putInt(value.ordinal + 1)
+    }
+}
+
+
+
+
+
+/**
  * How the patron already has a title (`AccountHolding.kind`).
  */
 
@@ -5381,6 +5788,62 @@ public object FfiConverterSequenceTypeExpiryChoice: FfiConverterRustBuffer<List<
 /**
  * @suppress
  */
+public object FfiConverterSequenceTypeFeaturedLink: FfiConverterRustBuffer<List<FeaturedLink>> {
+    override fun read(buf: ByteBuffer): List<FeaturedLink> {
+        val len = buf.getInt()
+        return List<FeaturedLink>(len) {
+            FfiConverterTypeFeaturedLink.read(buf)
+        }
+    }
+
+    override fun allocationSize(value: List<FeaturedLink>): ULong {
+        val sizeForLength = 4UL
+        val sizeForItems = value.map { FfiConverterTypeFeaturedLink.allocationSize(it) }.sum()
+        return sizeForLength + sizeForItems
+    }
+
+    override fun write(value: List<FeaturedLink>, buf: ByteBuffer) {
+        buf.putInt(value.size)
+        value.iterator().forEach {
+            FfiConverterTypeFeaturedLink.write(it, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterSequenceTypeFeaturedSection: FfiConverterRustBuffer<List<FeaturedSection>> {
+    override fun read(buf: ByteBuffer): List<FeaturedSection> {
+        val len = buf.getInt()
+        return List<FeaturedSection>(len) {
+            FfiConverterTypeFeaturedSection.read(buf)
+        }
+    }
+
+    override fun allocationSize(value: List<FeaturedSection>): ULong {
+        val sizeForLength = 4UL
+        val sizeForItems = value.map { FfiConverterTypeFeaturedSection.allocationSize(it) }.sum()
+        return sizeForLength + sizeForItems
+    }
+
+    override fun write(value: List<FeaturedSection>, buf: ByteBuffer) {
+        buf.putInt(value.size)
+        value.iterator().forEach {
+            FfiConverterTypeFeaturedSection.write(it, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
 public object FfiConverterSequenceTypeGenre: FfiConverterRustBuffer<List<Genre>> {
     override fun read(buf: ByteBuffer): List<Genre> {
         val len = buf.getInt()
@@ -5399,6 +5862,34 @@ public object FfiConverterSequenceTypeGenre: FfiConverterRustBuffer<List<Genre>>
         buf.putInt(value.size)
         value.iterator().forEach {
             FfiConverterTypeGenre.write(it, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterSequenceTypeHolding: FfiConverterRustBuffer<List<Holding>> {
+    override fun read(buf: ByteBuffer): List<Holding> {
+        val len = buf.getInt()
+        return List<Holding>(len) {
+            FfiConverterTypeHolding.read(buf)
+        }
+    }
+
+    override fun allocationSize(value: List<Holding>): ULong {
+        val sizeForLength = 4UL
+        val sizeForItems = value.map { FfiConverterTypeHolding.allocationSize(it) }.sum()
+        return sizeForLength + sizeForItems
+    }
+
+    override fun write(value: List<Holding>, buf: ByteBuffer) {
+        buf.putInt(value.size)
+        value.iterator().forEach {
+            FfiConverterTypeHolding.write(it, buf)
         }
     }
 }

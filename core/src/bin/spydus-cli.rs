@@ -3,7 +3,9 @@
 //! `scripts/library-survey.py`).
 //!
 //!   spydus-cli search [--sort relevance|newest] "<query>"
-//!   spydus-cli <page|availability|record|related> "<url>"
+//!   spydus-cli <page|availability|record|related|holdings|collection> "<url>"
+//!   spydus-cli featured                # the home page's Featured collections
+//!   spydus-cli barcode-type            # the card barcode symbology
 //!   spydus-cli libraries [--all]       # the Spydus library directory; --all adds test instances
 //!
 //! Public reads only — account/reservation methods are deliberately not exposed here.
@@ -16,13 +18,17 @@ use std::process::ExitCode;
 use librespydus_core::{SearchSort, SpydusClient, SpydusError, list_libraries};
 use serde::Serialize;
 
-const USAGE: &str = "usage: spydus-cli <search|page|availability|record|related> <query-or-url>\n       spydus-cli search --sort <relevance|newest> <query>\n       spydus-cli libraries [--all]";
+const USAGE: &str = "usage: spydus-cli <search|page|availability|record|related|holdings|collection> <query-or-url>\n       spydus-cli search --sort <relevance|newest> <query>\n       spydus-cli featured | barcode-type\n       spydus-cli libraries [--all]";
 
 #[tokio::main]
 async fn main() -> ExitCode {
     let args: Vec<String> = std::env::args().skip(1).collect();
     let json = match args.as_slice() {
         [command] if command == "libraries" => to_json(list_libraries(false).await),
+        [command] if command == "featured" => to_json(client().featured().await),
+        [command] if command == "barcode-type" => {
+            to_json(Ok::<_, SpydusError>(format!("{:?}", client().card_barcode_symbology().await)))
+        }
         [command, all] if command == "libraries" && all == "--all" => {
             to_json(list_libraries(true).await)
         }
@@ -44,6 +50,8 @@ async fn main() -> ExitCode {
                 "availability" => to_json(client.availability(arg).await),
                 "record" => to_json(client.record(arg).await),
                 "related" => to_json(client.related(arg).await),
+                "holdings" => to_json(client.holdings(arg).await),
+                "collection" => to_json(client.collection(arg).await),
                 _ => return usage(&format!("unknown command {command:?}")),
             }
         }

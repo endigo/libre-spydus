@@ -26,6 +26,7 @@ pub mod types;
 pub use error::SpydusError;
 pub use types::*;
 
+use std::collections::HashMap;
 use std::future::Future;
 use std::sync::{Arc, LazyLock, PoisonError, RwLock};
 use std::time::Duration;
@@ -35,7 +36,7 @@ use regex::Regex;
 use cache::TtlCache;
 use fetch::Http;
 use parse::account::{parse_patron_items, parse_personal_details};
-use parse::availability::parse_availability;
+use parse::availability::{parse_availability, parse_holdings};
 use parse::decode::js_trim;
 use parse::record::{bib_link_from_fragment, parse_brief_cards, parse_record_detail};
 use parse::search::parse_search_results;
@@ -49,6 +50,9 @@ const SHORT_TTL: Duration = Duration::from_secs(60);
 static RECFMT_URL: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"[?&]FMT=RECFMT").unwrap());
 // server.ts:113 — `/IRN[=(](\d+)/`.
 static IRN: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"IRN[=(]([0-9]+)").unwrap());
+/// An edition-level format's availability URL (`parse::search`): `…/BIBENQ?SETLVL=&IRN={irn}&FMT=RECFMT`.
+static EDITION_RECFMT: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"^(.*/BIBENQ\?SETLVL=&IRN=[0-9]+)&FMT=RECFMT$").unwrap());
 
 /// Every library in Civica's public Spydus directory, sorted by name: the list the app's library
 /// picker shows. Each entry's `origin` is what [`SpydusClient::new`] takes. Civica's own
@@ -94,6 +98,9 @@ struct Caches {
     related: TtlCache<RelatedList>,
     /// `acct:{session}` → the session's account links.
     accounts: TtlCache<AccountLinks>,
+    holdings: TtlCache<Vec<Holding>>,
+    featured: TtlCache<Vec<FeaturedLink>>,
+    collections: TtlCache<FeaturedCollection>,
     /// The library's card barcode symbology (one entry).
     symbology: TtlCache<barcode::BarcodeSymbology>,
 }
@@ -189,15 +196,62 @@ impl SpydusClient {
     }
 
     /// Live counts for one format: a format's `availabilityUrl` (server.ts:81-95). Cached 60 s.
+    /// An edition-level format's fragment (collection and saved-search lists) carries no counts:
+    /// `copies` and `available` are then counted from the record's holdings.
     pub async fn availability(&self, url: String) -> Result<Availability, SpydusError> {
         let http = self.guarded(&url)?;
         cached(&self.caches().availability, format!("a:{url}"), SHORT_TTL, "availability", async {
-            timing::fetch_and_parse("availability", http.fetch_fragment(&url), |html| {
+            let mut availability = timing::fetch_and_parse("availability", http.fetch_fragment(&url), |html| {
                 parse_availability(html, http.origin())
+            })
+            .await?;
+            if EDITION_RECFMT.is_match(&url)
+                && availability.counts.is_empty()
+                && let Some(holdings_url) = availability.holdings_url.clone()
+            {
+                let holdings = self.fetch_holdings(http, &holdings_url).await?;
+                let copies = i64::try_from(holdings.len()).unwrap_or(i64::MAX);
+                let available = i64::try_from(holdings.iter().filter(|h| h.available).count()).unwrap_or(i64::MAX);
+                availability.counts = HashMap::from([("copies".to_owned(), copies), ("available".to_owned(), available)]);
+                availability.copies = Some(copies);
+            }
+            Ok(availability)
+        })
+        .await
+    }
+
+    /// The library's "Featured" collections, from the "Featured" list on its OPAC home page, in
+    /// order (Canning: What's New, Coming Soon, eLibrary, …, Library of Things, …). Empty when the
+    /// home page has no such list. Cached 10 min.
+    pub async fn featured(&self) -> Result<Vec<FeaturedLink>, SpydusError> {
+        let http = self.http()?;
+        let url = format!("{}{}", http.origin(), config::HOME_PATH);
+        cached(&self.caches().featured, "featured".into(), LIST_TTL, "featured", async {
+            timing::fetch_and_parse("featured", http.fetch_fragment(&url), |html| {
+                parse::featured::parse_featured(html, http.origin())
             })
             .await
         })
         .await
+    }
+
+    /// A featured collection page (a `FeaturedLink` of kind `Collection`) → its sections, each a
+    /// results list for `page`. Cached 10 min.
+    pub async fn collection(&self, url: String) -> Result<FeaturedCollection, SpydusError> {
+        let http = self.guarded(&url)?;
+        cached(&self.caches().collections, format!("col:{url}"), LIST_TTL, "collection", async {
+            timing::fetch_and_parse("collection", http.fetch_fragment(&url), |html| {
+                parse::featured::parse_collection(html, http.origin())
+            })
+            .await
+        })
+        .await
+    }
+
+    /// Every copy of a record, from its holdings list: an `Availability.holdingsUrl`. Cached 60 s.
+    pub async fn holdings(&self, url: String) -> Result<Vec<Holding>, SpydusError> {
+        let http = self.guarded(&url)?;
+        cached(&self.caches().holdings, format!("h:{url}"), SHORT_TTL, "holdings", self.fetch_holdings(http, &url)).await
     }
 
     /// The full bib record (server.ts:99-122). Pass a format's `availabilityUrl` (BK preferred;
@@ -206,6 +260,14 @@ impl SpydusClient {
     pub async fn record(&self, url: String) -> Result<RecordDetail, SpydusError> {
         let http = self.guarded(&url)?;
         cached(&self.caches().records, format!("rec:{url}"), LIST_TTL, "record", async {
+            // An edition-level format: its record is the bib itself, without the fragment.
+            if let Some(bib) = EDITION_RECFMT.captures(&url) {
+                let bib_irn = IRN.captures(&bib[1]).map(|m| m[1].to_owned());
+                return timing::fetch_and_parse("record", http.fetch_fragment(&bib[1]), |html| {
+                    parse_record_detail(html, http.origin(), bib_irn)
+                })
+                .await;
+            }
             if RECFMT_URL.is_match(&url) {
                 let bib = timing::fetch_and_parse("record format", http.fetch_fragment(&url), |html| {
                     bib_link_from_fragment(html, http.origin())
@@ -428,6 +490,13 @@ impl SpydusClient {
         let http = self.http()?;
         http.guard(url)?;
         Ok(http)
+    }
+
+    /// The holdings modal as `Holding`s (`?RECDISP=REC` asks for the record display's version).
+    async fn fetch_holdings(&self, http: &Http, url: &str) -> Result<Vec<Holding>, SpydusError> {
+        http.guard(url)?;
+        let url = if url.contains('?') { url.to_owned() } else { format!("{url}?RECDISP=REC") };
+        timing::fetch_and_parse("holdings", http.fetch_fragment(&url), parse_holdings).await
     }
 
     /// The card number and expiry from `links`' Personal details page; an empty result without one.

@@ -102,6 +102,72 @@ pub struct Availability {
     pub record_url: Option<String>,
 }
 
+/// What a featured link opens (`FeaturedLink.kind`).
+#[derive(uniffi::Enum, serde::Serialize, serde::Deserialize, Debug, Clone, Copy, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub enum FeaturedKind {
+    /// A collection page: `SpydusClient::collection(url)` → its sections.
+    Collection,
+    /// One saved search: `SpydusClient::page(url)` → its results.
+    Search,
+    /// Anything else (a page of links to outside services, another site): open it on the web.
+    Web,
+}
+
+/// A link in the library's "Featured" list on its OPAC home page.
+#[derive(uniffi::Record, serde::Serialize, serde::Deserialize, Debug, Clone, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct FeaturedLink {
+    /// e.g. "Library of Things".
+    pub title: String,
+    /// The link's tooltip when it says more than the title, e.g. "New Library items available in
+    /// the last 2 months".
+    pub description: Option<String>,
+    /// The Font Awesome icon the library picked, without `fa-`: "book", "balloons", "computer",
+    /// "circle", "globe", "game-board", "map-location-dot", "user-circle".
+    pub icon: Option<String>,
+    pub kind: FeaturedKind,
+    /// `Collection`: the page for `collection`; `Search`: a results list for `page`; `Web`: as is.
+    pub url: String,
+}
+
+/// A featured collection page (`SpydusClient::collection`).
+#[derive(uniffi::Record, serde::Serialize, serde::Deserialize, Debug, Clone, PartialEq, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct FeaturedCollection {
+    /// The page's title, e.g. "Library of Things".
+    pub title: Option<String>,
+    /// Its sections in order; none for a page that isn't a set of saved searches (open it on the web).
+    pub sections: Vec<FeaturedSection>,
+}
+
+/// One section of a collection page: a titled saved search.
+#[derive(uniffi::Record, serde::Serialize, serde::Deserialize, Debug, Clone, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct FeaturedSection {
+    /// e.g. "Musical Instruments".
+    pub title: String,
+    /// Its results list, 20 a page: `SpydusClient::page(url)`.
+    pub url: String,
+}
+
+/// One copy in a record's holdings list (the "View availability" modal, `/XHLD/OPAC/BIBENQ/…`).
+#[derive(uniffi::Record, serde::Serialize, serde::Deserialize, Debug, Clone, PartialEq, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct Holding {
+    /// The branch, e.g. "RIVERTON LIBRARY".
+    pub location: Option<String>,
+    /// e.g. "Library of Things", "Books - Adult Fiction".
+    pub collection: Option<String>,
+    pub call_number: Option<String>,
+    /// The copy's status, e.g. "Available", "On loan - Due: 29 Oct 2026".
+    pub status: Option<String>,
+    /// A note on the copy that comes before its status, e.g. "Pink body, teal handle".
+    pub description: Option<String>,
+    /// The status says the copy is on the shelf ("Available …").
+    pub available: bool,
+}
+
 /// One value within a record-detail row — text plus an optional OPAC link.
 #[derive(uniffi::Record, serde::Serialize, serde::Deserialize, Debug, Clone, PartialEq, Default)]
 #[serde(rename_all = "camelCase")]

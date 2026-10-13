@@ -15,7 +15,8 @@ use lol_html::{RewriteStrSettings, element, rewrite_str, text};
 use regex::Regex;
 
 use crate::parse::decode::{JS_WS, absolute, collapse, to_int};
-use crate::types::Availability;
+use crate::parse::decode::decode;
+use crate::types::{Availability, Holding};
 
 // availability.ts:88 / :99. JS `\w` and `\d` are ASCII-only.
 static XHLD_IRN: LazyLock<Regex> =
@@ -190,4 +191,60 @@ pub fn parse_availability(html: &str, origin: &str) -> Availability {
         holdings_url: absolute(origin, s.holdings_url.as_deref()),
         record_url: absolute(origin, s.record_url.as_deref()),
     }
+}
+
+// ---------------------------------------------------------------------------
+// Holdings modal → copies (new; no TS counterpart)
+// ---------------------------------------------------------------------------
+
+static HOLDING_ROW: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"(?s)<tr\b[^>]*>(.*?)</tr>").unwrap());
+static HOLDING_CELL: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r#"(?s)<td\b[^>]*data-caption="([^"]*)"[^>]*>(.*?)</td>"#).unwrap());
+static ANY_TAG: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"<[^>]*>").unwrap());
+static AVAILABLE_STATUS: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"(?i)^(?:available|on shelf|in library)\b").unwrap());
+
+/// The holdings modal (`Availability.holdings_url`, `/XHLD/OPAC/BIBENQ/{set}/{bibIrn}`) → one
+/// `Holding` per copy row. Cells are found by their `data-caption` (Location, Collection, Call
+/// number, Status/Desc); the status is the last line of its cell, earlier lines are the copy's
+/// description. Rows without cells (the header) are skipped.
+pub fn parse_holdings(html: &str) -> Vec<Holding> {
+    let text = |fragment: &str| collapse(&decode(&ANY_TAG.replace_all(fragment, " ")));
+    let mut holdings = Vec::new();
+    for row in HOLDING_ROW.captures_iter(html) {
+        let mut holding = Holding::default();
+        let mut cells = 0;
+        for cell in HOLDING_CELL.captures_iter(&row[1]) {
+            cells += 1;
+            // One line per `span.d-block`; a cell without them is one line.
+            let mut lines: Vec<String> = cell[2]
+                .split(r#"<span class="d-block""#)
+                .skip(1)
+                .map(|part| text(&format!("<span {part}")))
+                .filter(|line| !line.is_empty())
+                .collect();
+            if lines.is_empty() {
+                lines = Some(text(&cell[2])).filter(|line| !line.is_empty()).into_iter().collect();
+            }
+            let caption = cell[1].to_lowercase();
+            if caption.starts_with("status") {
+                holding.status = lines.pop();
+                holding.description = Some(lines.join(" ")).filter(|d| !d.is_empty());
+            } else {
+                let value = Some(lines.join(" ")).filter(|v| !v.is_empty());
+                match caption.as_str() {
+                    "location" | "branch" => holding.location = value,
+                    "collection" => holding.collection = value,
+                    "call number" | "call no" | "call no." => holding.call_number = value,
+                    _ => {}
+                }
+            }
+        }
+        if cells == 0 {
+            continue;
+        }
+        holding.available = holding.status.as_deref().is_some_and(|s| AVAILABLE_STATUS.is_match(s));
+        holdings.push(holding);
+    }
+    holdings
 }

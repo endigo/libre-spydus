@@ -662,6 +662,8 @@ public protocol SpydusClientProtocol: AnyObject, Sendable {
     
     /**
      * Live counts for one format: a format's `availabilityUrl` (server.ts:81-95). Cached 60 s.
+     * An edition-level format's fragment (collection and saved-search lists) carries no counts:
+     * `copies` and `available` are then counted from the record's holdings.
      */
     func availability(url: String) async throws  -> Availability
     
@@ -680,6 +682,12 @@ public protocol SpydusClientProtocol: AnyObject, Sendable {
     func cardBarcodeSymbology() async  -> BarcodeSymbology
     
     /**
+     * A featured collection page (a `FeaturedLink` of kind `Collection`) → its sections, each a
+     * results list for `page`. Cached 10 min.
+     */
+    func collection(url: String) async throws  -> FeaturedCollection
+    
+    /**
      * The edit-reservation form (pickup choices + current dates) for a reservation row's
      * "Edit" action href (server.ts:248-258). Read-only.
      */
@@ -691,6 +699,18 @@ public protocol SpydusClientProtocol: AnyObject, Sendable {
      * an existing date.
      */
     func editReservation(url: String, session: String, overrides: EditOverrides) async throws  -> ReserveResult
+    
+    /**
+     * The library's "Featured" collections, from the "Featured" list on its OPAC home page, in
+     * order (Canning: What's New, Coming Soon, eLibrary, …, Library of Things, …). Empty when the
+     * home page has no such list. Cached 10 min.
+     */
+    func featured() async throws  -> [FeaturedLink]
+    
+    /**
+     * Every copy of a record, from its holdings list: an `Availability.holdingsUrl`. Cached 60 s.
+     */
+    func holdings(url: String) async throws  -> [Holding]
     
     /**
      * Current loans (server.ts:290-302). No loans link → an empty list.
@@ -892,6 +912,8 @@ open func accountSnapshot(session: String)async throws  -> AccountSnapshot  {
     
     /**
      * Live counts for one format: a format's `availabilityUrl` (server.ts:81-95). Cached 60 s.
+     * An edition-level format's fragment (collection and saved-search lists) carries no counts:
+     * `copies` and `available` are then counted from the record's holdings.
      */
 open func availability(url: String)async throws  -> Availability  {
     return
@@ -953,6 +975,26 @@ open func cardBarcodeSymbology()async  -> BarcodeSymbology  {
 }
     
     /**
+     * A featured collection page (a `FeaturedLink` of kind `Collection`) → its sections, each a
+     * results list for `page`. Cached 10 min.
+     */
+open func collection(url: String)async throws  -> FeaturedCollection  {
+    return
+        try  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_librespydus_core_fn_method_spydusclient_collection(
+                        self.uniffiCloneHandle(),FfiConverterString.lower(url)
+                )
+            },
+            pollFunc: ffi_librespydus_core_rust_future_poll_rust_buffer,
+            completeFunc: ffi_librespydus_core_rust_future_complete_rust_buffer,
+            freeFunc: ffi_librespydus_core_rust_future_free_rust_buffer,
+            liftFunc: FfiConverterTypeFeaturedCollection_lift,
+            errorHandler: FfiConverterTypeSpydusError_lift
+        )
+}
+    
+    /**
      * The edit-reservation form (pickup choices + current dates) for a reservation row's
      * "Edit" action href (server.ts:248-258). Read-only.
      */
@@ -989,6 +1031,46 @@ open func editReservation(url: String, session: String, overrides: EditOverrides
             completeFunc: ffi_librespydus_core_rust_future_complete_rust_buffer,
             freeFunc: ffi_librespydus_core_rust_future_free_rust_buffer,
             liftFunc: FfiConverterTypeReserveResult_lift,
+            errorHandler: FfiConverterTypeSpydusError_lift
+        )
+}
+    
+    /**
+     * The library's "Featured" collections, from the "Featured" list on its OPAC home page, in
+     * order (Canning: What's New, Coming Soon, eLibrary, …, Library of Things, …). Empty when the
+     * home page has no such list. Cached 10 min.
+     */
+open func featured()async throws  -> [FeaturedLink]  {
+    return
+        try  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_librespydus_core_fn_method_spydusclient_featured(
+                        self.uniffiCloneHandle()
+                )
+            },
+            pollFunc: ffi_librespydus_core_rust_future_poll_rust_buffer,
+            completeFunc: ffi_librespydus_core_rust_future_complete_rust_buffer,
+            freeFunc: ffi_librespydus_core_rust_future_free_rust_buffer,
+            liftFunc: FfiConverterSequenceTypeFeaturedLink.lift,
+            errorHandler: FfiConverterTypeSpydusError_lift
+        )
+}
+    
+    /**
+     * Every copy of a record, from its holdings list: an `Availability.holdingsUrl`. Cached 60 s.
+     */
+open func holdings(url: String)async throws  -> [Holding]  {
+    return
+        try  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_librespydus_core_fn_method_spydusclient_holdings(
+                        self.uniffiCloneHandle(),FfiConverterString.lower(url)
+                )
+            },
+            pollFunc: ffi_librespydus_core_rust_future_poll_rust_buffer,
+            completeFunc: ffi_librespydus_core_rust_future_complete_rust_buffer,
+            freeFunc: ffi_librespydus_core_rust_future_free_rust_buffer,
+            liftFunc: FfiConverterSequenceTypeHolding.lift,
             errorHandler: FfiConverterTypeSpydusError_lift
         )
 }
@@ -2401,6 +2483,241 @@ public func FfiConverterTypeExpiryChoice_lower(_ value: ExpiryChoice) -> RustBuf
 
 
 /**
+ * A featured collection page (`SpydusClient::collection`).
+ */
+public struct FeaturedCollection: Equatable, Hashable {
+    /**
+     * The page's title, e.g. "Library of Things".
+     */
+    public var title: String?
+    /**
+     * Its sections in order; none for a page that isn't a set of saved searches (open it on the web).
+     */
+    public var sections: [FeaturedSection]
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(
+        /**
+         * The page's title, e.g. "Library of Things".
+         */title: String?, 
+        /**
+         * Its sections in order; none for a page that isn't a set of saved searches (open it on the web).
+         */sections: [FeaturedSection]) {
+        self.title = title
+        self.sections = sections
+    }
+
+    
+
+    
+}
+
+#if compiler(>=6)
+extension FeaturedCollection: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeFeaturedCollection: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> FeaturedCollection {
+        return
+            try FeaturedCollection(
+                title: FfiConverterOptionString.read(from: &buf), 
+                sections: FfiConverterSequenceTypeFeaturedSection.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: FeaturedCollection, into buf: inout [UInt8]) {
+        FfiConverterOptionString.write(value.title, into: &buf)
+        FfiConverterSequenceTypeFeaturedSection.write(value.sections, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeFeaturedCollection_lift(_ buf: RustBuffer) throws -> FeaturedCollection {
+    return try FfiConverterTypeFeaturedCollection.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeFeaturedCollection_lower(_ value: FeaturedCollection) -> RustBuffer {
+    return FfiConverterTypeFeaturedCollection.lower(value)
+}
+
+
+/**
+ * A link in the library's "Featured" list on its OPAC home page.
+ */
+public struct FeaturedLink: Equatable, Hashable {
+    /**
+     * e.g. "Library of Things".
+     */
+    public var title: String
+    /**
+     * The link's tooltip when it says more than the title, e.g. "New Library items available in
+     * the last 2 months".
+     */
+    public var description: String?
+    /**
+     * The Font Awesome icon the library picked, without `fa-`: "book", "balloons", "computer",
+     * "circle", "globe", "game-board", "map-location-dot", "user-circle".
+     */
+    public var icon: String?
+    public var kind: FeaturedKind
+    /**
+     * `Collection`: the page for `collection`; `Search`: a results list for `page`; `Web`: as is.
+     */
+    public var url: String
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(
+        /**
+         * e.g. "Library of Things".
+         */title: String, 
+        /**
+         * The link's tooltip when it says more than the title, e.g. "New Library items available in
+         * the last 2 months".
+         */description: String?, 
+        /**
+         * The Font Awesome icon the library picked, without `fa-`: "book", "balloons", "computer",
+         * "circle", "globe", "game-board", "map-location-dot", "user-circle".
+         */icon: String?, kind: FeaturedKind, 
+        /**
+         * `Collection`: the page for `collection`; `Search`: a results list for `page`; `Web`: as is.
+         */url: String) {
+        self.title = title
+        self.description = description
+        self.icon = icon
+        self.kind = kind
+        self.url = url
+    }
+
+    
+
+    
+}
+
+#if compiler(>=6)
+extension FeaturedLink: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeFeaturedLink: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> FeaturedLink {
+        return
+            try FeaturedLink(
+                title: FfiConverterString.read(from: &buf), 
+                description: FfiConverterOptionString.read(from: &buf), 
+                icon: FfiConverterOptionString.read(from: &buf), 
+                kind: FfiConverterTypeFeaturedKind.read(from: &buf), 
+                url: FfiConverterString.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: FeaturedLink, into buf: inout [UInt8]) {
+        FfiConverterString.write(value.title, into: &buf)
+        FfiConverterOptionString.write(value.description, into: &buf)
+        FfiConverterOptionString.write(value.icon, into: &buf)
+        FfiConverterTypeFeaturedKind.write(value.kind, into: &buf)
+        FfiConverterString.write(value.url, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeFeaturedLink_lift(_ buf: RustBuffer) throws -> FeaturedLink {
+    return try FfiConverterTypeFeaturedLink.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeFeaturedLink_lower(_ value: FeaturedLink) -> RustBuffer {
+    return FfiConverterTypeFeaturedLink.lower(value)
+}
+
+
+/**
+ * One section of a collection page: a titled saved search.
+ */
+public struct FeaturedSection: Equatable, Hashable {
+    /**
+     * e.g. "Musical Instruments".
+     */
+    public var title: String
+    /**
+     * Its results list, 20 a page: `SpydusClient::page(url)`.
+     */
+    public var url: String
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(
+        /**
+         * e.g. "Musical Instruments".
+         */title: String, 
+        /**
+         * Its results list, 20 a page: `SpydusClient::page(url)`.
+         */url: String) {
+        self.title = title
+        self.url = url
+    }
+
+    
+
+    
+}
+
+#if compiler(>=6)
+extension FeaturedSection: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeFeaturedSection: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> FeaturedSection {
+        return
+            try FeaturedSection(
+                title: FfiConverterString.read(from: &buf), 
+                url: FfiConverterString.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: FeaturedSection, into buf: inout [UInt8]) {
+        FfiConverterString.write(value.title, into: &buf)
+        FfiConverterString.write(value.url, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeFeaturedSection_lift(_ buf: RustBuffer) throws -> FeaturedSection {
+    return try FfiConverterTypeFeaturedSection.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeFeaturedSection_lower(_ value: FeaturedSection) -> RustBuffer {
+    return FfiConverterTypeFeaturedSection.lower(value)
+}
+
+
+/**
  * A "Popular genres" tile on the home screen. Tapping it runs a relevance `search(query)`.
  */
 public struct Genre: Equatable, Hashable {
@@ -2478,6 +2795,109 @@ public func FfiConverterTypeGenre_lift(_ buf: RustBuffer) throws -> Genre {
 #endif
 public func FfiConverterTypeGenre_lower(_ value: Genre) -> RustBuffer {
     return FfiConverterTypeGenre.lower(value)
+}
+
+
+/**
+ * One copy in a record's holdings list (the "View availability" modal, `/XHLD/OPAC/BIBENQ/…`).
+ */
+public struct Holding: Equatable, Hashable {
+    /**
+     * The branch, e.g. "RIVERTON LIBRARY".
+     */
+    public var location: String?
+    /**
+     * e.g. "Library of Things", "Books - Adult Fiction".
+     */
+    public var collection: String?
+    public var callNumber: String?
+    /**
+     * The copy's status, e.g. "Available", "On loan - Due: 29 Oct 2026".
+     */
+    public var status: String?
+    /**
+     * A note on the copy that comes before its status, e.g. "Pink body, teal handle".
+     */
+    public var description: String?
+    /**
+     * The status says the copy is on the shelf ("Available …").
+     */
+    public var available: Bool
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(
+        /**
+         * The branch, e.g. "RIVERTON LIBRARY".
+         */location: String?, 
+        /**
+         * e.g. "Library of Things", "Books - Adult Fiction".
+         */collection: String?, callNumber: String?, 
+        /**
+         * The copy's status, e.g. "Available", "On loan - Due: 29 Oct 2026".
+         */status: String?, 
+        /**
+         * A note on the copy that comes before its status, e.g. "Pink body, teal handle".
+         */description: String?, 
+        /**
+         * The status says the copy is on the shelf ("Available …").
+         */available: Bool) {
+        self.location = location
+        self.collection = collection
+        self.callNumber = callNumber
+        self.status = status
+        self.description = description
+        self.available = available
+    }
+
+    
+
+    
+}
+
+#if compiler(>=6)
+extension Holding: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeHolding: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> Holding {
+        return
+            try Holding(
+                location: FfiConverterOptionString.read(from: &buf), 
+                collection: FfiConverterOptionString.read(from: &buf), 
+                callNumber: FfiConverterOptionString.read(from: &buf), 
+                status: FfiConverterOptionString.read(from: &buf), 
+                description: FfiConverterOptionString.read(from: &buf), 
+                available: FfiConverterBool.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: Holding, into buf: inout [UInt8]) {
+        FfiConverterOptionString.write(value.location, into: &buf)
+        FfiConverterOptionString.write(value.collection, into: &buf)
+        FfiConverterOptionString.write(value.callNumber, into: &buf)
+        FfiConverterOptionString.write(value.status, into: &buf)
+        FfiConverterOptionString.write(value.description, into: &buf)
+        FfiConverterBool.write(value.available, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeHolding_lift(_ buf: RustBuffer) throws -> Holding {
+    return try FfiConverterTypeHolding.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeHolding_lower(_ value: Holding) -> RustBuffer {
+    return FfiConverterTypeHolding.lower(value)
 }
 
 
@@ -4169,6 +4589,91 @@ public func FfiConverterTypeBarcodeSymbology_lower(_ value: BarcodeSymbology) ->
 
 
 /**
+ * What a featured link opens (`FeaturedLink.kind`).
+ */
+
+public enum FeaturedKind: Equatable, Hashable {
+    
+    /**
+     * A collection page: `SpydusClient::collection(url)` → its sections.
+     */
+    case collection
+    /**
+     * One saved search: `SpydusClient::page(url)` → its results.
+     */
+    case search
+    /**
+     * Anything else (a page of links to outside services, another site): open it on the web.
+     */
+    case web
+
+
+
+
+
+}
+
+#if compiler(>=6)
+extension FeaturedKind: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeFeaturedKind: FfiConverterRustBuffer {
+    typealias SwiftType = FeaturedKind
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> FeaturedKind {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+        
+        case 1: return .collection
+        
+        case 2: return .search
+        
+        case 3: return .web
+        
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: FeaturedKind, into buf: inout [UInt8]) {
+        switch value {
+        
+        
+        case .collection:
+            writeInt(&buf, Int32(1))
+        
+        
+        case .search:
+            writeInt(&buf, Int32(2))
+        
+        
+        case .web:
+            writeInt(&buf, Int32(3))
+        
+        }
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeFeaturedKind_lift(_ buf: RustBuffer) throws -> FeaturedKind {
+    return try FfiConverterTypeFeaturedKind.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeFeaturedKind_lower(_ value: FeaturedKind) -> RustBuffer {
+    return FfiConverterTypeFeaturedKind.lower(value)
+}
+
+
+
+/**
  * How the patron already has a title (`AccountHolding.kind`).
  */
 
@@ -4789,6 +5294,56 @@ fileprivate struct FfiConverterSequenceTypeExpiryChoice: FfiConverterRustBuffer 
 #if swift(>=5.8)
 @_documentation(visibility: private)
 #endif
+fileprivate struct FfiConverterSequenceTypeFeaturedLink: FfiConverterRustBuffer {
+    typealias SwiftType = [FeaturedLink]
+
+    public static func write(_ value: [FeaturedLink], into buf: inout [UInt8]) {
+        let len = Int32(value.count)
+        writeInt(&buf, len)
+        for item in value {
+            FfiConverterTypeFeaturedLink.write(item, into: &buf)
+        }
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> [FeaturedLink] {
+        let len: Int32 = try readInt(&buf)
+        var seq = [FeaturedLink]()
+        seq.reserveCapacity(Int(len))
+        for _ in 0 ..< len {
+            seq.append(try FfiConverterTypeFeaturedLink.read(from: &buf))
+        }
+        return seq
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterSequenceTypeFeaturedSection: FfiConverterRustBuffer {
+    typealias SwiftType = [FeaturedSection]
+
+    public static func write(_ value: [FeaturedSection], into buf: inout [UInt8]) {
+        let len = Int32(value.count)
+        writeInt(&buf, len)
+        for item in value {
+            FfiConverterTypeFeaturedSection.write(item, into: &buf)
+        }
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> [FeaturedSection] {
+        let len: Int32 = try readInt(&buf)
+        var seq = [FeaturedSection]()
+        seq.reserveCapacity(Int(len))
+        for _ in 0 ..< len {
+            seq.append(try FfiConverterTypeFeaturedSection.read(from: &buf))
+        }
+        return seq
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 fileprivate struct FfiConverterSequenceTypeGenre: FfiConverterRustBuffer {
     typealias SwiftType = [Genre]
 
@@ -4806,6 +5361,31 @@ fileprivate struct FfiConverterSequenceTypeGenre: FfiConverterRustBuffer {
         seq.reserveCapacity(Int(len))
         for _ in 0 ..< len {
             seq.append(try FfiConverterTypeGenre.read(from: &buf))
+        }
+        return seq
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterSequenceTypeHolding: FfiConverterRustBuffer {
+    typealias SwiftType = [Holding]
+
+    public static func write(_ value: [Holding], into buf: inout [UInt8]) {
+        let len = Int32(value.count)
+        writeInt(&buf, len)
+        for item in value {
+            FfiConverterTypeHolding.write(item, into: &buf)
+        }
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> [Holding] {
+        let len: Int32 = try readInt(&buf)
+        var seq = [Holding]()
+        seq.reserveCapacity(Int(len))
+        for _ in 0 ..< len {
+            seq.append(try FfiConverterTypeHolding.read(from: &buf))
         }
         return seq
     }
@@ -5415,7 +5995,7 @@ private let initializationResult: InitializationResult = {
     if (uniffi_librespydus_core_checksum_method_spydusclient_account_snapshot() != 56033) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_librespydus_core_checksum_method_spydusclient_availability() != 17964) {
+    if (uniffi_librespydus_core_checksum_method_spydusclient_availability() != 12540) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_librespydus_core_checksum_method_spydusclient_cancel_reservation() != 50116) {
@@ -5424,10 +6004,19 @@ private let initializationResult: InitializationResult = {
     if (uniffi_librespydus_core_checksum_method_spydusclient_card_barcode_symbology() != 26393) {
         return InitializationResult.apiChecksumMismatch
     }
+    if (uniffi_librespydus_core_checksum_method_spydusclient_collection() != 20475) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_librespydus_core_checksum_method_spydusclient_edit_options() != 27600) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_librespydus_core_checksum_method_spydusclient_edit_reservation() != 57767) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_librespydus_core_checksum_method_spydusclient_featured() != 3738) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_librespydus_core_checksum_method_spydusclient_holdings() != 44920) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_librespydus_core_checksum_method_spydusclient_loans() != 55114) {

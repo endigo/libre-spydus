@@ -28,6 +28,7 @@ core/
     directory.rs        Civica's library directory → LibraryInfo (region, test-instance flag)
     fetch.rs            HTTP: search, fragments, authed GET, login, reservation wizards;
                         origin guard, timeouts, AWS WAF detection, verification cookie
+    parse/featured.rs   the home page's Featured list, collection pages, results-list URLs
     barcode.rs          card_barcode: a card number as Code 128 / Code 39 / Codabar modules
     timing.rs           opt-in timing log (set_timing_sink): network and parse time per page
     crypto.rs           encrypt.js → PEM, RSA PKCS#1 v1.5 (JSEncrypt-compatible) PIN encryption
@@ -140,6 +141,21 @@ reservations, and `parse_personal_details` reads only its "Card number" and "Car
 "Membership number", "Expiry date", …) into `AccountSnapshot.cardNumber` / `.cardExpires`. A missing
 or failing page leaves both `nil` without failing the snapshot. Older saved snapshots without
 these fields still decode.
+
+Featured collections (`docs/native-apps.md` §5.10), all public:
+
+| call | returns |
+|---|---|
+| `featured()` | The "Featured" list on the OPAC home page (`/cgi-bin/spydus.exe/MSGTRN/OPAC/HOME`) as `[FeaturedLink{title, description?, icon?, kind, url}]`, in order. `kind`: `.collection` (a `MSGTRNGEN` page for `collection`), `.search` (one saved search, already a results list for `page`) or `.web`. `icon` is the library's Font Awesome name without `fa-` (Canning: book, balloons, computer, circle, globe, game-board, map-location-dot, user-circle). Empty for a library without the list (Hutt, Geelong, Cumberland). Cached 10 min. |
+| `collection(url)` | `FeaturedCollection{title?, sections: [FeaturedSection{title, url}]}`: each section of the page is a saved search (`RUNSQRY`), its `url` a results list for `page` (20 a page, without the home page's grid view and random order). A page of outside links (eLibrary) has no sections. Cached 10 min. |
+| `holdings(url)` | An `Availability.holdingsUrl` → one `Holding{location, collection, callNumber, status, description, available}` per copy (`available`: the status starts with "Available", "On shelf" or "In library"). Cached 60 s. |
+
+Saved-search lists are **edition-level**: each card is one bib, with no format tabs. `page` gives
+such a record one format with an empty `code` and no label: the card's "Place reservation" link as
+`reserveUrl` and `…/ENQ/OPAC/BIBENQ?SETLVL=&IRN={bibIrn}&FMT=RECFMT` as `availabilityUrl`. For that
+URL `availability` counts `copies` / `available` from the holdings (the fragment has no counts) and
+`record` loads `…/BIBENQ?SETLVL=&IRN={bibIrn}` directly. Their first detail line is the author
+when it isn't a year; the blurb comes from `div.summary` itself.
 
 Saving the account on the device: `encodeAccountSnapshot(snapshot)` → JSON `String` and
 `decodeAccountSnapshot(json)` → `AccountSnapshot` (throws `Parse` for malformed JSON or a snapshot
