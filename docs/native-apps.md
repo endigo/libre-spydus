@@ -259,10 +259,20 @@ Canning sends its notices at about 07:20–07:45 local time, so LibreSpydus chec
   - Ready: title **"Ready to collect"**, body **"<Title> · <Branch>"**, where the branch is what
     Your Books shows for that row (pickup branch from Status), the body is just the title when the
     branch is unknown, and the title falls back to "A reservation". ID `ready:<originHash>:<key>`.
-    Tap → Your Books, Reservations, Ready segment.
+    Tap → that reservation's **book page** (see "Tap" below).
   - Due: title **"Due Thursday 16 Oct"** (local weekday, day, short month; **"Due today"** when
     due today, **"Due tomorrow"** when due tomorrow); body: one loan "<Title>", two "<A> and <B>",
-    more "<A> and N more". ID `due:<originHash>:<YYYY-MM-DD>`. Tap → Your Books, Loans.
+    more "<A> and N more". ID `due:<originHash>:<YYYY-MM-DD>`. Tap → the loan's **book page**
+    when it names one loan, else Your Books › Loans.
+  - **Tap** (both apps): every notification carries its kind (`ready` / `due`), the library origin
+    and the `patronItemKey`s it names (iOS `userInfo`; Android intent extras, one PendingIntent per
+    notification). Tapping opens the Your Books tab on the right list (Reservations / Loans) and
+    pushes the book page for the named item, built from the saved snapshot's `PatronItem` exactly
+    as tapping that row in Your Books does — so Back lands on the list. Falls back to just the list
+    when the item is no longer in the saved snapshot (collected, returned), when the notification
+    names several loans, or when it belongs to another library than the selected one. A
+    notification posted by an older build (no keys) also falls back; iOS reads a ready
+    notification's key from its ID. Android's collapsed group summary opens Your Books.
   - Android channels: `ready` "Ready to collect", `due` "Due-date reminders" (default importance).
 - **Morning check** (next 07:45 local; scheduled while signed in with any switch on, cancelled
   otherwise): fetch `accountSnapshot`, save it like a foreground refresh (so the app opens with
