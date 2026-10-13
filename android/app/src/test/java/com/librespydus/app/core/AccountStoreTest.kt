@@ -18,6 +18,8 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import uniffi.librespydus_core.PatronAction
+import uniffi.librespydus_core.PatronList
 import uniffi.librespydus_core.SpydusException
 
 /** AccountStore: restore, background refresh (coalesced, dropped when stale), save, discard. */
@@ -171,6 +173,26 @@ class AccountStoreTest {
         advanceUntilIdle()
         assertEquals("Reader for tok", store.snapshot.value?.accountName)
         assertEquals("Reader for tok", storage.load("https://canning.spydus.com")?.accountName)
+    }
+
+    @Test
+    fun aRenewedLoanShowsAndSavesItsNewDateAtOnce() = runTest {
+        val renew = "https://canning.spydus.com/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/1/0/N/3/LOANRENQ?SVL=loan-1"
+        val saved = accountSnapshot("Saved Reader").let { s ->
+            s.copy(loans = PatronList(1, listOf(s.loans.items[0].copy(actions = listOf(PatronAction("Renew loan", renew))))))
+        }
+        val storage = InMemoryAccountSnapshotStorage()
+        storage.save("https://canning.spydus.com", saved)
+        val store = store(storage)
+
+        store.renewLoan(renew, "17 Nov 2026") // signed out: nothing to change
+        assertNull(store.snapshot.value)
+
+        store.restore(backend(), "tok", cacheKey = "https://canning.spydus.com")
+        store.renewLoan(renew, "17 Nov 2026")
+        assertEquals("17 Nov 2026", store.snapshot.value?.loans?.items?.single()?.fields?.get("Due"))
+        advanceUntilIdle()
+        assertEquals("17 Nov 2026", storage.load("https://canning.spydus.com")?.loans?.items?.single()?.fields?.get("Due"))
     }
 
     @Test

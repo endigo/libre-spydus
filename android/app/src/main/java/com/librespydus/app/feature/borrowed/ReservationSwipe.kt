@@ -74,18 +74,39 @@ import com.librespydus.app.ui.theme.LsType
 import kotlin.math.roundToInt
 
 /**
- * A reservation's actions: revealed by swiping the card toward the leading edge, offered in its
- * long-press menu and as TalkBack custom actions. Only the ones the library linked are offered.
+ * An action on a Your Books card: revealed by swiping the card toward the leading edge, offered in
+ * its long-press menu and as a TalkBack custom action. A reservation's are [ReservationAction], a
+ * loan's [LoanAction]; only the ones the library linked are offered.
  */
-enum class ReservationAction(
+interface SwipeAction {
     /** The swipe tile's label. */
-    val title: String,
+    val title: String
+
     /** The long-press menu item and the TalkBack custom action. */
-    val fullTitle: String,
-) {
+    val fullTitle: String
+
+    /** The swipe tile's colour. */
+    val tileColor: Color
+
+    /** The swipe tile's and the menu item's icon. */
+    val icon: ImageVector
+
+    /** Shown in the danger colour in the menu. */
+    val isDestructive: Boolean get() = false
+
+    /** What the swipe tile does, for TalkBack. */
+    val hint: String? get() = null
+}
+
+/** A reservation's actions. */
+enum class ReservationAction(override val title: String, override val fullTitle: String) : SwipeAction {
     EDIT(Copy.Common.edit, Copy.YourBooks.editReservation),
     CANCEL(Copy.Common.cancel, Copy.YourBooks.cancelReservation),
     ;
+
+    override val tileColor: Color get() = if (this == CANCEL) LsColors.danger else LsColors.accent
+    override val icon: ImageVector get() = if (this == CANCEL) LsIcons.Close else ReservationIcons.Edit
+    override val isDestructive: Boolean get() = this == CANCEL
 
     companion object {
         /** In trailing order: Edit, then the destructive Cancel at the card's edge (as on iOS). */
@@ -96,13 +117,30 @@ enum class ReservationAction(
     }
 }
 
+/** A loan's actions (§5.12): Renew, when the library links it. */
+enum class LoanAction(override val title: String, override val fullTitle: String) : SwipeAction {
+    RENEW(Copy.YourBooks.renew, Copy.YourBooks.renewLoan),
+    ;
+
+    override val tileColor: Color get() = LsColors.accent
+    override val icon: ImageVector get() = ReservationIcons.Renew
+    override val hint: String get() = Copy.YourBooks.renewHint
+
+    companion object {
+        fun of(row: LoanRow): List<LoanAction> = if (row.renewHref != null) listOf(RENEW) else emptyList()
+    }
+}
+
+/** At least one loan can be renewed (shows the "Swipe left on a loan…" hint under the list). */
+val List<LoanRow>.canRenew: Boolean get() = any { it.renewHref != null }
+
 /** At least one reservation can be swiped (shows the "Swipe left…" hint under the list). */
 val ReservationSections.hasActions: Boolean
     get() = ready.any { ReservationAction.of(it).isNotEmpty() } || pending.any { ReservationAction.of(it).isNotEmpty() }
 
 /**
- * Which reservation card is swiped open: at most one. Hoisted to the screen, so opening a card
- * closes the others, and a scroll or a tap elsewhere closes it.
+ * Which card (a reservation, or a loan) is swiped open: at most one. Hoisted to the screen, so
+ * opening a card closes the others, and a scroll or a tap elsewhere closes it.
  */
 @Stable
 class ReservationSwipeController {
@@ -134,19 +172,20 @@ internal object ReservationSwipe {
 private enum class SwipeAnchor { Closed, Open }
 
 /**
- * Swipe-to-reveal for a reservation card. Dragging [content] toward the leading edge snaps it open
- * on rounded [actions] tiles at its trailing side (Edit, then Cancel); a tile runs [onAction] and
- * closes the card. Only two anchors, so no swipe length runs an action by itself. Horizontal drags
- * only: vertical ones still scroll the list. [surfaceTop] is where the card's rounded surface
- * starts below the cover that rises above it: the tiles line up with the surface, and while the
- * card moves it is clipped to that silhouette. [controller] keeps one card open at a time.
+ * Swipe-to-reveal for a Your Books card. Dragging [content] toward the leading edge snaps it open
+ * on rounded [actions] tiles at its trailing side (a reservation's Edit, then Cancel; a loan's
+ * Renew); a tile runs [onAction] and closes the card. Only two anchors, so no swipe length runs an
+ * action by itself. Horizontal drags only: vertical ones still scroll the list. [surfaceTop] is
+ * where the card's rounded surface starts below the cover that rises above it: the tiles line up
+ * with the surface, and while the card moves it is clipped to that silhouette. [controller] keeps
+ * one card open at a time.
  */
 @Composable
-fun ReservationSwipeBox(
+fun <A : SwipeAction> ReservationSwipeBox(
     id: String,
     controller: ReservationSwipeController,
-    actions: List<ReservationAction>,
-    onAction: (ReservationAction) -> Unit,
+    actions: List<A>,
+    onAction: (A) -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     surfaceTop: Dp = 0.dp,
@@ -243,22 +282,20 @@ fun Modifier.closesReservationSwipeOnTap(controller: ReservationSwipeController)
     }
 
 @Composable
-private fun SwipeTile(action: ReservationAction, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    val (color, icon) = when (action) {
-        ReservationAction.EDIT -> LsColors.accent to ReservationIcons.Edit
-        ReservationAction.CANCEL -> LsColors.danger to LsIcons.Close
-    }
+private fun SwipeTile(action: SwipeAction, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Column(
         modifier
             .clip(RoundedCornerShape(LsRadius.card))
-            .background(color)
+            .background(action.tileColor)
             .clickable(role = Role.Button, onClick = onClick)
-            .semantics { contentDescription = action.fullTitle }
+            .semantics {
+                contentDescription = action.hint?.let { Copy.A11y.labelAndHint(action.fullTitle, it) } ?: action.fullTitle
+            }
             .padding(horizontal = LsSpacing.xs),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Icon(icon, contentDescription = null, tint = Color.White, modifier = Modifier.size(22.dp))
+        Icon(action.icon, contentDescription = null, tint = Color.White, modifier = Modifier.size(22.dp))
         Spacer(Modifier.height(LsSpacing.xs))
         Text(
             action.title,
@@ -287,12 +324,22 @@ private class CardSilhouette(private val surfaceTop: Dp, private val radius: Dp)
     }
 }
 
-/** Icons only the reservation actions use (Material geometry, 24dp grid). */
+/** Icons only the card actions use (Material geometry, 24dp grid). */
 internal object ReservationIcons {
     val Edit: ImageVector = ImageVector.Builder("edit", 24.dp, 24.dp, 24f, 24f)
         .addPath(
             pathData = addPathNodes(
                 "M3,17.25V21h3.75L17.81,9.94l-3.75,-3.75L3,17.25zM20.71,7.04c0.39,-0.39 0.39,-1.02 0,-1.41l-2.34,-2.34c-0.39,-0.39 -1.02,-0.39 -1.41,0l-1.83,1.83 3.75,3.75 1.83,-1.83z",
+            ),
+            fill = SolidColor(Color.Black),
+        )
+        .build()
+
+    /** Material "autorenew": a loan's Renew. */
+    val Renew: ImageVector = ImageVector.Builder("autorenew", 24.dp, 24.dp, 24f, 24f)
+        .addPath(
+            pathData = addPathNodes(
+                "M12,6v3l4,-4 -4,-4v3c-4.42,0 -8,3.58 -8,8 0,1.57 0.46,3.03 1.24,4.26L6.7,14.8c-0.45,-0.83 -0.7,-1.79 -0.7,-2.8 0,-3.31 2.69,-6 6,-6zM18.76,7.74L17.3,9.2c0.44,0.84 0.7,1.79 0.7,2.8 0,3.31 -2.69,6 -6,6v-3l-4,4 4,4v-3c4.42,0 8,-3.58 8,-8 0,-1.57 -0.46,-3.03 -1.24,-4.26z",
             ),
             fill = SolidColor(Color.Black),
         )

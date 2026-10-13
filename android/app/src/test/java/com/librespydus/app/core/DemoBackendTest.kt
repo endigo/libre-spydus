@@ -10,6 +10,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Test
 import uniffi.librespydus_core.EditOverrides
+import uniffi.librespydus_core.RenewResult
 import uniffi.librespydus_core.SpydusException
 import uniffi.librespydus_core.decodeAccountSnapshot
 import uniffi.librespydus_core.encodeAccountSnapshot
@@ -96,6 +97,48 @@ class DemoBackendTest {
 
         val again = b.cancelReservation(cancel, session)
         assertFalse(again.ok)
+    }
+
+    @Test
+    fun renewMovesTheDueDateThreeWeeksLater() = runTest {
+        val b = backend()
+        val session = signedIn(b)
+        val loan = b.loans(session).items.first { it.title == "Project Hail Mary" }
+        val renew = loan.actions.first { it.label.contains("renew", ignoreCase = true) }.href
+
+        val start = currentTime
+        val result = b.renewLoan(renew, session)
+        assertTrue(currentTime - start >= 2_000) // a real renewal takes a few seconds
+        assertEquals(RenewResult(ok = true, message = null, due = "4 Nov 2026"), result)
+        assertEquals("4 Nov 2026", b.loans(session).items.first { it.irn == loan.irn }.fields["Due"])
+        assertEquals("4 Nov 2026", b.accountSnapshot(session).loans.items.first { it.irn == loan.irn }.fields["Due"])
+        // Again: three weeks on from the new date.
+        assertEquals("25 Nov 2026", b.renewLoan(renew, session).due)
+    }
+
+    @Test
+    fun oneDemoLoanIsRefusedWithTheLibrarysReason() = runTest {
+        val b = backend()
+        val session = signedIn(b)
+        val loan = b.loans(session).items.first { it.irn == DemoBackend.REFUSING_IRN }
+        assertEquals("Lessons in chemistry", loan.title)
+        val renew = loan.actions.first { it.label.contains("renew", ignoreCase = true) }.href
+        val result = b.renewLoan(renew, session)
+        assertEquals(RenewResult(ok = false, message = "This item cannot be renewed as it is reserved by another borrower.", due = "21 Oct 2026"), result)
+        assertEquals("21 Oct 2026", b.loans(session).items.first { it.irn == loan.irn }.fields["Due"])
+    }
+
+    @Test
+    fun renewNeedsTheDemoSessionAndALoanOnTheList() = runTest {
+        val b = backend()
+        val renew = b.loans(signedIn(b)).items.first().actions.first().href
+        try {
+            b.renewLoan(renew, "some-real-session")
+            fail("expected NotLoggedIn")
+        } catch (_: SpydusException.NotLoggedIn) {
+        }
+        val gone = b.renewLoan("$origin/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/1/0/N/3/LOANRENQ?SVL=0", signedIn(b))
+        assertEquals(RenewResult(ok = false, message = "This loan isn’t on your loans list any more.", due = null), gone)
     }
 
     @Test

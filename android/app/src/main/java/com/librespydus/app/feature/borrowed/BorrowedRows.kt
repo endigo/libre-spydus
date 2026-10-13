@@ -27,6 +27,9 @@ val PatronItem.cancelHref: String? get() = actionHref("cancel")
 /** `/edit/i`: the reservation's edit link (`editOptions(url)` / `editReservation(url)`). */
 val PatronItem.editHref: String? get() = actionHref("edit")
 
+/** `/renew/i`: the loan's renew link (`renewLoan(url)`, §5.12). */
+val PatronItem.renewHref: String? get() = actionHref("renew")
+
 private fun String?.nonBlank(): String? = this?.trim()?.takeIf { it.isNotEmpty() }
 
 /** Borrowed's date wording ("10 Oct"), as the library's own dates are English. */
@@ -64,7 +67,13 @@ data class LoanRow(
     val due: DueStatus?,
     /** `fields["Due"]` as the library wrote it. */
     val dueText: String?,
+    /** The "Renew loan" link; null when the library offers no renewal for this loan. */
+    val renewHref: String? = item.renewHref,
 ) {
+    /** The due date as `loans.dueOn` writes it ("27 Oct"); an unreadable date as the library wrote it. */
+    val dueDate: String?
+        get() = due?.let { BorrowedDates.short(it.dueDate, today = it.dueDate.minusDays(it.daysLeft)) } ?: dueText
+
     /** The meta line; an unreadable date is shown as the library wrote it. */
     val meta: String?
         get() {
@@ -256,6 +265,19 @@ data class ReservationSections(
                 .map { row(it, ReservationRow.Kind.PENDING) }
             return ReservationSections(ready, pending)
         }
+    }
+}
+
+/** The texts of a renewal (§5.12): the "Renew this loan?" confirmation and the result toast. */
+object RenewText {
+    /** "“Title” is due 14 Oct. Renewing asks the library for a later due date." */
+    fun confirm(row: LoanRow): String =
+        row.dueDate?.let { Copy.YourBooks.renewMessage(row.ref.title, it) } ?: Copy.YourBooks.renewMessageNoDate(row.ref.title)
+
+    /** "Renewed · Due 4 Nov" for the date the library now gives ([due], e.g. "4 Nov 2026"); "Renewed" without one. */
+    fun renewed(due: String?, today: LocalDate = LocalDate.now()): String {
+        val text = due.nonBlank() ?: return Copy.YourBooks.renewedNoDate
+        return Copy.YourBooks.renewed(Formatting.parseDueDate(text)?.let { BorrowedDates.short(it, today) } ?: text)
     }
 }
 

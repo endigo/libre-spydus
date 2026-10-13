@@ -429,8 +429,6 @@ enum Copy {
         static func noLoansMessage(library: String) -> String {
             "Books on loan from \(library) show up here with their due dates."
         }
-        /// Retired by the renew feature (§5.12): remove once neither app uses it.
-        static let renewalsSoon = "Renewals coming soon"
         /// Swipe action / button on a loan, and the Renew dialog's confirming button (cancel button: common.notNow).
         static let renew = "Renew"
         /// Menu item and screen-reader action on a loan row (like editReservation / cancelReservation).
