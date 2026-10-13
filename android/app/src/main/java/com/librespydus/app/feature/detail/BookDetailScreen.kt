@@ -41,6 +41,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.role
@@ -57,11 +58,13 @@ import com.librespydus.app.core.BorrowedSegment
 import com.librespydus.app.core.CoreHelpers
 import com.librespydus.app.core.FormatRef
 import com.librespydus.app.core.Formatting
+import com.librespydus.app.core.PickIrn
 import com.librespydus.app.core.ResultsSort
 import com.librespydus.app.feature.onboarding.AccountIcons
 import com.librespydus.app.feature.search.BrowseIcons
 import com.librespydus.app.feature.search.browseReporter
 import com.librespydus.app.feature.search.displayLabel
+import com.librespydus.app.feature.search.valueOrNull
 import com.librespydus.app.ui.components.Chip
 import com.librespydus.app.ui.components.CircleIconButton
 import com.librespydus.app.ui.components.CoverImage
@@ -95,6 +98,7 @@ fun BookDetailScreen(book: BookRef, appState: AppState, navigator: AppNavigator,
     val loginNeeded by appState.loginNeeded.collectAsStateWithLifecycle()
     val verification by appState.verificationGeneration.collectAsStateWithLifecycle()
     val favourites by appState.currentFavourites.collectAsStateWithLifecycle()
+    val pickIrns by appState.picks.irns.collectAsStateWithLifecycle()
     val account by appState.account.snapshot.collectAsStateWithLifecycle()
     val report = remember(appState) { appState.browseReporter() }
     val scope = rememberCoroutineScope()
@@ -154,7 +158,13 @@ fun BookDetailScreen(book: BookRef, appState: AppState, navigator: AppNavigator,
         }
     }
 
-    val isFavourite = favourites.any { it.id == state.ref.id }
+    // Signed in, the bookmark is My Picks on the library account (§5.11); signed out, this phone's favourites.
+    val pickIrn = PickIrn.of(state.ref, state.record.valueOrNull)
+    val bookmark = if (session != null) DetailBookmark.myPicks(pickIrn, pickIrns) else DetailBookmark.local(favourites.any { it.id == state.ref.id })
+    fun toggleBookmark() {
+        if (appState.session.value != null) pickIrn?.let(appState.picks::toggle)
+        else scope.launch { appState.toggleFavourite(model.state.value.favouriteRef) }
+    }
     // The format on screen is already on loan or reserved: a status pill instead of Reserve.
     val heldIrns = state.heldIrns
     val held = remember(account, session, heldIrns) {
@@ -216,9 +226,9 @@ fun BookDetailScreen(book: BookRef, appState: AppState, navigator: AppNavigator,
                     awaitingHolding = awaitingHolding,
                     onOpenHeld = appState::openBorrowed,
                     signedIn = session != null,
-                    isFavourite = isFavourite,
+                    bookmark = bookmark,
                     onBorrow = ::borrow,
-                    onToggleFavourite = { scope.launch { appState.toggleFavourite(model.state.value.favouriteRef) } },
+                    onToggleBookmark = ::toggleBookmark,
                     modifier = Modifier.align(Alignment.TopCenter),
                 )
             }
@@ -384,7 +394,7 @@ private fun RetryLine(text: String, onRetry: () -> Unit) {
 
 /**
  * "Reserve" (physical/reservable formats), or the [HeldStatusPill] in its place when the patron
- * already has the format, and the blue favourite bookmark.
+ * already has the format, and the blue bookmark (My Picks signed in, favourites signed out).
  */
 @Composable
 private fun DetailActions(
@@ -394,9 +404,9 @@ private fun DetailActions(
     awaitingHolding: Boolean,
     onOpenHeld: (BorrowedSegment) -> Unit,
     signedIn: Boolean,
-    isFavourite: Boolean,
+    bookmark: DetailBookmark,
     onBorrow: (FormatRef) -> Unit,
-    onToggleFavourite: () -> Unit,
+    onToggleBookmark: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Row(
@@ -430,11 +440,16 @@ private fun DetailActions(
             Spacer(Modifier.weight(1f))
         }
         CircleIconButton(
-            icon = if (isFavourite) LsIcons.BookmarkFilled else LsIcons.Bookmark,
-            contentDescription = if (isFavourite) "Remove from favourites" else "Add to favourites",
-            onClick = onToggleFavourite,
+            icon = if (bookmark.saved) LsIcons.BookmarkFilled else LsIcons.Bookmark,
+            contentDescription = bookmark.label,
+            onClick = { if (bookmark.enabled) onToggleBookmark() },
             size = ActionsHeight,
-            modifier = Modifier.semantics { selected = isFavourite },
+            modifier = Modifier
+                .alpha(if (bookmark.enabled) 1f else 0.5f)
+                .semantics {
+                    selected = bookmark.saved
+                    if (!bookmark.enabled) disabled()
+                },
         )
     }
 }

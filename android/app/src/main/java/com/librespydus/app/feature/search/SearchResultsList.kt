@@ -5,8 +5,10 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -35,11 +37,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.onLongClick
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
@@ -173,9 +178,20 @@ fun resultCount(total: Long?): String? {
     return if (total == 1L) "1 result" else "${NumberFormat.getIntegerInstance().format(total)} results"
 }
 
-/** A result: cover, title, author, format chips (digital ones tinted) and year. */
+/**
+ * A result: cover, title, author, format chips (digital ones tinted) and year. My Picks (§5.11)
+ * adds a long-press menu ([onLongClick]), screen-reader [actions] and a [trailing] button.
+ */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun SearchResultRow(item: SearchResultItem, onClick: () -> Unit, modifier: Modifier = Modifier) {
+fun SearchResultRow(
+    item: SearchResultItem,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    onLongClick: (() -> Unit)? = null,
+    actions: List<CustomAccessibilityAction> = emptyList(),
+    trailing: (@Composable () -> Unit)? = null,
+) {
     val shape = RoundedCornerShape(LsRadius.card)
     val rise = 14.dp
     val byLine = Formatting.byLine(item.ref.author)
@@ -193,6 +209,8 @@ fun SearchResultRow(item: SearchResultItem, onClick: () -> Unit, modifier: Modif
                 contentDescription = description
                 role = Role.Button
                 onClick { onClick(); true }
+                if (onLongClick != null) onLongClick(label = "More options") { onLongClick(); true }
+                if (actions.isNotEmpty()) customActions = actions
             },
     ) {
         Box(
@@ -201,7 +219,7 @@ fun SearchResultRow(item: SearchResultItem, onClick: () -> Unit, modifier: Modif
                 .padding(top = rise)
                 .clip(shape)
                 .background(LsColors.surface)
-                .clickable(role = Role.Button, onClick = onClick),
+                .combinedClickable(role = Role.Button, onLongClick = onLongClick, onClick = onClick),
         )
         Row(Modifier.padding(start = LsSpacing.l, end = LsSpacing.l, bottom = LsSpacing.l), verticalAlignment = Alignment.Top) {
             CoverImage(url = item.ref.coverUrl, title = item.ref.title, width = LsCover.smallWidth)
@@ -225,6 +243,9 @@ fun SearchResultRow(item: SearchResultItem, onClick: () -> Unit, modifier: Modif
                     }
                 }
                 item.ref.year?.let { Text(it, style = LsType.caption, color = LsColors.textMuted, modifier = Modifier.padding(top = LsSpacing.xs)) }
+            }
+            if (trailing != null) {
+                Box(Modifier.padding(top = rise + LsSpacing.xs, start = LsSpacing.s)) { trailing() }
             }
         }
     }

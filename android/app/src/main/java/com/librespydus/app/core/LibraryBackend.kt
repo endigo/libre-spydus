@@ -76,6 +76,20 @@ interface LibraryBackend {
 
     /** One row per copy for an `Availability.holdingsUrl` (the book page's "Copies" list, §5.10). */
     suspend fun holdings(url: String): List<Holding> = emptyList()
+
+    /**
+     * The reader's Pick list, "My Picks" (§5.11): [url] null for its first page, else one of its
+     * `nextPageUrl`s. Empty → `noResults`; an ended session → `NotLoggedIn`. Not cached. Test fakes
+     * get an empty list.
+     */
+    suspend fun picks(session: String, url: String?): SearchResults =
+        SearchResults(null, null, 0, null, null, null, true, emptyList())
+
+    /** MUTATING, only on the reader's tap: saves [irn] to the Pick list; returns the list's new size. */
+    suspend fun savePick(irn: String, session: String): Long = throw UnsupportedOperationException("savePick")
+
+    /** MUTATING, only on the reader's tap: removes [irn] from the Pick list; returns how many remain. */
+    suspend fun removePick(irn: String, session: String): Long = throw UnsupportedOperationException("removePick")
 }
 
 /**
@@ -120,6 +134,10 @@ class CoreBackend(private val client: SpydusClient) : LibraryBackend {
     override suspend fun featured() = io { client.featured() }
     override suspend fun collection(url: String) = io { client.collection(url) }
     override suspend fun holdings(url: String) = io { client.holdings(url) }
+
+    override suspend fun picks(session: String, url: String?) = io { client.picks(session, url) }
+    override suspend fun savePick(irn: String, session: String) = io { client.savePick(irn, session) }
+    override suspend fun removePick(irn: String, session: String) = io { client.removePick(irn, session) }
 
     private suspend inline fun <T> io(crossinline block: suspend () -> T): T =
         withContext(Dispatchers.IO) { block() }

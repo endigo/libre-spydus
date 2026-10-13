@@ -39,6 +39,7 @@ import com.librespydus.app.core.Tab
 import com.librespydus.app.feature.borrowed.BorrowedScreen
 import com.librespydus.app.feature.detail.BookDetailScreen
 import com.librespydus.app.feature.favourites.FavouritesScreen
+import com.librespydus.app.feature.favourites.PicksOverlays
 import com.librespydus.app.feature.featured.CollectionScreen
 import com.librespydus.app.feature.home.HomeScreen
 import com.librespydus.app.feature.onboarding.LibraryPickerScreen
@@ -83,6 +84,8 @@ fun LibreSpydusRoot(appState: AppState) {
                 library == null -> LibraryPickerScreen(appState, onDismiss = null)
                 else -> MainTabs(appState)
             }
+            // My Picks (§5.11): save/remove confirmations and the copy offer, over the tabs.
+            if (ready && library != null) PicksOverlays(appState)
 
             AnimatedVisibility(
                 visible = ready && library != null && pickerVisible,
