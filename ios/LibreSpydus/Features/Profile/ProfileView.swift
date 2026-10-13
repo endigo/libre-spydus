@@ -2,7 +2,8 @@ import LibreSpydusCore
 import SwiftUI
 
 /// Profile (docs/native-apps.md §6): the library card + Change library, the account (Sign in /
-/// Sign out), human verification for libraries that needed it, About, and (DEBUG) demo mode.
+/// Sign out), Notifications while signed in (§5.8), human verification for libraries that needed
+/// it, About, and (DEBUG) demo mode.
 /// The borrower's name comes from the saved account (`AppModel.account`).
 struct ProfileView: View {
     @Environment(AppModel.self) private var model
@@ -51,6 +52,7 @@ struct ProfileView: View {
             if let library = model.library {
                 libraryCard(library)
                 accountSection
+                if model.isSignedIn { NotificationsSection() }
                 if model.isVerified { verificationSection }
             } else {
                 EmptyStateView(systemImage: "building.columns", title: "No library selected",
@@ -298,7 +300,7 @@ struct ProfileView: View {
 
 // MARK: - Pieces
 
-private struct ProfileSectionHeader: View {
+struct ProfileSectionHeader: View {
     let title: String
 
     var body: some View {
@@ -310,7 +312,7 @@ private struct ProfileSectionHeader: View {
 }
 
 /// A `surface` card like Borrowed's.
-private struct ProfileCard<Content: View>: View {
+struct ProfileCard<Content: View>: View {
     @ViewBuilder var content: Content
 
     var body: some View {
@@ -323,7 +325,7 @@ private struct ProfileCard<Content: View>: View {
     }
 }
 
-private struct ProfileDivider: View {
+struct ProfileDivider: View {
     var body: some View {
         Rectangle()
             .fill(Theme.Colors.divider)

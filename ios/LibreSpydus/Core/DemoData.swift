@@ -51,6 +51,20 @@ struct DemoFixtures: Sendable {
             catalogue: DemoCatalogue(try load("demo-catalogue", as: DemoCatalogueDTO.self), origin: origin)
         )
     }
+
+    /// The pending reservation `makeNewReady` brings in: "Hollow bones", for pickup at Riverton.
+    static let newReadyIrn = "19000003"
+
+    /// `-LSDemoNewReady`: "Hollow bones" (pending, Riverton) is ready to collect, listed the way
+    /// Canning lists one, with the branch in its status: "Please pickup from: RIVERTON LIBRARY by
+    /// <a week from today>".
+    mutating func makeNewReady(today: Date = .now) {
+        guard let index = pending.firstIndex(where: { $0.irn == Self.newReadyIrn }) else { return }
+        var item = pending.remove(at: index)
+        let collectBy = Calendar.library.date(byAdding: .day, value: 7, to: today) ?? today
+        item.fields = ["Status": "Please pickup from: RIVERTON LIBRARY by \(DueDate.format(collectBy))"]
+        ready.append(item)
+    }
 }
 
 // MARK: - JSON shapes (the core's camelCase records; UniFFI types aren't Codable)

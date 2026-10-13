@@ -15,6 +15,12 @@ import Foundation
 ///   keeps the account in memory.
 /// - `-LSDemoRefreshFails YES` (with `-LSDemo`): every account refresh fails, to show the
 ///   "Couldn't refresh" state.
+/// - `-LSMorningCheckNow YES`: run the morning check (docs/native-apps.md §5.8) once the launch
+///   refresh has settled, instead of waiting for 07:45.
+/// - `-LSDemoNewReady YES` (with `-LSDemo`): one more demo reservation is ready from the account's
+///   second refresh on, so a "Ready to collect" alert can be shown.
+/// - `-LSAlertTime HH:mm`: due reminders show (and the morning check is scheduled) at this time
+///   instead of 07:45, to see a reminder arrive.
 struct LaunchOptions: Equatable, Sendable {
     enum LaunchRoute: Equatable, Sendable {
         case home
@@ -68,6 +74,10 @@ struct LaunchOptions: Equatable, Sendable {
     var reset = false
     var persistDemoAccount = false
     var demoRefreshFails = false
+    var morningCheckNow = false
+    var demoNewReady = false
+    /// `-LSAlertTime HH:mm` as hour and minute; nil: 07:45.
+    var alertTime: DateComponents?
 
     /// This process's options; always empty in release builds.
     static var current: LaunchOptions {
@@ -99,6 +109,9 @@ struct LaunchOptions: Equatable, Sendable {
             case "-LSReset": options.reset = isYes(value)
             case "-LSPersistDemoAccount": options.persistDemoAccount = isYes(value)
             case "-LSDemoRefreshFails": options.demoRefreshFails = isYes(value)
+            case "-LSMorningCheckNow": options.morningCheckNow = isYes(value)
+            case "-LSDemoNewReady": options.demoNewReady = isYes(value)
+            case "-LSAlertTime": options.alertTime = time(value)
             default:
                 index = next
                 continue
@@ -110,6 +123,14 @@ struct LaunchOptions: Equatable, Sendable {
 
     private static func isYes(_ value: String) -> Bool {
         ["yes", "true", "1"].contains(value.lowercased())
+    }
+
+    /// "7:45" / "14:05" → hour and minute; nil when it isn't a time of day.
+    private static func time(_ value: String) -> DateComponents? {
+        let parts = value.trimmingCharacters(in: .whitespaces).split(separator: ":")
+        guard parts.count == 2, let hour = Int(parts[0]), let minute = Int(parts[1]),
+              (0..<24).contains(hour), (0..<60).contains(minute) else { return nil }
+        return DateComponents(hour: hour, minute: minute)
     }
 }
 
@@ -140,6 +161,13 @@ extension LaunchOptions {
         case .login: model.loginNeeded = true
         case .verify: model.verificationNeeded = true
         case .gallery: model.componentsGalleryPresented = true
+        }
+        if morningCheckNow {
+            Task {
+                // After the launch refresh (this joins it), so the check fetches the account again.
+                await model.refreshAccount()
+                await model.runMorningCheck()
+            }
         }
     }
 }

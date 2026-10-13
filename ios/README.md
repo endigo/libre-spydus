@@ -109,6 +109,9 @@ Pass them as launch arguments (docs/native-apps.md §5.6):
 | `-LSProfileAnchor bottom` | with `-LSRoute profile`: start scrolled to the end of Profile |
 | `-LSPersistDemoAccount YES` | with `-LSDemo YES`: save the demo account on the device (in `AccountCache/Demo/`), to show a cold launch with saved data. Off by default: demo mode keeps the account in memory |
 | `-LSDemoRefreshFails YES` | with `-LSDemo YES`: every account refresh fails, to show "Couldn't refresh — showing saved data" (with saved data) or the error state (without) |
+| `-LSMorningCheckNow YES` | run the alerts' morning check once the launch refresh has settled, instead of waiting for 07:45 (see "Alerts") |
+| `-LSDemoNewReady YES` | with `-LSDemo YES`: "Hollow bones" (pending, Riverton) is ready to collect from the demo account's second refresh on, so a "Ready to collect" alert can be shown |
+| `-LSAlertTime HH:mm` | due reminders show, and the morning check is scheduled, at this time instead of 07:45, to watch a reminder arrive |
 
 `gallery` opens the **components gallery**, which shows every DesignSystem component on one
 screen. Example:
@@ -244,12 +247,57 @@ Only a person may do this. It needs the Search screen (I3) merged.
   A page opened from a loan or reservation selects the format whose `bibRecordIrn` is the row's,
   and a record that comes back empty counts as a failed load.
 
+- **Alerts** (docs/native-apps.md §5.8): local notifications, no server. `AlertCenter`
+  (`model.alerts`) holds the two Profile switches ("Ready to collect", "Due-date reminders"; off by
+  default, app-wide, in UserDefaults `alerts.readyEnabled` / `alerts.dueEnabled`; demo mode uses
+  `alerts.demo.*` so it never changes the real ones) and processes every fetched snapshot:
+  `AccountStore.didFetch` runs after each successful `accountSnapshot` (launch, foreground, pull to
+  refresh, after a reserve / cancel / edit, the morning check). Ready: `readyAlerts(snapshot,
+  savedKeys)` → one notification per new item (`ready:<sha256(origin)>:<patronItemKey>`, "Ready to
+  collect" / "<Title> · <Branch>", the branch as Your Books shows it) and the returned keys replace
+  `alerts.readyKeys.<sha256(origin)>`. Turning Ready on saves the keys of what's already waiting,
+  without a notification; a library with no saved keys (signed in again after a sign-out or an
+  expired session, or switched on before the account loaded) is seeded the same way by its next
+  snapshot, so nothing already waiting is announced as new. Due: `dueReminders(snapshot, today, 2)` → this library's pending `due:`
+  requests are replaced by `UNCalendarNotificationTrigger`s at 07:45 on each `remindOn` (one whose
+  07:45 has passed is skipped), "Due Thursday 15 Oct" / "Due today" / "Due tomorrow" and "<A> and
+  N more". Sign-out and session expiry delete that library's keys and its pending and delivered
+  notifications; a library change keeps them. A tap opens Your Books on Reservations (ready) or
+  Loans (due) through `AlertNotificationRouter`, the notification centre's delegate, which also
+  shows banners while the app is open. The copy and timing are in `AlertContent`; the notification
+  centre and `BGTaskScheduler` sit behind `NotificationScheduling` / `MorningCheckScheduling`, so
+  the tests use fakes (`AlertCenterTests`, `AlertContentTests`).
+- **Morning check:** the `BGAppRefreshTask` `com.librespydus.morning-check` (Info.plist
+  `BGTaskSchedulerPermittedIdentifiers`, `UIBackgroundModes` `fetch`), handled by
+  `.backgroundTask(.appRefresh(…))` on the app's scene. `earliestBeginDate` is the next 07:45; it's
+  submitted at launch, on going to the background, on sign-in, sign-out and a library change, when
+  a switch changes and after each run, while signed in with a switch on, and cancelled otherwise.
+  A run (`AppModel.runMorningCheck`) fetches the account with `AccountStore.refreshNow()` (saved
+  like any refresh, so the app opens with fresh data, and processed on the way), gives up waiting
+  after 25 s or when the task is cancelled, and schedules the next one. iOS decides when it runs
+  (often soon after 07:45 on a phone used in the morning; later, or not at all in Low Power Mode or
+  after the app was swiped away). Submits are held until the app has finished launching: before
+  SwiftUI registers the handler, `submit` raises an Objective-C exception. The simulator has no
+  background tasks (`submit` fails with "not available on this platform", logged): use
+  `-LSMorningCheckNow YES` there. On a device, pause in the debugger after the app has gone to the
+  background and run
+  `e -l objc -- (void)[[BGTaskScheduler sharedScheduler] _simulateLaunchForTaskWithIdentifier:@"com.librespydus.morning-check"]`,
+  then continue. DEBUG builds print `🔔 alerts …` lines (posted, scheduled, morning check).
+
+  Show the alerts in demo mode: Profile → turn both switches on (allow notifications), then
+  relaunch with `-LSLibraryOrigin https://canning.spydus.com -LSDemo YES -LSDemoNewReady YES
+  -LSMorningCheckNow YES` for "Ready to collect · Hollow bones · Riverton Library", or with
+  `-LSAlertTime <a minute from now>` for "Due Thursday 15 Oct · Whistler" (the demo loan due in
+  2 days).
+
 ### Core helpers in use
 
 `CoreBackend.searchSorted` → `client.searchSorted(query:sort:)` (`SearchSortOption.core` maps to
 the core's `SearchSort`); `SearchResults.isNoResults` → the core's `noResults`;
 `AppModel.webViewUserAgent` → `userAgent()`; `FormatRef.isDigital` → `isDigitalFormat(format:)`;
 `DueDate.parse` → `parseDueDate(text:)`; `BookRef(PatronItem)` → `patronItemRecordUrl(item:)`;
-`BookDetailModel.holding(in:)` → `accountHolding(snapshot:bibIrns:)`. Use `availabilitySummary(availability:)` for availability
+`BookDetailModel.holding(in:)` → `accountHolding(snapshot:bibIrns:)`; `AlertCenter` →
+`readyAlerts(snapshot:alertedKeys:)`, `dueReminders(snapshot:today:daysBefore:)` and
+`patronItemKey(item:)`. Use `availabilitySummary(availability:)` for availability
 labels and `homeShelves()` / `homeGenres()` for Home. "Reserve" depends on a format's
 `reserveUrl` only — some libraries (Brazoria County) accept holds on ebooks.
