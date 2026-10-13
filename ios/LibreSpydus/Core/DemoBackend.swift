@@ -18,8 +18,10 @@ actor DemoBackend: LibraryBackend {
     static let username = "demo"
     static let password = "demo"
     static let session = "demo-session"
-    /// The demo account's library card number (§5.9), kept in memory.
+    /// The demo account's library card number and expiry (§5.9), in its snapshot like a real
+    /// account's Personal details.
     static let cardNumber = "DEMO0012345"
+    static let cardExpires = "12 Mar 2027"
     /// The core's `ACCOUNT_SNAPSHOT_VERSION` (not exported; DemoBackendTests round-trips a demo
     /// snapshot through `decodeAccountSnapshot`, which fails if the core moves on).
     static let snapshotVersion: UInt32 = 1
@@ -152,7 +154,9 @@ actor DemoBackend: LibraryBackend {
             accountName: fixtures.account.name,
             loans: try await loans(session: session),
             reservations: try await reservations(session: session),
-            fetchedAtMs: Int64((Date.now.timeIntervalSince1970 * 1000).rounded(.down))
+            fetchedAtMs: Int64((Date.now.timeIntervalSince1970 * 1000).rounded(.down)),
+            cardNumber: Self.cardNumber,
+            cardExpires: Self.cardExpires
         )
     }
 

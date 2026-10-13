@@ -53,7 +53,8 @@ struct MyCardSheet: View {
     private func cardContent(_ number: String) -> some View {
         VStack(spacing: Theme.Spacing.l) {
             LibraryCardView(libraryName: model.libraryName, logoUrl: model.library?.logoUrl,
-                            borrowerName: model.accountName, number: number, barcode: card.barcode(for: number))
+                            borrowerName: model.accountName, number: number, expires: model.cardExpires,
+                            barcode: card.barcode(for: number))
             Text("Show this at the library desk or self-checkout.")
                 .themeFont(.body)
                 .foregroundStyle(Theme.Colors.textSecondary)
@@ -136,6 +137,8 @@ private struct LibraryCardView: View {
     let logoUrl: String?
     let borrowerName: String?
     let number: String
+    /// "Expires 12 Mar 2027" under the number, when the account gives it.
+    let expires: String?
     let barcode: MyCardModel.Barcode
 
     private static let barcodeHeight: CGFloat = 100
@@ -187,6 +190,7 @@ private struct LibraryCardView: View {
                     .frame(maxWidth: .infinity)
                     .frame(height: Self.barcodeHeight)
                 numberText(number)
+                expiryText
             }
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("Loading barcode for card \(number)")
@@ -196,6 +200,7 @@ private struct LibraryCardView: View {
                 BarcodeView(modules: barcode.modules)
                     .frame(height: Self.barcodeHeight)
                 numberText(barcode.text)
+                expiryText
             }
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("Barcode for card \(number)")
@@ -217,6 +222,16 @@ private struct LibraryCardView: View {
             .frame(maxWidth: .infinity)
             .padding(.horizontal, padding)
             .accessibilityElement(children: .combine)
+        }
+    }
+
+    @ViewBuilder
+    private var expiryText: some View {
+        if let expires {
+            Text("Expires \(expires)")
+                .themeFont(.caption)
+                .foregroundStyle(Theme.Colors.onSheetSecondary)
+                .frame(maxWidth: .infinity)
         }
     }
 

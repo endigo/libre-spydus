@@ -33,9 +33,16 @@ final class AppModel {
     /// Entered or edited on the card sheet; Keychain per origin (in memory in demo mode). Deleted on
     /// sign-out, kept when the session expires.
     private(set) var savedCardNumber: String?
-    /// The card number the library account itself lists (its Personal details page). The account
-    /// snapshot doesn't carry it yet, so nil; read it from `account.snapshot` here once it does.
-    var accountCardNumber: String? { nil }
+    /// The card number the library account itself lists: the core reads it from the account's
+    /// Personal details page into the snapshot.
+    var accountCardNumber: String? { account.snapshot?.cardNumber }
+    /// When the card expires ("12 Mar 2027", as the Personal details page writes it), while the card
+    /// shown is the account's own rather than a different number entered on the card.
+    var cardExpires: String? {
+        guard let expires = account.snapshot?.cardExpires?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !expires.isEmpty, cardNumber == Self.cardNumber(saved: nil, account: accountCardNumber) else { return nil }
+        return expires
+    }
 
     // MARK: Local data
 
@@ -378,7 +385,8 @@ final class AppModel {
         } else if isDemo {
             // Demo mode starts signed in as the fixture's "Test Borrower", with its card.
             session = dependencies.sessions.value(for: origin) ?? DemoBackend.session
-            savedCardNumber = dependencies.cardNumbers.value(for: origin) ?? DemoBackend.cardNumber
+            // Its card number comes with the demo account's snapshot, like a real account's.
+            savedCardNumber = dependencies.cardNumbers.value(for: origin)
         } else {
             session = dependencies.sessions.value(for: origin)
             savedCardNumber = dependencies.cardNumbers.value(for: origin)

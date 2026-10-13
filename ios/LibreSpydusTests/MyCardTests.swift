@@ -11,11 +11,12 @@ struct MyCardTests {
     static let cumberland = LibraryInfo.placeholder(origin: "https://cumberlandlibraries.spydus.com")
 
     func makeModel(cards: InMemorySecretStore = InMemorySecretStore(), sessions: InMemorySecretStore = InMemorySecretStore(),
-               demo: Bool = false, symbology: BarcodeSymbology = .code128) -> AppModel {
+               demo: Bool = false, symbology: BarcodeSymbology = .code128,
+               card: (number: String?, expires: String?) = (nil, nil)) -> AppModel {
         var dependencies = AppModel.Dependencies.testing(sessions: sessions, demo: demo)
         dependencies.cardNumbers = cards
         dependencies.makeBackend = { origin in
-            SymbologyBackend(origin: origin ?? Self.canning, symbology: symbology)
+            SymbologyBackend(origin: origin ?? Self.canning, symbology: symbology, card: card)
         }
         let model = AppModel(dependencies: dependencies)
         model.selectLibrary(.canning)
@@ -103,16 +104,34 @@ struct MyCardTests {
         #expect(AppModel.cardNumber(saved: nil, account: " CL114D0001234 ") == "CL114D0001234")
         #expect(AppModel.cardNumber(saved: "  ", account: "CL114D0001234") == "CL114D0001234")
         #expect(AppModel.cardNumber(saved: nil, account: nil) == nil)
-        // The account snapshot doesn't carry a card number yet.
+        // An account whose Personal details page gave no number.
         #expect(makeModel().accountCardNumber == nil)
     }
 
-    @Test func demoModeHasACardNumberInMemory() {
+    @Test func theAccountsCardNumberAndExpiryComeFromItsSnapshot() async throws {
+        let model = makeModel(card: (" CL114X0000001 ", "12 Mar 2027"))
+        try await model.signIn(username: "jdoe", password: "ok")
+        #expect(model.cardNumber == "CL114X0000001")
+        #expect(model.cardExpires == "12 Mar 2027")
+        #expect(model.savedCardNumber == nil) // nothing saved: it's the account's
+
+        // A different number entered on the card wins, and the account's expiry isn't its expiry.
+        model.setCardNumber("OTHER123")
+        #expect(model.cardNumber == "OTHER123")
+        #expect(model.cardExpires == nil)
+        // The same number entered keeps it.
+        model.setCardNumber("CL114X0000001")
+        #expect(model.cardExpires == "12 Mar 2027")
+    }
+
+    @Test func demoModeHasItsAccountsCardNumber() async throws {
         let cards = InMemorySecretStore()
         let model = makeModel(cards: cards, demo: true)
         #expect(model.isSignedIn)
-        #expect(model.cardNumber == DemoBackend.cardNumber)
-        #expect(DemoBackend.cardNumber == "DEMO0012345")
+        // The demo account's snapshot carries its card, like a real account's Personal details.
+        let snapshot = try await DemoBackend.live(origin: Self.canning).accountSnapshot(session: DemoBackend.session)
+        #expect(snapshot.cardNumber == "DEMO0012345")
+        #expect(snapshot.cardExpires == DemoBackend.cardExpires)
         model.setCardNumber("DEMO0099999")
         #expect(model.cardNumber == "DEMO0099999")
         // The app's demo stores are in memory; the real ones are the Keychain's.
@@ -269,12 +288,15 @@ struct MyCardTests {
 final class SymbologyBackend: LibraryBackend, @unchecked Sendable {
     private let fake: FakeBackend
     let symbology: BarcodeSymbology
+    /// What the account's Personal details page gives.
+    let card: (number: String?, expires: String?)
     var origin: String { fake.origin }
     var isDemo: Bool { false }
 
-    init(origin: String, symbology: BarcodeSymbology) {
+    init(origin: String, symbology: BarcodeSymbology, card: (number: String?, expires: String?) = (nil, nil)) {
         fake = FakeBackend(origin: origin)
         self.symbology = symbology
+        self.card = card
     }
 
     func cardBarcodeSymbology() async -> BarcodeSymbology { symbology }
@@ -294,7 +316,12 @@ final class SymbologyBackend: LibraryBackend, @unchecked Sendable {
     func account(session: String) async throws -> AccountLinks { try await fake.account(session: session) }
     func loans(session: String) async throws -> PatronList { try await fake.loans(session: session) }
     func reservations(session: String) async throws -> Reservations { try await fake.reservations(session: session) }
-    func accountSnapshot(session: String) async throws -> AccountSnapshot { try await fake.accountSnapshot(session: session) }
+    func accountSnapshot(session: String) async throws -> AccountSnapshot {
+        var snapshot = try await fake.accountSnapshot(session: session)
+        snapshot.cardNumber = card.number
+        snapshot.cardExpires = card.expires
+        return snapshot
+    }
     func reserveOptions(url: String, session: String) async throws -> ReserveOptions {
         try await fake.reserveOptions(url: url, session: session)
     }
