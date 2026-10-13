@@ -240,7 +240,10 @@ Canning sends its notices at about 07:20–07:45 local time, so LibreSpydus chec
   successful `accountSnapshot` — foreground refreshes and the morning check alike, never for demo
   data unless demo mode is on (demo processes the in-memory snapshot the same way).
   1. Ready on: `readyAlerts(snapshot, savedKeys)` → one notification per `newItems` entry, then
-     save `alertedKeys`.
+     save `alertedKeys`. A library with **no saved keys** (none recorded — not an empty list:
+     signed in again after a sign-out or an expired session, or switched on without a saved
+     account) only saves `alertedKeys` and posts nothing, so what is already waiting is never
+     announced as new.
   2. Due on: `dueReminders(snapshot, today, 2)` with `today` = the device's local date. iOS
      replaces all pending `due:` requests for this library with calendar triggers at 07:45 on
      each `remindOn` (skipping one whose 07:45 has already passed). Android posts, during the

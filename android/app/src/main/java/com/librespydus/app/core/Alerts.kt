@@ -52,11 +52,15 @@ class Alerts(
     /**
      * Turns "Ready to collect" on or off. On: the reservations ready in [snapshot] (the saved
      * account of [scope], the selected library) count as already alerted, so only ones that become
-     * ready later are announced. Off: every library's alerted keys are forgotten.
+     * ready later are announced; without a saved account the first fresh one is remembered the same
+     * way ([process]). Off: every library's alerted keys are forgotten.
      */
     suspend fun setReadyEnabled(on: Boolean, scope: String?, snapshot: AccountSnapshot?) = locked {
         if (on) {
-            if (scope != null) store.setReadyKeys(originHash(scope), snapshot?.let { readyAlerts(it, emptyList()).alertedKeys }.orEmpty())
+            if (scope != null) {
+                val hash = originHash(scope)
+                if (snapshot != null) store.setReadyKeys(hash, readyAlerts(snapshot, emptyList()).alertedKeys) else store.clearReadyKeys(hash)
+            }
         } else {
             store.clearReadyKeys(null)
         }
@@ -74,7 +78,10 @@ class Alerts(
     /**
      * After a successful `accountSnapshot` of [scope] (foreground refresh or morning check alike):
      * one "Ready to collect" notification per reservation that wasn't ready last time, then the
-     * keys of everything ready now are saved for next time. Nothing while the switch is off.
+     * keys of everything ready now are saved for next time. A library with no saved keys (signed in
+     * again after a sign-out or an expired session, or switched on before any account was saved)
+     * only has its keys saved: what is already waiting isn't announced. Nothing while the switch
+     * is off.
      */
     suspend fun process(scope: String, snapshot: AccountSnapshot) {
         if (!_readyEnabled.value) return
@@ -84,10 +91,12 @@ class Alerts(
     private fun processReady(scope: String, snapshot: AccountSnapshot) {
         if (!store.readyEnabled) return
         val hash = originHash(scope)
-        val result = readyAlerts(snapshot, store.readyKeys(hash))
-        result.newItems.forEach { item -> notifier.post(AlertText.ready(hash, patronItemKey(item), item)) }
+        val saved = store.readyKeys(hash)
+        val result = readyAlerts(snapshot, saved.orEmpty())
+        val announced = if (saved == null) emptyList() else result.newItems
+        announced.forEach { item -> notifier.post(AlertText.ready(hash, patronItemKey(item), item)) }
         store.setReadyKeys(hash, result.alertedKeys)
-        if (result.newItems.isNotEmpty()) Log.i(TAG, "posted ${result.newItems.size} ready-to-collect alert(s)")
+        if (announced.isNotEmpty()) Log.i(TAG, "posted ${announced.size} ready-to-collect alert(s)")
     }
 
     /**
@@ -208,7 +217,8 @@ interface AlertStore {
     var readyEnabled: Boolean
     var dueEnabled: Boolean
 
-    fun readyKeys(originHash: String): List<String>
+    /** The library's alerted keys, or null when none are saved for it (not even an empty list). */
+    fun readyKeys(originHash: String): List<String>?
 
     /** Replaces the saved keys (what `readyAlerts` returned). */
     fun setReadyKeys(originHash: String, keys: List<String>)
@@ -243,8 +253,8 @@ class SharedPreferencesAlertStore(private val prefs: SharedPreferences) : AlertS
         get() = prefs.getBoolean(DUE_ENABLED, false)
         set(value) = prefs.edit().putBoolean(DUE_ENABLED, value).apply()
 
-    override fun readyKeys(originHash: String): List<String> =
-        prefs.getStringSet("$READY_KEYS$originHash", null)?.toList().orEmpty()
+    override fun readyKeys(originHash: String): List<String>? =
+        prefs.getStringSet("$READY_KEYS$originHash", null)?.toList()
 
     override fun setReadyKeys(originHash: String, keys: List<String>) {
         prefs.edit().putStringSet("$READY_KEYS$originHash", keys.toSet()).apply()
@@ -296,7 +306,7 @@ class InMemoryAlertStore : AlertStore {
     val readyKeys = mutableMapOf<String, List<String>>()
     val duePosted = mutableMapOf<Pair<String, String>, LocalDate>()
 
-    override fun readyKeys(originHash: String) = readyKeys[originHash].orEmpty()
+    override fun readyKeys(originHash: String) = readyKeys[originHash]
     override fun setReadyKeys(originHash: String, keys: List<String>) {
         readyKeys[originHash] = keys
     }

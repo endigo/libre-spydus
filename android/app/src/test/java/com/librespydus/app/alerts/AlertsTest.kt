@@ -5,6 +5,7 @@ import com.librespydus.app.core.InMemoryAlertStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -45,7 +46,7 @@ class AlertsTest {
         )
         assertEquals(listOf("Ready to collect", "Ready to collect"), notifier.posted.map { it.title })
         assertEquals(listOf("Emma · Cannington Library", "Ulysses"), notifier.posted.map { it.body })
-        assertEquals(setOf("19000001", "19000002", "19000003"), store.readyKeys(canningHash).toSet())
+        assertEquals(setOf("19000001", "19000002", "19000003"), store.readyKeys(canningHash)?.toSet())
 
         // The same snapshot again: nothing new.
         alerts.process(canning, snapshot(ready = listOf(dune, emma, ulysses)))
@@ -66,7 +67,7 @@ class AlertsTest {
         alerts.setReadyEnabled(true, canning, snapshot(ready = listOf(dune, emma)))
         assertTrue(alerts.readyEnabled.value)
         assertTrue(store.readyEnabled)
-        assertEquals(setOf("19000001", "19000002"), store.readyKeys(canningHash).toSet())
+        assertEquals(setOf("19000001", "19000002"), store.readyKeys(canningHash)?.toSet())
         assertTrue(notifier.posted.isEmpty())
 
         alerts.process(canning, snapshot(ready = listOf(dune, emma)))
@@ -74,11 +75,25 @@ class AlertsTest {
     }
 
     @Test
-    fun turningReadyOnWithoutASavedAccountRemembersNothing() = runTest {
+    fun turningReadyOnWithoutASavedAccountRemembersTheFirstFreshOne() = runTest {
         alerts.setReadyEnabled(true, canning, null)
-        assertEquals(emptyList<String>(), store.readyKeys(canningHash))
+        assertNull(store.readyKeys(canningHash))
         alerts.process(canning, snapshot(ready = listOf(dune)))
-        assertEquals(1, notifier.posted.size)
+        assertTrue(notifier.posted.isEmpty())
+        assertEquals(listOf("19000001"), store.readyKeys(canningHash))
+        alerts.process(canning, snapshot(ready = listOf(dune, emma)))
+        assertEquals(listOf("ready:$canningHash:19000002"), notifier.posted.map { it.id })
+    }
+
+    @Test
+    fun signingInAgainDoesNotAnnounceWhatIsAlreadyWaiting() = runTest {
+        alerts.setReadyEnabled(true, canning, snapshot(ready = listOf(dune)))
+        alerts.forget(canning) // signed out, or the session expired
+        alerts.process(canning, snapshot(ready = listOf(dune, emma))) // the first refresh after signing in
+        assertTrue(notifier.posted.isEmpty())
+        assertEquals(setOf("19000001", "19000002"), store.readyKeys(canningHash)?.toSet())
+        alerts.process(canning, snapshot(ready = listOf(dune, emma, ulysses)))
+        assertEquals(listOf("ready:$canningHash:19000003"), notifier.posted.map { it.id })
     }
 
     @Test
@@ -167,7 +182,7 @@ class AlertsTest {
         alerts.postDueReminders(canning, snapshot(loans = listOf(loan("1", "Dune", "15 Oct 2026"))))
 
         alerts.forget(canning)
-        assertEquals(emptyList<String>(), store.readyKeys(canningHash))
+        assertNull(store.readyKeys(canningHash))
         assertEquals(listOf("19000002"), store.readyKeys(Alerts.originHash(hutt)))
         assertTrue(store.duePosted.isEmpty())
         assertEquals(listOf(canningHash), notifier.removed)

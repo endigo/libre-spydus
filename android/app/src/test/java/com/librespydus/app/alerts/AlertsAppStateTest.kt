@@ -25,6 +25,7 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -208,7 +209,7 @@ class AlertsAppStateTest {
         f.state.signOut()
         advanceUntilIdle()
         val hash = Alerts.originHash(canning.origin)
-        assertEquals(emptyList<String>(), f.store.readyKeys(hash))
+        assertNull(f.store.readyKeys(hash))
         assertEquals(listOf(hash), f.notifier.removed)
         assertEquals("cancel", f.scheduler.calls.last())
         assertTrue(f.state.alerts.readyEnabled.value) // app-wide: still on for the next sign-in
@@ -227,7 +228,7 @@ class AlertsAppStateTest {
         f.state.account.refresh(force = true)
         advanceUntilIdle()
         assertFalse(f.state.isSignedIn.value)
-        assertEquals(emptyList<String>(), f.store.readyKeys(Alerts.originHash(canning.origin)))
+        assertNull(f.store.readyKeys(Alerts.originHash(canning.origin)))
         assertEquals("cancel", f.scheduler.calls.last())
     }
 

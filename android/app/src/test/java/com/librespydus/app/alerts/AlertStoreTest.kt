@@ -31,17 +31,17 @@ class AlertStoreTest {
         store.setReadyKeys("aaa", listOf("1", "2"))
         store.setReadyKeys("bbb", listOf("3"))
         assertEquals(setOf("1", "2"), prefs.all["readyKeys.aaa"])
-        assertEquals(setOf("1", "2"), store.readyKeys("aaa").toSet())
-        assertEquals(emptyList<String>(), store.readyKeys("ccc"))
+        assertEquals(setOf("1", "2"), store.readyKeys("aaa")?.toSet())
+        assertNull(store.readyKeys("ccc"))
 
         store.setReadyKeys("aaa", listOf("2")) // replaced, not merged
         assertEquals(listOf("2"), store.readyKeys("aaa"))
 
         store.clearReadyKeys("aaa")
-        assertEquals(emptyList<String>(), store.readyKeys("aaa"))
+        assertNull(store.readyKeys("aaa"))
         assertEquals(listOf("3"), store.readyKeys("bbb"))
         store.clearReadyKeys(null)
-        assertEquals(emptyList<String>(), store.readyKeys("bbb"))
+        assertNull(store.readyKeys("bbb"))
     }
 
     @Test
