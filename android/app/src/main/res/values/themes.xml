@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Window theme only; everything inside is Compose (ui/theme). Navy window background so
+         launch and edge-to-edge areas never flash white. -->
+    <style name="Theme.LibreSpydus" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/ls_background</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+    </style>
+</resources>

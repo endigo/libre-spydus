@@ -1,0 +1,124 @@
+{
+  "loans": [
+    {
+      "dueInDays": -2,
+      "item": {
+        "irn": "18000001",
+        "bibIrn": "19244682",
+        "title": "The long night",
+        "bibUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/78500000?SETLVL=&QRY=IRN(19244682)&NAVLVL=SET",
+        "author": "White, Christian",
+        "year": "2026",
+        "coverUrls": [
+          "https://secure.syndetics.com/index.aspx?isbn=9781399197809/lc.gif&client=citycanning&upc=&oclc=&issn="
+        ],
+        "isbn": "9781399197809",
+        "fields": {
+          "Due": ""
+        },
+        "actions": [
+          {
+            "label": "Renew loan",
+            "href": "https://canning.spydus.com/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/78500000/0/N/3/LOANRENQ?SVL=18000001&SETDESC=Current%20loans"
+          }
+        ]
+      }
+    },
+    {
+      "dueInDays": 2,
+      "item": {
+        "irn": "18000002",
+        "bibIrn": "19243435",
+        "title": "Whistler",
+        "bibUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/78500000?SETLVL=&QRY=IRN(19243435)&NAVLVL=SET",
+        "author": "Patchett, Ann",
+        "year": "2026",
+        "coverUrls": [
+          "https://secure.syndetics.com/index.aspx?isbn=9781037206498/lc.gif&client=citycanning&upc=&oclc=&issn="
+        ],
+        "isbn": "9781037206498",
+        "fields": {
+          "Due": ""
+        },
+        "actions": [
+          {
+            "label": "Renew loan",
+            "href": "https://canning.spydus.com/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/78500000/0/N/3/LOANRENQ?SVL=18000002&SETDESC=Current%20loans"
+          }
+        ]
+      }
+    },
+    {
+      "dueInDays": 5,
+      "item": {
+        "irn": "18000003",
+        "bibIrn": "19242648",
+        "title": "The Love Library",
+        "bibUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/78500000?SETLVL=&QRY=IRN(19242648)&NAVLVL=SET",
+        "author": "Manning, Sarra",
+        "year": "2026",
+        "coverUrls": [
+          "https://secure.syndetics.com/index.aspx?isbn=9781398727830/lc.gif&client=citycanning&upc=&oclc=&issn="
+        ],
+        "isbn": "9781398727830",
+        "fields": {
+          "Due": ""
+        },
+        "actions": [
+          {
+            "label": "Renew loan",
+            "href": "https://canning.spydus.com/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/78500000/0/N/3/LOANRENQ?SVL=18000003&SETDESC=Current%20loans"
+          }
+        ]
+      }
+    },
+    {
+      "dueInDays": 12,
+      "item": {
+        "irn": "18000004",
+        "bibIrn": "19243328",
+        "title": "Everything to the sea",
+        "bibUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/78500000?SETLVL=&QRY=IRN(19243328)&NAVLVL=SET",
+        "author": "Upano, Alicia",
+        "year": "2026",
+        "coverUrls": [
+          "https://secure.syndetics.com/index.aspx?isbn=9781526687791/lc.gif&client=citycanning&upc=&oclc=&issn="
+        ],
+        "isbn": "9781526687791",
+        "fields": {
+          "Due": ""
+        },
+        "actions": [
+          {
+            "label": "Renew loan",
+            "href": "https://canning.spydus.com/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/78500000/0/N/3/LOANRENQ?SVL=18000004&SETDESC=Current%20loans"
+          }
+        ]
+      }
+    },
+    {
+      "dueInDays": 19,
+      "item": {
+        "irn": "18000005",
+        "bibIrn": "19242609",
+        "title": "The secret thread",
+        "bibUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/78500000?SETLVL=&QRY=IRN(19242609)&NAVLVL=SET",
+        "author": "Chase, Eve",
+        "year": "2026",
+        "coverUrls": [
+          "https://secure.syndetics.com/index.aspx?isbn=9780241633946/lc.gif&client=citycanning&upc=&oclc=&issn="
+        ],
+        "isbn": "9780241633946",
+        "fields": {
+          "Due": ""
+        },
+        "actions": [
+          {
+            "label": "Renew loan",
+            "href": "https://canning.spydus.com/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/78500000/0/N/3/LOANRENQ?SVL=18000005&SETDESC=Current%20loans"
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,4 +1,4 @@
-// Spydus OPAC "ALLWRKENQ" results-page → JSON.
+// Spydus OPAC "ALLWRKENQ" results-page → JSON (also yields the setId of edition-level ALLENQ pages).
 //
 // Engine: Bun's native HTMLRewriter (lol-html) in a single streaming pass.
 // There is no DOM and no random access — handlers fire in document order — so we
@@ -22,7 +22,10 @@ interface Draft {
   detailUrl: string | null;
   authorUrl: string | null;
   detailLines: string[];
+  /** Per detail line: did it contain an author-search (AUTHENQ) link? */
+  detailLinked: boolean[];
   lineBuf: string | null;
+  lineLinked: boolean;
   summaryBuf: string;
   isbn: string | null;
   coverUrls: string[];
@@ -31,7 +34,28 @@ interface Draft {
   fmtLabelBuf: string;
 }
 
-const AUTHOR_ROLE = /,\s*(author|illustrator|editor|translator|adapter|artist|writer|narrator|composer|contributor|creator)s?\.?$/i;
+// Relator terms (RDA) that end a creator line ("Rowling, J. K., author"), optionally qualified
+// ("film director", "executive producer", "co-author"). Deliberately no publisher / distributor /
+// issuing body: an imprint is never an author.
+const ROLE_WORDS =
+  "author|illustrator|editor|translator|adapter|artist|writer|narrator|composer|contributor|creator|" +
+  "director|producer|screenwriter|performer|actor|photographer|compiler|cartographer|lyricist|" +
+  "presenter|speaker|interviewer|interviewee|host|librettist|arranger|conductor|singer|musician|" +
+  "instrumentalist|animator|cinematographer|choreographer|abridger|reader";
+const ROLE = `(?:(?:film|television|executive|voice|cover|joint)\\s+)?(?:co-?)?(?:${ROLE_WORDS})`;
+// ", <role>[, <role>…]" at the end of the line, or a bare space after life dates
+// ("Rowling, J. K., 1965- author."). Group 1 = those life dates (kept in the author, like
+// "Haig, Matt, 1975-"); group 2 = the first role.
+const AUTHOR_ROLE = new RegExp(
+  `(?:,\\s*|(\\d{4}-(?:\\d{4})?\\.?)\\s+)(${ROLE})s?(?:\\s*,\\s*${ROLE}s?)*\\.?$`,
+  "i",
+);
+// Role-less personal name with life dates: "Haig, Matt, 1975-" / "Rowling, J. K. 1965-".
+const NAME_WITH_DATES = /^[^\d,:;\/()[\]]+,[^\d,:;\/()[\]]+(?:,\s*|\s+)\d{4}-(?:\d{4})?\.?$/;
+const YEAR = /^\d{4}(\s*[-–]\s*\d{4})?$/;
+// The OPAC's empty result, in a `div.alert` (same wording on every AU/NZ/US library surveyed):
+// "Sorry, your search for Anywhere: zzqxjv (Keywords) [in the local catalogue] did not find any records."
+const NO_RECORDS = /did not find any records/i;
 
 function newDraft(): Draft {
   return {
@@ -41,7 +65,9 @@ function newDraft(): Draft {
     detailUrl: null,
     authorUrl: null,
     detailLines: [],
+    detailLinked: [],
     lineBuf: null,
+    lineLinked: false,
     summaryBuf: "",
     isbn: null,
     coverUrls: [],
@@ -101,16 +127,26 @@ function finalize(d: Draft, origin: string): SearchRecord {
   let year: string | null = null;
   let language: string | null = null;
 
-  for (const raw of d.detailLines) {
+  let first = true;
+  for (const [i, raw] of d.detailLines.entries()) {
     const line = collapse(raw);
     if (!line) continue;
+    const isFirst = first;
+    first = false;
     const role = line.match(AUTHOR_ROLE);
     if (role && author === null) {
-      authorRole = role[1].toLowerCase();
-      author = line.replace(AUTHOR_ROLE, "").trim() || null;
+      authorRole = role[2].toLowerCase();
+      author = (line.slice(0, role.index) + (role[1] ?? "")).trim() || null;
       continue;
     }
-    if (year === null && /^\d{4}(\s*[-–]\s*\d{4})?$/.test(line)) {
+    // Guarded fallback: a role-less first line is the author only with structural evidence —
+    // an author-search link, or a personal name with life dates. A bare "Haig, Matt" without a
+    // link is indistinguishable from a language list ("English, French") and stays unclassified.
+    if (isFirst && !role && !YEAR.test(line) && (d.detailLinked[i] || NAME_WITH_DATES.test(line))) {
+      author = line;
+      continue;
+    }
+    if (year === null && YEAR.test(line)) {
       year = line; // single year "2025" or a range "2022 - 2023"
       continue;
     }
@@ -157,6 +193,7 @@ export function parseSearchResults(html: string, opts: ParseSearchOptions = {}):
 
   let setId: string | null = null;
   let headerBuf = "";
+  let alertBuf = "";
   let nextPageUrl: string | null = null;
   let prevPageUrl: string | null = null;
 
@@ -178,11 +215,11 @@ export function parseSearchResults(html: string, opts: ParseSearchOptions = {}):
         headerBuf += t.text;
       },
     })
-    // ---- page-level: setId from the first ALLWRKENQ link ----
-    .on('a[href*="/OPAC/ALLWRKENQ/"]', {
+    // ---- page-level: setId from the first ALLWRKENQ (work) or ALLENQ (edition) link ----
+    .on('a[href*="/OPAC/ALL"]', {
       element(el) {
         if (setId) return;
-        const m = decode(el.getAttribute("href") ?? "").match(/\/OPAC\/ALLWRKENQ\/(\d+)/);
+        const m = decode(el.getAttribute("href") ?? "").match(/\/OPAC\/ALL(?:WRK)?ENQ\/(\d+)/);
         if (m) setId = m[1];
       },
     })
@@ -224,16 +261,25 @@ export function parseSearchResults(html: string, opts: ParseSearchOptions = {}):
     })
     .on("fieldset.card-list div.recdetails > span.d-block", {
       element(el) {
-        if (current) current.lineBuf = "";
+        if (current) {
+          current.lineBuf = "";
+          current.lineLinked = false;
+        }
         el.onEndTag(() => {
           if (current && current.lineBuf != null) {
             current.detailLines.push(current.lineBuf);
+            current.detailLinked.push(current.lineLinked);
             current.lineBuf = null;
           }
         });
       },
       text(t) {
         if (current && current.lineBuf != null) current.lineBuf += t.text;
+      },
+    })
+    .on('fieldset.card-list div.recdetails > span.d-block a[href*="/AUTHENQ/"]', {
+      element() {
+        if (current && current.lineBuf != null) current.lineLinked = true;
       },
     })
     // ---- summary / blurb ----
@@ -286,6 +332,12 @@ export function parseSearchResults(html: string, opts: ParseSearchOptions = {}):
         const href = el.getAttribute("data-tab-href");
         if (code && href) fmtOf(current, code).availabilityUrl = href;
       },
+    })
+    // ---- page-level: alert boxes (the "did not find any records" message lives in one) ----
+    .on(".alert", {
+      text(t) {
+        alertBuf += t.text;
+      },
     });
 
   rw.transform(html);
@@ -303,6 +355,7 @@ export function parseSearchResults(html: string, opts: ParseSearchOptions = {}):
     showing,
     nextPageUrl: absolute(origin, nextPageUrl),
     prevPageUrl: absolute(origin, prevPageUrl),
+    noResults: records.length === 0 && NO_RECORDS.test(collapse(alertBuf)),
     records,
   };
 }

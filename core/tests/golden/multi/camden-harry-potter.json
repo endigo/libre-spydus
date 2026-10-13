@@ -1,0 +1,264 @@
+{
+  "query": "harry potter",
+  "setId": "31050547",
+  "totalResults": 108,
+  "showing": {
+    "from": 1,
+    "to": 10
+  },
+  "nextPageUrl": "https://camden.spydus.com/cgi-bin/spydus.exe/SET/OPAC/ALLWRKENQ/31050547/9507477?NREC=10",
+  "prevPageUrl": null,
+  "noResults": false,
+  "records": [
+    {
+      "rank": 1,
+      "workIrn": "9507876",
+      "title": "The Harry Potter wizarding almanac : the official magical companion to J.K. Rowling's Harry Potter books",
+      "detailUrl": "https://camden.spydus.com/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/31050547/9507876,1",
+      "author": "Rowling, J. K.",
+      "authorRole": "author",
+      "authorUrl": "https://camden.spydus.com/cgi-bin/spydus.exe/NAV/OPAC/AUTHENQ/31050547?SETLVL=&QRY=IRN(4639792)&QRYTEXT=Rowling%2C%20J.%20K.&NAVLVL=SET",
+      "year": "2023",
+      "language": "English",
+      "summary": "From the Sorting Hat to spell-casting, it's all packed inside! This dazzling gift book brings together beloved characters, unforgettable moments and iconic locations from Harry Potter and the Philosopher's Stone all the way through to The Deathly Hallows. It's the ultimate magical miscellany, filled with facts and fun about the wizarding world, beautifully catalogued and brilliantly explored. Joyfully illustrated throughout in full colour by seven stunning artists and tingling with things to spot on every page, this is the ideal introduction to the Harry Potter stories for new readers and the perfect book for families to share. The Harry Potter Wizarding Almanac also features an astonishing level of detail that is sure to surprise and fascinate lifelong fans. From incredible cross-sections to magical maps and ingenious lists, lose yourself exploring Hogwarts and beyond.",
+      "isbn": "9781526646712",
+      "coverUrls": [
+        "https://secure.syndetics.com/index.aspx?isbn=9781526646712/mc.gif&client=camdenlibs&upc=&oclc=&issn="
+      ],
+      "formats": [
+        {
+          "code": "BK",
+          "label": "Book",
+          "reserveUrl": "https://camden.spydus.com/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/31050547/0/V/0/R/9/ALLWRKENQ?SVL=9507876&RECFMT=BK",
+          "availabilityUrl": "https://camden.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/31050547?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=31050547&QRY=WRK01%5C9507876+%2B+03902\\BK"
+        }
+      ]
+    },
+    {
+      "rank": 2,
+      "workIrn": "9535429",
+      "title": "Harry potter and the philosopher's stone (official tv tie-in",
+      "detailUrl": "https://camden.spydus.com/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/31050547/9535429,2",
+      "author": "Rowling, J. K.",
+      "authorRole": "author",
+      "authorUrl": "https://camden.spydus.com/cgi-bin/spydus.exe/NAV/OPAC/AUTHENQ/31050547?SETLVL=&QRY=IRN(4639792)&QRYTEXT=Rowling%2C%20J.%20K.&NAVLVL=SET",
+      "year": null,
+      "language": "English",
+      "summary": null,
+      "isbn": "9781037217098",
+      "coverUrls": [
+        "https://secure.syndetics.com/index.aspx?isbn=9781037217098/mc.gif&client=camdenlibs&upc=&oclc=&issn="
+      ],
+      "formats": [
+        {
+          "code": "BK",
+          "label": "Book",
+          "reserveUrl": "https://camden.spydus.com/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/31050547/0/V/0/R/9/ALLWRKENQ?SVL=9535429&RECFMT=BK",
+          "availabilityUrl": "https://camden.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/31050547?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=31050547&QRY=WRK01%5C9535429+%2B+03902\\BK"
+        }
+      ]
+    },
+    {
+      "rank": 3,
+      "workIrn": "9534369",
+      "title": "Harry potter and the half-blood prince illustrated edition",
+      "detailUrl": "https://camden.spydus.com/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/31050547/9534369,3",
+      "author": "Rowling, J. K.",
+      "authorRole": "author",
+      "authorUrl": "https://camden.spydus.com/cgi-bin/spydus.exe/NAV/OPAC/AUTHENQ/31050547?SETLVL=&QRY=IRN(4639792)&QRYTEXT=Rowling%2C%20J.%20K.&NAVLVL=SET",
+      "year": null,
+      "language": "English",
+      "summary": null,
+      "isbn": "9781408845691",
+      "coverUrls": [
+        "https://secure.syndetics.com/index.aspx?isbn=9781408845691/mc.gif&client=camdenlibs&upc=&oclc=&issn="
+      ],
+      "formats": [
+        {
+          "code": "BK",
+          "label": "Book",
+          "reserveUrl": "https://camden.spydus.com/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/31050547/0/V/0/R/9/ALLWRKENQ?SVL=9534369&RECFMT=BK",
+          "availabilityUrl": "https://camden.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/31050547?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=31050547&QRY=WRK01%5C9534369+%2B+03902\\BK"
+        }
+      ]
+    },
+    {
+      "rank": 4,
+      "workIrn": "9525646",
+      "title": "Harry potter",
+      "detailUrl": "https://camden.spydus.com/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/31050547/9525646,4",
+      "author": "Rowling, J. K.",
+      "authorRole": "author",
+      "authorUrl": "https://camden.spydus.com/cgi-bin/spydus.exe/NAV/OPAC/AUTHENQ/31050547?SETLVL=&QRY=IRN(4639792)&QRYTEXT=Rowling%2C%20J.%20K.&NAVLVL=SET",
+      "year": "2025",
+      "language": "English",
+      "summary": null,
+      "isbn": "9781526672605",
+      "coverUrls": [
+        "https://secure.syndetics.com/index.aspx?isbn=9781526672605/mc.gif&client=camdenlibs&upc=&oclc=&issn="
+      ],
+      "formats": [
+        {
+          "code": "BK",
+          "label": "Book",
+          "reserveUrl": "https://camden.spydus.com/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/31050547/0/V/0/R/9/ALLWRKENQ?SVL=9525646&RECFMT=BK",
+          "availabilityUrl": "https://camden.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/31050547?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=31050547&QRY=WRK01%5C9525646+%2B+03902\\BK"
+        }
+      ]
+    },
+    {
+      "rank": 5,
+      "workIrn": "9511258",
+      "title": "From the films of Harry Potter : 100 objects the most iconic props from the movies",
+      "detailUrl": "https://camden.spydus.com/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/31050547/9511258,5",
+      "author": null,
+      "authorRole": null,
+      "authorUrl": null,
+      "year": "2024",
+      "language": "English",
+      "summary": "Harry Potter in 100 Objects presents a host of incredible props, artefacts and set items from the legendary Harry Potter movies. Through colourful photography and insider facts from the creators of all eight films, readers will discover the significance of each object and its unique role in shaping the beloved series. Filled with cast and crew interviews, behind-the-scenes accounts, concept art and film facts, this is a must-have for all Harry Potter fans. 100 ICONIC OBJECTS: A stunning range of objects play a part in Harry's journey, from the Elder Wand to the Cloak of Invisibility and the Sword of Gryffindor. Learn about the design, creation and significance of dozens of these important artefacts from the wizarding world. 8 feature films: The objects featured span all eight Harry Potter films, from Harry Potter and the Philosopher's Stone to Harry Potter and the Deathly Hallows - Part 1 and 2. Packed with behind-the-scenes information, interviews and concept art from the Harry Potter filmmakers and crew.",
+      "isbn": "9781526681546",
+      "coverUrls": [
+        "https://secure.syndetics.com/index.aspx?isbn=9781526681546/mc.gif&client=camdenlibs&upc=&oclc=&issn="
+      ],
+      "formats": [
+        {
+          "code": "BK",
+          "label": "Book",
+          "reserveUrl": "https://camden.spydus.com/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/31050547/0/V/0/R/9/ALLWRKENQ?SVL=9511258&RECFMT=BK",
+          "availabilityUrl": "https://camden.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/31050547?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=31050547&QRY=WRK01%5C9511258+%2B+03902\\BK"
+        }
+      ]
+    },
+    {
+      "rank": 6,
+      "workIrn": "9509118",
+      "title": "¿¿¿¿ ¿¿¿¿ ¿¿¿¿¿ ¿¿¿¿¿¿¿ : Harry Potter and the Chamber of Secrets",
+      "detailUrl": "https://camden.spydus.com/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/31050547/9509118,6",
+      "author": "¿¿¿¿¿¿, .¿. ¿",
+      "authorRole": "author",
+      "authorUrl": "https://camden.spydus.com/cgi-bin/spydus.exe/NAV/OPAC/AUTHENQ/31050547?SETLVL=&QRY=IRN(8741870)&QRYTEXT=%C2%BF%C2%BF%C2%BF%C2%BF%C2%BF%C2%BF%2C%20.%C2%BF.%20%C2%BF&NAVLVL=SET",
+      "year": "2019",
+      "language": "English",
+      "summary": "\"'¿¿¿¿ ¿¿¿¿¿ ¿¿¿¿ ¿¿¿¿¿¿¿ ¿¿¿¿¿¿ ¿¿¿ ¿¿¿¿¿¿¿ ¿¿¿¿ ¿¿¿¿ ¿¿¿¿¿¿ ¿¿ ¿¿¿¿¿ ¿¿¿¿¿¿¿ ¿¿¿¿¿ ¿¿¿¿¿ ¿¿¿¿¿¿¿¿ ¿¿¿ ¿¿¿¿¿.'\" ¿¿¿ ¿¿¿ ¿¿¿¿¿ ¿¿¿¿ ¿¿¿¿ ¿¿ ¿¿¿¿¿ ¿¿¿¿¿¿ ¿¿¿ ¿¿¿¿¿¿¿¿ ¿¿¿¿¿ ¿¿¿¿¿ ¿¿¿¿¿¿¿ ¿¿¿¿¿¿ ¿¿ ¿¿¿¿ ¿¿¿ ¿¿¿¿¿¿¿ ¿¿¿¿¿¿ ¿¿¿¿¿ ¿¿¿ ¿¿¿¿¿ ¿¿ ¿¿¿¿¿ ¿¿¿¿¿ ¿¿ ¿¿¿¿¿¿¿ ¿¿¿¿¿¿¿ ¿¿¿¿¿¿¿! ¿¿¿ ¿¿¿¿ ¿¿¿¿ ¿¿¿ ¿¿¿¿¿ ¿¿¿¿¿¿¿ ¿¿¿¿¿ ¿¿¿¿¿ ¿¿¿¿¿¿¿¿ ¿¿¿¿ ¿¿¿¿¿ ¿¿¿¿¿¿¿ ¿¿¿¿¿¿¿ ¿¿¿¿ ¿¿¿ ¿¿¿¿ ¿¿¿ ¿¿¿¿¿¿ ¿¿¿¿¿ ¿¿¿¿ ¿¿¿¿ ¿¿¿¿¿¿¿ ¿¿¿¿¿¿¿ - ¿¿¿ ¿¿¿ ¿¿¿ ¿¿¿¿¿¿. ¿¿¿ ¿¿¿¿¿¿ ¿¿¿ ¿¿¿¿¿¿ ¿¿¿ ¿¿¿ ¿¿¿¿¿¿¿ ¿¿¿ ¿¿¿¿¿... ¿¿¿¿ ¿¿¿¿¿¿ ¿¿¿¿ ¿¿¿¿¿¿¿¿ ¿¿¿¿¿¿ ¿¿¿ ¿¿¿¿¿. Theme music composed by James Hannigan",
+      "isbn": "9781781107584",
+      "coverUrls": [
+        "http://download.yourcloudlibrary.com/apps/icons/Cloud_Library_App_Icon_50x50.png",
+        "https://images.yourcloudlibrary.com/delivery/img?type=DOCUMENTIMAGE&documentID=xpsekg9&token=nobody",
+        "https://secure.syndetics.com/index.aspx?isbn=9781781107584/mc.gif&client=camdenlibs&upc=&oclc=&issn="
+      ],
+      "formats": [
+        {
+          "code": "EAUD",
+          "label": "eAudioBook",
+          "reserveUrl": null,
+          "availabilityUrl": "https://camden.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/31050547?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=31050547&QRY=WRK01%5C9509118+%2B+03902\\EAUD"
+        }
+      ]
+    },
+    {
+      "rank": 7,
+      "workIrn": "9508320",
+      "title": "¿¿¿¿ ¿¿¿¿ ¿¿¿¿¿¿¿ ¿¿¿¿¿¿ : Harry Potter and the Half-Blood Prince",
+      "detailUrl": "https://camden.spydus.com/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/31050547/9508320,7",
+      "author": "¿¿¿¿¿¿, .¿. ¿",
+      "authorRole": "author",
+      "authorUrl": "https://camden.spydus.com/cgi-bin/spydus.exe/NAV/OPAC/AUTHENQ/31050547?SETLVL=&QRY=IRN(8741865)&QRYTEXT=%C2%BF%C2%BF%C2%BF%C2%BF%C2%BF%C2%BF%2C%20.%C2%BF.%20%C2%BF&NAVLVL=SET",
+      "year": "2019",
+      "language": "English",
+      "summary": "\";¿¿¿ ¿¿¿¿¿¿¿ ¿¿¿¿¿ ¿¿ ¿¿¿¿¿¿ ¿¿¿ ¿¿¿¿¿¿¿ : ¿¿¿¿¿¿¿ ¿¿¿¿¿¿¿ ¿¿¿¿¿¿¿¿ ¿¿¿¿¿¿¿ ¿¿¿¿¿¿¿¿¿, ¿¿¿¿¿¿¿ ¿¿¿¿ ¿¿¿¿¿¿ (¿¿¿¿¿ ¿¿¿¿¿) ¿¿¿¿¿¿ ¿¿¿¿ ¿¿¿¿¿ ¿¿¿¿.......¿¿¿¿ ¿¿¿¿¿\" ¿¿¿¿¿ ¿¿¿ ¿¿¿¿¿¿¿ ¿¿¿ ¿¿¿¿¿ ¿¿¿¿¿ ¿¿ ¿¿¿¿ ¿¿¿¿¿ ¿¿¿¿¿ ¿¿¿¿¿¿ ¿¿¿¿¿ ¿¿¿¿¿ ¿¿¿ ¿¿¿ ¿¿¿ ¿¿¿¿ ¿¿ ¿¿¿¿¿ ¿¿¿¿ ¿¿¿¿¿¿ ¿¿¿¿¿¿¿¿ ¿¿¿¿ ¿¿ ¿¿¿¿ ¿¿ ¿¿¿¿¿. ¿¿¿ ¿¿¿¿¿¿¿¿ ¿¿¿¿¿¿¿ ¿¿¿¿¿ ¿¿ ¿¿¿¿ ¿¿¿¿¿¿ ¿¿¿¿¿¿¿¿¿ ¿¿¿¿¿ ¿¿¿¿ ¿¿¿¿¿. ¿¿¿¿¿ ¿¿¿¿¿ ¿¿ ¿¿¿¿¿¿ ¿¿¿¿ ¿¿¿¿¿ ¿¿¿¿¿ ¿¿¿¿ ¿¿¿ ¿¿¿ ¿¿¿¿¿. ¿¿¿ ¿¿¿¿¿¿ ¿¿¿¿ ¿¿¿¿¿ ¿¿¿ ¿¿¿¿¿¿¿ ¿¿¿¿¿¿ ¿¿¿¿ ¿¿¿¿¿¿ ¿¿¿¿¿ ¿¿¿¿¿¿¿¿ ¿¿¿¿¿¿¿ ¿¿¿¿¿¿ ¿¿¿¿¿¿¿ ¿¿¿¿¿¿¿ ¿¿¿¿¿...",
+      "isbn": "9781781107621",
+      "coverUrls": [
+        "http://download.yourcloudlibrary.com/apps/icons/Cloud_Library_App_Icon_50x50.png",
+        "https://images.yourcloudlibrary.com/delivery/img?type=DOCUMENTIMAGE&documentID=yunms89&token=nobody",
+        "https://secure.syndetics.com/index.aspx?isbn=9781781107621/mc.gif&client=camdenlibs&upc=&oclc=&issn="
+      ],
+      "formats": [
+        {
+          "code": "EAUD",
+          "label": "eAudioBook",
+          "reserveUrl": null,
+          "availabilityUrl": "https://camden.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/31050547?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=31050547&QRY=WRK01%5C9508320+%2B+03902\\EAUD"
+        }
+      ]
+    },
+    {
+      "rank": 8,
+      "workIrn": "9508317",
+      "title": "¿¿¿¿ ¿¿¿¿ ¿¿¿¿¿ ¿¿¿¿¿¿¿ : Harry Potter and the Prisoner of Azkaban",
+      "detailUrl": "https://camden.spydus.com/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/31050547/9508317,8",
+      "author": "¿¿¿¿¿¿, .¿. ¿",
+      "authorRole": "author",
+      "authorUrl": "https://camden.spydus.com/cgi-bin/spydus.exe/NAV/OPAC/AUTHENQ/31050547?SETLVL=&QRY=IRN(8741852)&QRYTEXT=%C2%BF%C2%BF%C2%BF%C2%BF%C2%BF%C2%BF%2C%20.%C2%BF.%20%C2%BF&NAVLVL=SET",
+      "year": "2019",
+      "language": "English",
+      "summary": "\"'¿¿¿¿¿¿ ¿¿ ¿¿ ¿¿¿¿¿ ¿¿¿¿¿¿ ¿¿¿¿¿ ¿¿¿¿¿¿¿¿ ¿¿ ¿¿¿¿¿¿¿ ¿¿¿¿¿¿¿ ¿¿¿¿¿¿¿ ¿¿ ¿¿¿¿¿¿ ¿¿¿¿¿ ¿¿¿¿¿ ¿¿¿ ¿¿¿¿¿. ¿¿¿ ¿¿¿¿ ¿¿¿¿ ¿¿¿¿¿¿¿¿ ¿¿¿¿¿¿¿¿ ¿¿¿¿¿¿¿ ¿¿¿ ¿¿¿ ¿¿¿¿.'\" ¿¿¿ ¿¿¿¿¿¿ ¿¿¿¿¿ ¿¿¿¿¿ ¿¿¿¿ ¿¿¿¿¿¿ ¿¿¿¿¿¿¿ ¿¿¿¿ ¿¿¿¿¿¿ ¿¿¿ ¿¿¿¿¿ ¿¿¿¿¿ ¿¿¿ ¿¿¿¿ ¿¿¿¿¿ ¿¿¿¿¿ ¿¿¿¿ ¿¿ ¿¿¿¿¿¿¿. ¿¿ ¿¿¿ ¿¿¿¿¿¿ ¿¿¿¿¿ ¿¿¿¿ ¿¿¿¿¿ ¿¿¿¿ ¿¿¿¿ ¿¿¿¿¿ ¿¿¿¿ ¿¿¿¿¿¿¿¿ - ¿¿¿¿¿¿ ¿¿¿ ¿¿¿¿¿¿ ¿¿¿¿. ¿¿¿ ¿¿¿¿¿¿¿ ¿¿¿¿¿¿¿¿ ¿¿ ¿¿¿¿ ¿¿¿¿¿¿ ¿¿¿ ¿¿¿¿¿¿¿ ¿¿¿¿ ¿¿¿¿¿ ¿¿ ¿¿¿¿¿ ¿¿¿ ¿¿¿¿ ¿¿¿¿... ¿¿¿ ¿¿¿¿¿¿ ¿¿ ¿¿¿ ¿¿¿¿ ¿¿¿¿ ¿¿¿¿¿¿¿¿¿¿ ¿¿¿¿¿¿ ¿¿¿¿¿ ¿¿¿¿¿¿¿ ¿¿¿¿¿¿¿¿ ¿¿¿¿¿¿¿ ¿¿¿¿¿... Theme music composed by James Hannigan",
+      "isbn": "9781781107591",
+      "coverUrls": [
+        "http://download.yourcloudlibrary.com/apps/icons/Cloud_Library_App_Icon_50x50.png",
+        "https://images.yourcloudlibrary.com/delivery/img?type=DOCUMENTIMAGE&documentID=w4e3kg9&token=nobody",
+        "https://secure.syndetics.com/index.aspx?isbn=9781781107591/mc.gif&client=camdenlibs&upc=&oclc=&issn="
+      ],
+      "formats": [
+        {
+          "code": "EAUD",
+          "label": "eAudioBook",
+          "reserveUrl": null,
+          "availabilityUrl": "https://camden.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/31050547?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=31050547&QRY=WRK01%5C9508317+%2B+03902\\EAUD"
+        }
+      ]
+    },
+    {
+      "rank": 9,
+      "workIrn": "9507615",
+      "title": "¿¿¿¿ ¿¿¿¿ ¿¿¿¿ ¿¿¿¿¿¿¿¿ : Harry Potter and the Philosopher's Stone",
+      "detailUrl": "https://camden.spydus.com/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/31050547/9507615,9",
+      "author": "¿¿¿¿¿¿, .¿. ¿",
+      "authorRole": "author",
+      "authorUrl": "https://camden.spydus.com/cgi-bin/spydus.exe/NAV/OPAC/AUTHENQ/31050547?SETLVL=&QRY=IRN(8741839)&QRYTEXT=%C2%BF%C2%BF%C2%BF%C2%BF%C2%BF%C2%BF%2C%20.%C2%BF.%20%C2%BF&NAVLVL=SET",
+      "year": "2019",
+      "language": "English",
+      "summary": "\"¿¿¿ ¿¿ ¿¿¿ ¿¿¿¿ ¿¿¿¿¿¿ ¿¿¿¿¿ ¿¿¿¿¿¿¿¿ ¿¿¿ ¿¿¿¿ ¿¿¿¿¿ ¿¿¿¿¿¿ ¿¿¿¿¿¿¿¿¿ ¿¿¿¿ ¿¿¿¿ ¿¿¿¿¿¿¿¿ ¿¿¿¿¿¿ ¿¿¿¿¿¿¿ ¿¿¿¿ ¿¿¿¿¿¿ ¿¿¿¿¿¿¿¿ ¿¿¿¿¿ ¿¿¿¿¿¿ \"H\".\" ¿¿ ¿¿¿¿ ¿¿¿¿ ¿¿¿¿¿¿¿¿ ¿¿ ¿¿¿ ¿¿¿ ¿¿¿¿¿¿¿ ¿¿¿¿¿ ¿¿¿¿ ¿¿¿¿¿¿¿¿ ¿¿¿¿¿¿¿¿ ¿¿¿ ¿¿¿¿¿ ¿¿¿¿¿ ¿¿¿ ¿¿¿¿¿ ¿¿¿¿¿¿ ¿¿ ¿¿¿¿ ¿¿¿¿¿¿ ¿¿¿¿¿. ¿¿¿¿¿ ¿¿¿¿¿¿ ¿¿¿¿¿¿ ¿¿¿¿¿¿ ¿¿¿ ¿¿¿¿¿¿ ¿¿¿¿¿ ¿¿¿¿¿ ¿¿ ¿¿¿ ¿¿¿¿¿¿¿¿ ¿¿¿¿¿¿¿ ¿¿¿¿¿ ¿¿¿ ¿¿¿¿¿ ¿¿¿¿¿¿¿¿ ¿¿¿¿¿ ¿¿¿¿¿. ¿¿¿ ¿¿¿¿ ¿¿ ¿¿¿ ¿¿¿¿¿ ¿¿¿¿ ¿¿¿¿¿¿ ¿¿¿¿ ¿¿¿¿¿ ¿¿¿ ¿¿¿¿¿ ¿¿ ¿¿¿¿ ¿¿¿¿¿ ¿¿¿¿¿ ¿¿¿¿¿¿ ¿¿¿¿¿¿ ¿¿¿¿¿¿ ¿¿¿¿¿¿ ¿¿¿ ¿¿¿¿¿¿¿ ¿¿¿¿¿¿¿: ¿¿¿¿ ¿¿¿¿ ¿¿¿¿ ¿¿¿¿¿¿¿ ¿¿¿ ¿¿¿¿¿ ¿¿ ¿¿¿¿¿ ¿¿¿¿¿¿¿ ¿¿¿¿¿ ¿¿¿¿¿ ¿¿¿¿¿¿¿¿. ¿¿¿¿¿¿ ¿¿¿¿¿ ¿¿¿ ¿¿¿ ¿¿¿¿¿! Theme music composed by James Hannigan",
+      "isbn": "9781781107652",
+      "coverUrls": [
+        "http://download.yourcloudlibrary.com/apps/icons/Cloud_Library_App_Icon_50x50.png",
+        "https://images.yourcloudlibrary.com/delivery/img?type=DOCUMENTIMAGE&documentID=w7q1b89&token=nobody",
+        "https://secure.syndetics.com/index.aspx?isbn=9781781107652/mc.gif&client=camdenlibs&upc=&oclc=&issn="
+      ],
+      "formats": [
+        {
+          "code": "EAUD",
+          "label": "eAudioBook",
+          "reserveUrl": null,
+          "availabilityUrl": "https://camden.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/31050547?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=31050547&QRY=WRK01%5C9507615+%2B+03902\\EAUD"
+        }
+      ]
+    },
+    {
+      "rank": 10,
+      "workIrn": "9507477",
+      "title": "¿¿¿¿ ¿¿¿¿ ¿¿¿¿¿¿ ¿¿¿¿¿¿¿ : Harry Potter and the Order of the Phoenix",
+      "detailUrl": "https://camden.spydus.com/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/31050547/9507477,10",
+      "author": "¿¿¿¿¿¿, .¿. ¿",
+      "authorRole": "author",
+      "authorUrl": "https://camden.spydus.com/cgi-bin/spydus.exe/NAV/OPAC/AUTHENQ/31050547?SETLVL=&QRY=IRN(8741874)&QRYTEXT=%C2%BF%C2%BF%C2%BF%C2%BF%C2%BF%C2%BF%2C%20.%C2%BF.%20%C2%BF&NAVLVL=SET",
+      "year": "2019",
+      "language": "English",
+      "summary": "\"\"¿¿¿ ¿¿¿¿¿ ¿¿¿ ¿¿¿¿¿¿ ¿¿¿¿¿¿¿ ¿¿¿¿¿¿¿¿. ¿¿¿¿ ¿¿¿¿¿¿ ¿¿ ¿¿¿ ¿¿¿¿¿ ¿¿¿ ¿¿¿ ¿¿¿¿¿. ¿¿¿¿¿¿¿ ¿¿ ¿¿¿¿¿ ¿¿¿¿¿ ¿¿¿¿¿ ¿¿¿¿ ¿¿¿¿ ¿¿¿ ¿¿¿¿¿¿.\"\" ¿¿¿ ¿¿¿¿ ¿¿¿¿¿ ¿¿¿¿¿¿¿ ¿¿¿¿¿¿ ¿¿¿¿¿. ¿¿ ¿¿¿¿ ¿¿¿¿ ¿¿¿¿ ¿¿ ¿¿¿¿¿¿¿ ¿¿ ¿¿¿¿¿ ¿¿¿ ¿¿¿ ¿¿¿¿ ¿¿¿ ¿¿¿¿ ¿¿¿¿¿¿¿¿¿¿¿¿ ¿¿¿ ¿¿¿ ¿¿¿ ¿¿¿¿. ¿¿¿¿ ¿¿¿¿¿¿ ¿¿¿ ¿¿¿¿¿¿ ¿¿¿¿ ¿¿¿ ¿¿¿¿¿¿¿ ¿¿¿ ¿¿¿¿ ¿¿¿ ¿¿¿¿¿¿: ¿¿¿¿¿ ¿¿¿¿ ¿¿¿¿¿ ¿¿ ¿¿¿¿ ¿¿¿¿¿¿¿ ¿¿¿¿¿¿¿ ¿¿¿ ¿¿¿¿¿¿. ¿¿¿ ¿¿ ¿¿¿¿ ¿¿¿¿ ¿¿¿¿¿¿¿¿¿¿ ¿¿¿¿¿ ¿¿¿¿¿¿¿ ¿¿¿¿¿ ¿¿¿¿¿ ¿¿¿¿ ¿¿ ¿¿¿¿¿¿¿¿ ¿¿¿¿¿¿¿ ¿¿¿¿¿¿¿ ¿¿¿ ¿¿¿¿. ¿¿¿¿¿ ¿¿¿¿¿ ¿¿¿ ¿¿¿¿¿ ¿¿¿ ¿¿¿ ¿¿¿¿¿¿ ¿¿¿¿ ¿¿ ¿¿¿¿ ...",
+      "isbn": "9781781107614",
+      "coverUrls": [
+        "http://download.yourcloudlibrary.com/apps/icons/Cloud_Library_App_Icon_50x50.png",
+        "https://images.yourcloudlibrary.com/delivery/img?type=DOCUMENTIMAGE&documentID=yewzgr9&token=nobody",
+        "https://secure.syndetics.com/index.aspx?isbn=9781781107614/mc.gif&client=camdenlibs&upc=&oclc=&issn="
+      ],
+      "formats": [
+        {
+          "code": "EAUD",
+          "label": "eAudioBook",
+          "reserveUrl": null,
+          "availabilityUrl": "https://camden.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/31050547?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=31050547&QRY=WRK01%5C9507477+%2B+03902\\EAUD"
+        }
+      ]
+    }
+  ]
+}

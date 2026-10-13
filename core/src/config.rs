@@ -1,0 +1,67 @@
+//! Upstream constants. Strings are copied verbatim from
+//! `middleware/src/fetch/spydus.ts` and `middleware/src/fetch/auth.ts`.
+
+use std::time::Duration;
+
+/// The one library this core talks to (spydus.ts:4).
+pub const ORIGIN: &str = "https://canning.spydus.com";
+
+/// Browser UA sent on every request (auth.ts:20-21, identical to spydus.ts:6-7).
+pub const USER_AGENT: &str = "Mozilla/5.0 (Linux; Android 14; Pixel 10 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Mobile Safari/537.36";
+
+/// UI cookies the native app assigns; authed reads need them (auth.ts:25).
+pub const UI_COOKIES: &str =
+    "SPYDUS_DISPLAYCONTEXT_443=MOB; consentSettings_443=ALL; SPYDUS_MYACCOUNT_443=";
+
+/// Browse-session cookie name the authed `Cookie` header carries (auth.ts:23).
+pub const SESSION_COOKIE: &str = "SPYDUS_BRWSESSIONID_443";
+
+/// Login form POST target (auth.ts:27).
+pub const LOGIN_POST_PATH: &str = "/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/LB/2";
+
+/// Login redirect target / account dashboard entry (auth.ts:28).
+pub const LOGIN_RDT: &str = "/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/LB/1?ISGLB=0";
+
+/// Script carrying the OPAC RSA public key (auth.ts:29).
+pub const ENCRYPT_JS: &str = "/docs/OPAC/js/encrypt.js";
+
+/// Keyword search results, built directly instead of asking the mobile discover API (which 404s
+/// on many libraries). Every `{q}` is replaced by the form-urlencoded query (`harry potter` →
+/// `harry+potter`) and `{sorts}` by the form-urlencoded sort code. With [`SORTS_RELEVANCE`] it is
+/// byte-for-byte what Canning's `discover/search` returns. `ALLWRKENQ` (work-level results)
+/// works on every library tested.
+pub const SEARCH_PATH: &str = "/cgi-bin/spydus.exe/ENQ/OPAC/ALLWRKENQ?ENTRY={q}&ENTRY_NAME=BS&ENTRY_TYPE=K&SORTS={sorts}&GQ={q}";
+
+/// The OPAC home page: its "Featured" list (`SpydusClient::featured`).
+pub const HOME_PATH: &str = "/cgi-bin/spydus.exe/MSGTRN/OPAC/HOME";
+
+/// The signed-in reader's active Pick list ("My Picks"), 20 records a page (`SpydusClient::picks`).
+pub const PICK_LIST_PATH: &str = "/cgi-bin/spydus.exe/SVL/OPAC/ALLENQ?ISGLB=1&NRECS=20";
+
+/// Saves (`?SVL={irn}`) or removes (`?RSVL={irn}`) one record on the active Pick list: what the
+/// website's bookmark buttons request (`spydus.js` `onClickSVL`). A work's IRN and an edition's
+/// bib IRN both work, without a result set in the path.
+pub const PICK_TOGGLE_PATH: &str = "/cgi-bin/spydus.exe/XSVL/OPAC/ALLENQ";
+
+/// The Spydus mobile app's public library config (card `barcodeType`, branding). Optional: some
+/// libraries answer 404.
+pub const MOBILE_CONFIG_PATH: &str = "/api/mobile/1.0/general/config?wifiName=";
+
+/// `SORTS` for relevance order (`SearchSort::Relevance`), what discover/search asks for.
+pub const SORTS_RELEVANCE: &str = "SQL_REL_GENWRK";
+
+/// `SORTS` for newest-added-first (`SearchSort::Newest`): the bib record's creation date, then
+/// time (`]` separates sort keys). It is the sort of the OPAC's own RSS feed link on every results
+/// page, and page 1 matched that feed's order on all 6 AU/NZ/US libraries checked (2026-10-12).
+/// `SQL_DATECREATEDDESC` is not an equivalent: its page 1 differed from the feed on 4 of the 6.
+pub const SORTS_NEWEST: &str = "MAIN.CREATED_DATE.DESC]MAIN.CREATED_TIME.DESC";
+
+/// TCP (+ TLS) connect timeout on every request; unreachable servers fail fast.
+pub const CONNECT_TIMEOUT: Duration = Duration::from_secs(10);
+
+/// Total per-request timeout, from connecting until the response body is read.
+pub const REQUEST_TIMEOUT: Duration = Duration::from_secs(60);
+
+/// Response header AWS WAF sets when it answers with a captcha or challenge instead of the
+/// library (`captcha` on every `*.spydus.co.uk` request, with status 405).
+pub const WAF_ACTION_HEADER: &str = "x-amzn-waf-action";

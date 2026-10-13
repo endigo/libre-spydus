@@ -1,0 +1,28 @@
+<html><body>
+<div class="form-static-text">All branches available online</div>
+<div id="formValidationMsg" class="d-none">Error</div>
+<form class="form" id="mainForm" method="post" action="/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/78500000/12345/R/1?A=1&amp;amp;B=2" novalidate>
+  <input type="hidden" name="csrf" value="tok&amp;en==">
+  <input type="hidden" name="PICKUP" value="25363">
+  <input name="ITM" value="">
+  <input type="text" name="SDTE" value="">
+  <input type="date" name="XDTE">
+  <input type="checkbox" name="CLRSDTE" value="1">
+  <input type="checkbox" name="NOTIFY" checked>
+  <input type="radio" name="MODE" value="A">
+  <input type="radio" name="MODE" value="B" checked>
+  <input type="hidden" value="no-name">
+  <div class="form-group" id="pickuplocs"><label>Pickup location</label><div class="form-static-text">  RIVERTON LIBRARY  </div></div>
+  <div class="form-group"><label>Available items</label><div class="form-static-text">Canning - Reservable items 3, available 0</div></div>
+  <select class="form-select" name="XDAYS" id="xdays">
+    <option value="0">No expiry</option>
+    <option value="30" selected>1 month</option>
+    <option value="730"> 2   years </option>
+  </select>
+  <select name="LANG"><option value="EN">English</option><option selected value="FR">French</option></select>
+  <select name="EMPTY"></select>
+  <button type="button" name="cancelButton" class="btn btn-secondary">Cancel</button>
+  <button class="btn btn-primary" type="submit" name="submitButton" value="Continue"><span class="fa-light fa-check"></span> Continue </button>
+</form>
+<div class="form-static-text">Footer: items available for loan</div>
+</body></html>

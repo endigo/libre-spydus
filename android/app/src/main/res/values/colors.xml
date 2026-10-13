@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- design/tokens.json color.background / color.primary -->
+    <color name="ls_background">#2B2D42</color>
+    <color name="ls_primary">#F2665E</color>
+</resources>

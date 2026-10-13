@@ -1,0 +1,2159 @@
+{
+  "works": [
+    {
+      "key": "midnight",
+      "workIrn": "15642035",
+      "title": "The Midnight Library",
+      "author": "Haig, Matt, 1975-",
+      "authorRole": "author",
+      "year": "2020 - 2023",
+      "language": "English",
+      "isbn": "1786892707",
+      "coverUrls": [
+        "https://secure.syndetics.com/index.aspx?isbn=1786892707/mc.gif&client=citycanning&upc=&oclc=&issn="
+      ],
+      "formats": [
+        {
+          "code": "BK",
+          "label": "Book",
+          "bibIrn": "8753080",
+          "publisher": "Edinburgh : Canongate, 2020.©2020",
+          "counts": {
+            "copies": 2
+          },
+          "record": {
+            "bibIrn": "8753080",
+            "brn": "275039",
+            "title": "The Midnight Library",
+            "seriesTitle": null,
+            "isbn": "9781786892720",
+            "coverUrls": [
+              "https://secure.syndetics.com/index.aspx?isbn=9781786892720/lc.gif&client=citycanning&upc=&oclc=&issn="
+            ],
+            "summary": "Somewhere out beyond the edge of the universe there is a library that contains an infinite number of books, each one the story of another reality. One tells the story of your life as it is, along with another book for the other life you could have lived if you had made a different choice at any point in your life. While we all wonder how our lives might have been, what if you had the chance to go to the library and see for yourself? Would any of these other lives truly be better? Nora Seed finds herself faced with this decision. Faced with the possibility of changing her life for a new one, following a different career, undoing old breakups, realizing her dreams of becoming a glaciologist; she must search within herself as she travels through the Midnight Library to decide what is truly fulfilling in life, and what makes it worth living in the first place.",
+            "details": [
+              {
+                "label": "Main title",
+                "values": [
+                  {
+                    "text": "The Midnight Library / Matt Haig.",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Author",
+                "values": [
+                  {
+                    "text": "Haig, Matt, 1975-, author",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Work",
+                "values": [
+                  {
+                    "text": "The Midnight Library",
+                    "url": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/WRKENQ/78578779?SETLVL=&IRN=15642035"
+                  }
+                ]
+              },
+              {
+                "label": "Imprint",
+                "values": [
+                  {
+                    "text": "Edinburgh : Canongate, 2020.",
+                    "url": null
+                  },
+                  {
+                    "text": "©2020",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Collation",
+                "values": [
+                  {
+                    "text": "288 pages ; 22 cm",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Notes",
+                "values": [
+                  {
+                    "text": "\"One library. Infinite lives.\" --Page [1] of cover.",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "ISBN",
+                "values": [
+                  {
+                    "text": "9781786892720 (paperback)",
+                    "url": null
+                  },
+                  {
+                    "text": "1786892723",
+                    "url": null
+                  },
+                  {
+                    "text": "1786892707 (hardcover)",
+                    "url": null
+                  },
+                  {
+                    "text": "9781786892706 (hardcover)",
+                    "url": null
+                  },
+                  {
+                    "text": "9781838852870 (hbk.)",
+                    "url": null
+                  },
+                  {
+                    "text": "1838852875",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Dewey class",
+                "values": [
+                  {
+                    "text": "823.92",
+                    "url": null
+                  },
+                  {
+                    "text": "F",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Language",
+                "values": [
+                  {
+                    "text": "English",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Subject",
+                "values": [
+                  {
+                    "text": "Libraries -- Fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Choice (Psychology) -- Fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Decision making -- Fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Life change events -- Fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Speculative fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Science fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Fantasy fiction",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "BRN",
+                "values": [
+                  {
+                    "text": "275039",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Bookmark link",
+                "values": [
+                  {
+                    "text": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ?SETLVL=&BRN=275039",
+                    "url": null
+                  }
+                ]
+              }
+            ],
+            "bookmarkUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ?SETLVL=&BRN=275039",
+            "related": {
+              "similar": null,
+              "author": null,
+              "series": null,
+              "versions": null
+            }
+          }
+        },
+        {
+          "code": "LP",
+          "label": "Large Print",
+          "bibIrn": "14404975",
+          "publisher": "Waterville, Maine : Large Print Press, 2023.©2020.",
+          "counts": {
+            "copies": 1
+          },
+          "record": {
+            "bibIrn": "14404975",
+            "brn": "384349",
+            "title": "The midnight library",
+            "seriesTitle": null,
+            "isbn": "9798885792226",
+            "coverUrls": [
+              "https://secure.syndetics.com/index.aspx?isbn=9798885792226/lc.gif&client=citycanning&upc=&oclc=&issn="
+            ],
+            "summary": "Somewhere out beyond the edge of the universe there is a library that contains an infinite number of books, each one the story of another reality. One tells the story of your life as it is, along with another book for the other life you could have lived if you had made a different choice at any point in your life. While we all wonder how our lives might have been, what if you had the chance to go to the library and see for yourself? Would any of these other lives truly be better? In The Midnight Library, Matt Haig's enchanting new novel, Nora Seed finds herself faced with this decision. Faced with the possibility of changing her life for a new one, following a different career, undoing old breakups, realising her dreams of becoming a glaciologist; she must search within herself as she travels through the Midnight Library to decide what is truly fulfilling in life, and what makes it worth living in the first place.",
+            "details": [
+              {
+                "label": "Main title",
+                "values": [
+                  {
+                    "text": "The midnight library / Matt Haig.",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Author",
+                "values": [
+                  {
+                    "text": "Haig, Matt, 1975-, author",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Work",
+                "values": [
+                  {
+                    "text": "The Midnight Library",
+                    "url": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/WRKENQ/78578786?SETLVL=&IRN=15642035"
+                  }
+                ]
+              },
+              {
+                "label": "Edition",
+                "values": [
+                  {
+                    "text": "Large print edition.",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Imprint",
+                "values": [
+                  {
+                    "text": "Waterville, Maine : Large Print Press, 2023.",
+                    "url": null
+                  },
+                  {
+                    "text": "©2020.",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Collation",
+                "values": [
+                  {
+                    "text": "439 pages (large print) ; 22 cm.",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "ISBN",
+                "values": [
+                  {
+                    "text": "9798885792226",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Dewey class",
+                "values": [
+                  {
+                    "text": "F",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Language",
+                "values": [
+                  {
+                    "text": "English",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Subject",
+                "values": [
+                  {
+                    "text": "Choice (Psychology) -- Fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Conduct of life -- Fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Decision making -- Fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Libraries -- Fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Life change events -- Fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Large type books",
+                    "url": null
+                  },
+                  {
+                    "text": "Alternative histories (Fiction)",
+                    "url": null
+                  },
+                  {
+                    "text": "Fantasy fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Science fiction",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "BRN",
+                "values": [
+                  {
+                    "text": "384349",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Bookmark link",
+                "values": [
+                  {
+                    "text": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ?SETLVL=&BRN=384349",
+                    "url": null
+                  }
+                ]
+              }
+            ],
+            "bookmarkUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ?SETLVL=&BRN=384349",
+            "related": {
+              "similar": null,
+              "author": null,
+              "series": null,
+              "versions": null
+            }
+          }
+        }
+      ]
+    },
+    {
+      "key": "longnight",
+      "workIrn": "15975964",
+      "title": "The Long Night",
+      "author": "White, Christian",
+      "authorRole": "author",
+      "year": "2025 - 2026",
+      "language": "English",
+      "isbn": "9781004225712",
+      "coverUrls": [
+        "https://secure.syndetics.com/index.aspx?isbn=9781004225712/mc.gif&client=citycanning&upc=&oclc=&issn="
+      ],
+      "formats": [
+        {
+          "code": "BK",
+          "label": "Book",
+          "bibIrn": "17648631",
+          "publisher": "South Melbourne, VIC : Affirm Press, 2025.©2025",
+          "counts": {
+            "copies": 2
+          },
+          "record": {
+            "bibIrn": "17648631",
+            "brn": "439699",
+            "title": "The long night",
+            "seriesTitle": null,
+            "isbn": "9781923046795",
+            "coverUrls": [
+              "https://secure.syndetics.com/index.aspx?isbn=9781923046795/lc.gif&client=citycanning&upc=&oclc=&issn="
+            ],
+            "summary": "Em has lived a quiet life with her complicated mother and is now looking for love and a potential escape from her small hometown. When a masked man kidnaps her in the dark of night, though, she is drawn into a terrifying world. Jodie has been trying to forget a troubling time in her life, pouring her trauma into her work and out of her mind. Until one night her daughter is kidnapped and Jodie is dragged back into the violence. As Em and Jodie race into the darkness, the agony of the past rushes up to meet them. It will take all their devotion and courage to escape this night alive. Bold, vivid and heart-racingly intense, The Long Night is the darkest and most exhilarating novel yet from bestselling author Christian White.",
+            "details": [
+              {
+                "label": "Main title",
+                "values": [
+                  {
+                    "text": "The long night / Christian White.",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Author",
+                "values": [
+                  {
+                    "text": "White, Christian, author",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Work",
+                "values": [
+                  {
+                    "text": "The Long Night",
+                    "url": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/WRKENQ/78578847?SETLVL=&IRN=15975964"
+                  }
+                ]
+              },
+              {
+                "label": "Imprint",
+                "values": [
+                  {
+                    "text": "South Melbourne, VIC : Affirm Press, 2025.",
+                    "url": null
+                  },
+                  {
+                    "text": "©2025",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Collation",
+                "values": [
+                  {
+                    "text": "296 pages ; 24 cm.",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Notes",
+                "values": [
+                  {
+                    "text": "\"Who will survive till daybreak?\" --Cover.",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "ISBN",
+                "values": [
+                  {
+                    "text": "9781923046795 (paperback)",
+                    "url": null
+                  },
+                  {
+                    "text": "9781761822155 (hardback)",
+                    "url": null
+                  },
+                  {
+                    "text": "9781761637919 (ebook)",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Dewey class",
+                "values": [
+                  {
+                    "text": "F",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Language",
+                "values": [
+                  {
+                    "text": "English",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Subject",
+                "values": [
+                  {
+                    "text": "Women -- Fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Kidnapping -- Fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Small cities -- Fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Families -- Fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Secrecy -- Fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Thrillers (Fiction)",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "BRN",
+                "values": [
+                  {
+                    "text": "439699",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Bookmark link",
+                "values": [
+                  {
+                    "text": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ?SETLVL=&BRN=439699",
+                    "url": null
+                  }
+                ]
+              }
+            ],
+            "bookmarkUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ?SETLVL=&BRN=439699",
+            "related": {
+              "similar": null,
+              "author": null,
+              "series": null,
+              "versions": null
+            }
+          }
+        },
+        {
+          "code": "LP",
+          "label": "Large Print",
+          "bibIrn": "19244682",
+          "publisher": "Leicester [England] : Ulverscroft, Aurora, 2026.",
+          "counts": {
+            "copies": 1
+          },
+          "record": {
+            "bibIrn": "19244682",
+            "brn": "467086",
+            "title": "The long night",
+            "seriesTitle": null,
+            "isbn": "9781399197809",
+            "coverUrls": [
+              "https://secure.syndetics.com/index.aspx?isbn=9781399197809/lc.gif&client=citycanning&upc=&oclc=&issn="
+            ],
+            "summary": "Em has lived a quiet life with her complicated mother, and is now looking for love and a potential escape from her small hometown. When a masked man kidnaps her in the dark of night, though, she is drawn into a terrifying world. Jodie has been trying to forget a troubling time in her life, pouring her trauma into her work and out of her mind. Until one night her daughter is kidnapped, and Jodie is dragged back into the violence. As Em and Jodie race into the darkness, the agony of the past rushes up to meet them. It will take all their devotion and courage to escape this night alive.",
+            "details": [
+              {
+                "label": "Main title",
+                "values": [
+                  {
+                    "text": "The long night / Christian White.",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Author",
+                "values": [
+                  {
+                    "text": "White, Christian, author",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Work",
+                "values": [
+                  {
+                    "text": "The Long Night",
+                    "url": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/WRKENQ/78578857?SETLVL=&IRN=15975964"
+                  }
+                ]
+              },
+              {
+                "label": "Edition",
+                "values": [
+                  {
+                    "text": "Large print edition.",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Imprint",
+                "values": [
+                  {
+                    "text": "Leicester [England] : Ulverscroft, Aurora, 2026.",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Collation",
+                "values": [
+                  {
+                    "text": "362 pages (large print) ; 23 cm.",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "ISBN",
+                "values": [
+                  {
+                    "text": "9781399197809",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Language",
+                "values": [
+                  {
+                    "text": "English",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Subject",
+                "values": [
+                  {
+                    "text": "Mothers and daughters -- Fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Life change events -- Fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Kidnapping -- Fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Secrecy -- Fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Detective and mystery fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Large type books",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "BRN",
+                "values": [
+                  {
+                    "text": "467086",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Bookmark link",
+                "values": [
+                  {
+                    "text": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ?SETLVL=&BRN=467086",
+                    "url": null
+                  }
+                ]
+              }
+            ],
+            "bookmarkUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ?SETLVL=&BRN=467086",
+            "related": {
+              "similar": null,
+              "author": null,
+              "series": null,
+              "versions": null
+            }
+          }
+        }
+      ]
+    },
+    {
+      "key": "whistler",
+      "workIrn": "15982237",
+      "title": "Whistler",
+      "author": "Patchett, Ann",
+      "authorRole": "author",
+      "year": "2026",
+      "language": "English",
+      "isbn": "9781037206498",
+      "coverUrls": [
+        "https://secure.syndetics.com/index.aspx?isbn=9781037206498/mc.gif&client=citycanning&upc=&oclc=&issn="
+      ],
+      "formats": [
+        {
+          "code": "BK",
+          "label": "Book",
+          "bibIrn": "19243435",
+          "publisher": "London : Bloomsbury Publishing, 2026.©2026.",
+          "counts": {
+            "copies": 3,
+            "reserved": 12
+          },
+          "record": {
+            "bibIrn": "19243435",
+            "brn": "465787",
+            "title": "Whistler",
+            "seriesTitle": null,
+            "isbn": "9781037206498",
+            "coverUrls": [
+              "https://secure.syndetics.com/index.aspx?isbn=9781037206498/lc.gif&client=citycanning&upc=&oclc=&issn="
+            ],
+            "summary": "At the Metropolitan Museum of Art, fifty-three-year-old Daphne Fuller unexpectedly reunites with Eddie Triplett, the former stepfather she has not seen since childhood. Though Eddie was married to Daphne's mother for only a brief period, their bond profoundly shaped both of their lives. As they reconnect decades later, the novel reflects on memory, loss, love, and the lasting effects of choices and relationships across time.",
+            "details": [
+              {
+                "label": "Main title",
+                "values": [
+                  {
+                    "text": "Whistler / Ann Patchett.",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Author",
+                "values": [
+                  {
+                    "text": "Patchett, Ann, author",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Work",
+                "values": [
+                  {
+                    "text": "Whistler",
+                    "url": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/WRKENQ/78578711?SETLVL=&IRN=15982237"
+                  }
+                ]
+              },
+              {
+                "label": "Imprint",
+                "values": [
+                  {
+                    "text": "London : Bloomsbury Publishing, 2026.",
+                    "url": null
+                  },
+                  {
+                    "text": "©2026.",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Collation",
+                "values": [
+                  {
+                    "text": "295 pages ; 24 cm.",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "ISBN",
+                "values": [
+                  {
+                    "text": "9781037206498 (paperback)",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Dewey class",
+                "values": [
+                  {
+                    "text": "813.6",
+                    "url": null
+                  },
+                  {
+                    "text": "F",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Language",
+                "values": [
+                  {
+                    "text": "English",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Subject",
+                "values": [
+                  {
+                    "text": "Interpersonal relations -- Fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Reunions -- Fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Stepparents -- Fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Fathers and daughters -- Fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Estranged families -- Fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Loss (Psychology) -- Fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Memory -- Fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Life change events -- Fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "New York (N.Y.) -- Fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Psychological fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Domestic fiction",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "BRN",
+                "values": [
+                  {
+                    "text": "465787",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Bookmark link",
+                "values": [
+                  {
+                    "text": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ?SETLVL=&BRN=465787",
+                    "url": null
+                  }
+                ]
+              }
+            ],
+            "bookmarkUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ?SETLVL=&BRN=465787",
+            "related": {
+              "similar": null,
+              "author": null,
+              "series": null,
+              "versions": null
+            }
+          }
+        }
+      ]
+    },
+    {
+      "key": "lovelibrary",
+      "workIrn": "15989965",
+      "title": "The Love Library",
+      "author": "Manning, Sarra",
+      "authorRole": "author",
+      "year": "2026",
+      "language": "English",
+      "isbn": "9781398727830",
+      "coverUrls": [
+        "https://secure.syndetics.com/index.aspx?isbn=9781398727830/mc.gif&client=citycanning&upc=&oclc=&issn="
+      ],
+      "formats": [
+        {
+          "code": "BK",
+          "label": "Book",
+          "bibIrn": "19242648",
+          "publisher": "London : Orion Books, 2026.©2026",
+          "counts": {
+            "copies": 1
+          },
+          "record": {
+            "bibIrn": "19242648",
+            "brn": "464989",
+            "title": "The Love Library",
+            "seriesTitle": null,
+            "isbn": "9781398727830",
+            "coverUrls": [
+              "https://secure.syndetics.com/index.aspx?isbn=9781398727830/lc.gif&client=citycanning&upc=&oclc=&issn="
+            ],
+            "summary": "After a series of dating disasters, Tess Hardy wonders if she'll ever find the man of her dreams - or if he only exists on the pages of her favourite novels. So when she's invited to visit The Love Library, a 200-hundred-year-old institution which promises dates with her favourite romantic heroes in real life, Tess can't resist! But handsome head librarian Gabe Sharma seems grumpily determined to keep the library under lock and key. And as soon as Tess steps into the beautiful building crammed full of books, she realises why - it's not just dust in the air - it's magic! Here she really can grab drinks with Heathcliff, dine with Rochester and cosy up to her one true literary love, Darcy. There's just one problem: Gabe. He's determined to sabotage all of Tess's dates! And why is it that she has more fun fighting with Gabe than flirting with any of her book-bound suitors?",
+            "details": [
+              {
+                "label": "Main title",
+                "values": [
+                  {
+                    "text": "The Love Library / Sarra Manning.",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Author",
+                "values": [
+                  {
+                    "text": "Manning, Sarra, author",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Work",
+                "values": [
+                  {
+                    "text": "The Love Library",
+                    "url": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/WRKENQ/78578719?SETLVL=&IRN=15989965"
+                  }
+                ]
+              },
+              {
+                "label": "Imprint",
+                "values": [
+                  {
+                    "text": "London : Orion Books, 2026.",
+                    "url": null
+                  },
+                  {
+                    "text": "©2026",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Collation",
+                "values": [
+                  {
+                    "text": "368 pages ; 20 cm.",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Notes",
+                "values": [
+                  {
+                    "text": "\"What if you could date your favourite book boyfriend?\"--Cover.",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "ISBN",
+                "values": [
+                  {
+                    "text": "9781398727830 (paperback)",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Dewey class",
+                "values": [
+                  {
+                    "text": "823.92",
+                    "url": null
+                  },
+                  {
+                    "text": "F",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Language",
+                "values": [
+                  {
+                    "text": "English",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Subject",
+                "values": [
+                  {
+                    "text": "Man-woman relationships -- Fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Characters and characteristics in literature -- Fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Dating (Social customs) -- Fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Librarians -- Fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Libraries -- Fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Books and reading -- Fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Magic -- Fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Romance fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Magic realist fiction",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "BRN",
+                "values": [
+                  {
+                    "text": "464989",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Bookmark link",
+                "values": [
+                  {
+                    "text": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ?SETLVL=&BRN=464989",
+                    "url": null
+                  }
+                ]
+              }
+            ],
+            "bookmarkUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ?SETLVL=&BRN=464989",
+            "related": {
+              "similar": null,
+              "author": null,
+              "series": null,
+              "versions": null
+            }
+          }
+        }
+      ]
+    },
+    {
+      "key": "everything",
+      "workIrn": "15994199",
+      "title": "Everything to the sea",
+      "author": "Upano, Alicia",
+      "authorRole": "author",
+      "year": "2026",
+      "language": "English",
+      "isbn": "9781526687753",
+      "coverUrls": [
+        "https://secure.syndetics.com/index.aspx?isbn=9781526687753/mc.gif&client=citycanning&upc=&oclc=&issn="
+      ],
+      "formats": [
+        {
+          "code": "BK",
+          "label": "Book",
+          "bibIrn": "19243328",
+          "publisher": "London : Bloomsbury, 2026.©2026",
+          "counts": {
+            "copies": 1
+          },
+          "record": {
+            "bibIrn": "19243328",
+            "brn": "465679",
+            "title": "Everything to the sea",
+            "seriesTitle": null,
+            "isbn": "9781526687791",
+            "coverUrls": [
+              "https://secure.syndetics.com/index.aspx?isbn=9781526687791/lc.gif&client=citycanning&upc=&oclc=&issn="
+            ],
+            "summary": "This is how the story goes: Jane will fall in love. And then all of this will vanish. Home for one final summer, Jane is working and saving cash for her senior year of college before she leaves her island town behind forever. At first, she doesn't remember Kenji, but he quickly becomes someone she can't forget: square jaw, a dimple in his cheek. A Hilo boy. To Kenji, she's Janie, nose perpetually buried in her old high school sketchbooks. Jane tells herself it's only a fling--one perfect, carefree summer, on her way to achieving her dream of becoming an architect and moving to the continent. Then a tsunami sweeps their families out to sea, and their all-consuming affair breaks with the weight of grief, pulling them in opposite directions. Kenji remains in Hawai'i, bound by duty to rebuild their hometown. Jane, shattered by the loss, follows her best friend to California. For seven years, an ocean lies between them, until Jane and Kenji meet on another coast... In prose that sparkles like sun on the water, Upano's debut novel tells the unforgettable story of two young people as they come of age, fall in love, forge new families, and try to find their way back together, again and again. Everything to the Sea is a moving portrait of our ability to overcome even the most devastating tragedies, when everything else is washed away.",
+            "details": [
+              {
+                "label": "Main title",
+                "values": [
+                  {
+                    "text": "Everything to the sea / Alicia Upano.",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Author",
+                "values": [
+                  {
+                    "text": "Upano, Alicia, author",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Work",
+                "values": [
+                  {
+                    "text": "Everything to the sea",
+                    "url": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/WRKENQ/78578730?SETLVL=&IRN=15994199"
+                  }
+                ]
+              },
+              {
+                "label": "Imprint",
+                "values": [
+                  {
+                    "text": "London : Bloomsbury, 2026.",
+                    "url": null
+                  },
+                  {
+                    "text": "©2026",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Collation",
+                "values": [
+                  {
+                    "text": "308 pages ; 24 cm.",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "ISBN",
+                "values": [
+                  {
+                    "text": "9781526687791 (paperback)",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Dewey class",
+                "values": [
+                  {
+                    "text": "813.6",
+                    "url": null
+                  },
+                  {
+                    "text": "F",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Language",
+                "values": [
+                  {
+                    "text": "English",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Subject",
+                "values": [
+                  {
+                    "text": "Grief -- Fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Man-woman relationships -- Fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Tsunamis -- Hawaii -- Fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "College students -- Hawaii -- Fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Summer romance -- Fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Life change events -- Fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Hilo (Hawaii) -- Fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Psychological fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Coming-of-age fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Romance fiction",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "BRN",
+                "values": [
+                  {
+                    "text": "465679",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Bookmark link",
+                "values": [
+                  {
+                    "text": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ?SETLVL=&BRN=465679",
+                    "url": null
+                  }
+                ]
+              }
+            ],
+            "bookmarkUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ?SETLVL=&BRN=465679",
+            "related": {
+              "similar": null,
+              "author": null,
+              "series": null,
+              "versions": null
+            }
+          }
+        }
+      ]
+    },
+    {
+      "key": "secretthread",
+      "workIrn": "15925959",
+      "title": "The Secret Thread",
+      "author": "Chase, Eve",
+      "authorRole": "author",
+      "year": "2026",
+      "language": "English",
+      "isbn": "9780241633946",
+      "coverUrls": [
+        "https://secure.syndetics.com/index.aspx?isbn=9780241633946/mc.gif&client=citycanning&upc=&oclc=&issn="
+      ],
+      "formats": [
+        {
+          "code": "BK",
+          "label": "Book",
+          "bibIrn": "19242609",
+          "publisher": "London : Michael Joseph, 2026.©2026",
+          "counts": {
+            "copies": 1
+          },
+          "record": {
+            "bibIrn": "19242609",
+            "brn": "464950",
+            "title": "The secret thread",
+            "seriesTitle": null,
+            "isbn": "9780241633946",
+            "coverUrls": [
+              "https://secure.syndetics.com/index.aspx?isbn=9780241633946/lc.gif&client=citycanning&upc=&oclc=&issn="
+            ],
+            "summary": "Mimi Mott, celebrated designer and famously private style icon, is auctioning off her legendary estate, intent on telling the true story of her life in objects. In London, her new assistant, Jo O'Mara, is determined to win Mimi's trust. But Jo carries a secret of her own, and time is running out to unpick the past before the auctioneer's hammer falls. Who is Mimi, really? A woman who rose from humble beginnings to build an interiors empire - but at what cost? What happened in that remote Wiltshire manor house where Mimi and her family worked during the summer of 1969? Who died the night of the glittering party that stole the headlines? As the auction countdown begins, Jo is drawn into an intoxicating world of obsession, sisters and secrets - and must risk everything to unravel the truth, one thread at a time.",
+            "details": [
+              {
+                "label": "Main title",
+                "values": [
+                  {
+                    "text": "The secret thread / Eve Chase.",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Author",
+                "values": [
+                  {
+                    "text": "Chase, Eve, author",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Work",
+                "values": [
+                  {
+                    "text": "The Secret Thread",
+                    "url": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/WRKENQ/78578748?SETLVL=&IRN=15925959"
+                  }
+                ]
+              },
+              {
+                "label": "Imprint",
+                "values": [
+                  {
+                    "text": "London : Michael Joseph, 2026.",
+                    "url": null
+                  },
+                  {
+                    "text": "©2026",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Collation",
+                "values": [
+                  {
+                    "text": "387 pages ; 23 cm.",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Notes",
+                "values": [
+                  {
+                    "text": "\"Even the darkest secrets unravel over time...\"--Cover.",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "ISBN",
+                "values": [
+                  {
+                    "text": "9780241633946 (hardback)",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Dewey class",
+                "values": [
+                  {
+                    "text": "823.92",
+                    "url": null
+                  },
+                  {
+                    "text": "F",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Language",
+                "values": [
+                  {
+                    "text": "English",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Subject",
+                "values": [
+                  {
+                    "text": "Manors -- England -- Wiltshire -- Fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Life change events -- Fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Women journalists -- Fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Estranged families -- Fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Auctions -- Fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Interior decorators -- Fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Secrecy -- Fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Family secrets -- Fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "London (England) -- Fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Wiltshire (England) -- History -- 20th century -- Fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Psychological fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Detective and mystery fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Thrillers (Fiction)",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "BRN",
+                "values": [
+                  {
+                    "text": "464950",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Bookmark link",
+                "values": [
+                  {
+                    "text": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ?SETLVL=&BRN=464950",
+                    "url": null
+                  }
+                ]
+              }
+            ],
+            "bookmarkUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ?SETLVL=&BRN=464950",
+            "related": {
+              "similar": null,
+              "author": null,
+              "series": null,
+              "versions": null
+            }
+          }
+        }
+      ]
+    },
+    {
+      "key": "babysitters",
+      "workIrn": "15927359",
+      "title": "The Baby-sitters club graphic novels. 7, Boy-crazy Stacey",
+      "author": "Galligan, Gale",
+      "authorRole": "author",
+      "year": "2019",
+      "language": "English",
+      "isbn": "1338304518",
+      "coverUrls": [
+        "https://secure.syndetics.com/index.aspx?isbn=1338304518/mc.gif&client=citycanning&upc=&oclc=&issn="
+      ],
+      "formats": [
+        {
+          "code": "BK",
+          "label": "Book",
+          "bibIrn": "7467272",
+          "publisher": "New York, NY : Graphix, an imprint of Scholastic Inc., 2019.©2019.",
+          "counts": {
+            "copies": 3,
+            "reserved": 1
+          },
+          "record": {
+            "bibIrn": "7467272",
+            "brn": "178345",
+            "title": "The Baby-sitters club graphic novels. 7, Boy-crazy Stacey",
+            "seriesTitle": "Baby-sitters Club (Graphix) ; 7.",
+            "isbn": "9781338304510",
+            "coverUrls": [
+              "https://secure.syndetics.com/index.aspx?isbn=9781338304510/lc.gif&client=citycanning&upc=&oclc=&issn="
+            ],
+            "summary": "Accompanying the Pike family during a two-week vacation to the Jersey Shore, baby-sitter Stacey falls head over heels for a handsome lifeguard despite Mary Anne's warning that he is too old for her.",
+            "details": [
+              {
+                "label": "Main title",
+                "values": [
+                  {
+                    "text": "The Baby-sitters club graphic novels. 7, Boy-crazy Stacey / by Gale Galligan ; with color by Braden Lamb.",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Author",
+                "values": [
+                  {
+                    "text": "Galligan, Gale, author, artist",
+                    "url": null
+                  },
+                  {
+                    "text": "Martin, Ann M., 1955-, bibliographic antecedent",
+                    "url": null
+                  },
+                  {
+                    "text": "Lamb, Braden, colourist",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Work",
+                "values": [
+                  {
+                    "text": "The Baby-sitters club graphic novels. 7, Boy-crazy Stacey",
+                    "url": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/WRKENQ/78578869?SETLVL=&IRN=15927359"
+                  }
+                ]
+              },
+              {
+                "label": "Edition",
+                "values": [
+                  {
+                    "text": "First edition.",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Imprint",
+                "values": [
+                  {
+                    "text": "New York, NY : Graphix, an imprint of Scholastic Inc., 2019.",
+                    "url": null
+                  },
+                  {
+                    "text": "©2019.",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Collation",
+                "values": [
+                  {
+                    "text": "159 pages : chiefly illustrations (colour) ; 21 cm.",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Series title",
+                "values": [
+                  {
+                    "text": "Baby-sitters Club (Graphix) ; 7.",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Notes",
+                "values": [
+                  {
+                    "text": "\"Based on the novel by Ann M. Martin\"--Cover.",
+                    "url": null
+                  },
+                  {
+                    "text": "Chiefly illustrations.",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Audience",
+                "values": [
+                  {
+                    "text": "Interest age level: Ages: 8–12.",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "ISBN",
+                "values": [
+                  {
+                    "text": "9781338304510 (paperback)",
+                    "url": null
+                  },
+                  {
+                    "text": "1338304518 (paperback)",
+                    "url": null
+                  },
+                  {
+                    "text": "9781338304527 (hardback)",
+                    "url": null
+                  },
+                  {
+                    "text": "1338304526 (hardback)",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Dewey class",
+                "values": [
+                  {
+                    "text": "741.5973",
+                    "url": null
+                  },
+                  {
+                    "text": "JF",
+                    "url": null
+                  },
+                  {
+                    "text": "JF",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "LC class",
+                "values": [
+                  {
+                    "text": "PZ7.7.G353",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Language",
+                "values": [
+                  {
+                    "text": "English",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Added title",
+                "values": [
+                  {
+                    "text": "Boy-crazy Stacey",
+                    "url": null
+                  },
+                  {
+                    "text": "Boy-crazy Stacey",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Subject",
+                "values": [
+                  {
+                    "text": "Babysitters Club (Imaginary organization) -- Comic books, strips, etc",
+                    "url": null
+                  },
+                  {
+                    "text": "Babysitters -- Comic books, strips, etc",
+                    "url": null
+                  },
+                  {
+                    "text": "Summer employment -- Comic books, strips, etc",
+                    "url": null
+                  },
+                  {
+                    "text": "Lifeguards -- Comic books, strips, etc",
+                    "url": null
+                  },
+                  {
+                    "text": "Girls -- Comic books, strips, etc",
+                    "url": null
+                  },
+                  {
+                    "text": "Graphic novels",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "BRN",
+                "values": [
+                  {
+                    "text": "178345",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Bookmark link",
+                "values": [
+                  {
+                    "text": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ?SETLVL=&BRN=178345",
+                    "url": null
+                  }
+                ]
+              }
+            ],
+            "bookmarkUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ?SETLVL=&BRN=178345",
+            "related": {
+              "similar": null,
+              "author": null,
+              "series": null,
+              "versions": null
+            }
+          }
+        }
+      ]
+    },
+    {
+      "key": "hollowbones",
+      "workIrn": "15989990",
+      "title": "Hollow Bones",
+      "author": "Picoult, Jodi, 1966-",
+      "authorRole": "author",
+      "year": "2026",
+      "language": "English",
+      "isbn": "9781038060198",
+      "coverUrls": [
+        "https://secure.syndetics.com/index.aspx?isbn=9781038060198/mc.gif&client=citycanning&upc=&oclc=&issn="
+      ],
+      "formats": [
+        {
+          "code": "BK",
+          "label": "Book",
+          "bibIrn": "19243431",
+          "publisher": "Sydney, NSW : Macmillan, Pan Macmillan Australia, 2026.©2026.",
+          "counts": {
+            "reserved": 6,
+            "copies": 3
+          },
+          "record": {
+            "bibIrn": "19243431",
+            "brn": "465783",
+            "title": "Hollow bones",
+            "seriesTitle": null,
+            "isbn": "9781761775642",
+            "coverUrls": [
+              "https://secure.syndetics.com/index.aspx?isbn=9781761775642/lc.gif&client=citycanning&upc=&oclc=&issn="
+            ],
+            "summary": "I reach up and unravel my braid. When my hair is loose and whipping around my face, I take the red ribbon I've woven through it and press it just beneath my mother's etched name, underlining. She was here. She was mine. When Molly Fitzgerald was two months old, her mother went to a morning appointment in downtown New York. Like so many who left their homes on September 11th, 2001, Molly's mother never came home. Now Molly saves lives for a living, running a department for when disasters strike. Molly and her husband Jesse a police polygraph expert with his own fractured family have found a love that is a solace in a dangerous world. But then Molly's whole world is turned on its head. She's spent her life preparing for catastrophe. But nothing could prepare her when a disaster strikes too close to home.",
+            "details": [
+              {
+                "label": "Main title",
+                "values": [
+                  {
+                    "text": "Hollow bones / Jodi Picoult.",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Author",
+                "values": [
+                  {
+                    "text": "Picoult, Jodi, 1966-, author",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Work",
+                "values": [
+                  {
+                    "text": "Hollow Bones",
+                    "url": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/WRKENQ/78578800?SETLVL=&IRN=15989990"
+                  }
+                ]
+              },
+              {
+                "label": "Imprint",
+                "values": [
+                  {
+                    "text": "Sydney, NSW : Macmillan, Pan Macmillan Australia, 2026.",
+                    "url": null
+                  },
+                  {
+                    "text": "©2026.",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Collation",
+                "values": [
+                  {
+                    "text": "453 pages ; 24 cm.",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Notes",
+                "values": [
+                  {
+                    "text": "Includes bibliographical references.",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "ISBN",
+                "values": [
+                  {
+                    "text": "9781761775642 (paperback)",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Dewey class",
+                "values": [
+                  {
+                    "text": "813.6",
+                    "url": null
+                  },
+                  {
+                    "text": "F",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Language",
+                "values": [
+                  {
+                    "text": "English",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Subject",
+                "values": [
+                  {
+                    "text": "Rhode Island -- Fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Polygraph operators -- Fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Dysfunctional families -- Fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "September 11 Terrorist Attacks, 2001 -- Fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Medical emergencies -- Fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Secrecy -- Fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Life change events -- Fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Families -- Fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Disaster relief -- Fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Psychic trauma -- Fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Disasters -- Fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Husband and wife -- Fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Domestic fiction",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "BRN",
+                "values": [
+                  {
+                    "text": "465783",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Bookmark link",
+                "values": [
+                  {
+                    "text": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ?SETLVL=&BRN=465783",
+                    "url": null
+                  }
+                ]
+              }
+            ],
+            "bookmarkUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ?SETLVL=&BRN=465783",
+            "related": {
+              "similar": null,
+              "author": null,
+              "series": null,
+              "versions": null
+            }
+          }
+        }
+      ]
+    },
+    {
+      "key": "timetravel",
+      "workIrn": "15928622",
+      "title": "Time Travel for Beginners",
+      "author": "Moriarty, Jaclyn",
+      "authorRole": "author",
+      "year": "2026",
+      "language": "English",
+      "isbn": "9781004260522",
+      "coverUrls": [
+        "https://secure.syndetics.com/index.aspx?isbn=9781004260522/mc.gif&client=citycanning&upc=&oclc=&issn="
+      ],
+      "formats": [
+        {
+          "code": "BK",
+          "label": "Book",
+          "bibIrn": "19242577",
+          "publisher": "Gadigal Country ; Sydney, NSW : Ultimo Press, 2026.©2026",
+          "counts": {
+            "reserved": 1,
+            "copies": 1
+          },
+          "record": {
+            "bibIrn": "19242577",
+            "brn": "464918",
+            "title": "Time travel for beginners",
+            "seriesTitle": null,
+            "isbn": "9781761153723",
+            "coverUrls": [
+              "https://secure.syndetics.com/index.aspx?isbn=9781761153723/lc.gif&client=citycanning&upc=&oclc=&issn="
+            ],
+            "summary": "On a bustling road in Sydney lies a nondescript storefront known simply as the Time Travel Agency. Inside, you’ll be welcomed by the smell of freshly brewed coffee, a selection of baked goods . . . and the question, Where in time do you wish to go? The guidelines are simple: you can go whenever you wish into the past, and there’s no fear of altering the present. Have tea with Jane Austen, scream at a Beatles concert, witness the Olympics in ancient Greece. Perhaps a more personal trip? Visit your long-lost grandmother, recapture the heady days of your youth, return to the idyllic time when your teen was a babbling baby―or watch yourself make the one decision that changed everything. Is it a hoax? And if it’s real, what’s the catch? When single mother Anna is offered a job at the agency, she glimpses the possibility of happiness. Meanwhile, Teddy’s a customer hoping to untangle his recently imploded marriage. And Jade, who has a deeply buried secret, despises the agency for offering false hope. In Jaclyn Moriarty’s incandescent novel, Anna, Teddy and Jade leap headlong into time, hurtling on a crash course towards one another. At turns entertaining and illuminating, Time Travel for Beginners explores the moments, big and small, that shape our destiny.",
+            "details": [
+              {
+                "label": "Main title",
+                "values": [
+                  {
+                    "text": "Time travel for beginners / Jaclyn Moriarty.",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Author",
+                "values": [
+                  {
+                    "text": "Moriarty, Jaclyn, author",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Work",
+                "values": [
+                  {
+                    "text": "Time Travel for Beginners",
+                    "url": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/WRKENQ/78578940?SETLVL=&IRN=15928622"
+                  }
+                ]
+              },
+              {
+                "label": "Imprint",
+                "values": [
+                  {
+                    "text": "Gadigal Country ; Sydney, NSW : Ultimo Press, 2026.",
+                    "url": null
+                  },
+                  {
+                    "text": "©2026",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Collation",
+                "values": [
+                  {
+                    "text": "532 pages ; 24 cm.",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "ISBN",
+                "values": [
+                  {
+                    "text": "9781761153723 (paperback)",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Dewey class",
+                "values": [
+                  {
+                    "text": "A823.4",
+                    "url": null
+                  },
+                  {
+                    "text": "823.4",
+                    "url": null
+                  },
+                  {
+                    "text": "F",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Language",
+                "values": [
+                  {
+                    "text": "English",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Subject",
+                "values": [
+                  {
+                    "text": "Single mothers -- Fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Travel agents -- Fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Secrecy -- Fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Time travel -- Fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Traffic accidents -- Fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Life change events -- Fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Interpersonal relations -- Fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Sydney (N.S.W.) -- Fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Science fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Australian fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Magic realist fiction",
+                    "url": null
+                  },
+                  {
+                    "text": "Time-travel fiction",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "BRN",
+                "values": [
+                  {
+                    "text": "464918",
+                    "url": null
+                  }
+                ]
+              },
+              {
+                "label": "Bookmark link",
+                "values": [
+                  {
+                    "text": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ?SETLVL=&BRN=464918",
+                    "url": null
+                  }
+                ]
+              }
+            ],
+            "bookmarkUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ?SETLVL=&BRN=464918",
+            "related": {
+              "similar": null,
+              "author": null,
+              "series": null,
+              "versions": null
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

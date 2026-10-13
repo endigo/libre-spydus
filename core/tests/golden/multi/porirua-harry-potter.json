@@ -1,0 +1,254 @@
+{
+  "query": "harry potter",
+  "setId": "586830568",
+  "totalResults": 206,
+  "showing": {
+    "from": 1,
+    "to": 10
+  },
+  "nextPageUrl": "https://porirua.spydus.co.nz/cgi-bin/spydus.exe/SET/OPAC/ALLWRKENQ/586830568/99749103?NREC=10",
+  "prevPageUrl": null,
+  "noResults": false,
+  "records": [
+    {
+      "rank": 1,
+      "workIrn": "103858381",
+      "title": "Harry Potter : knitting magic for baby & toddler : an official Harry Potter knitting pattern book",
+      "detailUrl": "https://porirua.spydus.co.nz/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/586830568/103858381,1",
+      "author": "Brooke, Julie",
+      "authorRole": "author",
+      "authorUrl": "https://porirua.spydus.co.nz/cgi-bin/spydus.exe/NAV/OPAC/AUTHENQ/586830568?SETLVL=&QRY=IRN(84333834)&QRYTEXT=Brooke%2C%20Julie&NAVLVL=SET",
+      "year": "2025",
+      "language": "English",
+      "summary": "\"Create beautiful, Harry Potter-themed clothing and accessories for babies and toddlers with this officially licensed book filled with all-new knitting patterns. ... The book includes all charts and patterns, beautiful full-color photography, plus behind the scenes info and images from the films themselves\"--Page [4] of Cover.",
+      "isbn": "9780008778019",
+      "coverUrls": [
+        "https://secure.syndetics.com/index.aspx?isbn=9780008778019/mc.gif&client=porirualib&upc=&oclc=&issn=",
+        "https://secure.syndetics.com/index.aspx?isbn=9798886638547/mc.gif&client=porirualib&upc=&oclc=&issn="
+      ],
+      "formats": [
+        {
+          "code": "BK",
+          "label": "Book",
+          "reserveUrl": "https://porirua.spydus.co.nz/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/586830568/0/V/0/R/9/ALLWRKENQ?SVL=103858381&RECFMT=BK",
+          "availabilityUrl": "https://porirua.spydus.co.nz/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/586830568?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=586830568&QRY=WRK01%5C103858381+%2B+03902\\BK"
+        }
+      ]
+    },
+    {
+      "rank": 2,
+      "workIrn": "99913981",
+      "title": "Harry Potter : the official Hogwarts book of cross-stitch",
+      "detailUrl": "https://porirua.spydus.co.nz/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/586830568/99913981,2",
+      "author": "Revenson, Jody",
+      "authorRole": "author",
+      "authorUrl": "https://porirua.spydus.co.nz/cgi-bin/spydus.exe/NAV/OPAC/AUTHENQ/586830568?SETLVL=&QRY=IRN(12621833)&QRYTEXT=Revenson%2C%20Jody&NAVLVL=SET",
+      "year": "2024",
+      "language": "English",
+      "summary": "\"Stitch your way through the halls of Hogwarts with 25 unique cross-stitch patterns that bring the creatures, characters, and magical moments from the films to life, from the house crests to a Professor McGonagall-inspired bookmark. Learn how to cross-stich on clothes and 3-D décor and bring a bit of magic to the Muggle world. Harry Potter: The Official Hogwarts Book of Cross-Stitch invites the beloved School of Witchcraft and Wizardry into your home, as you craft alongside enchanting behind-the-scenes facts and photographs from the films\"-- Amazon.com.",
+      "isbn": "9798886633917",
+      "coverUrls": [
+        "https://secure.syndetics.com/index.aspx?isbn=9798886633917/mc.gif&client=porirualib&upc=&oclc=&issn="
+      ],
+      "formats": [
+        {
+          "code": "BK",
+          "label": "Book",
+          "reserveUrl": "https://porirua.spydus.co.nz/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/586830568/0/V/0/R/9/ALLWRKENQ?SVL=99913981&RECFMT=BK",
+          "availabilityUrl": "https://porirua.spydus.co.nz/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/586830568?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=586830568&QRY=WRK01%5C99913981+%2B+03902\\BK"
+        }
+      ]
+    },
+    {
+      "rank": 3,
+      "workIrn": "99881316",
+      "title": "Harry Potter and the philosopher's stone",
+      "detailUrl": "https://porirua.spydus.co.nz/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/586830568/99881316,3",
+      "author": null,
+      "authorRole": null,
+      "authorUrl": null,
+      "year": "2002",
+      "language": "English",
+      "summary": null,
+      "isbn": null,
+      "coverUrls": [],
+      "formats": [
+        {
+          "code": "PM",
+          "label": "DVDs and BluRay",
+          "reserveUrl": "https://porirua.spydus.co.nz/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/586830568/0/V/0/R/9/ALLWRKENQ?SVL=99881316&RECFMT=PM",
+          "availabilityUrl": "https://porirua.spydus.co.nz/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/586830568?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=586830568&QRY=WRK01%5C99881316+%2B+03902\\PM"
+        }
+      ]
+    },
+    {
+      "rank": 4,
+      "workIrn": "99881261",
+      "title": "Harry Potter and the Order of the Phoenix",
+      "detailUrl": "https://porirua.spydus.co.nz/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/586830568/99881261,4",
+      "author": null,
+      "authorRole": null,
+      "authorUrl": null,
+      "year": "2009",
+      "language": "Icelandic, Arabic, Turkish, Hebrew, English",
+      "summary": "Review: \"Lord Voldemort has returned, but the Ministry of Magic is doing everything it can to keep the wizarding world from knowing the truth - including appointing Ministry official Dolores Umbridge as the new Defense Against the Dark Arts professor at Hogwarts. When Umbridge refuses to teach practical defensive magic, Ron and Hermione convince Harry to secretly train a select group of students for the wizarding war that lies ahead\"--Back cover.",
+      "isbn": null,
+      "coverUrls": [],
+      "formats": [
+        {
+          "code": "PM",
+          "label": "DVDs and BluRay",
+          "reserveUrl": "https://porirua.spydus.co.nz/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/586830568/0/V/0/R/9/ALLWRKENQ?SVL=99881261&RECFMT=PM",
+          "availabilityUrl": "https://porirua.spydus.co.nz/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/586830568?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=586830568&QRY=WRK01%5C99881261+%2B+03902\\PM"
+        }
+      ]
+    },
+    {
+      "rank": 5,
+      "workIrn": "99873790",
+      "title": "Harry Potter and the goblet of fire",
+      "detailUrl": "https://porirua.spydus.co.nz/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/586830568/99873790,5",
+      "author": null,
+      "authorRole": null,
+      "authorUrl": null,
+      "year": "2005 - 2009",
+      "language": "English",
+      "summary": "When Harry Potter's name emerges from the Goblet of Fire, he becomes a competitor in a grueling battle for glory among three wizarding schools - the Triwizard Tournament.",
+      "isbn": null,
+      "coverUrls": [],
+      "formats": [
+        {
+          "code": "PM",
+          "label": "DVDs and BluRay",
+          "reserveUrl": "https://porirua.spydus.co.nz/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/586830568/0/V/0/R/9/ALLWRKENQ?SVL=99873790&RECFMT=PM",
+          "availabilityUrl": "https://porirua.spydus.co.nz/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/586830568?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=586830568&QRY=WRK01%5C99873790+%2B+03902\\PM"
+        }
+      ]
+    },
+    {
+      "rank": 6,
+      "workIrn": "99841951",
+      "title": "Harry Potter official Christmas cookbook",
+      "detailUrl": "https://porirua.spydus.co.nz/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/586830568/99841951,6",
+      "author": "Craig, Elena P.",
+      "authorRole": "author",
+      "authorUrl": "https://porirua.spydus.co.nz/cgi-bin/spydus.exe/NAV/OPAC/AUTHENQ/586830568?SETLVL=&QRY=IRN(93655529)&QRYTEXT=Craig%2C%20Elena%20P.&NAVLVL=SET",
+      "year": "2023",
+      "language": "English",
+      "summary": "\"Celebrate Christmas like Harry, Ron, and Hermione with over 50 recipes inspired by festive celebrations in the Harry Potter films! Filled with ideas to inspire feasts for every occasion, this cookbook includes recipes ranging from Professor Sprout's Superior Sprouts; Weasley Sweater Focaccia; and the Great Hall Floating Candle Cake to make sure you're covered from starter to dessert. It even features drinks to conclude every gathering - both boozy and alcohol-free options to suit the needs of every attendee. The Harry Potter: Official Christmas Cookbook features full colour photography of your favourite moments and characters from the acclaimed film franchise, step-by-step instructions and helpful tips to ensure every cook - advanced and novice - makes magic in the kitchen.\" -- publisher.",
+      "isbn": "1529434734",
+      "coverUrls": [
+        "https://secure.syndetics.com/index.aspx?isbn=1529434734/mc.gif&client=porirualib&upc=&oclc=&issn=",
+        "https://secure.syndetics.com/index.aspx?isbn=9781529434736/mc.gif&client=porirualib&upc=&oclc=&issn="
+      ],
+      "formats": [
+        {
+          "code": "BK",
+          "label": "Book",
+          "reserveUrl": "https://porirua.spydus.co.nz/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/586830568/0/V/0/R/9/ALLWRKENQ?SVL=99841951&RECFMT=BK",
+          "availabilityUrl": "https://porirua.spydus.co.nz/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/586830568?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=586830568&QRY=WRK01%5C99841951+%2B+03902\\BK"
+        }
+      ]
+    },
+    {
+      "rank": 7,
+      "workIrn": "99838029",
+      "title": "From the films of Harry Potter : the official book of crochet amigurumi",
+      "detailUrl": "https://porirua.spydus.co.nz/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/586830568/99838029,7",
+      "author": "Anne, Juli",
+      "authorRole": "author",
+      "authorUrl": "https://porirua.spydus.co.nz/cgi-bin/spydus.exe/NAV/OPAC/AUTHENQ/586830568?SETLVL=&QRY=IRN(12524283)&QRYTEXT=Anne%2C%20Juli&NAVLVL=SET",
+      "year": "2024",
+      "language": "English",
+      "summary": "A comprehensive, officially licensed guide to crocheting amigurumi from the Wizarding World, this book includes designs for every skill level, using a wide range of stitches and techniques, and featuring yarn matched to the colours used in the films. Also included are behind-the-scenes facts and quotes from the films, as well as concept art and film stills to inspire your creativity relive favourite movie moments.",
+      "isbn": "1529440874",
+      "coverUrls": [
+        "https://secure.syndetics.com/index.aspx?isbn=1529440874/mc.gif&client=porirualib&upc=&oclc=&issn=",
+        "https://secure.syndetics.com/index.aspx?isbn=9781529440874/mc.gif&client=porirualib&upc=&oclc=&issn="
+      ],
+      "formats": [
+        {
+          "code": "BK",
+          "label": "Book",
+          "reserveUrl": "https://porirua.spydus.co.nz/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/586830568/0/V/0/R/9/ALLWRKENQ?SVL=99838029&RECFMT=BK",
+          "availabilityUrl": "https://porirua.spydus.co.nz/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/586830568?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=586830568&QRY=WRK01%5C99838029+%2B+03902\\BK"
+        }
+      ]
+    },
+    {
+      "rank": 8,
+      "workIrn": "99834752",
+      "title": "Harry Potter afternoon tea magic : official snacks, sips, and sweets inspired by the wizarding world",
+      "detailUrl": "https://porirua.spydus.co.nz/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/586830568/99834752,8",
+      "author": "Hinke, Veronica",
+      "authorRole": "author",
+      "authorUrl": "https://porirua.spydus.co.nz/cgi-bin/spydus.exe/NAV/OPAC/AUTHENQ/586830568?SETLVL=&QRY=IRN(12688225)&QRYTEXT=Hinke%2C%20Veronica&NAVLVL=SET",
+      "year": "2024",
+      "language": "English",
+      "summary": "With more than 60 recipes for clever beverages, enchanting sweets, and savory treats, Harry Potter: Afternoon Tea Magic is the perfect guide to creating a memorable and magical tea party for one, two, or more.",
+      "isbn": "1529434998",
+      "coverUrls": [
+        "https://secure.syndetics.com/index.aspx?isbn=1529434998/mc.gif&client=porirualib&upc=&oclc=&issn=",
+        "https://secure.syndetics.com/index.aspx?isbn=9781529434996/mc.gif&client=porirualib&upc=&oclc=&issn="
+      ],
+      "formats": [
+        {
+          "code": "BK",
+          "label": "Book",
+          "reserveUrl": "https://porirua.spydus.co.nz/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/586830568/0/V/0/R/9/ALLWRKENQ?SVL=99834752&RECFMT=BK",
+          "availabilityUrl": "https://porirua.spydus.co.nz/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/586830568?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=586830568&QRY=WRK01%5C99834752+%2B+03902\\BK"
+        }
+      ]
+    },
+    {
+      "rank": 9,
+      "workIrn": "99820444",
+      "title": "Harry Potter homemade : an official book of enchanting crafts, activities, and recipes for every season",
+      "detailUrl": "https://porirua.spydus.co.nz/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/586830568/99820444,9",
+      "author": "Gilbert, Lindsay",
+      "authorRole": "author",
+      "authorUrl": "https://porirua.spydus.co.nz/cgi-bin/spydus.exe/NAV/OPAC/AUTHENQ/586830568?SETLVL=&QRY=IRN(84403022)&QRYTEXT=Gilbert%2C%20Lindsay&NAVLVL=SET",
+      "year": "2022",
+      "language": "English",
+      "summary": "Harry Potter: Homemade offers more than 25 crafts, recipes, and activities to help you celebrate and share the comforting moments from the Harry Potter films in your own home. Divided into four chapters, one for each season of the year, projects include a wide range of crafts and activities including candle-making, quilting, jam-making, macramé, wreaths, felting, ceramics, and more. Make a Deathly Hallows wreath from the fauna around your home. Piece together a colorful quilt inspired by your favorite house. Make Honeydukes-inspired candies right in your own kitchen. Featuring step-by-step instructions and gorgeous photography, alongside behind-the-scenes facts, concept art, and film stills, Harry Potter: Homemade is perfect for crafters, makers, homebodies, and Harry Potter fans everywhere.",
+      "isbn": "1647224640",
+      "coverUrls": [
+        "https://secure.syndetics.com/index.aspx?isbn=1647224640/mc.gif&client=porirualib&upc=&oclc=&issn=",
+        "https://secure.syndetics.com/index.aspx?isbn=9781647224646/mc.gif&client=porirualib&upc=&oclc=&issn="
+      ],
+      "formats": [
+        {
+          "code": "BK",
+          "label": "Book",
+          "reserveUrl": "https://porirua.spydus.co.nz/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/586830568/0/V/0/R/9/ALLWRKENQ?SVL=99820444&RECFMT=BK",
+          "availabilityUrl": "https://porirua.spydus.co.nz/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/586830568?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=586830568&QRY=WRK01%5C99820444+%2B+03902\\BK"
+        }
+      ]
+    },
+    {
+      "rank": 10,
+      "workIrn": "99749103",
+      "title": "The dark fantastic : race and the imagination from Harry Potter to The hunger games",
+      "detailUrl": "https://porirua.spydus.co.nz/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/586830568/99749103,10",
+      "author": "Thomas, Ebony Elizabeth, 1977-",
+      "authorRole": "author",
+      "authorUrl": "https://porirua.spydus.co.nz/cgi-bin/spydus.exe/NAV/OPAC/AUTHENQ/586830568?SETLVL=&QRY=IRN(38091514)&QRYTEXT=Thomas%2C%20Ebony%20Elizabeth%2C%201977-&NAVLVL=SET",
+      "year": "2019",
+      "language": "English",
+      "summary": "The promise of escape draws people from all backgrounds to speculative fiction, but when people of color seek passageways into the fantastic the doors are often barred. This problem lies not only with children's publishing, but also with the television and film executives tasked with adapting these stories into a visual world. When characters of color do appear, they are often marginalized or subjected to violence, reinforcing for audiences that not all lives matter. In an engaging and provocative exploration of race in popular youth and young adult speculative fiction, Thomas considers four black girl protagonists from some popular stories of the early 21st century and reveals how these characters mirror the violence against black and brown people in our own world. -- adapted from jacket",
+      "isbn": "1479800651",
+      "coverUrls": [
+        "https://secure.syndetics.com/index.aspx?isbn=1479800651/mc.gif&client=porirualib&upc=&oclc=&issn=",
+        "https://secure.syndetics.com/index.aspx?isbn=9781479800650/mc.gif&client=porirualib&upc=&oclc=&issn="
+      ],
+      "formats": [
+        {
+          "code": "BK",
+          "label": "Book",
+          "reserveUrl": "https://porirua.spydus.co.nz/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/586830568/0/V/0/R/9/ALLWRKENQ?SVL=99749103&RECFMT=BK",
+          "availabilityUrl": "https://porirua.spydus.co.nz/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/586830568?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=586830568&QRY=WRK01%5C99749103+%2B+03902\\BK"
+        }
+      ]
+    }
+  ]
+}

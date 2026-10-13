@@ -1,0 +1,29 @@
+{
+  "query": null,
+  "setId": "24681357",
+  "totalResults": 1,
+  "showing": {
+    "from": 1,
+    "to": 1
+  },
+  "nextPageUrl": null,
+  "prevPageUrl": null,
+  "noResults": false,
+  "records": [
+    {
+      "rank": 1,
+      "workIrn": null,
+      "title": "Harry Potter and the philosopher's stone",
+      "detailUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/FULL/OPAC/ALLENQ/24681357/1001,1",
+      "author": "Rowling, J. K.",
+      "authorRole": "author",
+      "authorUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/NAV/OPAC/AUTHENQ/24681357?QRY=IRN(5)",
+      "year": "1997",
+      "language": "English",
+      "summary": null,
+      "isbn": null,
+      "coverUrls": [],
+      "formats": []
+    }
+  ]
+}

@@ -1,0 +1,257 @@
+{
+  "query": "harry potter",
+  "setId": "586830584",
+  "totalResults": 249,
+  "showing": {
+    "from": 1,
+    "to": 10
+  },
+  "nextPageUrl": "https://hutt.spydus.co.nz/cgi-bin/spydus.exe/SET/OPAC/ALLWRKENQ/586830584/99806505?NREC=10",
+  "prevPageUrl": null,
+  "noResults": false,
+  "records": [
+    {
+      "rank": 1,
+      "workIrn": "103872604",
+      "title": "Harry Potter y la piedra filosofal : Harry Potter Serie, Libro 1",
+      "detailUrl": "https://hutt.spydus.co.nz/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/586830584/103872604,1",
+      "author": "Rowling, J.K.",
+      "authorRole": "author",
+      "authorUrl": null,
+      "year": "2015 - 2019",
+      "language": "Spanish",
+      "summary": "\"Con las manos temblorosas, Harry le dio la vuelta al sobre y vio un sello de lacre púrpura con un escudo de armas: un león, un águila, un tejón y una serpiente, que rodeaban una gran letra hache.\" Harry Potter jamás ha oído hablar de Hogwarts hasta que las cartas comienzan a llegar al número cuatro de Privet Drive, pero sus siniestros tíos se apropian rápidamente de estos pergaminos amarillentos que llevan la dirección escrita en tinta verde y un sello púrpura. Luego, en su undécimo cumpleaños, un gigantesco hombre con ojos como escarabajos llamado Rubeus Hagrid irrumpe con una noticia asombrosa: Harry Potter es un mago y lo esperan en el Colegio Hogwarts de Magia y Hechicería. ¡Una aventura increíble está por comenzar! Please note: this audiobook is narrated in Spanish with a Latin American accent Theme music composed by James Hannigan",
+      "isbn": "9781781101315",
+      "coverUrls": [
+        "https://img1.od-cdn.com/ImageType-100/3450-1/{633251A3-C8FD-4FB3-A190-95E07EA18B30}Img100.jpg",
+        "https://secure.syndetics.com/index.aspx?isbn=9781781101315/mc.gif&client=huccp&upc=&oclc=&issn="
+      ],
+      "formats": [
+        {
+          "code": "EBK",
+          "label": "eBook",
+          "reserveUrl": null,
+          "availabilityUrl": "https://hutt.spydus.co.nz/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/586830584?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=586830584&QRY=WRK01%5C103872604+%2B+03902\\EBK"
+        }
+      ]
+    },
+    {
+      "rank": 2,
+      "workIrn": "99900273",
+      "title": "哈利·波特与魔法石 (Harry Potter and the Philosopher's Stone) : Harry Potter Series, Book 1",
+      "detailUrl": "https://hutt.spydus.co.nz/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/586830584/99900273,2",
+      "author": "罗琳, J.K.",
+      "authorRole": "author",
+      "authorUrl": "https://hutt.spydus.co.nz/cgi-bin/spydus.exe/NAV/OPAC/AUTHENQ/586830584?SETLVL=&QRY=IRN(12799187)&QRYTEXT=%E7%BD%97%E7%90%B3%2C%20J.K.&NAVLVL=SET",
+      "year": "2016",
+      "language": "Chinese",
+      "summary": "「哈利用颤抖的手把信封翻转过来，只见上面有一块蜡封、一个盾牌饰章，大写\"H\"字母的周围圈着一头狮子、一只鹰、一只獾和一条蛇。」 当信件开始掉落在女贞路4号门口的地垫时，哈利·波特不曾听说霍格沃茨的存在。那些信是以翡翠绿的墨水写的，在黄色的羊皮纸上有着紫色蜡封。哈利的阿姨和姨丈迅速地没收了这些信。直到哈利的11岁生日那天，一名眼睛如黑甲虫般闪亮、自称鲁伯·海格的巨人突然冲进屋内，带来了令人惊讶的消息：哈利·波特是一名巫师，而且拥有进入霍格沃茨魔法学校就读的资格。一段超棒的冒险即将启程！",
+      "isbn": "9781781104804",
+      "coverUrls": [
+        "https://img1.od-cdn.com/ImageType-100/3450-1/{32C0E540-17DD-495C-92CA-A89E83259631}Img100.jpg",
+        "https://secure.syndetics.com/index.aspx?isbn=9781781104804/mc.gif&client=huccp&upc=&oclc=&issn="
+      ],
+      "formats": [
+        {
+          "code": "EBK",
+          "label": "eBook",
+          "reserveUrl": null,
+          "availabilityUrl": "https://hutt.spydus.co.nz/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/586830584?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=586830584&QRY=WRK01%5C99900273+%2B+03902\\EBK"
+        }
+      ]
+    },
+    {
+      "rank": 3,
+      "workIrn": "99899955",
+      "title": "해리 포터와 마법사의 돌 (Harry Potter and the Philosopher's Stone) : Harry Potter Series, Book 1",
+      "detailUrl": "https://hutt.spydus.co.nz/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/586830584/99899955,3",
+      "author": "Rowling, J. K.",
+      "authorRole": "author",
+      "authorUrl": "https://hutt.spydus.co.nz/cgi-bin/spydus.exe/NAV/OPAC/AUTHENQ/586830584?SETLVL=&QRY=IRN(12401147)&QRYTEXT=Rowling%2C%20J.%20K.&NAVLVL=SET",
+      "year": "2020",
+      "language": "English",
+      "summary": "이 전자책은 2019년 번역본입니다. \"떨리는 손으로 봉투를 뒤집은 해리는 거대한 문자 H가 사자와 독수리와 오소리와 뱀에 둘러싸여 있는 모양의 보랏빛 밀랍 봉인을 보았다.\" 편지들이 프리벳 가 4번지의 현관 앞에 배달되기 시작할 무렵에도 해리 포터는 호그와트에 대해 들어본 적도 없었다. 보랏빛 밀랍이 찍힌 노르스름한 양피지에 초록색 잉크로 주소를 써넣은 편지들은 왠지 기분 나쁜 느낌의 그의 이모와 이모부가 받는 족족 재빨리 낚아채가기 때문이다. 그러다 해리의 11번째 생일날, 거대한 딱정벌레 눈을 가진 거인, 루베우스 해그리드가 놀라운 소식을 안고 그를 불쑥 찾아온다. 그 소식은 바로 해리 포터가 마법사이며 호그와트 마법학교에 입학하게 되었다는 것. 믿기지 않는 모험이 곧 시작되는 순간인 것이다! 이 책은 1999년에 한국에서 처음 출간된 '해리 포터' 시리즈의 《해리 포터와 마법사의 돌》을 새로 번역한 것으로, 2014년 Bloomsbury Publishing Plc.에서 출간된 J.K. Rowling의 Harry Potter and the Philosopher's Stone을 저본으로 삼았다. 인명 등 고유명사의 표기는 국립국어원 외래어표기법과 오디오북의 발음을 따랐으나, 이미 널리 굳어진 몇몇 명칭('호그와트', '헤르미온느', '래번클로', '후플푸프' 등등)은 기존 한국어판 번역을 그대로 따랐다. 역주는 본문 중에 '-옮긴이'로 표시했다.",
+      "isbn": "9781781106303",
+      "coverUrls": [
+        "https://img1.od-cdn.com/ImageType-100/3450-1/{CCDF3218-4B17-4EAB-973E-46BE261C6AC8}Img100.jpg",
+        "https://secure.syndetics.com/index.aspx?isbn=9781781106303/mc.gif&client=huccp&upc=&oclc=&issn="
+      ],
+      "formats": [
+        {
+          "code": "EBK",
+          "label": "eBook",
+          "reserveUrl": null,
+          "availabilityUrl": "https://hutt.spydus.co.nz/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/586830584?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=586830584&QRY=WRK01%5C99899955+%2B+03902\\EBK"
+        }
+      ]
+    },
+    {
+      "rank": 4,
+      "workIrn": "99832633",
+      "title": "The Harry Potter wizarding almanac : the official magical companion to J.K. Rowling's Harry Potter books",
+      "detailUrl": "https://hutt.spydus.co.nz/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/586830584/99832633,4",
+      "author": null,
+      "authorRole": null,
+      "authorUrl": null,
+      "year": "2023",
+      "language": "English",
+      "summary": "Whisk yourself away to Harry Potter's wizarding world with this Whiz-bang of an illustrated companion. Discover magical places, study wandlore, encounter fantastic beasts and find out about the witches and wizards who lived. From the Sorting Hat to spell-casting, it's all packed inside! This dazzling gift book brings together beloved characters, unforgettable moments and iconic locations from Harry Potter and the Philosopher's Stone all the way through to The Deathly Hallows. It's the ultimate magical miscellany, filled with facts and fun about the wizarding world, beautifully catalogued and brilliantly explored. Joyfully illustrated throughout in full colour by seven stunning artists and tingling with things to spot on every page, this is the ideal introduction to the Harry Potter stories for new readers and the perfect book for families to share.",
+      "isbn": "1526646714",
+      "coverUrls": [
+        "https://secure.syndetics.com/index.aspx?isbn=1526646714/mc.gif&client=huccp&upc=&oclc=&issn=",
+        "https://secure.syndetics.com/index.aspx?isbn=9781526646712/mc.gif&client=huccp&upc=&oclc=&issn="
+      ],
+      "formats": [
+        {
+          "code": "BK",
+          "label": "Book",
+          "reserveUrl": "https://hutt.spydus.co.nz/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/586830584/0/V/0/R/9/ALLWRKENQ?SVL=99832633&RECFMT=BK",
+          "availabilityUrl": "https://hutt.spydus.co.nz/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/586830584?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=586830584&QRY=WRK01%5C99832633+%2B+03902\\BK"
+        }
+      ]
+    },
+    {
+      "rank": 5,
+      "workIrn": "99720883",
+      "title": "Harry Potter dan Batu Bertuah : Harry Potter Series, Book 1",
+      "detailUrl": "https://hutt.spydus.co.nz/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/586830584/99720883,5",
+      "author": "Rowling, J. K.",
+      "authorRole": "author",
+      "authorUrl": "https://hutt.spydus.co.nz/cgi-bin/spydus.exe/NAV/OPAC/AUTHENQ/586830584?SETLVL=&QRY=IRN(12401147)&QRYTEXT=Rowling%2C%20J.%20K.&NAVLVL=SET",
+      "year": "2016",
+      "language": "English",
+      "summary": "Harry Potter belum pernah mendengar tentang Hogwarts ketika surat-surat mulai berjatuhan di keset Privet Drive nomor empat. Alamat ditulis dengan tinta hijau di atas perkamen kekuningan dengan segel ungu, surat-surat itu disita secara cepat oleh bibi dan pamannya yang menakutkan. Kemudian, pada hari ulang tahun Harry yang kesebelas, Rubeus Hagrid, seorang manusia raksasa bermata kumbang menyerbu masuk dengan berita mengherankan: Harry Potter adalah seorang penyihir, dan dia mendapatkan tempat di Sekolah Sihir Hogswarts. Petualangan menakjubkan segera dimulai!",
+      "isbn": "9781781104842",
+      "coverUrls": [
+        "https://img1.od-cdn.com/ImageType-100/3450-1/{61D4E042-B1A6-40CC-8B9A-36933D6B4E75}Img100.jpg",
+        "https://secure.syndetics.com/index.aspx?isbn=9781781104842/mc.gif&client=huccp&upc=&oclc=&issn="
+      ],
+      "formats": [
+        {
+          "code": "EBK",
+          "label": "eBook",
+          "reserveUrl": null,
+          "availabilityUrl": "https://hutt.spydus.co.nz/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/586830584?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=586830584&QRY=WRK01%5C99720883+%2B+03902\\EBK"
+        }
+      ]
+    },
+    {
+      "rank": 6,
+      "workIrn": "103842300",
+      "title": "Harry Potter and the prisoner of Azkaban (Motion picture)",
+      "detailUrl": "https://hutt.spydus.co.nz/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/586830584/103842300,6",
+      "author": null,
+      "authorRole": null,
+      "authorUrl": null,
+      "year": "2004 - 2016",
+      "language": "English",
+      "summary": "In Harry Potter and the Prisoner of Azkaban, Harry, Ron and Hermione, now teenagers, return for their third year at Hogwarts, where they are forced to face escaped prisoner, Sirius Black, who poses a great threat to Harry. Harry and his friends spend their third year learning how to handle a half-horse half-eagle Hippogriff, repel shape-shifting Boggarts and master the art of Divination.",
+      "isbn": null,
+      "coverUrls": [],
+      "formats": [
+        {
+          "code": "PM",
+          "label": "DVDs and BluRay",
+          "reserveUrl": "https://hutt.spydus.co.nz/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/586830584/0/V/0/R/9/ALLWRKENQ?SVL=103842300&RECFMT=PM",
+          "availabilityUrl": "https://hutt.spydus.co.nz/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/586830584?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=586830584&QRY=WRK01%5C103842300+%2B+03902\\PM"
+        }
+      ]
+    },
+    {
+      "rank": 7,
+      "workIrn": "99884243",
+      "title": "Harry Potter and the Order of the Phoenix",
+      "detailUrl": "https://hutt.spydus.co.nz/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/586830584/99884243,7",
+      "author": "Yates, David, 1963-",
+      "authorRole": "film director",
+      "authorUrl": "https://hutt.spydus.co.nz/cgi-bin/spydus.exe/NAV/OPAC/AUTHENQ/586830584?SETLVL=&QRY=IRN(12568224)&QRYTEXT=Yates%2C%20David%2C%201963-&NAVLVL=SET",
+      "year": "2007 - 2016",
+      "language": "English",
+      "summary": "Lord Voldemort has returned, but the Ministry of Magic is doing everything it can to keep the wizarding world from knowing the truth.",
+      "isbn": null,
+      "coverUrls": [],
+      "formats": [
+        {
+          "code": "PM",
+          "label": "DVDs and BluRay",
+          "reserveUrl": "https://hutt.spydus.co.nz/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/586830584/0/V/0/R/9/ALLWRKENQ?SVL=99884243&RECFMT=PM",
+          "availabilityUrl": "https://hutt.spydus.co.nz/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/586830584?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=586830584&QRY=WRK01%5C99884243+%2B+03902\\PM"
+        }
+      ]
+    },
+    {
+      "rank": 8,
+      "workIrn": "99842643",
+      "title": "Harry Potter official Christmas cookbook",
+      "detailUrl": "https://hutt.spydus.co.nz/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/586830584/99842643,8",
+      "author": "Revenson, Jody",
+      "authorRole": "author",
+      "authorUrl": "https://hutt.spydus.co.nz/cgi-bin/spydus.exe/NAV/OPAC/AUTHENQ/586830584?SETLVL=&QRY=IRN(12621833)&QRYTEXT=Revenson%2C%20Jody&NAVLVL=SET",
+      "year": "2023",
+      "language": "English",
+      "summary": "Recreate the holiday magic of the wizarding world with Harry Potter: The Official Cookbook, filled with festive recipes worthy of a Great Hall feast! Celebrate Christmas like Harry, Ron, and Hermione with over 50 recipes inspired by holiday celebrations in the Harry Potter films! Filled with fan favorites like treacle tart and Yule Ball-inspired appetizers and punches to classic British dishes such as Neville Longbottom's Toad in a Hole and Bubble and Squeak, there are sweet treats, hearty entrees, and delicious drinks for every holiday time gathering, from small family dinners to parties for friends and neighbors. Harry Potter: Official Christmas Cookbook features full color photography, step-by-step instructions, and helpful tips to ensure every cook makes magic in the kitchen.",
+      "isbn": "9798886630886",
+      "coverUrls": [
+        "https://secure.syndetics.com/index.aspx?isbn=9798886630886/mc.gif&client=huccp&upc=&oclc=&issn="
+      ],
+      "formats": [
+        {
+          "code": "BK",
+          "label": "Book",
+          "reserveUrl": "https://hutt.spydus.co.nz/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/586830584/0/V/0/R/9/ALLWRKENQ?SVL=99842643&RECFMT=BK",
+          "availabilityUrl": "https://hutt.spydus.co.nz/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/586830584?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=586830584&QRY=WRK01%5C99842643+%2B+03902\\BK"
+        }
+      ]
+    },
+    {
+      "rank": 9,
+      "workIrn": "99834752",
+      "title": "Harry Potter afternoon tea magic : official snacks, sips, and sweets inspired by the wizarding world",
+      "detailUrl": "https://hutt.spydus.co.nz/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/586830584/99834752,9",
+      "author": "Hinke, Veronica",
+      "authorRole": "author",
+      "authorUrl": "https://hutt.spydus.co.nz/cgi-bin/spydus.exe/NAV/OPAC/AUTHENQ/586830584?SETLVL=&QRY=IRN(12688225)&QRYTEXT=Hinke%2C%20Veronica&NAVLVL=SET",
+      "year": "2024",
+      "language": "English",
+      "summary": "With more than 60 recipes for clever beverages, enchanting sweets, and savory treats, Harry Potter: Afternoon Tea Magic is the perfect guide to creating a memorable and magical tea party for one, two, or more.",
+      "isbn": "1529434998",
+      "coverUrls": [
+        "https://secure.syndetics.com/index.aspx?isbn=1529434998/mc.gif&client=huccp&upc=&oclc=&issn=",
+        "https://secure.syndetics.com/index.aspx?isbn=9781529434996/mc.gif&client=huccp&upc=&oclc=&issn="
+      ],
+      "formats": [
+        {
+          "code": "BK",
+          "label": "Book",
+          "reserveUrl": "https://hutt.spydus.co.nz/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/586830584/0/V/0/R/9/ALLWRKENQ?SVL=99834752&RECFMT=BK",
+          "availabilityUrl": "https://hutt.spydus.co.nz/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/586830584?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=586830584&QRY=WRK01%5C99834752+%2B+03902\\BK"
+        }
+      ]
+    },
+    {
+      "rank": 10,
+      "workIrn": "99806505",
+      "title": "Harry potter: a history of magic",
+      "detailUrl": "https://hutt.spydus.co.nz/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/586830584/99806505,10",
+      "author": "Publishing, Pottermore",
+      "authorRole": "author",
+      "authorUrl": "https://hutt.spydus.co.nz/cgi-bin/spydus.exe/NAV/OPAC/AUTHENQ/586830584?SETLVL=&QRY=IRN(84378151)&QRYTEXT=Publishing%2C%20Pottermore&NAVLVL=SET",
+      "year": "2018",
+      "language": "English",
+      "summary": "The history of magic is as long as time and as wide as the world. In every culture, in every age, in every place and, probably, in every heart, there is magic. Harry Potter: A History of Magic reveals some of the hidden stories behind real-world magic and explores some of J.K. Rowling's magical inventions alongside their folkloric, cultural and historical forebears. Narrator Natalie Dormer and a host of experts will take you on an audio journey like no other; from ancient China, to a 14th century apothecary's shop, on to the Salem witch trials and beyond. They delve into a rich body of writings about magic and explore intriguing artefacts to bring to life deep-rooted ideas of mysticism from around the world. Along the way, you can listen for handy tips on how to capture a basilisk, make yourself invisible or create your very own philosopher's stone. You'll hear about the dozens of drafts and drawings that went into J.K. Rowling's writing process and enjoy exclusive interviews with Jim Dale, Stephen Fry and illustrator Jim Kay, who all share their experiences of working on these incredible stories. The extraordinary and thought-provoking tales in this audiobook are perfect for anyone who wants to know a little more about magic and the wizarding world. Music composed by Patrick Neil Doyle Sound effects licensed from ProSound Effects",
+      "isbn": "9781781102862",
+      "coverUrls": [
+        "https://img1.od-cdn.com/ImageType-100/3450-1/{DF1D25ED-213F-4E1D-B4D5-3E938678A48C}Img100.jpg",
+        "https://secure.syndetics.com/index.aspx?isbn=9781781102862/mc.gif&client=huccp&upc=&oclc=&issn="
+      ],
+      "formats": [
+        {
+          "code": "EAUD",
+          "label": "eAudioBook",
+          "reserveUrl": null,
+          "availabilityUrl": "https://hutt.spydus.co.nz/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/586830584?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=586830584&QRY=WRK01%5C99806505+%2B+03902\\EAUD"
+        }
+      ]
+    }
+  ]
+}

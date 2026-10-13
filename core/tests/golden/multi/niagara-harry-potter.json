@@ -1,0 +1,261 @@
+{
+  "query": "harry potter",
+  "setId": "277171",
+  "totalResults": 79,
+  "showing": {
+    "from": 1,
+    "to": 10
+  },
+  "nextPageUrl": "https://niagara.spydus.com/cgi-bin/spydus.exe/SET/OPAC/ALLWRKENQ/277171/2870494?NREC=10",
+  "prevPageUrl": null,
+  "noResults": false,
+  "records": [
+    {
+      "rank": 1,
+      "workIrn": "2909893",
+      "title": "Potterversity : essays exploring the world of Harry Potter",
+      "detailUrl": "https://niagara.spydus.com/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/277171/2909893,1",
+      "author": null,
+      "authorRole": null,
+      "authorUrl": null,
+      "year": "2024",
+      "language": "English",
+      "summary": "\"Potterversity: Essays Exploring the World of Harry Potter presents a written companion to the popular, \"Hermione-Approved\" MuggleNet podcast by the same name. Selected from the top Potter Studies scholars in the field, the diverse authors in the volume provide a range of interpretations of wizarding world stories. Essays include analysis of genre conventions, literary and religious symbolism, the role of games in the series, pedagogical approaches, and politically challenging issues like U.S. race relations, colonialism, and gender and sexuality-including direct attention to J.K. Rowling's controversial statements about trans people. Grouped into the sections \"Occult Knowledge,\" \"Ancient Magic,\" \"A Question of Character,\" \"Self and Other,\" \"Playing Potter,\" and \"Teaching, the Hogwarts Way,\" partnered essays precede transcripts of podcast conversations, led by the hosts of Potterversity. The book's essays and conversations aim to engage not only the mind but the spirit as well-the emotional, personal, and moral responses the Potterverse has evoked in so many people around the world. Fundamentally, this book demonstrates that the characters, stories, and situations of the magical realm promote thinking that helps us navigate our more mundane but no less dangerous world. Perhaps even more importantly, they help us to recognize the magic amid our everyday Muggle realities\"-- Provided by publisher.",
+      "isbn": "1476690537",
+      "coverUrls": [
+        "https://secure.syndetics.com/index.aspx?isbn=1476690537/mc.gif&client=niunlibciv&upc=&oclc=&issn=",
+        "https://secure.syndetics.com/index.aspx?isbn=9781476651279/mc.gif&client=niunlibciv&upc=&oclc=&issn=",
+        "https://secure.syndetics.com/index.aspx?isbn=9781476690537/mc.gif&client=niunlibciv&upc=&oclc=&issn="
+      ],
+      "formats": [
+        {
+          "code": "BK",
+          "label": "Book",
+          "reserveUrl": "https://niagara.spydus.com/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/277171/0/V/0/R/9/ALLWRKENQ?SVL=2909893&RECFMT=BK",
+          "availabilityUrl": "https://niagara.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/277171?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=277171&QRY=WRK01%5C2909893+%2B+03902\\BK"
+        }
+      ]
+    },
+    {
+      "rank": 2,
+      "workIrn": "2904641",
+      "title": "Harry Potter and beyond : on J. K. Rowling's fantasies and other fictions",
+      "detailUrl": "https://niagara.spydus.com/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/277171/2904641,2",
+      "author": "Pugh, Tison",
+      "authorRole": "author",
+      "authorUrl": "https://niagara.spydus.com/cgi-bin/spydus.exe/NAV/OPAC/AUTHENQ/277171?SETLVL=&QRY=IRN(1097840)&QRYTEXT=Pugh%2C%20Tison&NAVLVL=SET",
+      "year": "2020",
+      "language": "English",
+      "summary": "\"Harry Potter and Beyond explores J. K.Rowling's beloved best-selling series and its virtuoso reimagining of British literary traditions. Weaving together elements of fantasy, the school-story novel, detective fiction, allegory, and bildungsroman, the Harry Potter novels evade simplistic categorization as children's or fantasy literature. Along with the seven foundational novels of the Harry Potter series, Harry Potter and Beyond assesses the extraordinary range of supplementary material concerning the young wizard and his allies, including the films of the books, the subsequent film series, and a range of other Potter-inspired narratives. Beyond the world of Potter, Pugh surveys Rowling's literary fiction The Casual Vacancy and her detective series featuring Cormoran Strike, written under the pseudonym Robert Galbraith. Through this comprehensive overview of Rowling's body of work, Pugh reveals the vast web of connections between yesteryear's stories and Rowling's vivid creations\"-- Provided by publisher.",
+      "isbn": "1643360868",
+      "coverUrls": [
+        "https://secure.syndetics.com/index.aspx?isbn=1643360868/mc.gif&client=niunlibciv&upc=&oclc=&issn=",
+        "https://secure.syndetics.com/index.aspx?isbn=1643360876/mc.gif&client=niunlibciv&upc=&oclc=&issn=",
+        "https://secure.syndetics.com/index.aspx?isbn=9781643360867/mc.gif&client=niunlibciv&upc=&oclc=&issn=",
+        "https://secure.syndetics.com/index.aspx?isbn=9781643360874/mc.gif&client=niunlibciv&upc=&oclc=&issn=",
+        "https://secure.syndetics.com/index.aspx?isbn=9781643360881/mc.gif&client=niunlibciv&upc=&oclc=&issn="
+      ],
+      "formats": [
+        {
+          "code": "BK",
+          "label": "Book",
+          "reserveUrl": "https://niagara.spydus.com/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/277171/0/V/0/R/9/ALLWRKENQ?SVL=2904641&RECFMT=BK",
+          "availabilityUrl": "https://niagara.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/277171?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=277171&QRY=WRK01%5C2904641+%2B+03902\\BK"
+        }
+      ]
+    },
+    {
+      "rank": 3,
+      "workIrn": "2890510",
+      "title": "Unlocking Harry Potter : five keys for the serious reader",
+      "detailUrl": "https://niagara.spydus.com/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/277171/2890510,3",
+      "author": "Granger, John, 1961-",
+      "authorRole": "author",
+      "authorUrl": "https://niagara.spydus.com/cgi-bin/spydus.exe/NAV/OPAC/AUTHENQ/277171?SETLVL=&QRY=IRN(1101239)&QRYTEXT=Granger%2C%20John%2C%201961-&NAVLVL=SET",
+      "year": "2007",
+      "language": "English",
+      "summary": "Provides five essential keys for understanding the Harry Potter series--not who will live or die in Deathly Hollows, but how J.K. Rowling created the most successful books of our times. To understand the story behind the stories, John Granger introduces the themes and patterns Rowling uses to write books that resonate with readers of all ages. This book is for \"serious readers,\" but Granger writes in a very entertaining style. If you never understood the term \"postmodernism\" or how \"literary alchemy\" is used by great authors from Shakespeare to J.K. Rowling, then this is a fun way to learn. Unlocking Harry Potter is the only book to examine in depth the importance of what Rowling said in an interview from 1998, that \"to invent this wizard world\" she had to learn about alchemy \"in order to set the parameters and establish the stories' internal logic.\"--From publisher description.",
+      "isbn": "0972322124",
+      "coverUrls": [
+        "https://secure.syndetics.com/index.aspx?isbn=0972322124/mc.gif&client=niunlibciv&upc=&oclc=&issn=",
+        "https://secure.syndetics.com/index.aspx?isbn=9780972322126/mc.gif&client=niunlibciv&upc=&oclc=&issn="
+      ],
+      "formats": [
+        {
+          "code": "BK",
+          "label": "Book",
+          "reserveUrl": "https://niagara.spydus.com/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/277171/0/V/0/R/9/ALLWRKENQ?SVL=2890510&RECFMT=BK",
+          "availabilityUrl": "https://niagara.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/277171?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=277171&QRY=WRK01%5C2890510+%2B+03902\\BK"
+        }
+      ]
+    },
+    {
+      "rank": 4,
+      "workIrn": "2890318",
+      "title": "The subversive Harry Potter : adolescent rebellion and containment in the J.K. Rowling novels",
+      "detailUrl": "https://niagara.spydus.com/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/277171/2890318,4",
+      "author": "Saxena, Vandana, 1977-",
+      "authorRole": "author",
+      "authorUrl": "https://niagara.spydus.com/cgi-bin/spydus.exe/NAV/OPAC/AUTHENQ/277171?SETLVL=&QRY=IRN(1100370)&QRYTEXT=Saxena%2C%20Vandana%2C%201977-&NAVLVL=SET",
+      "year": "2012",
+      "language": "English",
+      "summary": "\"This detailed study of Harry Potter explores the limits of the formulaic structure of adolescent fantasy fiction like that of Rowling's and also examines the impulse of exploration, subversion, and resistance contained within the formula. Within the co-existing networks of subversion and containment in the narrative, young adult fantasy becomes an embodiment of the experience of adolescence\"--Provided by publisher.",
+      "isbn": "078646674X",
+      "coverUrls": [
+        "https://secure.syndetics.com/index.aspx?isbn=078646674X/mc.gif&client=niunlibciv&upc=&oclc=&issn=",
+        "https://secure.syndetics.com/index.aspx?isbn=9780786466740/mc.gif&client=niunlibciv&upc=&oclc=&issn="
+      ],
+      "formats": [
+        {
+          "code": "BK",
+          "label": "Book",
+          "reserveUrl": "https://niagara.spydus.com/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/277171/0/V/0/R/9/ALLWRKENQ?SVL=2890318&RECFMT=BK",
+          "availabilityUrl": "https://niagara.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/277171?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=277171&QRY=WRK01%5C2890318+%2B+03902\\BK"
+        }
+      ]
+    },
+    {
+      "rank": 5,
+      "workIrn": "2885788",
+      "title": "Trivial pursuit . World of Harry Potter [game]",
+      "detailUrl": "https://niagara.spydus.com/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/277171/2885788,5",
+      "author": null,
+      "authorRole": null,
+      "authorUrl": null,
+      "year": "2018",
+      "language": "English",
+      "summary": "Harry Potter fans test their knowledge of the beloved Harry Potter movies with TRIVIAL PURSUIT: World of Harry Potter. This bite-size edition requires no board and can be carried around in its bite-size wedge case. The 600 questions in six trivia categories include: The Dark Arts, HOGWARTS, Magical Spells & Potions, Magical Objects, Magical People and Animals & Magical Creatures.",
+      "isbn": null,
+      "coverUrls": [],
+      "formats": [
+        {
+          "code": "OB",
+          "label": "Objects",
+          "reserveUrl": "https://niagara.spydus.com/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/277171/0/V/0/R/9/ALLWRKENQ?SVL=2885788&RECFMT=OB",
+          "availabilityUrl": "https://niagara.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/277171?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=277171&QRY=WRK01%5C2885788+%2B+03902\\OB"
+        }
+      ]
+    },
+    {
+      "rank": 6,
+      "workIrn": "2881587",
+      "title": "The presence of Harry Potter in the classroom",
+      "detailUrl": "https://niagara.spydus.com/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/277171/2881587,6",
+      "author": "White, Karen",
+      "authorRole": "author",
+      "authorUrl": "https://niagara.spydus.com/cgi-bin/spydus.exe/NAV/OPAC/AUTHENQ/277171?SETLVL=&QRY=IRN(1081967)&QRYTEXT=White%2C%20Karen&NAVLVL=SET",
+      "year": "2005",
+      "language": "English",
+      "summary": null,
+      "isbn": null,
+      "coverUrls": [],
+      "formats": [
+        {
+          "code": "BK",
+          "label": "Book",
+          "reserveUrl": null,
+          "availabilityUrl": "https://niagara.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/277171?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=277171&QRY=WRK01%5C2881587+%2B+03902\\BK"
+        }
+      ]
+    },
+    {
+      "rank": 7,
+      "workIrn": "2881507",
+      "title": "The treatment of death in the Harry Potter series by J.K. Rowling",
+      "detailUrl": "https://niagara.spydus.com/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/277171/2881507,7",
+      "author": "Martin, Angelica N.",
+      "authorRole": "author",
+      "authorUrl": "https://niagara.spydus.com/cgi-bin/spydus.exe/NAV/OPAC/AUTHENQ/277171?SETLVL=&QRY=IRN(1081833)&QRYTEXT=Martin%2C%20Angelica%20N.&NAVLVL=SET",
+      "year": "2006",
+      "language": "English",
+      "summary": null,
+      "isbn": null,
+      "coverUrls": [],
+      "formats": [
+        {
+          "code": "BK",
+          "label": "Book",
+          "reserveUrl": "https://niagara.spydus.com/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/277171/0/V/0/R/9/ALLWRKENQ?SVL=2881507&RECFMT=BK",
+          "availabilityUrl": "https://niagara.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/277171?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=277171&QRY=WRK01%5C2881507+%2B+03902\\BK"
+        }
+      ]
+    },
+    {
+      "rank": 8,
+      "workIrn": "2880600",
+      "title": "The wisdom of Harry Potter : what our favorite hero teaches us about moral choices",
+      "detailUrl": "https://niagara.spydus.com/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/277171/2880600,8",
+      "author": "Kern, Edmund M., 1963-",
+      "authorRole": "author",
+      "authorUrl": "https://niagara.spydus.com/cgi-bin/spydus.exe/NAV/OPAC/AUTHENQ/277171?SETLVL=&QRY=IRN(1080552)&QRYTEXT=Kern%2C%20Edmund%20M.%2C%201963-&NAVLVL=SET",
+      "year": "2003",
+      "language": "English",
+      "summary": null,
+      "isbn": "1591021332",
+      "coverUrls": [
+        "https://secure.syndetics.com/index.aspx?isbn=1591021332/mc.gif&client=niunlibciv&upc=&oclc=&issn="
+      ],
+      "formats": [
+        {
+          "code": "BK",
+          "label": "Book",
+          "reserveUrl": "https://niagara.spydus.com/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/277171/0/V/0/R/9/ALLWRKENQ?SVL=2880600&RECFMT=BK",
+          "availabilityUrl": "https://niagara.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/277171?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=277171&QRY=WRK01%5C2880600+%2B+03902\\BK"
+        }
+      ]
+    },
+    {
+      "rank": 9,
+      "workIrn": "2877572",
+      "title": "A wizard of their age : critical essays from the Harry Potter generation",
+      "detailUrl": "https://niagara.spydus.com/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/277171/2877572,9",
+      "author": null,
+      "authorRole": null,
+      "authorUrl": null,
+      "year": "2015",
+      "language": "English",
+      "summary": "A Wizard of Their Age began when the students in Cecilia Konchar Farr's \"Six Degrees of Harry Potter\" course at St. Catherine University kept finding errors in the available scholarship. These students had been reading Harry Potter for their entire literate lives, and they demanded more attention to the details they found significant. \"We can do better than this,\" they said. Konchar Farr, two undergraduate teaching assistants, and five student editors decided to test that hypothesis. After issuing a call for contributions, they selected fifteen thoughtful academic essays by students from across the country. These essays examine the Harry Potter books from a variety of perspectives, including literary, historical, cultural, gender, mythological, psychological, theological, and genetic -- there is even a nursing care plan for Tom Riddle. Interspersed among the essays are brief vignettes entitled \"My Harry Potter Story,\" where students write about their personal encounters with the novels.",
+      "isbn": "1438454465",
+      "coverUrls": [
+        "https://secure.syndetics.com/index.aspx?isbn=1438454465/mc.gif&client=niunlibciv&upc=&oclc=&issn=",
+        "https://secure.syndetics.com/index.aspx?isbn=1438454473/mc.gif&client=niunlibciv&upc=&oclc=&issn=",
+        "https://secure.syndetics.com/index.aspx?isbn=9781438454467/mc.gif&client=niunlibciv&upc=&oclc=&issn=",
+        "https://secure.syndetics.com/index.aspx?isbn=9781438454474/mc.gif&client=niunlibciv&upc=&oclc=&issn=",
+        "https://secure.syndetics.com/index.aspx?isbn=9781438454481/mc.gif&client=niunlibciv&upc=&oclc=&issn="
+      ],
+      "formats": [
+        {
+          "code": "BK",
+          "label": "Book",
+          "reserveUrl": "https://niagara.spydus.com/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/277171/0/V/0/R/9/ALLWRKENQ?SVL=2877572&RECFMT=BK",
+          "availabilityUrl": "https://niagara.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/277171?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=277171&QRY=WRK01%5C2877572+%2B+03902\\BK"
+        }
+      ]
+    },
+    {
+      "rank": 10,
+      "workIrn": "2870494",
+      "title": "Harry Potter and the Order of the Phoenix (DVD)",
+      "detailUrl": "https://niagara.spydus.com/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/277171/2870494,10",
+      "author": "Yates, David, 1963-",
+      "authorRole": "director",
+      "authorUrl": "https://niagara.spydus.com/cgi-bin/spydus.exe/NAV/OPAC/AUTHENQ/277171?SETLVL=&QRY=IRN(235664)&QRYTEXT=Yates%2C%20David%2C%201963-&NAVLVL=SET",
+      "year": "2007",
+      "language": "Spanish, French, English",
+      "summary": "Lord Voldemort has returned, but the ministry of Magic is doing everything it can to keep the wizarding world from knowing the truth. They appoint Ministry official Dolores Umbridge as the new Defense Against the Dark Arts professor at Hogwarts. When Umbridge refuses to teach practical defensive magic, Ron and Hermione convince Harry to secretly train a select group of students for the wizarding war that lies ahead. A terrifying showdown between good and evil awaits.",
+      "isbn": "1419802526",
+      "coverUrls": [
+        "https://secure.syndetics.com/index.aspx?isbn=1419802526/mc.gif&client=niunlibciv&upc=&oclc=&issn=",
+        "https://secure.syndetics.com/index.aspx?isbn=9781419802522/mc.gif&client=niunlibciv&upc=&oclc=&issn="
+      ],
+      "formats": [
+        {
+          "code": "PM",
+          "label": "DVDs and BluRay",
+          "reserveUrl": "https://niagara.spydus.com/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/277171/0/V/0/R/9/ALLWRKENQ?SVL=2870494&RECFMT=PM",
+          "availabilityUrl": "https://niagara.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/277171?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=277171&QRY=WRK01%5C2870494+%2B+03902\\PM"
+        }
+      ]
+    }
+  ]
+}

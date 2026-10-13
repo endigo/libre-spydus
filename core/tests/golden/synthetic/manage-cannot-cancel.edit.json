@@ -1,0 +1,4 @@
+{
+  "ok": false,
+  "message": "Error This reservation cannot be cancelled because it is in transit"
+}

@@ -1,0 +1,143 @@
+{
+  "_source": "Offline demo catalogue for DemoBackend: the demo account's books as search results, format availability and full bib records. IRNs, BRNs and ISBNs of the editions in the account are Canning's; editions with 9900xxxx IRNs are demo-only. Synopses are short demo texts, not the publishers' blurbs.",
+  "works": [
+    {
+      "workIrn": "15642035",
+      "title": "The midnight library",
+      "author": "Haig, Matt, 1975-",
+      "year": "2020",
+      "summary": "Between life and death there is a library, and its shelves hold every life Nora Seed could have lived. Each book lets her step into one of them, and find out whether any is better than the one she left behind.",
+      "genres": ["Fantasy fiction"],
+      "subjects": ["Libraries -- Fiction", "Choice (Psychology) -- Fiction", "Regret -- Fiction", "Self-realization -- Fiction"],
+      "editions": [
+        {
+          "code": "BK", "label": "Book", "bibIrn": "8753080", "brn": "275039", "isbn": "9781786892720",
+          "imprint": "Edinburgh : Canongate, 2020.", "collation": "288 pages ; 22 cm",
+          "cover": "https://secure.syndetics.com/index.aspx?isbn=9781786892720/lc.gif&client=citycanning&upc=&oclc=&issn=",
+          "counts": { "copies": 4, "reserved": 2 }
+        },
+        {
+          "code": "LP", "label": "Large Print", "bibIrn": "99000102", "brn": "990102", "isbn": null,
+          "imprint": "Bath : Chivers Large Print, 2021.", "collation": "392 pages (large print) ; 24 cm",
+          "cover": "https://secure.syndetics.com/index.aspx?isbn=9781786892720/lc.gif&client=citycanning&upc=&oclc=&issn=",
+          "counts": { "copies": 1 }
+        },
+        {
+          "code": "EBK", "label": "eBook", "bibIrn": "99000103", "brn": "990103", "isbn": null,
+          "imprint": "Edinburgh : Canongate, 2020.", "collation": "1 online resource", "digital": true,
+          "cover": "https://secure.syndetics.com/index.aspx?isbn=9781786892720/lc.gif&client=citycanning&upc=&oclc=&issn=",
+          "counts": {}
+        }
+      ]
+    },
+    {
+      "workIrn": "15643445",
+      "title": "Project Hail Mary",
+      "author": "Weir, Andy",
+      "year": "2021",
+      "summary": "A science teacher wakes up alone on a spacecraft light-years from home, with no memory of how he got there. As his memory comes back, so does the mission: find out what is dimming the Sun before life on Earth fails.",
+      "genres": ["Science fiction"],
+      "subjects": ["Astronauts -- Fiction", "Space flight -- Fiction", "Interstellar travel -- Fiction", "Survival -- Fiction"],
+      "editions": [
+        {
+          "code": "BK", "label": "Book", "bibIrn": "17665994", "brn": "457540", "isbn": "9781804953693",
+          "imprint": "London : Del Rey, 2023.", "collation": "496 pages ; 20 cm",
+          "cover": "https://secure.syndetics.com/index.aspx?isbn=9781804953693/lc.gif&client=citycanning&upc=&oclc=&issn=",
+          "counts": { "copies": 3, "reserved": 1 }
+        }
+      ]
+    },
+    {
+      "workIrn": "99001002",
+      "title": "Lessons in chemistry",
+      "author": "Garmus, Bonnie",
+      "year": "2022",
+      "summary": "In the early 1960s the chemist Elizabeth Zott is pushed out of her research post and ends up presenting a television cooking show, where she teaches a nation of home cooks to think like scientists.",
+      "genres": ["Historical fiction"],
+      "subjects": ["Women chemists -- Fiction", "Television cooking shows -- Fiction", "Sex discrimination against women -- Fiction"],
+      "editions": [
+        {
+          "code": "BK", "label": "Book", "bibIrn": "10958382", "brn": "329293", "isbn": "9780857528131",
+          "imprint": "London : Doubleday, 2022.", "collation": "386 pages ; 24 cm",
+          "cover": "https://secure.syndetics.com/index.aspx?isbn=9780857528131/lc.gif&client=citycanning&upc=&oclc=&issn=",
+          "counts": { "copies": 5, "reserved": 3 }
+        }
+      ]
+    },
+    {
+      "workIrn": "99001003",
+      "title": "Where the crawdads sing",
+      "author": "Owens, Delia",
+      "year": "2018",
+      "summary": "Left to fend for herself as a child, Kya Clark grows up alone in the marshes of the North Carolina coast. When a local man is found dead, the town is quick to suspect the \"Marsh Girl\".",
+      "genres": ["Mystery fiction"],
+      "subjects": ["Marshes -- North Carolina -- Fiction", "Self-reliance -- Fiction", "Murder -- Investigation -- Fiction"],
+      "editions": [
+        {
+          "code": "BK", "label": "Book", "bibIrn": "12130675", "brn": "337249", "isbn": "9781472157362",
+          "imprint": "London : Corsair, 2018.", "collation": "370 pages ; 24 cm",
+          "cover": "https://secure.syndetics.com/index.aspx?isbn=9781472157362/lc.gif&client=citycanning&upc=&oclc=&issn=",
+          "counts": { "copies": 6 }
+        }
+      ]
+    },
+    {
+      "workIrn": "15650448",
+      "title": "Tomorrow, and tomorrow, and tomorrow",
+      "author": "Zevin, Gabrielle",
+      "year": "2022",
+      "summary": "Two friends who met as children in a hospital games room become partners in making video games. Across thirty years of success, rivalry and loss, the worlds they build keep drawing them back together.",
+      "genres": ["Literary fiction"],
+      "subjects": ["Friendship -- Fiction", "Video game designers -- Fiction", "Video games -- Fiction"],
+      "editions": [
+        {
+          "code": "BK", "label": "Book", "bibIrn": "15595347", "brn": "410588", "isbn": "9781529115543",
+          "imprint": "[London] : Vintage, 2023.", "collation": "482 pages ; 20 cm",
+          "cover": "https://secure.syndetics.com/index.aspx?isbn=9781529115543/lc.gif&client=citycanning&upc=&oclc=&issn=",
+          "counts": { "copies": 2, "reserved": 1 }
+        }
+      ]
+    },
+    {
+      "workIrn": "99001005",
+      "title": "Baby-sitters club. 18, Boy-crazy Stacey",
+      "author": "Galligan, Gale, 1964-",
+      "year": "2025",
+      "summary": "Stacey spends the summer at the beach as a mother's helper and falls for a lifeguard, while her friends wonder whether she has forgotten the job she came to do. A graphic novel.",
+      "genres": ["Graphic novels"],
+      "subjects": ["Babysitters -- Comic books, strips, etc.", "Friendship -- Comic books, strips, etc."],
+      "audience": "Interest age level: For ages 8-12.",
+      "editions": [
+        {
+          "code": "BK", "label": "Book", "bibIrn": "17651573", "brn": "990501", "isbn": null,
+          "imprint": "[Gosford, NSW] : Scholastic Australia, 2025.", "collation": "1 volume (unpaged) : colour illustrations ; 21 cm",
+          "cover": null,
+          "counts": { "copies": 3, "reserved": 1 }
+        }
+      ]
+    },
+    {
+      "workIrn": "99001006",
+      "title": "The Thursday Murder Club",
+      "author": "Osman, Richard, 1970-",
+      "year": "2020",
+      "summary": "In a quiet retirement village four friends meet every week to look into unsolved murders. When a real killing happens on their doorstep, the Thursday Murder Club finds itself with its first live case.",
+      "genres": ["Detective and mystery fiction"],
+      "subjects": ["Retirement communities -- England -- Fiction", "Older people -- Fiction", "Murder -- Investigation -- Fiction"],
+      "editions": [
+        {
+          "code": "BK", "label": "Book", "bibIrn": "99000601", "brn": "990601", "isbn": null,
+          "imprint": "London : Penguin Books, 2021.", "collation": "400 pages ; 20 cm",
+          "cover": "https://secure.syndetics.com/index.aspx?isbn=9780241425459/lc.gif&client=citycanning&upc=&oclc=&issn=",
+          "counts": { "copies": 5, "reserved": 4 }
+        },
+        {
+          "code": "LP", "label": "Large Print", "bibIrn": "8753740", "brn": "275705", "isbn": "9780241425459",
+          "imprint": "London : Viking, 2020.", "collation": "382 pages (large print) ; 24 cm",
+          "cover": "https://secure.syndetics.com/index.aspx?isbn=9780241425459/lc.gif&client=citycanning&upc=&oclc=&issn=",
+          "counts": { "copies": 2, "reserved": 1 }
+        }
+      ]
+    }
+  ]
+}

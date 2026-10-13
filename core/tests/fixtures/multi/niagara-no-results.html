@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:x="http://www.w3.org/1999/xhtml" xmlns:msxsl="urn:schemas-microsoft-com:xslt" xmlns:civica="http://www.civica.com" xmlns:js="urn:spydus-scripts"><head prefix="og: http://ogp.me/ns# books: http://ogp.me/ns/books#" data-cookie="1"><meta charset="utf-8" /><meta http-equiv="x-ua-compatible" content="ie=edge" /><title>Result | Niagara University Library Catalog</title><script src="/spyscripts/cookie.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" /><meta name="robots" content="noindex, follow" /><meta property="og:image" content="https://niagara.spydus.com/api/maintenance/1.0/imagebrowser/image?blobName=19f50abd-0138-4c93-9a3d-2e2ec26ab60b.jpg" /><link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png" /><link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png" /><meta name="theme-color" content="#ffffff" /><meta property="og:site_name" content="Niagara University Library Catalog" /><meta property="og:locale" content="en-AU" /><script src="/docs/OPAC/js/modernizr-spydus.js"></script><link href="/docs/OPAC/bootstrap-5.3.8-dist/css/bootstrap.min.css" rel="stylesheet" /><link href="/docs/OPAC/css/kendo.default-main.css" rel="stylesheet" /><link href="/docs/OPAC/css/spydus.css" rel="stylesheet" /><link href="/docs/OPAC/css/jssocials.css" rel="stylesheet" /><link href="/docs/OPAC/css/jssocials-theme-flat.css" rel="stylesheet" /><script src="/docs/OPAC/js/timeout.js"></script><script defer="defer">
+                setupTimeout(1200, 20, '/cgi-bin/spydus.exe/MSGTRN/OPAC/TIMEOUT');
+              </script><style type="text/css">
+      :root {
+        --spy-body-background-color: rgba(255,255,255,1);
+        --spy-body-bg-text-color: rgba(38,38,38,1);
+        --spy-body-bg-text-color-rgb: 38,38,38;
+        --spy-primary-color: rgba(79, 38, 131, 1);
+        --spy-primary-color-rgb: 79, 38, 131;
+        --spy-primary-hover-color: rgba(79, 38, 131, 1);
+        --spy-primary-hover-color-rgb: 79, 38, 131;
+        --spy-primary-bg-text-color: rgba(255,255,255,1);
+        --spy-primary-bg-text-color-rgb: 255,255,255;
+        --spy-primary-hover-bg-text-color: rgba(255,255,255,1);
+        --spy-primary-hover-bg-text-color-rgb: 255,255,255;
+        --spy-secondary-color: rgba(79, 38, 131, 1);
+        --spy-secondary-color-rgb: 79, 38, 131;
+        --spy-secondary-hover-color: rgba(79, 38, 131, 1);
+        --spy-secondary-hover-color-rgb: 79, 38, 131;
+        --spy-secondary-bg-text-color: rgba(255,255,255,1);
+        --spy-secondary-bg-text-color-rgb: 255,255,255;
+        --spy-secondary-hover-bg-text-color: rgba(255,255,255,1);
+        --spy-secondary-hover-bg-text-color-rgb: 255,255,255;
+        --spy-copyright-bg-color: rgba(38,38,38,1);
+        --spy-copyright-bg-color-rgb: 38,38,38;
+        --spy-copyright-text-color: rgba(255,255,255,1);
+        --spy-copyright-text-color-rgb: 255,255,255;
+        --spy-small-text-color: rgba(79, 38, 131, 1);
+        --spy-small-text-color-rgb: 79, 38, 131;
+        --spy-highlight-primary-color: rgba(79, 38, 131, 1);
+        --spy-highlight-primary-color-rgb: 79, 38, 131;
+        --spy-highlight-primary-hover-color: rgba(157, 224, 243, 1);
+        --spy-highlight-primary-hover-color-rgb: 157, 224, 243;
+        --spy-highlight-primary-bg-text-color: rgba(255,255,255,1);
+        --spy-highlight-primary-bg-text-color-rgb: 255,255,255;
+        --spy-highlight-secondary-color: rgba(230, 179, 159, 1);
+        --spy-highlight-secondary-color-rgb: 230, 179, 159;
+        --spy-highlight-secondary-hover-color: rgba(157, 224, 243, 1);
+        --spy-highlight-secondary-hover-color-rgb: 157, 224, 243;
+        --spy-highlight-secondary-bg-text-color: rgba(255,255,255,1);
+        --spy-highlight-secondary-bg-text-color-rgb: 255,255,255;
+        --spy-secondary-lightbg-text-color: rgba(89,89,89,1);
+        --spy-secondary-lightbg-text-color-rgb: 89,89,89;
+        --spy-breadcrumb-main-color: rgba(79, 38, 131, 1);
+        --spy-breadcrumb-main-color-rgb: 79, 38, 131;
+        --spy-breadcrumb-hover-color: rgba(24,24,24,1);
+        --spy-breadcrumb-hover-color-rgb: 24,24,24;
+        --spy-button-hover-shadow-color: rgba(78,78,78,1);
+        --spy-button-hover-shadow-color-rgb: 78,78,78;
+        --spy-info-light-color: rgba(240, 232, 245, 1);
+        --spy-info-light-color-rgb: 240, 232, 245;
+        --spy-info-dark-color: rgba(79, 38, 131, 1);
+        --spy-info-dark-color-rgb: 79, 38, 131;
+        --spy-update-light-color: rgba(219,247,255,1);
+        --spy-update-light-color-rgb: 219,247,255;
+        --spy-update-dark-color: rgba(6,86,132,1);
+        --spy-update-dark-color-rgb: 6,86,132;
+        --spy-success-light-color: rgba(222,247,235,1);
+        --spy-success-light-color-rgb: 222,247,235;
+        --spy-success-dark-color: rgba(6,91,80,1);
+        --spy-success-dark-color-rgb: 6,91,80,1;
+        --spy-danger-light-color: rgba(248,215,218,1);
+        --spy-danger-light-color-rgb: 248,215,218;
+        --spy-danger-dark-color: rgba(132,32,41,1);
+        --spy-danger-dark-color-rgb: 132,32,41;
+        --spy-warning-light-color: rgba(240, 232, 245, 1);
+        --spy-warning-light-color-rgb: 240, 232, 245;
+        --spy-warning-dark-color: rgba(79, 38, 131, 1);
+        --spy-warning-dark-color-rgb: 79, 38, 131;
+        --spy-disable-primary-color: rgba(181,181,181,1);
+        --spy-disable-primary-color-rgb: 181,181,181;
+        --spy-list-active-color: rgba(242,242,242,1);
+        --spy-list-active-color-rgb: 242,242,242;
+        --spy-list-hover-color: rgba(248,249,250,1);
+        --spy-list-hover-color-rgb: 248,249,250;
+        --spy-control-border-color: rgba(79, 38, 131, 1);
+        --spy-control-border-color-rgb: 79, 38, 131;
+        --spy-control-border-hover-color: rgba(79, 38, 131, 1);
+        --spy-control-border-hover-color-rgb: 79, 38, 131;
+        --bs-primary: rgba(79, 38, 131, 1);
+        --bs-primary-rgb: 79, 38, 131;
+        --bs-secondary: rgba(79, 38, 131, 1);
+        --bs-secondary-rgb: 79, 38, 131;
+        --bs-danger: rgba(132,32,41,1);
+        --bs-danger-rgb: 132,32,41;
+        --bs-success: rgba(6,91,80,1);
+        --bs-success-rgb: 6,91,80,1;
+        --bs-info: rgba(79, 38, 131, 1);
+        --bs-info-rgb: 79, 38, 131;
+        --bs-warning: rgba(79, 38, 131, 1);
+        --bs-warning-rgb: 79, 38, 131;  
+        --bs-card-color: rgba(38,38,38,1); 
+        --bs-body-color: rgba(38,38,38,1); 
+        --bs-list-group-bg: rgba(255,255,255,1); 
+        --spy-header-height: 90px; 
+      }
+
+      html {
+        font-size: 14px;
+      }
+
+      body {
+        background-color: rgba(255,255,255,1);
+        color: rgba(38,38,38,1);
+      }
+
+      h1, .h1 {
+        font-size: 1.75rem;
+      }
+
+      h2, .h2 {
+        font-size: 1.5rem;
+      }
+
+      h3, .h3 {
+        font-size: 1.375rem;
+      }
+
+      h4, .h4 {
+        font-size: 1.25rem;
+      }
+
+      h5, .h5 {
+        font-size: 1.125rem;
+      }
+
+      a:hover {
+        color: rgba(157, 224, 243, 1);
+      }
+
+      header .header-background-image {
+        background-color: rgba(0, 0, 0, 0);
+        
+            background-image: none;
+          
+      }
+
+      header .header-navbar-full {
+        background-color: rgba(0, 0, 0, 0);
+        --spy-breadcrumb-hover-color: rgba(24,24,24,1);
+        --spy-primary-color: rgba(79, 38, 131, 1);
+        --spy-primary-color-rgb: 79, 38, 131;
+        --spy-primary-hover-color: rgba(79, 38, 131, 1);
+        --spy-primary-hover-color-rgb: 79, 38, 131;
+        --spy-primary-bg-text-color: rgba(255,255,255,1);
+        --spy-primary-bg-text-color-rgb: 255,255,255;
+      }
+      
+          @media (min-width: 992px) {
+            header .header-navbar-full .btn-outline-primary:hover {
+              background-color: rgba(0, 0, 0, 0);
+            }
+          }
+        
+
+      header .header-navbar-full .offcanvas.show .offcanvas-header,
+      header .header-navbar-full .offcanvas.show .offcanvas-body {
+        background-color: rgba(0, 0, 0, 0);
+      }
+
+      header .header-library-name {
+        font-size: 40.000px;
+        font-weight: 600;
+        color: rgba(79, 38, 131, 1);
+      }
+
+      header .header-main-full {
+        --spy-primary-color: rgba(79, 38, 131, 1);
+        --spy-primary-color-rgb: 79, 38, 131;
+        --spy-primary-hover-color: rgba(157, 224, 243, 1);
+        --spy-primary-hover-color-rgb: 157, 224, 243;
+        --spy-primary-bg-text-color: rgba(255,255,255,1);
+        --spy-primary-bg-text-color-rgb: 255,255,255;
+        --spy-highlight-primary-color: rgba(214,37,152,1); /* Cerise - Use for Highlight */
+        --spy-highlight-primary-color-rgb: 214,37,152; /* Cerise - Use for Highlight */
+        --spy-highlight-primary-hover-color: rgba(233,77,178,1); 
+        --spy-highlight-primary-hover-color-rgb: 233,77,178; 
+        --spy-highlight-primary-bg-text-color: rgba(255,255,255,1); /* White - Use for text on dark background */
+        --spy-highlight-primary-bg-text-color-rgb: 255,255,255; /* White - Use for text on dark background */
+        --spy-highlight-secondary-color: rgba(123,87,203,1); /* Amethyst - Use for Highlight */
+        --spy-highlight-secondary-color-rgb: 123,87,203; /* Amethyst - Use for Highlight */
+        --spy-highlight-secondary-hover-color: rgba(142,137,229,1); 
+        --spy-highlight-secondary-hover-color-rgb: 142,137,229; 
+        --spy-highlight-secondary-bg-text-color: rgba(255,255,255,1); /* White - Use for text on dark background */
+        --spy-highlight-secondary-bg-text-color-rgb: 255,255,255; /* White - Use for text on dark background */
+      }
+
+      header .header-main-full #header-search-option {
+        color: rgba(89,89,89,1);
+        background-color: rgba(242,242,242,1);
+      }
+
+      header .header-main-full #header-search-advanced {
+        color: rgba(89,89,89,1);
+        background-color: rgba(0, 0, 0, 0);
+      }
+
+      footer div.footer {
+        --spy-primary-color: rgba(79, 38, 131, 1);
+        --spy-primary-color-rgb: 79, 38, 131;
+        --spy-primary-bg-text-color: rgba(255,255,255,1);
+        --spy-primary-bg-text-color-rgb: 255,255,255;
+        
+            background-image: none;
+          
+      }
+
+      .search-result-header .dropdown-menu .dropdown-item:hover {
+        color: rgba(157, 224, 243, 1);
+      }
+
+      #mylist-floating a {
+        background-color: rgba(242,242,242,1);
+        border-color: rgba(242,242,242,1);
+        color: rgba(79, 38, 131, 1);
+        box-shadow: inset 0 0 0 0 rgba(79, 38, 131, 1);
+      }
+
+      #mylist-floating a:hover {
+        background-color: rgba(242,242,242,1);
+        border-color: rgba(242,242,242,1);
+        box-shadow: inset 60px 0 0 0 rgba(157, 224, 243, 1);
+        color: rgba(242,242,242,1);
+      }
+
+
+      #mylist-floating .badge {
+        background-color: rgba(79, 38, 131, 1);
+        color: rgba(255,255,255,1);
+      }
+
+      .label-required:after {
+        content: '*';
+        font-weight: 700;
+        color: rgba(79, 38, 131, 1);
+      }
+
+      .newTitle {
+        font-size: 1rem;
+        font-weight: 400;
+        color: rgba(255,255,255,1);
+        background-color: rgba(79, 38, 131, 1);
+      }
+
+      .prevBorrowed {
+        font-size: 1rem;
+        font-weight: 400;
+        color: rgba(255,255,255,1);
+        background-color: rgba(79, 38, 131, 1);
+      }
+
+      .recfrmt-icon {
+        font-size: 1.800rem;
+        background-color: rgba(24,24,24,0.5);
+        color: rgba(255,255,255,1);
+      }
+
+      /* events */
+      /* session status */
+      .event-inprogress {
+        font-weight: 700;
+        color: rgba(14,78,14,1);
+      }
+
+      .event-cancelled {
+        font-weight: 700;
+        color: rgba(255,0,0,1);
+      }
+
+      .event-closed {
+        font-weight: 700;
+        color: rgba(255,0,0,1);
+      }
+
+      .event-complete {
+        font-weight: 700;
+        color: rgba(255,0,0,1);
+      }
+
+      .event-full {
+        font-weight: 700;
+        color: rgba(255,0,0,1);
+      }
+
+      .event-registrationreq {
+        font-weight: 700;
+        color: rgba(8,62,82,1);
+      }
+
+      .event-noregistration {
+        font-weight: 700;
+        color: rgba(8,62,82,1);
+      }
+
+      .event-venueregistration {
+        font-weight: 700;
+        color: rgba(8,62,82,1);
+      }
+
+      .event-fee {
+        font-weight: 700;
+        color: rgba(8,62,82,1);
+      }
+
+      .event-free {
+        font-weight: 700;
+        color: rgba(14,78,14,1);
+      }
+
+      .event-postponed-brief {
+        font-weight: 700;
+        color: rgba(255,0,0,1);
+      }
+
+      .event-postponed-full {
+        font-weight: 700;
+        color: rgba(51,204,221,1);
+      }
+
+      .event-registrationwalkin {
+        font-weight: 700;
+        color: rgba(8,62,82,1);
+      }
+
+      /* registration status */
+      .evreg-confirmed {
+        font-weight: 700;
+        color: rgba(14,78,14,1);
+      }
+
+      .evreg-pendingpayment {
+        font-weight: 700;
+        color: rgba(255,0,0,1);
+      }
+
+      .evreg-onwaitlist {
+        font-weight: 700;
+        color: rgba(8,62,82,1);
+      }
+
+      .evreg-cancelled {
+        font-weight: 700;
+        color: rgba(255,0,0,1);
+      }
+
+      .evreg-eventcancelled {
+        font-weight: 700;
+        color: rgba(255,0,0,1);
+      }
+
+      .evreg-eventcomplete {
+        font-weight: 600;
+        color: rgba(88,89,91,1);
+      }
+
+      /* Wordcloud */
+      div.wordCloud-container a {
+        --color: rgba(79, 38, 131, 1);
+      }
+
+      div.wordCloud-container span:nth-child(2n+1) a {
+        --color: rgba(157, 224, 243, 1);
+      }
+
+      div.wordCloud-container span:nth-child(3n+1) a {
+        --color: rgba(230, 179, 159, 1);
+      }
+
+      div.wordCloud-container span:nth-child(4n+1) a {
+        --color: rgba(38,38,38,1);
+      }
+
+      /* Bookings */
+      svg.bkg-selected path {
+        stroke: rgba(6,91,80,1);
+        fill: rgba(222,247,235,1);
+      }
+
+      .btn-check:checked+.btn-outline-booking {
+        color: rgba(6,91,80,1);
+        background-color: rgba(222,247,235,1)
+        border-color: rgba(6,91,80,1);
+      }
+
+      svg.bkg-unavailable path {
+        stroke: rgba(71,71,71,1);
+        fill: rgba(229,229,229,1);
+      }
+
+      .btn-check:disabled+.btn-outline-booking, 
+      .btn-outline-booking:disabled, 
+      .btn-outline-booking.btn-blocked-booking {
+        color: rgba(71,71,71,1);
+        background-color: rgba(229,229,229,1)
+        border-color: rgba(71,71,71,1);
+      }
+
+      svg.bkg-mybooking path {
+        stroke: rgba(79, 38, 131, 1);
+        fill: rgba(229,229,229,1);
+      }
+
+      .btn-check:disabled+.btn-outline-booking.booking-mybooking, 
+      .btn-outline-booking.booking-mybooking:disabled, 
+      .btn-outline-booking.btn-blocked-booking.booking-mybooking {
+        color: rgba(79, 38, 131, 1);
+        background-color: rgba(229,229,229,1)
+        border-color: rgba(79, 38, 131, 1);
+      }   
+
+      /* default image colours - based on length of title */
+      .noimgsc {
+        background-color: rgba(8,62,82,1);
+      }
+
+      .noimgsc .bc1 {
+        background-color: rgba(161,38,85,1);
+        color: rgba(255,255,255,1);
+      }
+
+      .noimgsc .bc2 {
+        background-color: rgba(169,39,10,1);
+        color: rgba(255,255,255,1);
+      }
+
+      .noimgsc .bc3 {
+        background-color: rgba(251,176,65,1);
+        color: rgba(38,38,38,1);
+      }
+
+      .noimgsc .bc4 {
+        background-color: rgba(29,99,73,1);
+        color: rgba(255,255,255,1);
+      }
+
+      .noimgsc .bc5 {
+        background-color: rgba(132,35,148,1);
+        color: rgba(255,255,255,1);
+      }
+
+      .noimgsc .bc6 {
+        background-color: rgba(76,175,80,1);
+        color: rgba(38,38,38,1);
+      }
+
+      .noimgsc .bc7 {
+        background-color: rgba(251,176,65,1);
+        color: rgba(38,38,38,1);
+      }
+
+      .noimgsc .bc8 {
+        background-color: rgba(43,146,109,1);
+        color: rgba(255,255,255,1);
+      }
+
+      .noimgsc .bc9 {
+        background-color: rgba(132,35,148,1);
+        color: rgba(255,255,255,1);
+      }
+
+      .noimgsc .bc10 {
+        background-color: rgba(182,43,96,1);
+        color: rgba(255,255,255,1);
+		}
+
+    
+
+		/* Bootstrap */
+		.list-group {
+		--bs-list-group-color: rgba(38,38,38,1);
+		--bs-list-group-bg: rgba(255,255,255,1);
+		--bs-list-group-action-hover-bg: rgba(248,249,250,1);
+		}
+
+		.card {
+		--bs-card-bg: rgba(255,255,255,1);
+		}
+
+		.modal-content {
+		--bs-modal-bg: rgba(255,255,255,1);
+		}
+
+		.form-select, .form-control {
+		color: rgba(38,38,38,1);
+		}
+
+		/* Kendo */
+		.k-list, .k-popup {
+		color: rgba(38,38,38,1);
+		}
+
+		.k-list-item.k-hover {
+		background-color: rgba(248,249,250,1);
+		}
+
+    </style><style type="text/css">.card-text.mt-3 a {
+font-weight: 800;
+}
+/* Desktop: 4 across */
+@media (min-width: 1200px) {
+#tabTOPTILES .masonry-container-item {
+flex: 0 0 25% !important;
+width: 25% !important;
+max-width: 25% !important;
+}
+}
+/* Medium screens: keep 3 across */
+@media (min-width: 768px) and (max-width: 1199.98px) {
+#tabTOPTILES .masonry-container-item {
+flex: 0 0 33.333333% !important;
+width: 33.333333% !important;
+max-width: 33.333333% !important;
+}
+}
+/* Small screens: 2 across */
+@media (max-width: 767.98px) {
+#tabTOPTILES .masonry-container-item {
+flex: 0 0 50% !important;
+width: 50% !important;
+max-width: 50% !important;
+}
+}
+#tabTOPTILES img {
+width: 80%;
+margin: 0 auto;
+display: block;
+}
+}</style></head><body data-instcode="NIAG" data-subsite="" data-autocomplete="1" data-showhomealways="1"><div id="skiptocontent"><a href="#mainContent" class="visually-hidden-focusable" accesskey="9">Skip to main content</a></div><div id="hidden-dialogs"><div class="modal fade" id="confirmDlg" tabindex="-1" role="dialog" aria-labelledby="confirmDlgLabel" aria-hidden="true"><div class="modal-dialog" role="document"><div class="modal-content"><div class="modal-header"><h4 class="modal-title" id="confirmDlgLabel">Confirm Action</h4><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div><div class="modal-body"><p><span id="confirmMessage">Confirmation message</span></p></div><div class="modal-footer"><button type="button" id="confirmTarget" class="btn btn-primary" onclick="return closeConfirmDlg();">Confirm</button><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button></div></div></div></div><div class="modal fade" id="alertDlg" tabindex="-1" role="dialog" aria-labelledby="alertDlgLabel" aria-hidden="true"><div class="modal-dialog" role="document"><div class="modal-content"><div class="modal-header"><h4 class="modal-title" id="alertDlgLabel"><span class="fa-duotone fa-triangle-exclamation me-2"></span>Alert</h4><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div><div class="modal-body"><p><span id="alertMessage">Alert message</span></p></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button></div></div></div></div><div class="modal fade" id="holdingsDlg" tabindex="-1" role="dialog" aria-labelledby="holdingsDlgLabel" aria-hidden="true"><div class="modal-dialog modal-lg" role="document"><div class="modal-content"><div class="modal-header"><h4 class="modal-title" id="holdingsDlgLabel">Availability<span id="tabHoldingsLoading" class="ms-2"><span class="fa-solid fa-spinner fa-pulse"></span><span class="visually-hidden">Loading...</span></span></h4><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div><div class="modal-body"><div id="tabHoldingsLoaded"><span></span></div></div><div class="modal-footer"><button type="button" id="holdingsDlg-plcrsv" class="btn btn-primary" style="display: none;">Place reservation</button><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button></div></div></div></div><div class="modal fade" id="recFmtDlg" tabindex="-1" role="dialog" aria-labelledby="recFmtDlgLabel" aria-hidden="true"><div class="modal-dialog modal-lg" role="document"><div class="modal-content"><div class="modal-header"><h4 class="modal-title" id="recFmtDlgLabel"><span id="recFmtTitle">Details</span><span id="tabRecFmtLoading" class="ms-2"><span class="fa-solid fa-spinner fa-pulse"></span><span class="visually-hidden">Loading...</span></span></h4><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div><div class="modal-body"><div id="tabRecFmtLoaded"><span></span></div></div><div class="modal-footer"><button type="button" id="recFmtDlg-plcrsv" class="btn btn-primary" style="display: none;">Place reservation</button><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button></div></div></div></div><div class="modal fade" id="newSVLDlg" tabindex="-1" role="dialog" aria-labelledby="newSVLDlgLabel" aria-hidden="true"><div class="modal-dialog" role="document"><div class="modal-content"><form id="newSVLForm" name="newSVLForm" method="post" action="#" novalidate="novalidate" data-hideonsubmit="true"><div class="modal-header"><h4 class="modal-title" id="newSVLDlgLabel">Add new Saved List</h4><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div><div class="modal-body"><div class="form-group"><label for="SVLNAME" class="label-required">Title</label><input type="text" name="SVLNAME" id="SVLNAME" class="form-control" pattern="^[\w ]*$" required="required" aria-describedby="helpSVLNAME" aria-labelledby="valSVLNAMEmsg" /><div class="invalid-feedback" aria-live="polite" id="valSVLNAMEmsg">Please enter your Saved List title in the required format.</div><small class="form-text text-muted" id="helpSVLNAME">Please enter a title for your new Saved List. Your Saved List title may contain only letters, numbers, spaces and underscores.</small></div><div class="form-group"><label for="SVLDESC">Description</label><textarea name="SVLDESC" id="SVLDESC" class="form-control" aria-describedby="helpSVLDESC" rows="4" maxlength="4000"></textarea><small class="form-text text-muted" id="helpSVLDESC">Please enter a description for your new Saved List. Maximum length is 4000 characters.</small></div></div><div class="modal-footer"><button type="submit" class="btn btn-primary">Add</button><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button></div></form></div></div></div><div class="modal fade" id="updSVLDlg" tabindex="-1" role="dialog" aria-labelledby="updSVLDlgLabel" aria-hidden="true"><div class="modal-dialog" role="document"><div class="modal-content"><form id="updSVLForm" name="updSVLForm" method="post" action="#" novalidate="novalidate" data-hideonsubmit="true"><div class="modal-header"><h4 class="modal-title" id="updSVLDlgLabel">Update Saved List</h4><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div><div class="modal-body"><div class="form-group"><label for="SVLNAME" class="label-required">Title</label><input type="text" name="SVLNAME" id="updSVLNAME" class="form-control" pattern="^[\w ]*$" required="required" aria-describedby="helpUpdSVLNAME" aria-labelledby="valUpdSVLNAMEmsg" /><div class="invalid-feedback" aria-live="polite" id="valUpdSVLNAMEmsg">Please enter your Saved List title in the required format.</div><small class="form-text text-muted" id="helpUpdSVLNAME">Please enter a title for your Saved List. Your Saved List title may contain only letters, numbers, spaces and underscores.</small></div><div class="form-group"><label for="SVLDESC">Description</label><textarea name="SVLDESC" id="updSVLDESC" class="form-control" aria-describedby="helpUpdSVLDESC" rows="4" maxlength="4000"></textarea><small class="form-text text-muted" id="helpUpdSVLDESC">Please enter a description for your Saved List. Maximum length is 4000 characters.</small></div></div><div class="modal-footer"><button type="submit" class="btn btn-primary">Update</button><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button></div></form></div></div></div><div class="modal fade" id="selTgtSVLDlg" tabindex="-1" role="dialog" aria-labelledby="selTgtSVLDlgLabel" aria-hidden="true"><div class="modal-dialog" role="document"><div class="modal-content"><form id="selTgtSVLForm" name="selTgtSVLForm" class="form-horizontal" method="post" action="#" novalidate="novalidate" data-hideonsubmit="false"><div class="modal-header"><h4 class="modal-title" id="selTgtSVLDlgLabel">Select target Saved List</h4><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div><div class="modal-body"><div class="row"><div class="col form-group"><label for="SVLTGT" class="visually-hidden">Target Saved List</label><select name="SVLTGT" id="SVLTGT" class="form-select"></select></div></div><div class="row"><div class="col form-group"><div class="form-check checkbox-shrink"><input class="form-check-input" type="checkbox" id="SVLMOVECHK" /><label class="form-check-label" for="SVLMOVECHK"><span>Remove records from the original Saved List</span></label></div></div></div><div class="row"><div class="col form-group"><small class="form-text text-muted mt-sm-2">The records will only be copied into the target Saved List if left unchecked.</small></div></div></div><div class="modal-footer"><button type="submit" class="btn btn-primary">Select</button><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button></div></form></div></div></div><div class="modal fade" id="iFrameDlg" tabindex="-1" role="dialog" aria-labelledby="iFrameDlgLabel" aria-hidden="true"><div class="modal-dialog modal-lg" role="document"><div class="modal-content"><div class="modal-header"><h4 class="modal-title" id="iFrameDlgLabel">External display</h4><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div><div class="modal-body"><div class="ratio ratio-4x3"><iframe frameborder="0"></iframe></div></div></div></div></div><div class="modal fade" id="eventsDlg" tabindex="-1" role="dialog" aria-labelledby="eventsDlgLabel" aria-hidden="true"><div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" role="document"><div class="modal-content"><div class="modal-body"><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button><div id="tabEventsLoading" class="text-center mt-4"><span><span class="fa-solid fa-spinner fa-pulse fa-5x"></span><span class="visually-hidden">Loading...</span></span></div><div id="tabEventsLoaded"><span></span></div></div><div class="modal-footer"><button type="button" id="eventsDlg-register" class="btn btn-primary w-100" style="display: none;">Register for event</button></div></div></div></div></div><header><div class="header-background-image"><div class="container-fluid header-navbar-full"><div class="container header-navbar"><nav class="navbar navbar-expand-lg navbar-light px-3 py-0"><div class="container-fluid px-0"><div class="col col-md-auto"><a href="https://library.niagara.edu/home" class="navbar-brand d-flex align-items-center"><img src="/api/maintenance/1.0/imagebrowser/image?blobName=19f50abd-0138-4c93-9a3d-2e2ec26ab60b.jpg" alt="Niagara University Library Logo" /></a></div><div class="col-auto"><div class="dropdown d-inline-block"><button type="button" id="headerAccessibilitySmall" class="navbar-toggler collapsed px-2 ms-auto me-2 dropdown-toggle" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" data-bs-display="static" aria-label="Accessibility options"><span class="fa-regular fa-universal-access fa-lg"></span></button><div class="dropdown-menu dropdown-menu-end" aria-labelledby="headerAccessibilitySmall"><div class="dropdown-item form-check form-switch form-check-reverse"><label class="form-check-label" for="dyslexicFontheaderAccessibilitySmall">Dyslexic-friendly font</label><input class="form-check-input dyslexicFont" type="checkbox" value="" id="dyslexicFontheaderAccessibilitySmall" switch="switch" role="switch" /></div></div></div><button type="button" id="header-search-submit-nav" class="navbar-toggler collapsed d-md-none px-2 ms-auto me-2" data-bs-toggle="collapse" href="#header-search-container" role="button" aria-expanded="false" aria-controls="header-search-container" aria-label="Show search bar" title="Show search bar" /><button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#header-navbar" aria-controls="header-navbar" aria-expanded="false" aria-label="Toggle navigation" title="Toggle navigation"><span class="fa-regular fa-bars fa-lg"></span></button></div><div class="offcanvas offcanvas-end" tabindex="-1" id="header-navbar" aria-labelledby="header-navbar-Label"><div class="offcanvas-header justify-content-end py-1"><span class="offcanvas-title visually-hidden" id="header-navbar-Label">Menu</span><button type="button" class="fa-solid fa-xmark fa-2xl" data-bs-dismiss="offcanvas" aria-label="Close"></button></div><div class="offcanvas-body d-flex flex-column flex-lg-row justify-content-between pt-0"><div class="d-none align-items-center p-2 pe-3" id="nav-menu-left"><span class="fa-solid fa-angle-left"></span><span class="visually-hidden">Scroll left</span></div><ul class="navbar-nav mt-2 mt-lg-0 align-content-start w-100" id="nav-menu"><li class="nav-item nav-home-link"><a class="nav-link homeIcon" id="header-homeIcon" href="/cgi-bin/spydus.exe/MSGTRN/OPAC/HOME"><span class="fa-solid fa-house"></span><span class="visually-hidden">Home</span></a></li><li class="nav-item"><a class="nav-link" href="https://library.niagara.edu/home" target="_blank">Library Home Page</a></li><li class="nav-item dropdown"><a class="nav-link dropdown-toggle" href="#" id="dropdown02" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Services</a><div class="dropdown-menu" aria-labelledby="dropdown02"><a class="dropdown-item" href="https://library.niagara.edu/studentservices" target="_blank">Student Services</a><a class="dropdown-item" href="https://library.niagara.edu/facultyservices" target="_blank">Faculty Services</a></div></li><li class="nav-item dropdown"><a class="nav-link dropdown-toggle" href="#" id="dropdown03" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">About Us</a><div class="dropdown-menu" aria-labelledby="dropdown03"><a class="dropdown-item" href="https://library.niagara.edu/policies" target="_blank">Library Policies</a><a class="dropdown-item" href="https://niagara.libcal.com/" target="_blank">Library Hours</a><a class="dropdown-item" href="https://niagara.libanswers.com/" target="_blank">Contact Us</a></div></li><li class="nav-item dropdown"><a class="nav-link dropdown-toggle" href="#" id="dropdown04" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Quick Links</a><div class="dropdown-menu" aria-labelledby="dropdown04"><a class="dropdown-item" href="https://1978.account.worldcat.org/account" target="_blank">Interlibrary Loan</a><a class="dropdown-item" href="https://library.niagara.edu/az/databases" target="_blank">Find Articles/Databases</a><a class="dropdown-item" href="https://login.ezproxy.niagara.edu/login?url=https://login.ezproxy.niagara.edu/ebrary/niagara-ebooks/unauthorized?url=https%3A%2F%2Febookcentral.proquest.com%2Flib%2Fniagara-ebooks%2Fhome.action" target="_blank">eBook Central</a><a class="dropdown-item" href="https://library.niagara.edu/friendly.php?s=video" target="_blank">Streaming Video</a></div></li></ul><div class="d-none align-items-center p-2 ps-3" id="nav-menu-right"><span class="fa-solid fa-angle-right"></span><span class="visually-hidden">Scroll right</span></div><ul class="navbar-nav align-items-center align-items-lg-normal d-flex flex-row justify-content-center justify-content-lg-end d-none d-md-flex"><li class="nav-item dropdown d-none d-lg-list-item"><a id="headerAccessibility" href="#" class="nav-link accessibility me-2 dropdown-toggle" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" aria-label="Accessibility options"><span class="fa-regular fa-universal-access fa-lg pe-2"></span>Accessibility</a><div class="dropdown-menu dropdown-menu-end" aria-labelledby="headerAccessibility"><div class="dropdown-item form-check form-switch form-check-reverse"><label class="form-check-label" for="dyslexicFontheaderAccessibility">Dyslexic-friendly font</label><input class="form-check-input dyslexicFont" type="checkbox" value="" id="dyslexicFontheaderAccessibility" switch="switch" role="switch" /></div></div></li><li class="nav-item dropup dropdown-lg"><button class="btn btn-outline-primary btn-login dropdown-toggle" id="navbarLoginMenuLink1" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-haspopup="true" aria-expanded="false">Login</button><div class="dropdown-menu dropdown-menu-end navbar-login" aria-labelledby="navbarLoginMenuLink1"><form id="frmLogin" method="post" action="/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/LB/2" novalidate="novalidate"><div class="alert alert-warning" role="alert">To protect your privacy, please make sure you logout when you have finished your session.</div><fieldset><legend class="visually-hidden">Login using Your Library account</legend><div class="form-group form-floating"><input type="text" class="form-control" id="user_name" name="BRWLID" required="required" aria-describedby="helpLoginID" autocomplete="username" aria-labelledby="valuser_namemsg" placeholder="Borrower Id"></input><label for="user_name">Barcode or NU ID number</label><div class="invalid-feedback" aria-live="polite" id="valuser_namemsg">Barcode numbers are found on the back of your NU ID, new accounts use the NU ID number.</div><small id="helpLoginID" class="form-text text-muted">Barcode numbers are found on the back of your NU ID, new accounts use the NU ID number.</small></div><div class="form-group form-floating"><input type="password" class="form-control" id="user_password" name="BRWLPWD" required="required" aria-describedby="helpLoginPassword" autocomplete="current-password" aria-labelledby="valuser_passwordmsg" placeholder="Password"></input><label for="user_password">PIN</label><div class="invalid-feedback" aria-live="polite" id="valuser_passwordmsg">Your PIN is a four digit number.</div><small id="helpLoginPassword" class="form-text text-muted">Your PIN is a four digit number.</small><div class="login-forgot text-end pb-2"><a href="/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/RPWD/1" rel="nofollow">Forgot your PIN?</a></div></div></fieldset><div class="d-grid"><button type="submit" class="btn btn-primary btn-block my-3 btn-submit g-recaptcha-btn">Login</button></div><fieldset hidden="true" class="form-hidden-fields"><legend class="visually-hidden">Hidden form elements</legend><input type="hidden" name="RDT" value="/cgi-bin/spydus.exe/SET/OPAC/ALLWRKENQ/277243" /></fieldset></form></div></li></ul></div></div></div></nav></div></div><div class="collapse d-md-block" id="header-search-container"><div class="container-fluid pb-2"><div class="row"><div class="col text-center"><span class="header-library-name">Niagara University Library Catalog</span></div></div></div><div class="container-fluid header-main-full"><div class="container header-main" id="header-main"><div class="row"><div class="col"><form id="header-search" method="get" action="/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ"><fieldset><legend class="visually-hidden">Header quickfind search</legend><div class="row justify-content-end"><div class="col-12 col-md pe-md-0 pb-1 pb-md-0"><label for="header-search-entry" class="visually-hidden">Search Terms</label><input type="text" name="ENTRY" id="header-search-entry" class="form-control" maxlength="200" value="zzqxjv" placeholder="Enter your search terms or author (last name, first name)" /></div><div class="col col-md-auto ps-md-0"><select class="form-select" id="header-search-option" title="Search type" onchange="headerSearchOptionChange(event)" aria-label="Search options"><optgroup label="Library catalog" data-advpage="COMB"><option data-tpc="OPAC/BIBENQ" data-sorts="SQL_REL_BIB" data-cf="" data-st="K" data-qry="" data-qrytext="Full catalog">Full catalog</option><option data-tpc="OPAC/BIBENQ" data-sorts="SQL_REL_BIB" data-cf="" data-st="K" data-qry="FIC: (C / F / J / 1) - AUD: (J / A / B / C / D)" data-qrytext="Adult fiction">Adult fiction</option><option data-tpc="OPAC/BIBENQ" data-sorts="SQL_REL_BIB" data-cf="" data-st="K" data-qry="DYN: FBK - FIC: (C / F / J / 1) - AUD: (J / A / B / C / D)" data-qrytext="Adult nonfiction">Adult nonfiction</option><option data-tpc="OPAC/BIBENQ" data-sorts="SQL_REL_BIB" data-cf="" data-st="K" data-qry="BIO: (A / B / C / D)" data-qrytext="Biographies">Biographies</option><option data-tpc="OPAC/BIBENQ" data-sorts="SQL_REL_BIB" data-cf="" data-st="K" data-qry="FIC: (C / F / J / 1) + AUD: (C / D)" data-qrytext="Young adult fiction">Young adult fiction</option><option data-tpc="OPAC/BIBENQ" data-sorts="SQL_REL_BIB" data-cf="" data-st="K" data-qry="FIC: (C / F / J / 1) + AUD: (J / A / B)" data-qrytext="Children's fiction">Children's fiction</option><option data-tpc="OPAC/BIBENQ" data-sorts="SQL_REL_BIB" data-cf="" data-st="K" data-qry="DYN: FBK - FIC: (C / F / J / 1) + AUD: (J / A / B)" data-qrytext="Children's nonfiction">Children's nonfiction</option><option data-tpc="OPAC/BIBENQ" data-sorts="SQL_REL_BIB" data-cf="" data-st="K" data-qry="BTYP: G" data-qrytext="DVDs">DVDs</option></optgroup><optgroup label="Archives" data-advpage="ARC"><option data-tpc="OPAC/ARCENQ" data-sorts="SQL_REL_ARC" data-st="K">Archives</option></optgroup></select></div><div class="col-auto ps-0"><button type="submit" id="header-search-submit" class="btn btn-primary px-2" aria-label="Search" title="Search"><span class="fa-regular fa-magnifying-glass fa-xl"></span></button></div></div><div class="row"><div class="col-auto ms-auto"><a href="/cgi-bin/spydus.exe/MSGTRN/OPAC/ALL" id="header-search-advanced" data-defadvpage="ALL">Advanced search</a></div></div></fieldset><fieldset hidden="true"><legend class="visually-hidden">Hidden form elements</legend><input type="hidden" name="ENTRY_NAME" value="BS" /><input type="hidden" name="ENTRY_TYPE" value="K" /><input type="hidden" name="SORTS" value="SQL_REL_BIB" /><input type="hidden" name="GQ" value="" /><input type="hidden" name="CF" value="" disabled="disabled" /><input type="hidden" name="NRECS" value="20" /><input type="hidden" name="QRY" value="" /><input type="hidden" name="QRYTEXT" value="" /><input type="hidden" name="_SPQ" value="2" /></fieldset></form></div></div></div></div></div></div></header><main><div id="breadcrumbs" class="container-fluid"><div class="container body-main"><div class="row"><div class="col col-md-9"><nav aria-label="breadcrumb"><ol class="breadcrumb mb-1"><li class="breadcrumb-item"><a id="breadcrumb-homeIcon" href="/cgi-bin/spydus.exe/MSGTRN/OPAC/HOME" class="homeIcon"><span class="fa-solid fa-house"></span><span class="visually-hidden">Home</span></a></li><li class="breadcrumb-item active" aria-current="page"><span>Result</span></li></ol></nav></div></div></div></div><div class="container-fluid"><div class="container main-container"><div id="mainContent"><h1 class="visually-hidden">Error result</h1><div class="alert alert-info" role="alert">Sorry, your search for Anywhere: zzqxjv (Keywords) did not find any records.</div><div class="row"><div class="col-12 col-sm-6"><h3>Try Again!</h3><ul><li>Check your spelling</li><li>Try searching by author (last name first!)</li><li>Try using different search terms</li></ul></div><div class="col-12 col-sm-6"><h3>Need Help?</h3><ul><li><a href="https://1978.account.worldcat.org/account">Borrow through Interlibrary Loan</a></li><li><a href="https://niagara.libwizard.com/f/suggestabook">Suggest an item for purchase</a></li><li><a href="https://niagara.libanswers.com/">Contact Us</a></li></ul></div><div class="col"><h3>Can't find the book in print? Try Ebook Central!</h3><ul><li><a href="https://login.ezproxy.niagara.edu/login?url=https://login.ezproxy.niagara.edu/ebrary/niagara-ebooks/unauthorized?url=https%3A%2F%2Febookcentral.proquest.com%2Flib%2Fniagara-ebooks%2Fhome.action">Browse Ebook Central</a></li></ul></div></div></div></div></div></main><footer><div class="container-fluid footer pe-0"><div class="container"><h2 class="visually-hidden">Footer</h2><div class="row pt-5 pb-3 py-sm-5"><div class="col-12 col-sm pb-3 pb-sm-0"><h3><button class="d-inline-block d-sm-none px-0" type="button" data-bs-toggle="collapse" data-bs-target="#footerMenu1" aria-expanded="false" aria-controls="footerMenu1"><span class="fa-solid fa-plus pe-2"></span><span>Niagara University Library</span></button><span class="d-none d-sm-inline-block">Niagara University Library</span></h3><ul class="list-unstyled collapse d-sm-block" id="footerMenu1"><li class="py-2 py-sm-0"><span class="fa-solid fa-period pe-3 invisible d-sm-none"></span><a href="https://library.niagara.edu/home" target="_blank">Library Home Page</a></li><li class="py-2 py-sm-0"><span class="fa-solid fa-period pe-3 invisible d-sm-none"></span><a href="https://niagara.libcal.com/" target="_blank">Library Hours</a></li><li class="py-2 py-sm-0"><span class="fa-solid fa-period pe-3 invisible d-sm-none"></span><a href="https://www.instagram.com/niagaraulibrary/" target="_blank">NU Library Instagram</a></li><li class="py-2 py-sm-0"><span class="fa-solid fa-period pe-3 invisible d-sm-none"></span><a href="https://www.youtube.com/user/NiagaraUnivLibrary" target="_blank">NU Library YouTube</a></li></ul></div><div class="col-12 col-sm pb-3 pb-sm-0"><h3><button class="d-inline-block d-sm-none px-0" type="button" data-bs-toggle="collapse" data-bs-target="#footerMenu2" aria-expanded="false" aria-controls="footerMenu2"><span class="fa-solid fa-plus pe-2"></span><span>Useful Links</span></button><span class="d-none d-sm-inline-block">Useful Links</span></h3><ul class="list-unstyled collapse d-sm-block" id="footerMenu2"><li class="py-2 py-sm-0"><span class="fa-solid fa-period pe-3 invisible d-sm-none"></span><a href="https://niagara.libanswers.com/" target="_blank">Contact Us</a></li><li class="py-2 py-sm-0"><span class="fa-solid fa-period pe-3 invisible d-sm-none"></span><a href="https://library.niagara.edu/policies" target="_blank">Library Policies</a></li></ul></div><div class="col-12 col-sm pb-3 pb-sm-0"><h3><button class="d-inline-block d-sm-none px-0" type="button" data-bs-toggle="collapse" data-bs-target="#footerMenu3" aria-expanded="false" aria-controls="footerMenu3"><span class="fa-solid fa-plus pe-2"></span><span>Services</span></button><span class="d-none d-sm-inline-block">Services</span></h3><ul class="list-unstyled collapse d-sm-block" id="footerMenu3"><li class="py-2 py-sm-0"><span class="fa-solid fa-period pe-3 invisible d-sm-none"></span><a href="https://library.niagara.edu/studentservices" target="_blank">Student Services</a></li><li class="py-2 py-sm-0"><span class="fa-solid fa-period pe-3 invisible d-sm-none"></span><a href="https://library.niagara.edu/facultyservices" target="_blank">Faculty Services</a></li></ul></div><div class="col-12 col-sm pb-3 pb-sm-0"><h3><button class="d-inline-block d-sm-none px-0" type="button" data-bs-toggle="collapse" data-bs-target="#footerMenu4" aria-expanded="false" aria-controls="footerMenu4"><span class="fa-solid fa-plus pe-2"></span><span>Quick Links</span></button><span class="d-none d-sm-inline-block">Quick Links</span></h3><ul class="list-unstyled collapse d-sm-block" id="footerMenu4"><li class="py-2 py-sm-0"><span class="fa-solid fa-period pe-3 invisible d-sm-none"></span><a href="https://www.niagara.edu/" target="_blank">Niagara University</a></li><li class="py-2 py-sm-0"><span class="fa-solid fa-period pe-3 invisible d-sm-none"></span><a href="https://mynu.niagara.edu/" target="_blank">MyNU</a></li></ul></div></div></div></div><div class="container-fluid copyright"><div class="container"><h2 class="visually-hidden">Copyright</h2><div class="row"><div class="col d-flex align-items-center justify-content-start"><div class="dropup footer-accessibility pe-2"><h3 id="footerAccessibility1" class="visually-hidden">Accessibility options</h3><a href="#" class="dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" aria-label="Accessibility options"><span class="fa-regular fa-universal-access fa-lg pe-2"></span>Accessibility</a><div class="dropdown-menu" aria-labelledby="footerAccessibility1"><div class="dropdown-item form-check form-switch form-check-reverse"><label class="form-check-label" for="dyslexicFontfooterAccessibility1">Dyslexic-friendly font</label><input class="form-check-input dyslexicFont" type="checkbox" value="" id="dyslexicFontfooterAccessibility1" switch="switch" role="switch" /></div></div></div></div><div class="col d-flex flex-column align-items-center justify-content-center"><img class="footer-logo" src="/docs/OPAC/images/spydus-logo.png" height="39" alt="Spydus Logo" /><span class="visually-hidden">&copy; 2024 Civica Pty Ltd. All rights reserved.</span></div><div class="col d-flex align-items-center justify-content-end"><a data-bs-toggle="offcanvas" href="#offcanvasCookie" role="button" aria-controls="offcanvasCookie" aria-label="Manage cookies"><span class="fa-xl fa-regular fa-cookie-bite pe-5 pe-md-2"></span><span class="d-none d-md-inline">Manage cookies</span></a><span></span></div></div></div></div><div class="offcanvas offcanvas-end" tabindex="-1" id="mobilemenu-navbar" aria-labelledby="mobilemenu-navbar-Label"><div class="offcanvas-header justify-content-end py-1"><span class="offcanvas-title visually-hidden" id="mobilemenu-navbar-Label">Menu</span><button type="button" class="fa-solid fa-xmark fa-2xl" data-bs-dismiss="offcanvas" aria-label="Close"></button></div><div class="offcanvas-body d-flex flex-column flex-lg-row justify-content-between pt-0 dropdown-menu"><h3 class="dropdown-header">My account</h3><a class="dropdown-item" href="/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/LB/1?ISGLB=0" rel="nofollow"><span class="fa-solid fa-grid-2"></span>Dashboard</a><div class="dropdown-divider"></div><h3 class="dropdown-header d-flex align-items-center"><span>My Saved List</span><a class="ms-auto" href="/cgi-bin/spydus.exe/SET/OPAC/ALLWRKENQ/277243" data-bs-toggle="modal" data-bs-target="#newSVLDlg" rel="nofollow"><span class="fa-layers fa-xl pe-0"><span class="fa-light fa-bookmark"></span><span class="fa-solid fa-plus" data-fa-transform="shrink-10 up-2 left-1"></span></span><span class="visually-hidden">Add new Saved List</span></a></h3><a class="dropdown-item" href="/cgi-bin/spydus.exe/MYSVL/OPAC/SVLENQ?ISGLB=1" rel="nofollow"><span class="fa-layers bookmark-all"><span class="fa-solid fa-bookmark"></span><span class="fa-light fa-bookmark" data-fa-transform="down-4 left-2"></span></span><span class="me-1">View all</span></a><div class="dropdown-divider"></div><h3 class="dropdown-header">My queries</h3><a class="dropdown-item" href="" rel="nofollow"><span class="fa-light fa-file-magnifying-glass"></span>View saved searches</a><div class="dropdown-divider"></div><a class="dropdown-item" href="/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/LB/3?RDT=/cgi-bin/spydus.exe/MSGTRN/OPAC/HOME" rel="nofollow"><span class="fa-light fa-arrow-right-from-bracket"></span>Logout</a><div class="w-100 mt-auto"></div></div></div><div class="container-fluid fixed-bottom d-md-none"><div class="row pt-2 mb-menu"><div class="offset-4 col-4 text-center mb-menu-home"><a id="footer_homeIcon" href="/cgi-bin/spydus.exe/MSGTRN/OPAC/HOME" class="homeIcon"><span class="fa-solid fa-house fa-2xl"></span></a></div><div class="col-4 text-center mb-menu-login"><a href="/cgi-bin/spydus.exe/MSGTRN/OPAC/LOGINB?RDT=%2Fcgi-bin%2Fspydus.exe%2FSET%2FOPAC%2FALLWRKENQ%2F277243" rel="nofollow" title="Login"><span class="fa-solid fa-right-to-bracket fa-2xl"></span><span class="visually-hidden">Login</span></a></div></div></div><div class="offcanvas offcanvas-bottom" data-bs-scroll="true" data-bs-backdrop="false" tabindex="-1" id="offcanvasCookie" aria-labelledby="offcanvasCookieLabel"><div class="offcanvas-header"><h2 class="offcanvas-title" id="offcanvasCookieLabel">This website uses cookies</h2><button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button></div><div class="offcanvas-body"><div class="d-flex flex-column flex-md-row justify-content-between"><div><p>This website uses cookies to improve your experience. Please visit our cookie policy below for more information.</p><p><a href="/cgi-bin/spydus.exe/MSGTRN/OPAC/COOKIEPOLICY" target="_blank">Cookie Policy</a></p></div><div class="col-lg-auto"><button type="button" class="btn btn-primary me-2 me-md-0 ms-md-2 mb-2" id="offcanvasCookie_req">Accept required cookies</button></div></div></div></div></footer><div id="cursel-floating" class="d-none"><div><a href="#" onclick="return clearSelections();" rel="nofollow" title="Clear current selections"><span class="fa-solid fa-check fa-lg selicon"></span><span class="fa-solid fa-xmark fa-lg selicon-hover"></span><span class="visually-hidden selicon-hover">Clear current selections</span><div class="badge rounded-pill" title="Count of selected items"><span class="selcount"></span><span class="visually-hidden"> items currently selected</span></div></a></div></div><div id="mylist-floating"><a href="/cgi-bin/spydus.exe/SVL/OPAC/ALLENQ?ISGLB=1&amp;NRECS=20" rel="nofollow" title="View my active Saved List"><span class="fa-solid fa-bookmark"></span><span class="visually-hidden">View my active Saved List</span></a></div><div aria-live="polite" aria-atomic="true" class="d-flex justify-content-center align-items-center" style="height: 0;"><div id="redirectMsg" class="toast" role="alert" aria-live="polite" aria-atomic="true" data-bs-autohide="false" style="position:fixed; top:2rem; display: none;"><div class="toast-header"><strong class="me-auto">Redirect message</strong><button type="button" class="ms-2 mb-1 close" data-bs-dismiss="toast" aria-label="Close"><span aria-hidden="true">&times;</span></button></div><div class="toast-body">You will be redirected if there is no further actions on this page</div></div></div><ul class="autocompleter-choices" style="display: none;"><li></li></ul><script src="/docs/OPAC/js/jquery-3.7.1.min.js"></script><script src="/docs/OPAC/bootstrap-5.3.8-dist/js/bootstrap.bundle.min.js"></script><script src="/docs/OPAC/js/tabContainer.js"></script><script src="/docs/OPAC/js/jssocials.min.js"></script><script src="/docs/OPAC/js/spydus.js"></script><script src="/docs/OPAC/js/gq.js"></script><script src="/docs/OPAC/js/modal.js"></script><script src="/docs/OPAC/js/searchAutoComplete.js"></script><script src="/docs/OPAC/js/qrcode.min.js"></script><script src="/docs/OPAC/js/jsencrypt.min.js"></script><script src="/docs/OPAC/js/encrypt.js"></script><script src="/docs/OPAC/js/login.js"></script><script src="/docs/OPAC/js/imagesloaded.pkgd.min.js"></script><script data-search-pseudo-elements="data-search-pseudo-elements" defer="defer" src="https://cdn.spydus.com/fontawesome-pro-7.3.0-web/js/solid.min.js?https://niagara.spydus.com" crossorigin="anonymous"></script><script data-search-pseudo-elements="data-search-pseudo-elements" defer="defer" src="https://cdn.spydus.com/fontawesome-pro-7.3.0-web/js/regular.min.js?https://niagara.spydus.com" crossorigin="anonymous"></script><script data-search-pseudo-elements="data-search-pseudo-elements" defer="defer" src="https://cdn.spydus.com/fontawesome-pro-7.3.0-web/js/light.min.js?https://niagara.spydus.com" crossorigin="anonymous"></script><script data-search-pseudo-elements="data-search-pseudo-elements" defer="defer" src="https://cdn.spydus.com/fontawesome-pro-7.3.0-web/js/brands.min.js?https://niagara.spydus.com" crossorigin="anonymous"></script><script data-search-pseudo-elements="data-search-pseudo-elements" defer="defer" src="https://cdn.spydus.com/fontawesome-pro-7.3.0-web/js/duotone.min.js?https://niagara.spydus.com" crossorigin="anonymous"></script><script data-search-pseudo-elements="data-search-pseudo-elements" defer="defer" src="https://cdn.spydus.com/fontawesome-pro-7.3.0-web/js/v4-shims.min.js?https://niagara.spydus.com" crossorigin="anonymous"></script><script>
+      window.addEventListener('load', () => {
+        setTimeout(() => {
+          const script = document.createElement('script');
+          script.src = "https://cdn.spydus.com/fontawesome-pro-7.3.0-web/js/fontawesome.min.js";
+          script.setAttribute('data-search-pseudo-elements', 'data-search-pseudo-elements');
+          script.setAttribute('crossorigin', 'anonymous');
+          document.body.appendChild(script);
+        }, 50); // Adjust delay as needed
+      });
+    </script><script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4bc70e2c01a94c73b74392e4234840661791215815920" integrity="sha512-L0ha0OXavK/8okipN9F8BtP84dg9DUhPERbBXzwI6dgTA55d2+yweo3pn5CSFYs45/r8md2+xvUPtTdvTNRfjA==" data-cf-beacon='{"version":"2024.11.0","token":"74f261a96afd457fbb4e3434bdf74da0","spa":2}' crossorigin="anonymous"></script>
+</body></html>

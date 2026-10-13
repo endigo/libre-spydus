@@ -2,3 +2,21 @@
 __pycache__/
 .DS_Store
 build/
+
+# LibreSpydus Rust core: account-bearing fixtures/goldens + build output
+core/tests/fixtures/private/
+core/tests/golden/private/
+core/target/
+
+# LibreSpydus native apps: build output (core artifacts are rebuilt by ios/ and android/ scripts)
+ios/**/*.xcframework
+ios/**/xcuserdata/
+ios/**/DerivedData/
+ios/build/
+android/.gradle/
+android/.kotlin/
+android/build/
+android/app/build/
+android/local.properties
+android/app/src/main/jniLibs/
+*.hprof

@@ -1,0 +1,332 @@
+{
+  "query": "the midnight library",
+  "setId": "78554983",
+  "totalResults": 72,
+  "showing": {
+    "from": 1,
+    "to": 10
+  },
+  "nextPageUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/SET/OPAC/ALLWRKENQ/78554983/15802010?NREC=10",
+  "prevPageUrl": null,
+  "noResults": false,
+  "records": [
+    {
+      "rank": 1,
+      "workIrn": "15642035",
+      "title": "The Midnight Library",
+      "detailUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/78554983/15642035,1",
+      "author": "Haig, Matt, 1975-",
+      "authorRole": "author",
+      "authorUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/NAV/OPAC/AUTHENQ/78554983?SETLVL=&QRY=IRN(795344)&QRYTEXT=Haig%2C%20Matt%2C%201975-&NAVLVL=SET",
+      "year": "2020 - 2023",
+      "language": "English",
+      "summary": "Somewhere out beyond the edge of the universe there is a library that contains an infinite number of books, each one the story of another reality. One tells the story of your life as it is, along with another book for the other life you could have lived if you had made a different choice at any point in your life. While we all wonder how our lives might have been, what if you had the chance to go to the library and see for yourself? Would any of these other lives truly be better? In The Midnight Library, Matt Haig’s enchanting new novel, Nora Seed finds herself faced with this decision. Faced with the possibility of changing her life for a new one, following a different career, undoing old breakups, realising her dreams of becoming a glaciologist; she must search within herself as she travels through the Midnight Library to decide what is truly fulfilling in life, and what makes it worth living in the first place.",
+      "isbn": "1786892707",
+      "coverUrls": [
+        "https://covers.borrowbox.com/v3/covers/CGB_917167",
+        "https://secure.syndetics.com/index.aspx?isbn=1786892707/mc.gif&client=citycanning&upc=&oclc=&issn=",
+        "https://secure.syndetics.com/index.aspx?isbn=1786892723/mc.gif&client=citycanning&upc=&oclc=&issn=",
+        "https://secure.syndetics.com/index.aspx?isbn=1838852875/mc.gif&client=citycanning&upc=&oclc=&issn=",
+        "https://secure.syndetics.com/index.aspx?isbn=9780655686323/mc.gif&client=citycanning&upc=&oclc=&issn=",
+        "https://secure.syndetics.com/index.aspx?isbn=9781786892706/mc.gif&client=citycanning&upc=&oclc=&issn=",
+        "https://secure.syndetics.com/index.aspx?isbn=9781786892713/mc.gif&client=citycanning&upc=&oclc=&issn=",
+        "https://secure.syndetics.com/index.aspx?isbn=9781786892720/mc.gif&client=citycanning&upc=&oclc=&issn=",
+        "https://secure.syndetics.com/index.aspx?isbn=9781838852870/mc.gif&client=citycanning&upc=&oclc=&issn=",
+        "https://secure.syndetics.com/index.aspx?isbn=9781867503644/mc.gif&client=citycanning&upc=&oclc=&issn=",
+        "https://secure.syndetics.com/index.aspx?isbn=9798885792226/mc.gif&client=citycanning&upc=&oclc=&issn="
+      ],
+      "formats": [
+        {
+          "code": "BK",
+          "label": "Book",
+          "reserveUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/78554983/0/V/0/R/9/ALLWRKENQ?SVL=15642035&RECFMT=BK",
+          "availabilityUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/78554983?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=78554983&QRY=WRK01%5C15642035+%2B+03902\\BK"
+        },
+        {
+          "code": "LP",
+          "label": "Large Print",
+          "reserveUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/78554983/0/V/0/R/9/ALLWRKENQ?SVL=15642035&RECFMT=LP",
+          "availabilityUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/78554983?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=78554983&QRY=WRK01%5C15642035+%2B+03902\\LP"
+        },
+        {
+          "code": "TB",
+          "label": "Audiobooks",
+          "reserveUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/78554983/0/V/0/R/9/ALLWRKENQ?SVL=15642035&RECFMT=TB",
+          "availabilityUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/78554983?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=78554983&QRY=WRK01%5C15642035+%2B+03902\\TB"
+        },
+        {
+          "code": "EBK",
+          "label": "eBook",
+          "reserveUrl": null,
+          "availabilityUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/78554983?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=78554983&QRY=WRK01%5C15642035+%2B+03902\\EBK"
+        },
+        {
+          "code": "EAUD",
+          "label": "eAudioBook",
+          "reserveUrl": null,
+          "availabilityUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/78554983?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=78554983&QRY=WRK01%5C15642035+%2B+03902\\EAUD"
+        }
+      ]
+    },
+    {
+      "rank": 2,
+      "workIrn": "15779565",
+      "title": "Midnight at the library",
+      "detailUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/78554983/15779565,2",
+      "author": "Dubosarsky, Ursula, 1961-",
+      "authorRole": "author",
+      "authorUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/NAV/OPAC/AUTHENQ/78554983?SETLVL=&QRY=IRN(196201)&QRYTEXT=Dubosarsky%2C%20Ursula%2C%201961-&NAVLVL=SET",
+      "year": "2018",
+      "language": "English",
+      "summary": "A picture book about the story of a book through time and its eventual home in a library.",
+      "isbn": "9780642279316",
+      "coverUrls": [
+        "https://secure.syndetics.com/index.aspx?isbn=9780642279316/mc.gif&client=citycanning&upc=&oclc=&issn="
+      ],
+      "formats": [
+        {
+          "code": "BK",
+          "label": "Book",
+          "reserveUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/78554983/0/V/0/R/9/ALLWRKENQ?SVL=15779565&RECFMT=BK",
+          "availabilityUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/78554983?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=78554983&QRY=WRK01%5C15779565+%2B+03902\\BK"
+        }
+      ]
+    },
+    {
+      "rank": 3,
+      "workIrn": "15986299",
+      "title": "The Midnight Train",
+      "detailUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/78554983/15986299,3",
+      "author": "Haig, Matt, 1975-",
+      "authorRole": "author",
+      "authorUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/NAV/OPAC/AUTHENQ/78554983?SETLVL=&QRY=IRN(795344)&QRYTEXT=Haig%2C%20Matt%2C%201975-&NAVLVL=SET",
+      "year": "2026",
+      "language": "English",
+      "summary": "'This book is a complete delight, not only a fairytale for adults that transports you on a magical journey of childlike wonder, but also a parable that helps you lead a better life' - JAMES NORTON 'Magically hopeful. This story will speak to your soul and your monkey mind and bring them back into harmony. Beautiful and uplifting, charming and soul-nurturing, this is another glorious triumph from the beloved Matt Haig' - DONNA ASHWORTH 'If you enjoyed The Midnight Library, you'll love this. The Midnight Train is exquisite storytelling and utterly brilliant. One of the most beautiful stories you'll ever experience' - JOANNA CANNON When your life flashes before your eyes, what will matter most? For Wilbur it was his time with Maggie, the love of his life. Their honeymoon in Venice. Before he threw it all away. Years later, on the brink of his own death, a train arrives. It can take Wilbur back in time. To relive his most important moments. Soon he realises just how much he would have changed... An adventure through time, The Midnight Train is a story of love and second chances, from the world of The Midnight Library.",
+      "isbn": "9781837262823",
+      "coverUrls": [
+        "https://img1.od-cdn.com/ImageType-100/1590-1/{F5AD7C86-D27C-4DB8-901B-8A1BA7AF1AE2}IMG100.JPG",
+        "https://secure.syndetics.com/index.aspx?isbn=9781837262823/mc.gif&client=citycanning&upc=&oclc=&issn=",
+        "https://secure.syndetics.com/index.aspx?isbn=9781837262830/mc.gif&client=citycanning&upc=&oclc=&issn=",
+        "https://secure.syndetics.com/index.aspx?isbn=9781867569237/mc.gif&client=citycanning&upc=&oclc=&issn=",
+        "https://secure.syndetics.com/index.aspx?isbn=9798217349142/mc.gif&client=citycanning&upc=&oclc=&issn="
+      ],
+      "formats": [
+        {
+          "code": "BK",
+          "label": "Book",
+          "reserveUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/78554983/0/V/0/R/9/ALLWRKENQ?SVL=15986299&RECFMT=BK",
+          "availabilityUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/78554983?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=78554983&QRY=WRK01%5C15986299+%2B+03902\\BK"
+        },
+        {
+          "code": "LP",
+          "label": "Large Print",
+          "reserveUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/78554983/0/V/0/R/9/ALLWRKENQ?SVL=15986299&RECFMT=LP",
+          "availabilityUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/78554983?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=78554983&QRY=WRK01%5C15986299+%2B+03902\\LP"
+        },
+        {
+          "code": "EBK",
+          "label": "eBook",
+          "reserveUrl": null,
+          "availabilityUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/78554983?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=78554983&QRY=WRK01%5C15986299+%2B+03902\\EBK"
+        },
+        {
+          "code": "EAUD",
+          "label": "eAudioBook",
+          "reserveUrl": null,
+          "availabilityUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/78554983?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=78554983&QRY=WRK01%5C15986299+%2B+03902\\EAUD"
+        }
+      ]
+    },
+    {
+      "rank": 4,
+      "workIrn": "15963274",
+      "title": "Midnight on the Scottish Shore",
+      "detailUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/78554983/15963274,4",
+      "author": "Sundin, Sarah",
+      "authorRole": "author",
+      "authorUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/NAV/OPAC/AUTHENQ/78554983?SETLVL=&QRY=IRN(8558308)&QRYTEXT=Sundin%2C%20Sarah&NAVLVL=SET",
+      "year": "2025",
+      "language": "English",
+      "summary": "Desperate to escape the Occupied Netherlands in 1941, Cilla van der Zee agrees to become a spy in Britain. But her plans to betray the Germans and work for the Allied cause are derailed when a suspicious Scottish lieutenant finds her on the shores of his home.",
+      "isbn": "9781493448760",
+      "coverUrls": [
+        "https://img1.od-cdn.com/ImageType-100/2003-1/{D0F74223-3DD1-44AE-9F55-8C91E691DE12}IMG100.JPG",
+        "https://secure.syndetics.com/index.aspx?isbn=9781493448760/mc.gif&client=citycanning&upc=&oclc=&issn="
+      ],
+      "formats": [
+        {
+          "code": "EBK",
+          "label": "eBook",
+          "reserveUrl": null,
+          "availabilityUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/78554983?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=78554983&QRY=WRK01%5C15963274+%2B+03902\\EBK"
+        }
+      ]
+    },
+    {
+      "rank": 5,
+      "workIrn": "15927597",
+      "title": "Mistress by Midnight",
+      "detailUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/78554983/15927597,5",
+      "author": "Robinson, Maggie",
+      "authorRole": "author",
+      "authorUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/NAV/OPAC/AUTHENQ/78554983?SETLVL=&QRY=IRN(517533)&QRYTEXT=Robinson%2C%20Maggie&NAVLVL=SET",
+      "year": "2011",
+      "language": "English",
+      "summary": "First comes seduction. . . As children, Desmond Ryland, Marquess of Conover, and Laurette Vincent were inseparable. As young adults, their friendship blossomed into love. But then fate intervened, sending them down different paths. Years later, Con still can't forget his beautiful Laurette. Now he's determined to make her his forever. There's just one problem. Laurette keeps refusing his marriage proposals. Throwing honor to the wind, Con decides that the only way Laurette will wed him is if he thoroughly seduces her. . . Then comes marriage. . . Laurette's pulse still quickens every time she thinks of Con and the scorching passion they once shared. She aches to taste the pleasure Con offers her. But she knows she can't. For so much has happened since they were last lovers. But how long can she resist the consuming desire that demands to be obeyed. . .? Praise for Maggie Robinson's Mistress by Mistake \"Sizzles off the page.\" —Anna Campbell",
+      "isbn": "9780758267993",
+      "coverUrls": [
+        "https://img1.od-cdn.com/ImageType-100/6852-1/{1653AFFC-D5C0-4354-AD73-8D70B6AA77C4}Img100.jpg",
+        "https://secure.syndetics.com/index.aspx?isbn=9780758267993/mc.gif&client=citycanning&upc=&oclc=&issn="
+      ],
+      "formats": [
+        {
+          "code": "EBK",
+          "label": "eBook",
+          "reserveUrl": null,
+          "availabilityUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/78554983?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=78554983&QRY=WRK01%5C15927597+%2B+03902\\EBK"
+        }
+      ]
+    },
+    {
+      "rank": 6,
+      "workIrn": "15906686",
+      "title": "Roaring Midnight : Macey Gardella Series, Book 1",
+      "detailUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/78554983/15906686,6",
+      "author": "Gleason, Colleen",
+      "authorRole": "author",
+      "authorUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/NAV/OPAC/AUTHENQ/78554983?SETLVL=&QRY=IRN(6459221)&QRYTEXT=Gleason%2C%20Colleen&NAVLVL=SET",
+      "year": "2013",
+      "language": "English",
+      "summary": "From New York Times and USA Today bestselling author Colleen Gleason, the long-awaited spin-off of the international bestselling Gardella Vampire Chronicles. Amid the glitzy age of Jazz, when gangsters and bootleggers control the cities, there lies another, more insidious threat...the undead. Macey Gardella is a typical young woman of the Roaring Twenties: she works a job, has her own flat, and loves to dance the Charleston. But when a mysterious man named Sebastian Vioget informs her she belongs to a family of vampire hunters, Macey is stunned and disbelieving. Yet, strange and frightening things begin to happen, and when Macey comes face-to-face with one of the fanged creatures, she has no choice but to believe Sebastian. And when she learns his own soul depends on her willingness to carry forth the family legacy and hunt the undead, Macey capitulates and joins the fight. As she begins to learn about her new life, Macey meets the handsome newspaper reporter known as Grady—who seems to know more about vampires than he should. When he begins to ask too many questions, she has to juggle her strong attraction to him with the need for secrecy. Slipping into speakeasies and sampling bootlegged whiskeys, dodging gangster gunfire and trying to keep her nosy landlady from finding the stakes in her flat, Macey Gardella must navigate through a world of stunning violence, passionate romance, and dark betrayal... Praise for the Gardella Vampire Chronicles: \"Sophisticated, sexy, surprising!\" –JR Ward \"Gleason is really on a roll.\" –Publishers Weekly \"Deliciously dark and delightfully entertaining.\" –Chicago Tribune \"[Victoria Gardella] stakes the undead with the best of them.\" –The Detroit Free Press \"The sophistication and intelligence of [Gleason's] storytelling are evident on each page of the Gardella Vampire Chronicles.\" –Romantic Times Book Club \"An intelligent new spin on the vampire genre.\" –All About Romance",
+      "isbn": "9781931419208",
+      "coverUrls": [
+        "https://img1.od-cdn.com/ImageType-100/3235-1/{CC935021-B479-4E3C-A8D2-487786BAEFFD}Img100.jpg",
+        "https://secure.syndetics.com/index.aspx?isbn=9781931419208/mc.gif&client=citycanning&upc=&oclc=&issn="
+      ],
+      "formats": [
+        {
+          "code": "EBK",
+          "label": "eBook",
+          "reserveUrl": null,
+          "availabilityUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/78554983?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=78554983&QRY=WRK01%5C15906686+%2B+03902\\EBK"
+        }
+      ]
+    },
+    {
+      "rank": 7,
+      "workIrn": "15836112",
+      "title": "Midnight Frost",
+      "detailUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/78554983/15836112,7",
+      "author": "Estep, Jennifer",
+      "authorRole": "author",
+      "authorUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/NAV/OPAC/AUTHENQ/78554983?SETLVL=&QRY=IRN(5264441)&QRYTEXT=Estep%2C%20Jennifer&NAVLVL=SET",
+      "year": "2013",
+      "language": "English",
+      "summary": "Estep blends the perfect amount of action, romance and comedy. —RT Book Reviews Here we go again. . . Just when it seems life at Mythos Academy can't get any more dangerous, the Reapers of Chaos manage to prove me wrong. It was just a typical night at the Library of Antiquities—until a Reaper tried to poison me. The good news is I'm still alive and kicking. The bad news is the Reaper poisoned someone else instead. As Nike's Champion, everyone expects me to lead the charge against the Reapers, even though I'm still hurting over what happened with Spartan warrior Logan Quinn. I've got to get my hands on the antidote fast—otherwise, an innocent person will die. But the only known cure is hidden in some creepy ruins—and the Reapers are sure to be waiting for me there . . . Praise for the international bestselling Mythos Academy series \"Kiss of Frost has just as much ass-kicking as the first book in the series.\" —Good Choice Reading \"Lots of twists and turns and a surprise ending will leave the reader breathless!\" —RT Book Reviews on Kiss of Frost, 4 Stars \"Ms. Estep's Mythos Academy is sure to appeal to all those who love a good character-driven YA that uses humor, snark, and seriousness to create a world you won't want to leave.\" —Heroes & Heartbreakers \"It has literally everything: mystery, romance, mythology, boarding schools. What could be better?\" —Simply Nerdy Book Reviews on Touch of Frost",
+      "isbn": "9780758281517",
+      "coverUrls": [
+        "https://img1.od-cdn.com/ImageType-100/6852-1/{9D71BA14-D0A9-4A04-AA11-F8C54429CD8F}Img100.jpg",
+        "https://secure.syndetics.com/index.aspx?isbn=9780758281517/mc.gif&client=citycanning&upc=&oclc=&issn="
+      ],
+      "formats": [
+        {
+          "code": "EBK",
+          "label": "eBook",
+          "reserveUrl": null,
+          "availabilityUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/78554983?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=78554983&QRY=WRK01%5C15836112+%2B+03902\\EBK"
+        }
+      ]
+    },
+    {
+      "rank": 8,
+      "workIrn": "15831179",
+      "title": "After Midnight in the Garden of Good and Evil",
+      "detailUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/78554983/15831179,8",
+      "author": "Bardsley, Marilyn J.",
+      "authorRole": "author",
+      "authorUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/NAV/OPAC/AUTHENQ/78554983?SETLVL=&QRY=IRN(8563003)&QRYTEXT=Bardsley%2C%20Marilyn%20J.&NAVLVL=SET",
+      "year": "2012",
+      "language": "English",
+      "summary": "The #1 Wall Street Journal ebook bestseller about the murder that shocked Savannah society and inspired the blockbuster film. As a premier antiques dealer in Savannah, Jim Williams had it all: style, culture, charisma, and sophistication. But three decades of hard work came crashing down the night he shot Danny Hansford, his wild young lover. Jim Williams stood trial four times over the next decade for premeditated murder. While Clint Eastwood's movie—starring Kevin Spacey and Jude Law—and the book Midnight in the Garden of Good and Evil by John Berendt portrayed the natives of Savannah as remarkably decadent, exotic characters, they missed the surprising dark side of Jim Williams himself. He was a smooth predator whose crimes could have put him behind bars long before the death of Danny Hansford. After Midnight in the Garden of Good and Evil is Marilyn Bardsley's continuation of the story, which includes crucial testimony recreating the courtroom drama between a gifted prosecutor and a brilliant defense attorney as they battle over the future of a self-made aristocrat. More than forty photos and revealing insider interviews bring new life to the vivid cast of characters in this unique southern crime story. \"[A] provocative summer read.\" —Savannahnow.com",
+      "isbn": "9780795333439",
+      "coverUrls": [
+        "https://img1.od-cdn.com/ImageType-100/2363-1/{90711AC9-1D62-4557-9F30-BAAAC88692D3}Img100.jpg",
+        "https://secure.syndetics.com/index.aspx?isbn=9780795333439/mc.gif&client=citycanning&upc=&oclc=&issn="
+      ],
+      "formats": [
+        {
+          "code": "EBK",
+          "label": "eBook",
+          "reserveUrl": null,
+          "availabilityUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/78554983?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=78554983&QRY=WRK01%5C15831179+%2B+03902\\EBK"
+        }
+      ]
+    },
+    {
+      "rank": 9,
+      "workIrn": "15817044",
+      "title": "Princess of the Midnight Ball",
+      "detailUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/78554983/15817044,9",
+      "author": "Day George, Jessica",
+      "authorRole": "author",
+      "authorUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/NAV/OPAC/AUTHENQ/78554983?SETLVL=&QRY=IRN(8558824)&QRYTEXT=Day%20George%2C%20Jessica&NAVLVL=SET",
+      "year": "2011",
+      "language": "English",
+      "summary": "New York Times bestselling author Jessica Day George re-imagines the classic fairy-tale, The Twelve Dancing Princesses, in this start to an enchanting YA fantasy series. Rose is one of twelve princesses—sisters condemned to dance every night in the palace of the King Under Stone. Galen is a young soldier returning from war. Together they will search for a way to break the curse that forces the princesses to attend the endless midnight balls. All they need is an invisibility cloak, a black wool chain knit with silver needles, and that most critical fairy tale ingredient—true love. Don't miss these other stories from New York Times bestselling author Jessica Day George: The Twelve Dancing Princesses series Princess of the Midnight Ball Princess of Glass Princess of the Silver Woods Sun and Moon, Ice and Snow Silver in the Blood The Rose Legacy series The Rose Legacy Tuesdays at the Castle series Tuesdays at the Castle Wednesdays in the Tower Thursdays with the Crown Fridays with the Wizards Saturdays at Sea Dragon Slippers series Dragon Slippers Dragon Flight Dragon Spear",
+      "isbn": "9781599907727",
+      "coverUrls": [
+        "https://img1.od-cdn.com/ImageType-100/2183-1/{7B9E21C3-5983-4D4B-AC75-EFA4A3055087}Img100.jpg",
+        "https://secure.syndetics.com/index.aspx?isbn=9781599907727/mc.gif&client=citycanning&upc=&oclc=&issn="
+      ],
+      "formats": [
+        {
+          "code": "EBK",
+          "label": "eBook",
+          "reserveUrl": null,
+          "availabilityUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/78554983?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=78554983&QRY=WRK01%5C15817044+%2B+03902\\EBK"
+        }
+      ]
+    },
+    {
+      "rank": 10,
+      "workIrn": "15802010",
+      "title": "Crown of midnight",
+      "detailUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/FULL/OPAC/ALLWRKENQ/78554983/15802010,10",
+      "author": "Maas, Sarah J.",
+      "authorRole": "author",
+      "authorUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/NAV/OPAC/AUTHENQ/78554983?SETLVL=&QRY=IRN(192461)&QRYTEXT=Maas%2C%20Sarah%20J.&NAVLVL=SET",
+      "year": "2013 - 2023",
+      "language": "English",
+      "summary": "'One of the best fantasy book series of the past decade' TIME Never trust an assassin. Celaena's story continues in this second book in the #1 bestselling Throne of Glass series by Sarah J. Maas. Celaena Sardothien won a brutal contest to become the King's Champion. But she is far from loyal to the crown. Though she goes to great lengths to hide her secret, her deadly charade becomes more difficult when she realises she is not the only one seeking justice. Her search for answers ensnares those closest to her, and no one is safe from suspicion — not the Crown Prince Dorian; not Chaol, the Captain of the Guard; not even her best friend, Nehemia, a princess with a rebel heart. Then, one terrible night, the secrets they have all been keeping lead to an unspeakable tragedy. As Celaena's world shatters, she will be forced to decide once and for all where her true loyalties lie ... and what she is willing to fight for. The second book in the #1 New York Times bestselling Throne of Glass series returns readers to a land destroyed by liars, where one woman's truth is the only thing that can save them all.",
+      "isbn": "9781408834954",
+      "coverUrls": [
+        "https://img1.od-cdn.com/ImageType-100/1559-1/{1FAA0159-9A07-4373-9B13-6C515C29A4B6}IMG100.JPG",
+        "https://secure.syndetics.com/index.aspx?isbn=9781408834954/mc.gif&client=citycanning&upc=&oclc=&issn=",
+        "https://secure.syndetics.com/index.aspx?isbn=9781526631619/mc.gif&client=citycanning&upc=&oclc=&issn=",
+        "https://secure.syndetics.com/index.aspx?isbn=9781526635211/mc.gif&client=citycanning&upc=&oclc=&issn=",
+        "https://secure.syndetics.com/index.aspx?isbn=9781639730964/mc.gif&client=citycanning&upc=&oclc=&issn="
+      ],
+      "formats": [
+        {
+          "code": "BK",
+          "label": "Book",
+          "reserveUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/78554983/0/V/0/R/9/ALLWRKENQ?SVL=15802010&RECFMT=BK",
+          "availabilityUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/78554983?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=78554983&QRY=WRK01%5C15802010+%2B+03902\\BK"
+        },
+        {
+          "code": "EBK",
+          "label": "eBook",
+          "reserveUrl": null,
+          "availabilityUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/78554983?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=78554983&QRY=WRK01%5C15802010+%2B+03902\\EBK"
+        },
+        {
+          "code": "EAUD",
+          "label": "eAudioBook",
+          "reserveUrl": null,
+          "availabilityUrl": "https://canning.spydus.com/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ/78554983?SETLVL=SET&FMT=RECFMT&XSLT=XRecFmtDisplay.xsl&SETID=78554983&QRY=WRK01%5C15802010+%2B+03902\\EAUD"
+        }
+      ]
+    }
+  ]
+}
