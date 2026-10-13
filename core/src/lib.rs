@@ -19,6 +19,7 @@ pub mod directory;
 pub mod error;
 pub mod fetch;
 pub mod parse;
+pub mod timing;
 pub mod types;
 
 pub use error::SpydusError;
@@ -159,9 +160,15 @@ impl SpydusClient {
         if q.is_empty() {
             return Err(SpydusError::Parse { message: "missing search query".into() });
         }
-        cached(&self.caches().pages, search_key(sort, q), LIST_TTL, async {
-            let html = http.fetch_search_html_sorted(q, sort).await?;
-            Ok(parse_search_results(&html, http.origin(), Some(q)))
+        let operation = match sort {
+            SearchSort::Relevance => format!("search \"{q}\""),
+            SearchSort::Newest => format!("search newest \"{q}\""),
+        };
+        cached(&self.caches().pages, search_key(sort, q), LIST_TTL, &operation, async {
+            timing::fetch_and_parse(&operation, http.fetch_search_html_sorted(q, sort), |html| {
+                parse_search_results(html, http.origin(), Some(q))
+            })
+            .await
         })
         .await
     }
@@ -169,9 +176,11 @@ impl SpydusClient {
     /// Another results page: a `nextPageUrl` / `prevPageUrl` (server.ts:69-79). Cached 10 min.
     pub async fn page(&self, url: String) -> Result<SearchResults, SpydusError> {
         let http = self.guarded(&url)?;
-        cached(&self.caches().pages, format!("p:{url}"), LIST_TTL, async {
-            let html = http.fetch_fragment(&url).await?;
-            Ok(parse_search_results(&html, http.origin(), None))
+        cached(&self.caches().pages, format!("p:{url}"), LIST_TTL, "results page", async {
+            timing::fetch_and_parse("results page", http.fetch_fragment(&url), |html| {
+                parse_search_results(html, http.origin(), None)
+            })
+            .await
         })
         .await
     }
@@ -179,9 +188,11 @@ impl SpydusClient {
     /// Live counts for one format: a format's `availabilityUrl` (server.ts:81-95). Cached 60 s.
     pub async fn availability(&self, url: String) -> Result<Availability, SpydusError> {
         let http = self.guarded(&url)?;
-        cached(&self.caches().availability, format!("a:{url}"), SHORT_TTL, async {
-            let html = http.fetch_fragment(&url).await?;
-            Ok(parse_availability(&html, http.origin()))
+        cached(&self.caches().availability, format!("a:{url}"), SHORT_TTL, "availability", async {
+            timing::fetch_and_parse("availability", http.fetch_fragment(&url), |html| {
+                parse_availability(html, http.origin())
+            })
+            .await
         })
         .await
     }
@@ -191,20 +202,25 @@ impl SpydusClient {
     /// Cached 10 min.
     pub async fn record(&self, url: String) -> Result<RecordDetail, SpydusError> {
         let http = self.guarded(&url)?;
-        cached(&self.caches().records, format!("rec:{url}"), LIST_TTL, async {
+        cached(&self.caches().records, format!("rec:{url}"), LIST_TTL, "record", async {
             if RECFMT_URL.is_match(&url) {
-                let fragment = http.fetch_fragment(&url).await?;
-                let bib = bib_link_from_fragment(&fragment, http.origin()).ok_or_else(|| {
-                    SpydusError::Upstream {
-                        message: "no bib record link in format fragment".into(),
-                    }
+                let bib = timing::fetch_and_parse("record format", http.fetch_fragment(&url), |html| {
+                    bib_link_from_fragment(html, http.origin())
+                })
+                .await?
+                .ok_or_else(|| SpydusError::Upstream {
+                    message: "no bib record link in format fragment".into(),
                 })?;
-                let html = http.fetch_fragment(&bib.bib_url).await?;
-                return Ok(parse_record_detail(&html, http.origin(), Some(bib.bib_irn)));
+                return timing::fetch_and_parse("record", http.fetch_fragment(&bib.bib_url), |html| {
+                    parse_record_detail(html, http.origin(), Some(bib.bib_irn))
+                })
+                .await;
             }
-            let html = http.fetch_fragment(&url).await?;
             let bib_irn = IRN.captures(&url).map(|m| m[1].to_owned());
-            Ok(parse_record_detail(&html, http.origin(), bib_irn))
+            timing::fetch_and_parse("record", http.fetch_fragment(&url), |html| {
+                parse_record_detail(html, http.origin(), bib_irn)
+            })
+            .await
         })
         .await
     }
@@ -212,9 +228,11 @@ impl SpydusClient {
     /// A related-titles panel: one of `RecordDetail.related.*` (server.ts:126-139). Cached 10 min.
     pub async fn related(&self, url: String) -> Result<RelatedList, SpydusError> {
         let http = self.guarded(&url)?;
-        cached(&self.caches().related, format!("rel:{url}"), LIST_TTL, async {
-            let html = http.fetch_fragment(&url).await?;
-            Ok(RelatedList { items: parse_brief_cards(&html, http.origin()) })
+        cached(&self.caches().related, format!("rel:{url}"), LIST_TTL, "related", async {
+            timing::fetch_and_parse("related", http.fetch_fragment(&url), |html| RelatedList {
+                items: parse_brief_cards(html, http.origin()),
+            })
+            .await
         })
         .await
     }
@@ -250,8 +268,10 @@ impl SpydusClient {
         let session = signed_in(&session)?;
         let links = self.account_links(session).await?;
         let Some(loans_url) = links.loans_url else { return Ok(empty_list()) };
-        let html = http.fetch_authed(&loans_url, session).await?;
-        Ok(parse_patron_items(&html, http.origin()))
+        timing::fetch_and_parse("loans", http.fetch_authed(&loans_url, session), |html| {
+            parse_patron_items(html, http.origin())
+        })
+        .await
     }
 
     /// Ready-for-pickup and pending reservations, fetched concurrently (server.ts:305-322).
@@ -260,13 +280,17 @@ impl SpydusClient {
         let http = self.http()?;
         let session = signed_in(&session)?;
         let links = self.account_links(session).await?;
-        let list = |url: Option<String>| async move {
+        let list = |url: Option<String>, operation: &'static str| async move {
             let Some(url) = url else { return Ok(empty_list()) };
-            let html = http.fetch_authed(&url, session).await?;
-            Ok::<_, SpydusError>(parse_patron_items(&html, http.origin()))
+            timing::fetch_and_parse(operation, http.fetch_authed(&url, session), |html| {
+                parse_patron_items(html, http.origin())
+            })
+            .await
         };
-        let (ready, pending) =
-            tokio::join!(list(links.reservations_ready_url), list(links.reservations_pending_url));
+        let (ready, pending) = tokio::join!(
+            list(links.reservations_ready_url, "reservations ready"),
+            list(links.reservations_pending_url, "reservations pending")
+        );
         Ok(Reservations { ready: ready?, pending: pending? })
     }
 
@@ -379,20 +403,22 @@ impl SpydusClient {
         let http = self.http()?;
         let session = signed_in(session)?;
         let caches = self.caches();
-        cached(&caches.accounts, account_key(session), SHORT_TTL, http.resolve_account(session))
+        cached(&caches.accounts, account_key(session), SHORT_TTL, "account", http.resolve_account(session))
             .await
     }
 }
 
-/// The middleware's `cached()` (server.ts:40-50): a live hit is returned as-is; otherwise
-/// `fetch` runs and only a success is stored.
+/// The middleware's `cached()` (server.ts:40-50): a live hit is returned as-is (and reported to
+/// the timing log as `operation`); otherwise `fetch` runs and only a success is stored.
 async fn cached<V: Clone + Send>(
     cache: &TtlCache<V>,
     key: String,
     ttl: Duration,
+    operation: &str,
     fetch: impl Future<Output = Result<V, SpydusError>>,
 ) -> Result<V, SpydusError> {
     if let Some(hit) = cache.get(&key) {
+        timing::cache_hit(operation);
         return Ok(hit);
     }
     let value = fetch.await?;
@@ -551,6 +577,35 @@ mod tests {
             Err(SpydusError::Parse { .. })
         ));
         assert_eq!(search_key(SearchSort::Newest, "Q"), "s:newest:q");
+    }
+
+    #[tokio::test]
+    async fn the_timing_log_reports_each_page_and_cache_hit() {
+        struct Collect(std::sync::Mutex<Vec<timing::Timing>>);
+        impl timing::TimingSink for Collect {
+            fn record(&self, timing: timing::Timing) {
+                self.0.lock().unwrap().push(timing);
+            }
+        }
+        let (origin, _) = cookie_echo_server();
+        let c = SpydusClient::new(Some(origin));
+        let sink = Arc::new(Collect(std::sync::Mutex::new(Vec::new())));
+        timing::set_timing_sink(Some(sink.clone()));
+        c.search("timing probe".into()).await.unwrap();
+        c.search("Timing Probe".into()).await.unwrap();
+        timing::set_timing_sink(None);
+        c.search_sorted("timing probe".into(), SearchSort::Newest).await.unwrap();
+
+        // Other tests share the global sink: only this query's entries count.
+        let mine: Vec<_> = sink.0.lock().unwrap().iter()
+            .filter(|t| t.operation.contains("timing probe") || t.operation.contains("Timing Probe"))
+            .cloned()
+            .collect();
+        assert_eq!(mine.len(), 2, "{mine:?}");
+        assert_eq!(mine[0].operation, r#"search "timing probe""#);
+        assert!(!mine[0].cached && !mine[0].failed && mine[0].bytes > 0);
+        assert!(mine[0].network_ms > 0.0);
+        assert!(mine[1].cached && mine[1].bytes == 0 && mine[1].network_ms == 0.0);
     }
 
     /// An HTTP/1.1 server on 127.0.0.1 answering every request with a one-card results page

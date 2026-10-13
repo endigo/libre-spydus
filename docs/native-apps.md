@@ -205,6 +205,14 @@ iOS launch arguments / Android intent extras:
 Example: `xcrun simctl launch <udid> com.librespydus -LSLibraryOrigin https://canning.spydus.com -LSDemo YES -LSRoute borrowed`;
 `adb -s emulator-5554 shell am start -n com.librespydus.app/.MainActivity --es ls_origin https://canning.spydus.com --ez ls_demo true --es ls_route borrowed`.
 
+**Timing log (DEBUG only).** At launch the app installs a core `TimingSink` that prints one
+`⏱ core <operation>: library <ms> · parse <ms> (<size>)` line per page the core loads
+(`from cache` for a hit, `failed after <ms>` for an error). `CoreBackend` adds one
+`⏱ app <call>: <ms> total` line per call, the time as the app saw it (core work, the hand-off
+and waiting for the caller's thread). iOS: `ios/LibreSpydus/Core/TimingLog.swift`, printed to
+stdout. Read it in Xcode's console, or on a device with
+`xcrun devicectl device process launch --console --device <udid> com.librespydus`.
+
 ### 5.7 User-facing errors
 `Network` → "Can't reach {library}. Check your connection." · `HumanVerificationRequired` →
 verification sheet · `NotLoggedIn` → "Please sign in again." (+ login) · `CredentialsRejected` →

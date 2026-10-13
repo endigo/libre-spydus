@@ -6,6 +6,7 @@ struct LibreSpydusApp: App {
 
     init() {
         Appearance.configure()
+        TimingLog.install()
         let options = LaunchOptions.current
         let dependencies = AppModel.Dependencies.live(demo: options.demo, persistDemoAccount: options.persistDemoAccount,
                                                       demoRefreshFails: options.demoRefreshFails)

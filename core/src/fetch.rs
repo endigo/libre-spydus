@@ -25,6 +25,7 @@ use reqwest::{Client, Method, RequestBuilder, Response, redirect};
 use crate::config;
 use crate::crypto::{public_key_pem_from_encrypt_js, rsa_encrypt_base64};
 use crate::error::SpydusError;
+use crate::timing;
 use crate::parse::account::parse_account_links;
 use crate::parse::decode::JS_WS;
 use crate::parse::reserve::{
@@ -199,12 +200,18 @@ impl Http {
     }
 
     /// auth.ts:309-317 — dashboard meta-refresh → BRWENQ "My details" page → account links.
+    /// Both GETs are timed together as `account`.
     pub async fn resolve_account(&self, session: &str) -> Result<AccountLinks, SpydusError> {
-        let entry =
-            self.fetch_authed(&format!("{}{}", self.origin, config::LOGIN_RDT), session).await?;
-        let refresh = meta_refresh_url(&entry).ok_or(SpydusError::NotLoggedIn)?;
-        let account_html = self.fetch_authed(&normalize_brwenq_url(&refresh), session).await?;
-        Ok(parse_account_links(&account_html, &self.origin))
+        let account_html = async {
+            let entry =
+                self.fetch_authed(&format!("{}{}", self.origin, config::LOGIN_RDT), session).await?;
+            let refresh = meta_refresh_url(&entry).ok_or(SpydusError::NotLoggedIn)?;
+            self.fetch_authed(&normalize_brwenq_url(&refresh), session).await
+        };
+        timing::fetch_and_parse("account", account_html, |html| {
+            parse_account_links(html, &self.origin)
+        })
+        .await
     }
 
     /// auth.ts:158-165 (read-only GET of the reserve form).

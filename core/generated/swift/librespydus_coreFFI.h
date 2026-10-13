@@ -243,6 +243,22 @@ typedef void (*UniffiForeignFutureCompleteVoid)(uint64_t, UniffiForeignFutureRes
     );
 
 #endif
+#ifndef UNIFFI_FFIDEF_CALLBACK_INTERFACE_TIMING_SINK_METHOD0
+#define UNIFFI_FFIDEF_CALLBACK_INTERFACE_TIMING_SINK_METHOD0
+typedef void (*UniffiCallbackInterfaceTimingSinkMethod0)(uint64_t, RustBuffer, void* _Nonnull, 
+        RustCallStatus *_Nonnull uniffiCallStatus
+    );
+
+#endif
+#ifndef UNIFFI_FFIDEF_V_TABLE_CALLBACK_INTERFACE_TIMING_SINK
+#define UNIFFI_FFIDEF_V_TABLE_CALLBACK_INTERFACE_TIMING_SINK
+typedef struct UniffiVTableCallbackInterfaceTimingSink {
+    UniffiCallbackInterfaceFree _Nonnull uniffiFree;
+    UniffiCallbackInterfaceClone _Nonnull uniffiClone;
+    UniffiCallbackInterfaceTimingSinkMethod0 _Nonnull record;
+} UniffiVTableCallbackInterfaceTimingSink;
+
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_FN_CLONE_SPYDUSCLIENT
 #define UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_FN_CLONE_SPYDUSCLIENT
 uint64_t uniffi_librespydus_core_fn_clone_spydusclient(uint64_t handle, RustCallStatus *_Nonnull out_status
@@ -348,6 +364,26 @@ uint64_t uniffi_librespydus_core_fn_method_spydusclient_search_sorted(uint64_t p
 void uniffi_librespydus_core_fn_method_spydusclient_set_verification_cookie(uint64_t ptr, RustBuffer cookie, RustCallStatus *_Nonnull out_status
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_FN_CLONE_TIMINGSINK
+#define UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_FN_CLONE_TIMINGSINK
+uint64_t uniffi_librespydus_core_fn_clone_timingsink(uint64_t handle, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_FN_FREE_TIMINGSINK
+#define UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_FN_FREE_TIMINGSINK
+void uniffi_librespydus_core_fn_free_timingsink(uint64_t handle, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_FN_INIT_CALLBACK_VTABLE_TIMINGSINK
+#define UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_FN_INIT_CALLBACK_VTABLE_TIMINGSINK
+void uniffi_librespydus_core_fn_init_callback_vtable_timingsink(const UniffiVTableCallbackInterfaceTimingSink* _Nonnull vtable
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_FN_METHOD_TIMINGSINK_RECORD
+#define UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_FN_METHOD_TIMINGSINK_RECORD
+void uniffi_librespydus_core_fn_method_timingsink_record(uint64_t ptr, RustBuffer timing, RustCallStatus *_Nonnull out_status
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_FN_FUNC_LIST_LIBRARIES
 #define UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_FN_FUNC_LIST_LIBRARIES
 uint64_t uniffi_librespydus_core_fn_func_list_libraries(int8_t include_test
@@ -404,6 +440,11 @@ RustBuffer uniffi_librespydus_core_fn_func_parse_due_date(RustBuffer text, RustC
 #ifndef UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_FN_FUNC_PATRON_ITEM_RECORD_URL
 #define UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_FN_FUNC_PATRON_ITEM_RECORD_URL
 RustBuffer uniffi_librespydus_core_fn_func_patron_item_record_url(RustBuffer item, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_FN_FUNC_SET_TIMING_SINK
+#define UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_FN_FUNC_SET_TIMING_SINK
+void uniffi_librespydus_core_fn_func_set_timing_sink(RustBuffer sink, RustCallStatus *_Nonnull out_status
 );
 #endif
 #ifndef UNIFFI_FFIDEF_FFI_LIBRESPYDUS_CORE_RUSTBUFFER_ALLOC
@@ -732,6 +773,12 @@ uint16_t uniffi_librespydus_core_checksum_func_patron_item_record_url(void
     
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_CHECKSUM_FUNC_SET_TIMING_SINK
+#define UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_CHECKSUM_FUNC_SET_TIMING_SINK
+uint16_t uniffi_librespydus_core_checksum_func_set_timing_sink(void
+    
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_CHECKSUM_METHOD_SPYDUSCLIENT_ACCOUNT
 #define UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_CHECKSUM_METHOD_SPYDUSCLIENT_ACCOUNT
 uint16_t uniffi_librespydus_core_checksum_method_spydusclient_account(void
@@ -837,6 +884,12 @@ uint16_t uniffi_librespydus_core_checksum_method_spydusclient_search_sorted(void
 #ifndef UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_CHECKSUM_METHOD_SPYDUSCLIENT_SET_VERIFICATION_COOKIE
 #define UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_CHECKSUM_METHOD_SPYDUSCLIENT_SET_VERIFICATION_COOKIE
 uint16_t uniffi_librespydus_core_checksum_method_spydusclient_set_verification_cookie(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_CHECKSUM_METHOD_TIMINGSINK_RECORD
+#define UNIFFI_FFIDEF_UNIFFI_LIBRESPYDUS_CORE_CHECKSUM_METHOD_TIMINGSINK_RECORD
+uint16_t uniffi_librespydus_core_checksum_method_timingsink_record(void
     
 );
 #endif

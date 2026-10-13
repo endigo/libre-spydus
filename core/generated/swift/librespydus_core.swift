@@ -460,7 +460,13 @@ fileprivate final class UniffiHandleMap<T>: @unchecked Sendable {
 
 
 // Public interface members begin here.
-
+// Magic number for the Rust proxy to call using the same mechanism as every other method,
+// to free the callback once it's dropped by Rust.
+private let IDX_CALLBACK_FREE: Int32 = 0
+// Callback return codes
+private let UNIFFI_CALLBACK_SUCCESS: Int32 = 0
+private let UNIFFI_CALLBACK_ERROR: Int32 = 1
+private let UNIFFI_CALLBACK_UNEXPECTED_ERROR: Int32 = 2
 
 #if swift(>=5.8)
 @_documentation(visibility: private)
@@ -513,6 +519,22 @@ fileprivate struct FfiConverterInt32: FfiConverterPrimitive {
 #if swift(>=5.8)
 @_documentation(visibility: private)
 #endif
+fileprivate struct FfiConverterUInt64: FfiConverterPrimitive {
+    typealias FfiType = UInt64
+    typealias SwiftType = UInt64
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> UInt64 {
+        return try lift(readInt(&buf))
+    }
+
+    public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
+        writeInt(&buf, lower(value))
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 fileprivate struct FfiConverterInt64: FfiConverterPrimitive {
     typealias FfiType = Int64
     typealias SwiftType = Int64
@@ -523,6 +545,22 @@ fileprivate struct FfiConverterInt64: FfiConverterPrimitive {
 
     public static func write(_ value: Int64, into buf: inout [UInt8]) {
         writeInt(&buf, lower(value))
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterDouble: FfiConverterPrimitive {
+    typealias FfiType = Double
+    typealias SwiftType = Double
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> Double {
+        return try lift(readDouble(&buf))
+    }
+
+    public static func write(_ value: Double, into buf: inout [UInt8]) {
+        writeDouble(&buf, lower(value))
     }
 }
 
@@ -1201,6 +1239,212 @@ public func FfiConverterTypeSpydusClient_lift(_ handle: UInt64) throws -> Spydus
 #endif
 public func FfiConverterTypeSpydusClient_lower(_ value: SpydusClient) -> UInt64 {
     return FfiConverterTypeSpydusClient.lower(value)
+}
+
+
+
+
+
+
+/**
+ * Receives a [`Timing`] for every page loaded while it is installed. Called on the core's
+ * worker threads, so an implementation must be thread-safe and should return quickly.
+ */
+public protocol TimingSink: AnyObject, Sendable {
+    
+    func record(timing: Timing) 
+    
+}
+/**
+ * Receives a [`Timing`] for every page loaded while it is installed. Called on the core's
+ * worker threads, so an implementation must be thread-safe and should return quickly.
+ */
+open class TimingSinkImpl: TimingSink, @unchecked Sendable {
+    fileprivate let handle: UInt64
+
+    /// Used to instantiate a [FFIObject] without an actual handle, for fakes in tests, mostly.
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
+    public struct NoHandle {
+        public init() {}
+    }
+
+    // TODO: We'd like this to be `private` but for Swifty reasons,
+    // we can't implement `FfiConverter` without making this `required` and we can't
+    // make it `required` without making it `public`.
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
+    required public init(unsafeFromHandle handle: UInt64) {
+        self.handle = handle
+    }
+
+    // This constructor can be used to instantiate a fake object.
+    // - Parameter noHandle: Placeholder value so we can have a constructor separate from the default empty one that may be implemented for classes extending [FFIObject].
+    //
+    // - Warning:
+    //     Any object instantiated with this constructor cannot be passed to an actual Rust-backed object. Since there isn't a backing handle the FFI lower functions will crash.
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
+    public init(noHandle: NoHandle) {
+        self.handle = 0
+    }
+
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
+    public func uniffiCloneHandle() -> UInt64 {
+        return try! rustCall { uniffi_librespydus_core_fn_clone_timingsink(self.handle, $0) }
+    }
+    // No primary constructor declared for this class.
+
+    deinit {
+        if handle == 0 {
+            // Mock objects have handle=0 don't try to free them
+            return
+        }
+
+        try! rustCall { uniffi_librespydus_core_fn_free_timingsink(handle, $0) }
+    }
+
+    
+
+    
+open func record(timing: Timing)  {try! rustCall() {
+        uniffiCallStatus in
+    uniffi_librespydus_core_fn_method_timingsink_record(
+            self.uniffiCloneHandle(),
+        FfiConverterTypeTiming_lower(timing),uniffiCallStatus
+    )
+}
+}
+    
+
+    
+}
+
+
+
+// Put the implementation in a struct so we don't pollute the top-level namespace
+fileprivate struct UniffiCallbackInterfaceTimingSink {
+
+    // Create the VTable using a series of closures.
+    // Swift automatically converts these into C callback functions.
+    //
+    // Store the vtable directly.
+    static let vtable: UniffiVTableCallbackInterfaceTimingSink = UniffiVTableCallbackInterfaceTimingSink(
+        uniffiFree: { (uniffiHandle: UInt64) -> () in
+            do {
+                try FfiConverterTypeTimingSink.handleMap.remove(handle: uniffiHandle)
+            } catch {
+                print("Uniffi callback interface TimingSink: handle missing in uniffiFree")
+            }
+        },
+        uniffiClone: { (uniffiHandle: UInt64) -> UInt64 in
+            do {
+                return try FfiConverterTypeTimingSink.handleMap.clone(handle: uniffiHandle)
+            } catch {
+                fatalError("Uniffi callback interface TimingSink: handle missing in uniffiClone")
+            }
+        },
+        record: { (
+            uniffiHandle: UInt64,
+            timing: RustBuffer,
+            uniffiOutReturn: UnsafeMutableRawPointer,
+            uniffiCallStatus: UnsafeMutablePointer<RustCallStatus>
+        ) in
+            let makeCall = {
+                () throws -> () in
+                guard let uniffiObj = try? FfiConverterTypeTimingSink.handleMap.get(handle: uniffiHandle) else {
+                    throw UniffiInternalError.unexpectedStaleHandle
+                }
+                return uniffiObj.record(
+                     timing: try FfiConverterTypeTiming_lift(timing)
+                )
+            }
+
+            
+            let writeReturn = { () }
+            uniffiTraitInterfaceCall(
+                callStatus: uniffiCallStatus,
+                makeCall: makeCall,
+                writeReturn: writeReturn
+            )
+        }
+    )
+
+    // Rust stores this pointer for future callback invocations, so it must live
+    // for the process lifetime (not just for the init function call).
+    //
+    // `nonisolated(unsafe)` is needed under Swift 6 strict concurrency.
+    // This is safe because the pointee is initialized once during static init
+    // and never mutated by either side of the FFI.  Its fields are C function pointers.
+    nonisolated(unsafe) static let vtablePtr: UnsafePointer<UniffiVTableCallbackInterfaceTimingSink> = {
+        let ptr = UnsafeMutablePointer<UniffiVTableCallbackInterfaceTimingSink>.allocate(capacity: 1)
+        ptr.initialize(to: vtable)
+        return UnsafePointer(ptr)
+    }()
+}
+
+private func uniffiCallbackInitTimingSink() {
+    uniffi_librespydus_core_fn_init_callback_vtable_timingsink(UniffiCallbackInterfaceTimingSink.vtablePtr)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeTimingSink: FfiConverter {
+    fileprivate static let handleMap = UniffiHandleMap<TimingSink>()
+
+    typealias FfiType = UInt64
+    typealias SwiftType = TimingSink
+
+    public static func lift(_ handle: UInt64) throws -> TimingSink {
+        if ((handle & 1) == 0) {
+            // Rust-generated handle, construct a new class that uses the handle to implement the
+            // interface
+            return TimingSinkImpl(unsafeFromHandle: handle)
+        } else {
+            // Swift-generated handle, get the object from the handle map
+            return try handleMap.remove(handle: handle)
+        }
+    }
+
+    public static func lower(_ value: TimingSink) -> UInt64 {
+         if let rustImpl = value as? TimingSinkImpl {
+             // Rust-implemented object.  Clone the handle and return it
+            return rustImpl.uniffiCloneHandle()
+         } else {
+            // Swift object, generate a new vtable handle and return that.
+            return handleMap.insert(obj: value)
+         }
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> TimingSink {
+        let handle: UInt64 = try readInt(&buf)
+        return try lift(handle)
+    }
+
+    public static func write(_ value: TimingSink, into buf: inout [UInt8]) {
+        writeInt(&buf, lower(value))
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTimingSink_lift(_ handle: UInt64) throws -> TimingSink {
+    return try FfiConverterTypeTimingSink.lift(handle)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTimingSink_lower(_ value: TimingSink) -> UInt64 {
+    return FfiConverterTypeTimingSink.lower(value)
 }
 
 
@@ -3352,6 +3596,117 @@ public func FfiConverterTypeSimpleDate_lower(_ value: SimpleDate) -> RustBuffer 
 
 
 /**
+ * One page a call loaded (or served from the core's cache).
+ */
+public struct Timing: Equatable, Hashable {
+    /**
+     * What was loaded, e.g. `search "harry potter"`, `availability`, `record`, `loans`.
+     */
+    public var operation: String
+    /**
+     * Request sent → whole page received, in milliseconds (redirects included). For a failed
+     * request, how long it took to fail.
+     */
+    public var networkMs: Double
+    /**
+     * Parsing the page into the result, in milliseconds (0 for a failed request).
+     */
+    public var parseMs: Double
+    /**
+     * The page's size as text, after decompression (0 for a failed request or a cache hit).
+     */
+    public var bytes: UInt64
+    /**
+     * Served from the core's cache: no request was sent and both times are 0.
+     */
+    public var cached: Bool
+    /**
+     * The request failed; `network_ms` is how long it took.
+     */
+    public var failed: Bool
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(
+        /**
+         * What was loaded, e.g. `search "harry potter"`, `availability`, `record`, `loans`.
+         */operation: String, 
+        /**
+         * Request sent → whole page received, in milliseconds (redirects included). For a failed
+         * request, how long it took to fail.
+         */networkMs: Double, 
+        /**
+         * Parsing the page into the result, in milliseconds (0 for a failed request).
+         */parseMs: Double, 
+        /**
+         * The page's size as text, after decompression (0 for a failed request or a cache hit).
+         */bytes: UInt64, 
+        /**
+         * Served from the core's cache: no request was sent and both times are 0.
+         */cached: Bool, 
+        /**
+         * The request failed; `network_ms` is how long it took.
+         */failed: Bool) {
+        self.operation = operation
+        self.networkMs = networkMs
+        self.parseMs = parseMs
+        self.bytes = bytes
+        self.cached = cached
+        self.failed = failed
+    }
+
+    
+
+    
+}
+
+#if compiler(>=6)
+extension Timing: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeTiming: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> Timing {
+        return
+            try Timing(
+                operation: FfiConverterString.read(from: &buf), 
+                networkMs: FfiConverterDouble.read(from: &buf), 
+                parseMs: FfiConverterDouble.read(from: &buf), 
+                bytes: FfiConverterUInt64.read(from: &buf), 
+                cached: FfiConverterBool.read(from: &buf), 
+                failed: FfiConverterBool.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: Timing, into buf: inout [UInt8]) {
+        FfiConverterString.write(value.operation, into: &buf)
+        FfiConverterDouble.write(value.networkMs, into: &buf)
+        FfiConverterDouble.write(value.parseMs, into: &buf)
+        FfiConverterUInt64.write(value.bytes, into: &buf)
+        FfiConverterBool.write(value.cached, into: &buf)
+        FfiConverterBool.write(value.failed, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTiming_lift(_ buf: RustBuffer) throws -> Timing {
+    return try FfiConverterTypeTiming.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTiming_lower(_ value: Timing) -> RustBuffer {
+    return FfiConverterTypeTiming.lower(value)
+}
+
+
+/**
  * How the patron already has a title (`AccountHolding.kind`).
  */
 
@@ -3694,6 +4049,30 @@ fileprivate struct FfiConverterOptionString: FfiConverterRustBuffer {
         switch try readInt(&buf) as Int8 {
         case 0: return nil
         case 1: return try FfiConverterString.read(from: &buf)
+        default: throw UniffiInternalError.unexpectedOptionalTag
+        }
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterOptionTypeTimingSink: FfiConverterRustBuffer {
+    typealias SwiftType = TimingSink?
+
+    public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
+        guard let value = value else {
+            writeInt(&buf, Int8(0))
+            return
+        }
+        writeInt(&buf, Int8(1))
+        FfiConverterTypeTimingSink.write(value, into: &buf)
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SwiftType {
+        switch try readInt(&buf) as Int8 {
+        case 0: return nil
+        case 1: return try FfiConverterTypeTimingSink.read(from: &buf)
         default: throw UniffiInternalError.unexpectedOptionalTag
         }
     }
@@ -4362,6 +4741,17 @@ public func patronItemRecordUrl(item: PatronItem) -> String?  {
     )
 })
 }
+/**
+ * Installs `sink` for every client (replacing any earlier one), or with `None` turns the
+ * timing log off.
+ */
+public func setTimingSink(sink: TimingSink?)  {try! rustCall() {
+        uniffiCallStatus in
+    uniffi_librespydus_core_fn_func_set_timing_sink(
+        FfiConverterOptionTypeTimingSink.lower(sink),uniffiCallStatus
+    )
+}
+}
 
 private enum InitializationResult {
     case ok
@@ -4409,6 +4799,9 @@ private let initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_librespydus_core_checksum_func_patron_item_record_url() != 26917) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_librespydus_core_checksum_func_set_timing_sink() != 27295) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_librespydus_core_checksum_method_spydusclient_account() != 60698) {
@@ -4465,10 +4858,14 @@ private let initializationResult: InitializationResult = {
     if (uniffi_librespydus_core_checksum_method_spydusclient_set_verification_cookie() != 7) {
         return InitializationResult.apiChecksumMismatch
     }
+    if (uniffi_librespydus_core_checksum_method_timingsink_record() != 10362) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_librespydus_core_checksum_constructor_spydusclient_new() != 11551) {
         return InitializationResult.apiChecksumMismatch
     }
 
+    uniffiCallbackInitTimingSink()
     return InitializationResult.ok
 }()
 

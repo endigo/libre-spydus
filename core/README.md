@@ -28,6 +28,7 @@ core/
     directory.rs        Civica's library directory → LibraryInfo (region, test-instance flag)
     fetch.rs            HTTP: search, fragments, authed GET, login, reservation wizards;
                         origin guard, timeouts, AWS WAF detection, verification cookie
+    timing.rs           opt-in timing log (set_timing_sink): network and parse time per page
     crypto.rs           encrypt.js → PEM, RSA PKCS#1 v1.5 (JSEncrypt-compatible) PIN encryption
     cache.rs            thread-safe TTL cache
     parse/              HTML → records (search, availability, record, reserve, account, decode)
@@ -89,6 +90,14 @@ means Canning. The async methods each return a record or throw `SpydusError`.
   Swift and Kotlin see each variant with its display message (`flat_error`): Swift as
   `SpydusError.HumanVerificationRequired(message:)`, Kotlin as
   `SpydusException.HumanVerificationRequired`.
+- Timing log: `set_timing_sink(sink)` installs a `TimingSink` (a foreign trait the app
+  implements; `None` turns it off). Every page a call loads reports a `Timing`: `operation`
+  (`search "q"`, `search newest "q"`, `results page`, `availability`, `record format`,
+  `record`, `related`, `account`, `loans`, `reservations ready` / `pending`), `networkMs`
+  (request sent → whole page received; for `account`, both of its GETs), `parseMs`, `bytes`
+  (decompressed), `cached` (a cache hit: no request, times 0) and `failed` (how long the
+  request took to fail). `record(sink:)` runs on the core's worker threads. The apps install
+  one in debug builds only.
 
 ### App helpers (`app.rs`)
 
