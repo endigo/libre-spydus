@@ -39,11 +39,13 @@ import com.librespydus.app.core.Tab
 import com.librespydus.app.feature.borrowed.BorrowedScreen
 import com.librespydus.app.feature.detail.BookDetailScreen
 import com.librespydus.app.feature.favourites.FavouritesScreen
+import com.librespydus.app.feature.featured.CollectionScreen
 import com.librespydus.app.feature.home.HomeScreen
 import com.librespydus.app.feature.onboarding.LibraryPickerScreen
 import com.librespydus.app.feature.onboarding.LoginSheet
 import com.librespydus.app.feature.onboarding.VerificationScreen
 import com.librespydus.app.feature.profile.ProfileScreen
+import com.librespydus.app.feature.search.ListResultsScreen
 import com.librespydus.app.feature.search.SearchResultsScreen
 import com.librespydus.app.feature.search.SearchScreen
 import com.librespydus.app.ui.components.ComponentGallery
@@ -176,6 +178,12 @@ private fun TabNavHost(tab: Tab, appState: AppState, reselects: Flow<Tab>) {
         }
         composable<Route.Results>(typeMap = routeTypeMap) { entry ->
             SearchResultsScreen(entry.toRoute<Route.Results>(), appState, navigator)
+        }
+        composable<Route.Collection> { entry ->
+            CollectionScreen(entry.toRoute<Route.Collection>(), appState, navigator)
+        }
+        composable<Route.ListResults> { entry ->
+            ListResultsScreen(entry.toRoute<Route.ListResults>(), appState, navigator)
         }
     }
 }

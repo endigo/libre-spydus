@@ -79,12 +79,14 @@ fun SearchResultsList(
     onOpen: (BookRef) -> Unit,
     modifier: Modifier = Modifier,
     listState: LazyListState = rememberLazyListState(),
+    noResultsTitle: String = "No results for “$query”",
+    noResultsMessage: String? = "Check the spelling, or try fewer or different words.",
 ) {
     when (val phase = state.phase) {
         SearchResultsModel.Phase.Idle, SearchResultsModel.Phase.Loading -> SearchSkeletonList(modifier)
         SearchResultsModel.Phase.NoResults -> EmptyStateView(
-            title = "No results for “$query”",
-            message = "Check the spelling, or try fewer or different words.",
+            title = noResultsTitle,
+            message = noResultsMessage,
             icon = BrowseIcons.SearchOff,
             modifier = modifier.padding(bottom = BrowseBottomClearance),
         )

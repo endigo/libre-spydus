@@ -4,6 +4,7 @@ import com.librespydus.app.core.AvailabilitySummary
 import com.librespydus.app.core.BookRef
 import com.librespydus.app.core.CoreHelpers
 import com.librespydus.app.core.FormatRef
+import com.librespydus.app.feature.featured.EditionLevel
 import com.librespydus.app.feature.search.BrowseLoadable
 import com.librespydus.app.feature.search.trimmedOrNull
 import uniffi.librespydus_core.Availability
@@ -26,12 +27,15 @@ object DetailRecordSource {
      * A search record's `detailUrl` (`…/FULL/OPAC/ALLWRKENQ/…`) loads the OPAC's work-level page:
      * a summary but no subjects, imprint, ISBNs, similar titles or other editions. A format's
      * `availabilityUrl` loads the full bib page, so it comes first for work-level refs. Bib URLs
-     * (loans, related items, saved bookmarks) are tried first as they are.
+     * (loans, related items, saved bookmarks) are tried first as they are. An edition-level item's
+     * format URL (`…/BIBENQ?SETLVL=&IRN=…&FMT=RECFMT`, §5.10) is its own bib record without a set
+     * id, so it comes first too: the card's `detailUrl` names a search set that expires.
      */
     fun candidateUrls(refUrl: String?, format: FormatRef?): List<String> {
         val formatUrl = format?.availabilityUrl.trimmedOrNull()
         val ref = refUrl.trimmedOrNull()
-        val ordered = if (isWorkLevel(ref)) listOf(formatUrl, ref) else listOf(ref, formatUrl)
+        val formatFirst = isWorkLevel(ref) || (format != null && EditionLevel.isEditionLevel(format))
+        val ordered = if (formatFirst) listOf(formatUrl, ref) else listOf(ref, formatUrl)
         return ordered.filterNotNull().distinct()
     }
 
@@ -67,13 +71,17 @@ object DetailRecordSource {
 }
 
 /**
- * A format's availability as the header shows it, and the bib record it resolves to
- * (`Availability.bibRecordIrn`, the edition's own IRN: what loans and reservations name).
+ * A format's availability as the header shows it, the bib record it resolves to
+ * (`Availability.bibRecordIrn`, the edition's own IRN: what loans and reservations name), and its
+ * copies' holdings URL (the "Copies" list of an edition-level item, §5.10).
  */
-data class FormatAvailability(val summary: AvailabilitySummary, val bibRecordIrn: String?) {
+data class FormatAvailability(val summary: AvailabilitySummary, val bibRecordIrn: String?, val holdingsUrl: String? = null) {
     companion object {
-        fun of(availability: Availability) =
-            FormatAvailability(CoreHelpers.availabilitySummary(availability), availability.bibRecordIrn.trimmedOrNull())
+        fun of(availability: Availability) = FormatAvailability(
+            CoreHelpers.availabilitySummary(availability),
+            availability.bibRecordIrn.trimmedOrNull(),
+            availability.holdingsUrl.trimmedOrNull(),
+        )
     }
 }
 

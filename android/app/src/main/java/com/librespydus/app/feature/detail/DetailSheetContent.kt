@@ -42,6 +42,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.librespydus.app.core.BookRef
 import com.librespydus.app.core.Formatting
+import com.librespydus.app.feature.featured.CopyRow
 import com.librespydus.app.feature.search.BrowseBottomClearance
 import com.librespydus.app.feature.search.BrowseLoadable
 import com.librespydus.app.feature.search.trimmedOrNull
@@ -57,8 +58,8 @@ import com.librespydus.app.ui.theme.LsType
 import uniffi.librespydus_core.RecordDetail
 
 /**
- * The white sheet under the detail header: synopsis, subject chips, details and the related
- * carousels, with loading / empty / error states.
+ * The white sheet under the detail header: synopsis, subject chips, an edition-level item's copies
+ * (§5.10), details and the related carousels, with loading / empty / error states.
  */
 @Composable
 fun DetailSheetContent(
@@ -68,6 +69,7 @@ fun DetailSheetContent(
     onStartRelated: () -> Unit,
     onOpenBook: (BookRef) -> Unit,
     onOpenSubject: (SubjectChip) -> Unit,
+    onRetryCopies: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -82,7 +84,7 @@ fun DetailSheetContent(
                 onSheet = true,
                 modifier = Modifier.padding(horizontal = LsSpacing.xl),
             )
-            is BrowseLoadable.Loaded -> LoadedSheet(record.value, state, onStartRelated, onOpenBook, onOpenSubject)
+            is BrowseLoadable.Loaded -> LoadedSheet(record.value, state, onStartRelated, onOpenBook, onOpenSubject, onRetryCopies)
         }
     }
 }
@@ -94,9 +96,11 @@ private fun LoadedSheet(
     onStartRelated: () -> Unit,
     onOpenBook: (BookRef) -> Unit,
     onOpenSubject: (SubjectChip) -> Unit,
+    onRetryCopies: () -> Unit,
 ) {
     val summary = record.summary.trimmedOrNull()
     val subjects = state.subjects
+    val copies = state.copiesSection
     val facts = state.facts
     val hasRelated = state.hasRelatedPanels
     val gutter = Modifier.padding(horizontal = LsSpacing.xl)
@@ -122,6 +126,7 @@ private fun LoadedSheet(
             }
         }
     }
+    if (copies != null) CopiesList(copies, onRetryCopies, gutter)
     if (facts.isNotEmpty()) DetailFactsList(facts, gutter)
     if (hasRelated) {
         // Starts the related loads when the carousels come into view (again for an upgraded record).
@@ -137,7 +142,7 @@ private fun LoadedSheet(
             RelatedCarousel(panel, state.related[panel] ?: BrowseLoadable.Loading, onOpenBook)
         }
     }
-    if (summary == null && subjects.isEmpty() && facts.isEmpty() && !hasRelated) {
+    if (summary == null && subjects.isEmpty() && copies == null && facts.isEmpty() && !hasRelated) {
         Text(
             "The library has no more details for this title.",
             style = LsType.body,
@@ -214,6 +219,72 @@ private fun DetailFactsList(facts: List<DetailFact>, modifier: Modifier) {
                 }
             }
         }
+    }
+}
+
+/**
+ * An edition-level item's copies (§5.10), one row each: the branch, the status (success colour
+ * when on the shelf), the copy's note in secondary text and its call number as a caption.
+ */
+@Composable
+private fun CopiesList(copies: BrowseLoadable<List<CopyRow>>, onRetry: () -> Unit, modifier: Modifier) {
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(LsSpacing.s)) {
+        SectionHeader("Copies", color = LsColors.onSheet)
+        when (copies) {
+            BrowseLoadable.Idle, BrowseLoadable.Loading -> Row(
+                Modifier
+                    .padding(vertical = LsSpacing.s)
+                    .semantics(mergeDescendants = true) {},
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                CircularProgressIndicator(color = LsColors.onSheetSecondary, strokeWidth = 2.dp, modifier = Modifier.size(14.dp))
+                Text("Loading copies…", style = LsType.caption, color = LsColors.onSheetSecondary, modifier = Modifier.padding(start = LsSpacing.s))
+            }
+            is BrowseLoadable.Failed -> Row(Modifier.padding(vertical = LsSpacing.s), verticalAlignment = Alignment.CenterVertically) {
+                Text("Couldn't load copies", style = LsType.caption, color = LsColors.onSheetSecondary, modifier = Modifier.weight(1f, fill = false))
+                if (copies.error.isRetryable) {
+                    Text(
+                        "Retry",
+                        style = LsType.caption.copy(fontWeight = LsType.bodyStrong.fontWeight),
+                        color = LsColors.primary,
+                        modifier = Modifier
+                            .padding(start = LsSpacing.xs)
+                            .clip(RoundedCornerShape(LsRadius.pill))
+                            .clickable(role = Role.Button, onClickLabel = "Retry loading copies", onClick = onRetry)
+                            .padding(horizontal = LsSpacing.s, vertical = LsSpacing.xs),
+                    )
+                }
+            }
+            is BrowseLoadable.Loaded -> Column {
+                copies.value.forEachIndexed { index, copy ->
+                    CopyRowView(copy)
+                    if (index < copies.value.lastIndex) {
+                        Box(
+                            Modifier
+                                .fillMaxWidth()
+                                .height(1.dp)
+                                .background(LsColors.chipOnSheet),
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun CopyRowView(copy: CopyRow) {
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .padding(vertical = LsSpacing.s)
+            .clearAndSetSemantics { contentDescription = copy.accessibilityLabel },
+        verticalArrangement = Arrangement.spacedBy(2.dp),
+    ) {
+        copy.location?.let { Text(it, style = LsType.bodyStrong, color = LsColors.onSheet) }
+        copy.status?.let { Text(it, style = LsType.body, color = if (copy.available) LsColors.success else LsColors.onSheet) }
+        copy.description?.let { Text(it, style = LsType.body, color = LsColors.onSheetSecondary) }
+        copy.callNumber?.let { Text(it, style = LsType.caption, color = LsColors.onSheetSecondary) }
     }
 }
 

@@ -48,6 +48,7 @@ import com.librespydus.app.core.CoreHelpers
 import com.librespydus.app.core.Formatting
 import com.librespydus.app.feature.search.BrowseIcons
 import com.librespydus.app.feature.search.BrowseLoadable
+import com.librespydus.app.feature.featured.EditionLevel
 import com.librespydus.app.feature.search.displayLabel
 import com.librespydus.app.feature.search.trimmedOrNull
 import com.librespydus.app.ui.components.Chip
@@ -178,11 +179,14 @@ private fun BookSummary(request: ReserveRequest) {
             Formatting.byLine(request.book.author)?.let {
                 Text(it, style = LsType.caption, color = LsColors.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
-            Chip(
-                request.format.displayLabel,
-                tint = if (CoreHelpers.isDigitalFormat(request.format)) LsColors.digital else null,
-                modifier = Modifier.padding(top = LsSpacing.xs),
-            )
+            // An edition-level item's one format has no label: no chip (§5.10).
+            if (!EditionLevel.isEditionLevel(request.format)) {
+                Chip(
+                    request.format.displayLabel,
+                    tint = if (CoreHelpers.isDigitalFormat(request.format)) LsColors.digital else null,
+                    modifier = Modifier.padding(top = LsSpacing.xs),
+                )
+            }
         }
     }
 }

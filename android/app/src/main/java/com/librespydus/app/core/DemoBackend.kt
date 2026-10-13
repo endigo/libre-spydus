@@ -89,6 +89,11 @@ class DemoBackend(
     /** A public GET of the library's mobile config, like the other public reads (§5.9). */
     override suspend fun cardBarcodeSymbology() = public.cardBarcodeSymbology()
 
+    /** Featured collections (§5.10) are public GETs: the real library answers. */
+    override suspend fun featured() = public.featured()
+    override suspend fun collection(url: String) = public.collection(url)
+    override suspend fun holdings(url: String) = public.holdings(url)
+
     override suspend fun login(username: String, password: String): String {
         delay(mutationDelay)
         if (username.trim() == DEMO_USERNAME && password == DEMO_PASSWORD) return SESSION
