@@ -219,6 +219,10 @@ Example: `xcrun simctl launch <udid> com.librespydus -LSLibraryOrigin https://ca
   (§5.8) right after launch instead of waiting for 07:45. `-LSDemoNewReady YES` /
   `--ez ls_demo_new_ready true` (with demo) — the demo account gains one more ready reservation on
   its next refresh, so a "Ready to collect" alert can be shown.
+- (I15/A13) Try an alert's tap (§5.8 "Tap") with demo data: iOS `-LSDemoAlert ready|due|due-several`
+  (one alert shown 8 s after the demo account loads); Android `--ez ls_demo_post_alerts true` (one
+  of each: ready, a one-loan reminder, a several-loans reminder). Both build the alerts like the real
+  ones, payload included.
 
 **Timing log (DEBUG only).** At launch the app installs a core `TimingSink` that prints one
 `⏱ core <operation>: library <ms> · parse <ms> (<size>)` line per page the core loads
