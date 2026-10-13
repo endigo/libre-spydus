@@ -215,6 +215,16 @@ Only a person may do this. It needs the Search screen (I3) merged.
    is still unverified (core/README.md).
 8. Profile → **Clear verification** → confirm, then search again. The sheet opens again.
 
+## Copy
+
+Every word a reader sees or hears comes from `design/copy.json`, the one wording both apps share
+([docs §7.1](../docs/native-apps.md): glossary and style rules). Use the generated
+`LibreSpydus/Core/Copy.swift` (`Copy.Picks.title`, `Copy.Search.results(count: n)`). Don't edit
+it by hand. Change the JSON, then run `design/scripts/gen_copy.py` (`--check` fails when the file
+is out of date). `design/scripts/check_copy.py` lists every user-facing literal left in app code.
+Exempt a line that has to stay with `// copy-exempt: <reason>`. `#if DEBUG` code is skipped. How
+each conflict was settled is in `design/copy-decisions.md`.
+
 ## App core in brief
 
 - **`LibraryBackend`** is the only API screens use: every `SpydusClient` method plus `origin`
