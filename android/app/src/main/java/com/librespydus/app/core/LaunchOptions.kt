@@ -11,7 +11,10 @@ import android.content.Intent
  * demo account refresh fail like an unreachable library.
  * Alerts (§5.8): `--ez ls_morning_check_now true` runs the 07:45 morning check once the launch's
  * account refresh has settled; with `ls_demo`, `--ez ls_demo_new_ready true` makes one more
- * reservation ready to collect on the demo account's next refresh (after the launch's own).
+ * reservation ready to collect on the demo account's next refresh (after the launch's own);
+ * with `ls_demo`, `--ez ls_demo_post_alerts true` posts one of each alert from the demo account
+ * once it has loaded (a ready reservation, a one-loan and a several-loan due reminder), so their
+ * taps (§5.8 "Tap") can be tried.
  *
  * ```
  * adb -s emulator-5554 shell am start -n com.librespydus.app/.MainActivity \
@@ -27,6 +30,7 @@ data class LaunchOptions(
     val demoRefreshFails: Boolean = false,
     val demoNewReady: Boolean = false,
     val morningCheckNow: Boolean = false,
+    val demoPostAlerts: Boolean = false,
 ) {
     val isEmpty: Boolean get() = origin == null && route == null && !demo && !reset && !morningCheckNow
 
@@ -39,6 +43,7 @@ data class LaunchOptions(
         const val EXTRA_DEMO_REFRESH_FAILS = "ls_demo_refresh_fails"
         const val EXTRA_DEMO_NEW_READY = "ls_demo_new_ready"
         const val EXTRA_MORNING_CHECK_NOW = "ls_morning_check_now"
+        const val EXTRA_DEMO_POST_ALERTS = "ls_demo_post_alerts"
 
         /** From an activity intent; always empty unless [debug]. */
         fun fromIntent(intent: Intent?, debug: Boolean): LaunchOptions {
@@ -60,6 +65,7 @@ data class LaunchOptions(
             demoRefreshFails = flag(extras[EXTRA_DEMO_REFRESH_FAILS]),
             demoNewReady = flag(extras[EXTRA_DEMO_NEW_READY]),
             morningCheckNow = flag(extras[EXTRA_MORNING_CHECK_NOW]),
+            demoPostAlerts = flag(extras[EXTRA_DEMO_POST_ALERTS]),
         )
 
         private fun flag(value: Any?): Boolean = when (value) {

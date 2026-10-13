@@ -52,10 +52,10 @@ class MainActivity : ComponentActivity() {
         appState.applyLaunchOptions(LaunchOptions.fromIntent(intent, BuildConfig.DEBUG))
     }
 
-    /** A tapped alert (§5.8) opens Your Books on its segment (once: the extra is then removed). */
+    /** A tapped alert (§5.8 "Tap") opens its book page over Your Books (once: its extras are then removed). */
     private fun openAlert(intent: Intent?) {
-        val segment = AlertIntents.segment(intent) ?: return
-        intent?.removeExtra(AlertIntents.EXTRA_OPEN_BORROWED)
-        appState.openFromAlert(segment)
+        val tap = AlertIntents.tap(intent) ?: return
+        AlertIntents.consume(intent)
+        appState.openFromAlert(tap)
     }
 }

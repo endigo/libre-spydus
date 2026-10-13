@@ -105,6 +105,7 @@ Intent extras read by `MainActivity` (`core/LaunchOptions.kt`, docs §5.6):
 | `--ez ls_demo_refresh_fails true` | with `ls_demo`: every demo account refresh fails like an unreachable library ("Couldn’t refresh · Showing the saved list" over a saved demo account) |
 | `--ez ls_morning_check_now true` | run the 07:45 morning check (docs §5.8) through WorkManager now, once the launch's own account refresh has settled |
 | `--ez ls_demo_new_ready true` | with `ls_demo`: the "In transit" reservation (Baby-sitters club) becomes ready at Riverton Library from the demo account's second refresh on, so a "Ready to collect" alert can be shown |
+| `--ez ls_demo_post_alerts true` | with `ls_demo`: once the demo account has loaded, posts one of each alert whatever the switches say (needs the notification permission): "Ready to collect" for the first ready reservation, the reminder for the first due date (one loan) and one naming every loan with a reminder (on the last of their dates), to try their taps (docs §5.8 "Tap") |
 | `--ez ls_open_card true` | with `ls_demo`: Home opens My card once (`feature/mycard/MyCardDebugHooks.kt`) |
 | `--es ls_demo_card <number>` | with `ls_demo`: the demo card number instead of `DEMO0012345`; `none` → no number (the card asks for one). Quote non-ASCII values: `"--es ls_demo_card 'CL114Ä'"` |
 
@@ -187,8 +188,16 @@ Open Settings shows.
   `remindOn` is today (once per key per day, from the saved account if the fetch failed) and
   replaces itself with the next 07:45 (REPLACE).
 - `core/AlertsAndroid.kt`: channels `ready` / `due`, notification tag = the §5.8 id
-  (`ready:<originHash>:<key>`, `due:<originHash>:<YYYY-MM-DD>`), tap → `MainActivity` with
-  `ls_open_borrowed` → `AppState.openFromAlert` → Your Books on Reservations / Loans.
+  (`ready:<originHash>:<key>`, `due:<originHash>:<YYYY-MM-DD>`). Each kind's alerts form a group
+  whose summary (shown by the system from two alerts up) opens Your Books on that kind's list.
+- Tap (§5.8 "Tap", `core/AlertTap.kt`): each notification's PendingIntent (its own data URI
+  `librespydus://alert/<id>` and request code) carries `ls_open_borrowed` (`reservations` /
+  `loans`), `ls_alert_kind` (`ready` / `due`), `ls_alert_origin` and `ls_alert_keys` (the
+  `patronItemKey`s). `MainActivity` → `AppState.openFromAlert`, which waits for the restore (the
+  saved account is loaded first on a cold launch), then `AlertRouting`: one key found on the saved
+  account's list → Your Books on that list with the row's book page pushed over it
+  (`BookRef.from(item)`, as tapping the row), else just the list (several loans, item gone,
+  another library, signed out, or an intent from an older build with only `ls_open_borrowed`).
 - Sign-out and an expired session forget that library's keys and remove its notifications.
 
 ```sh
@@ -197,6 +206,10 @@ adb -s emulator-5556 shell am start -S -n com.librespydus.app/.MainActivity --es
   --ez ls_demo true --ez ls_demo_new_ready true --ez ls_morning_check_now true
 adb -s emulator-5556 shell am broadcast -a androidx.work.diagnostics.REQUEST_DIAGNOSTICS -p com.librespydus.app
 adb -s emulator-5556 logcat -s MorningCheck Alerts WM-DiagnosticsWrkr
+# Taps: one of each alert at once, then tap them in the shade (Home first, so the app is in the background)
+adb -s emulator-5556 shell pm grant com.librespydus.app android.permission.POST_NOTIFICATIONS
+adb -s emulator-5556 shell am start -S -n com.librespydus.app/.MainActivity --es ls_origin https://canning.spydus.com \
+  --ez ls_demo true --ez ls_demo_post_alerts true
 ```
 
 ## My card (docs §5.9)
@@ -325,7 +338,7 @@ in `contentDescription` through `Copy.A11y.labelAndHint`. How each conflict was 
 | `core/CoreHelpers.kt` | A1 | seams for the P helpers (`userAgent`, `isDigitalFormat`, `availabilitySummary`, `homeGenres`, `homeShelves`) and `LibraryDirectory` |
 | `core/LaunchOptions.kt` | A1 | DEBUG intent extras |
 | `core/PicksStore.kt`, `core/DemoPicks.kt` | A10 | My Picks (§5.11): `PicksStore` (set, list, save/remove, copy offer, notices), `PickIrn`, `PicksText`, `PicksOfferStore`; the demo Pick list |
-| `core/Alerts.kt`, `core/AlertsContent.kt`, `core/AlertsAndroid.kt`, `core/MorningCheckWorker.kt` | A7 | ready-to-collect alerts and due-date reminders (§5.8): processor + stores, wording and 07:45 maths, channels/permission/tap intent, the WorkManager morning check |
+| `core/Alerts.kt`, `core/AlertsContent.kt`, `core/AlertsAndroid.kt`, `core/MorningCheckWorker.kt`, `core/AlertTap.kt` | A7 (+ A13) | ready-to-collect alerts and due-date reminders (§5.8): processor + stores, wording and 07:45 maths, channels/permission/tap intent and groups, the WorkManager morning check; a tap's payload and where it opens (`AlertTap`, `AlertRouting`) |
 | `ui/theme/` | A1 | `design/tokens.json` as `LsColors`, `LsType`, `LsRadius`, `LsSpacing`, `LsCover`, `LsTabBar`; `LsIcons` |
 | `ui/components/` | A1 | `CoverImage`, `ShelfCover`, `BookRowCard`, `SectionHeader`, `SearchField`, `PrimaryPillButton`, `SecondaryPillButton`, `CircleIconButton`, `LsTopBar`, `GenreTile`, `Chip`, `SegmentedToggle`, `LoadingView`, `EmptyStateView`, `ErrorStateView`, `PlaceholderScreen`, `LsTabBar`, `ComponentGallery` |
 | `ui/nav/` | A1 | `LibreSpydusRoot` (splash, onboarding, tabs, AppState-driven sheets), one `NavHost` per tab, `AppNavigator`, `LocalAppState` |

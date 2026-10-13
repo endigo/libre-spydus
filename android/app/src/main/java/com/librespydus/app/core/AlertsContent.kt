@@ -4,6 +4,7 @@ import com.librespydus.app.feature.borrowed.ReservationRow
 import uniffi.librespydus_core.DueReminder
 import uniffi.librespydus_core.PatronItem
 import uniffi.librespydus_core.SimpleDate
+import uniffi.librespydus_core.patronItemKey
 import java.time.Duration
 import java.time.LocalDate
 import java.time.LocalTime
@@ -21,9 +22,17 @@ enum class AlertKind(val channelId: String, val channelName: String, val opens: 
 /**
  * One local notification. [id] is `ready:<originHash>:<key>` or `due:<originHash>:<YYYY-MM-DD>`
  * (the Android notification tag), the same identifiers iOS uses. A tap opens Your Books on
- * [kind]'s segment.
+ * [kind]'s segment and the book page of the one item [keys] names (§5.8 "Tap", [AlertTap]):
+ * [origin] is the library, [keys] the `patronItemKey`s of the reservation or the loans.
  */
-data class AlertNotification(val id: String, val kind: AlertKind, val title: String, val body: String)
+data class AlertNotification(
+    val id: String,
+    val kind: AlertKind,
+    val title: String,
+    val body: String,
+    val origin: String,
+    val keys: List<String>,
+)
 
 /**
  * What the alerts say (§5.8), word for word the same on iOS. Pure, so the wording is unit-tested
@@ -62,12 +71,15 @@ object AlertText {
         }
     }
 
-    fun ready(originHash: String, key: String, item: PatronItem) =
-        AlertNotification("ready:$originHash:$key", AlertKind.READY, Copy.Alerts.readyTitle, readyBody(item))
+    fun ready(originHash: String, origin: String, key: String, item: PatronItem) =
+        AlertNotification("ready:$originHash:$key", AlertKind.READY, Copy.Alerts.readyTitle, readyBody(item), origin, listOf(key))
 
-    fun due(originHash: String, reminder: DueReminder, today: LocalDate): AlertNotification {
+    fun due(originHash: String, origin: String, reminder: DueReminder, today: LocalDate): AlertNotification {
         val due = reminder.due.toLocalDate()
-        return AlertNotification("due:$originHash:$due", AlertKind.DUE, dueTitle(due, today), dueBody(reminder.items))
+        return AlertNotification(
+            "due:$originHash:$due", AlertKind.DUE, dueTitle(due, today), dueBody(reminder.items),
+            origin, reminder.items.map(::patronItemKey),
+        )
     }
 
     private fun String?.nonBlank(): String? = this?.trim()?.takeIf { it.isNotEmpty() }
