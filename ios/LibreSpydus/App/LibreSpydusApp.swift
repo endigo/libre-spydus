@@ -4,8 +4,8 @@ import SwiftUI
 struct LibreSpydusApp: App {
     @State private var model: AppModel
     @Environment(\.scenePhase) private var scenePhase
-    /// Alerts show as banners in the app and a tap opens Your Books (§5.8). The notification centre
-    /// holds its delegate weakly, so the app keeps it.
+    /// Alerts show as banners in the app and a tap opens the book over Your Books (§5.8). The
+    /// notification centre holds its delegate weakly, so the app keeps it.
     private let notificationRouter: AlertNotificationRouter
 
     init() {
@@ -21,9 +21,10 @@ struct LibreSpydusApp: App {
         if options.reset {
             dependencies.resetPersistentState()
         }
+        // The model loads the saved account first, so a tap that launches the app finds its book.
         let model = AppModel(dependencies: dependencies)
-        notificationRouter = AlertNotificationRouter.install { [weak model] segment in
-            model?.openYourBooks(on: segment)
+        notificationRouter = AlertNotificationRouter.install { [weak model] tap in
+            model?.openAlert(tap)
         }
         #if DEBUG
         options.apply(to: model)

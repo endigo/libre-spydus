@@ -21,7 +21,19 @@ import Foundation
 ///   second refresh on, so a "Ready to collect" alert can be shown.
 /// - `-LSAlertTime HH:mm`: due reminders show (and the morning check is scheduled) at this time
 ///   instead of 07:45, to see a reminder arrive.
+/// - `-LSDemoAlert ready|due|due-several` (with `-LSDemo`): a few seconds after launch, show one
+///   alert from the demo account, to tap it (`AppModel.postDemoAlert`).
 struct LaunchOptions: Equatable, Sendable {
+    /// `-LSDemoAlert`: which demo alert to show.
+    enum DemoAlert: String, Equatable, Sendable {
+        /// "Ready to collect" for the first ready reservation.
+        case ready
+        /// The first due-date reminder naming one loan.
+        case due
+        /// A due-date reminder naming every loan due from today on.
+        case dueSeveral = "due-several"
+    }
+
     enum LaunchRoute: Equatable, Sendable {
         case home
         case search(String)
@@ -78,6 +90,7 @@ struct LaunchOptions: Equatable, Sendable {
     var demoNewReady = false
     /// `-LSAlertTime HH:mm` as hour and minute; nil: 07:45.
     var alertTime: DateComponents?
+    var demoAlert: DemoAlert?
 
     /// This process's options; always empty in release builds.
     static var current: LaunchOptions {
@@ -112,6 +125,7 @@ struct LaunchOptions: Equatable, Sendable {
             case "-LSMorningCheckNow": options.morningCheckNow = isYes(value)
             case "-LSDemoNewReady": options.demoNewReady = isYes(value)
             case "-LSAlertTime": options.alertTime = time(value)
+            case "-LSDemoAlert": options.demoAlert = DemoAlert(rawValue: value.lowercased())
             default:
                 index = next
                 continue
@@ -167,6 +181,12 @@ extension LaunchOptions {
                 // After the launch refresh (this joins it), so the check fetches the account again.
                 await model.refreshAccount()
                 await model.runMorningCheck()
+            }
+        }
+        if let demoAlert, model.isDemo {
+            Task {
+                await model.refreshAccount()
+                await model.postDemoAlert(demoAlert)
             }
         }
     }

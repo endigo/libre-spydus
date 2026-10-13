@@ -11,6 +11,71 @@ struct AlertNotification: Equatable, Sendable {
     var body: String
     /// When it shows: a local date and time (a calendar trigger), or nil for at once.
     var at: DateComponents?
+    /// What a tap opens (§5.8 Tap), kept in the notification's `userInfo`.
+    var payload: AlertPayload
+}
+
+/// What a notification names, so a tap can open it (docs/native-apps.md §5.8 Tap): its kind, its
+/// library and the `patronItemKey`s of the reservation or loans it is about. Kept in `userInfo` as
+/// `kind` ("ready" / "due"), `origin` and `keys`.
+struct AlertPayload: Equatable, Sendable {
+    var kind: AlertCenter.Kind
+    var origin: String
+    var keys: [String]
+
+    private static let kindKey = "kind"
+    private static let originKey = "origin"
+    private static let keysKey = "keys"
+
+    var userInfo: [String: Any] {
+        [Self.kindKey: kind.rawValue, Self.originKey: origin, Self.keysKey: keys]
+    }
+}
+
+extension AlertPayload {
+    /// Read back from a notification's `userInfo`; nil without one (posted by an older build).
+    init?(userInfo: [AnyHashable: Any]) {
+        guard let kind = (userInfo[Self.kindKey] as? String).flatMap(AlertCenter.Kind.init(rawValue:)),
+              let origin = userInfo[Self.originKey] as? String else { return nil }
+        self.init(kind: kind, origin: origin, keys: userInfo[Self.keysKey] as? [String] ?? [])
+    }
+}
+
+/// A tapped notification, as `AppModel.openAlert` routes it (§5.8 Tap).
+struct AlertTap: Equatable, Sendable {
+    var kind: AlertCenter.Kind
+    /// The notification's library, as `AlertContent.originHash(origin)`.
+    var originHash: String
+    /// The `patronItemKey`s it names; empty when they aren't known.
+    var keys: [String]
+
+    /// The list of Your Books it opens: Reservations for a ready alert, Loans for a due reminder.
+    var segment: BorrowedViewModel.Segment {
+        switch kind {
+        case .ready: .reservations
+        case .due: .loans
+        }
+    }
+}
+
+extension AlertTap {
+    init(_ payload: AlertPayload) {
+        self.init(kind: payload.kind, originHash: AlertContent.originHash(payload.origin), keys: payload.keys)
+    }
+
+    /// Reads a tapped notification: its payload, else (posted by an older build, without one) its
+    /// ID: `ready:<originHash>:<key>` names its reservation, `due:<originHash>:<date>` no loan. Nil
+    /// for an ID that isn't an alert's.
+    init?(notificationID id: String, userInfo: [AnyHashable: Any]) {
+        if let payload = AlertPayload(userInfo: userInfo) {
+            self.init(payload)
+            return
+        }
+        // The key itself may contain ":" (`bib:<IRN>`, `title:<title>`).
+        let parts = id.split(separator: ":", maxSplits: 2, omittingEmptySubsequences: false).map(String.init)
+        guard parts.count == 3, let kind = AlertCenter.Kind(rawValue: parts[0]), !parts[1].isEmpty else { return nil }
+        self.init(kind: kind, originHash: parts[1], keys: kind == .ready ? [parts[2]] : [])
+    }
 }
 
 /// Whether the app may show notifications (Settings → LibreSpydus → Notifications).
@@ -85,6 +150,7 @@ struct SystemNotifications: NotificationScheduling {
         content.sound = .default
         // Ready alerts and due reminders stack separately in Notification Centre.
         content.threadIdentifier = notification.id.hasPrefix("due:") ? "due" : "ready"
+        content.userInfo = notification.payload.userInfo
         let trigger = notification.at.map { UNCalendarNotificationTrigger(dateMatching: $0, repeats: false) }
         do {
             try await center.add(UNNotificationRequest(identifier: notification.id, content: content, trigger: trigger))
@@ -189,18 +255,19 @@ private final class LaunchGate: @unchecked Sendable {
     }
 }
 
-/// Shows alerts as banners while the app is open (`willPresent`) and opens Your Books on the
-/// right segment when one is tapped. Installed as the notification centre's delegate at launch,
-/// so a tap that launches the app is routed too. The centre holds its delegate weakly: keep it.
+/// Shows alerts as banners while the app is open (`willPresent`) and, when one is tapped, opens
+/// what it names (`AlertTap`, routed by `AppModel.openAlert`). Installed as the notification centre's
+/// delegate at launch, once the model has loaded the saved account, so a tap that launches the app
+/// is routed too. The centre holds its delegate weakly: keep it.
 final class AlertNotificationRouter: NSObject, UNUserNotificationCenterDelegate, Sendable {
-    private let open: @MainActor @Sendable (BorrowedViewModel.Segment) -> Void
+    private let open: @MainActor @Sendable (AlertTap) -> Void
 
-    private init(open: @escaping @MainActor @Sendable (BorrowedViewModel.Segment) -> Void) {
+    private init(open: @escaping @MainActor @Sendable (AlertTap) -> Void) {
         self.open = open
     }
 
     /// Makes the router the notification centre's delegate.
-    static func install(open: @escaping @MainActor @Sendable (BorrowedViewModel.Segment) -> Void) -> AlertNotificationRouter {
+    static func install(open: @escaping @MainActor @Sendable (AlertTap) -> Void) -> AlertNotificationRouter {
         let router = AlertNotificationRouter(open: open)
         UNUserNotificationCenter.current().delegate = router
         return router
@@ -216,13 +283,15 @@ final class AlertNotificationRouter: NSObject, UNUserNotificationCenterDelegate,
 
     func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse,
                                 withCompletionHandler completionHandler: @escaping () -> Void) {
-        let segment = response.actionIdentifier == UNNotificationDefaultActionIdentifier
-            ? AlertContent.segment(forNotificationID: response.notification.request.identifier) : nil
+        let request = response.notification.request
+        let tap = response.actionIdentifier == UNNotificationDefaultActionIdentifier
+            ? AlertTap(notificationID: request.identifier, userInfo: request.content.userInfo) : nil
+        AlertLog.print("tapped \(request.identifier): \(tap.map { "\($0.kind) \($0.keys)" } ?? "not an alert")")
         let open = self.open
         let done = UncheckedSendable(completionHandler)
         DispatchQueue.main.async {
             MainActor.assumeIsolated {
-                if let segment { open(segment) }
+                if let tap { open(tap) }
             }
             done.value()
         }

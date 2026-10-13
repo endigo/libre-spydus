@@ -1,6 +1,6 @@
 import Foundation
 
-/// The alert switches and the morning check (docs/native-apps.md §5.8) on `AppModel`.
+/// The alert switches, a tapped alert and the morning check (docs/native-apps.md §5.8) on `AppModel`.
 extension AppModel {
     /// The morning check gives up waiting after this; iOS allows an app-refresh task about 30 s.
     static let morningCheckLimit: Duration = .seconds(25)
@@ -15,6 +15,23 @@ extension AppModel {
     func setDueAlerts(_ on: Bool) async {
         await alerts.setDue(on, origin: library == nil ? nil : backend.origin, saved: account.snapshot)
         rescheduleMorningCheck()
+    }
+
+    /// A tapped alert (§5.8 Tap): Your Books on its list (Reservations / Loans) with the book page of
+    /// the reservation or loan it names pushed on top, built from the saved account the way tapping
+    /// that row opens it, so Back lands on the list. Just the list when the alert names several
+    /// loans, an item no longer in the account or none (an older build's due reminder), or belongs
+    /// to another library than the selected one. At launch the saved account is already loaded
+    /// (`AccountStore.use` reads it in `init`), so a tap that launches the app opens the book too.
+    func openAlert(_ tap: AlertTap) {
+        openYourBooks(on: tap.segment)
+        guard library != nil, tap.originHash == AlertContent.originHash(backend.origin),
+              let snapshot = account.snapshot, let ref = AlertContent.book(for: tap, in: snapshot) else {
+            AlertLog.print("tap: Your Books › \(tap.segment.rawValue)")
+            return
+        }
+        AlertLog.print("tap: Your Books › \(tap.segment.rawValue) › \(ref.id)")
+        push(.detail(ref), on: .borrowed)
     }
 
     /// Submits the morning check for the next 07:45 while signed in with a switch on, else cancels

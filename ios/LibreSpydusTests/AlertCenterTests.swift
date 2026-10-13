@@ -18,7 +18,8 @@ actor FakeNotifications: NotificationScheduling {
         self.status = status
         self.grants = grants
         self.pending = Dictionary(uniqueKeysWithValues: pending.map {
-            ($0, AlertNotification(id: $0, title: "old", body: "old", at: DateComponents(hour: 7, minute: 45)))
+            ($0, AlertNotification(id: $0, title: "old", body: "old", at: DateComponents(hour: 7, minute: 45),
+                                   payload: AlertPayload(kind: $0.hasPrefix("due:") ? .due : .ready, origin: "old", keys: [])))
         })
         self.delivered = delivered
     }
@@ -109,8 +110,10 @@ struct AlertCenterTests {
         let second = AlertFixtures.ready("19000009", nil, fields: [:])
         await center.process(AlertFixtures.snapshot(ready: [midnight, hollow, second]), origin: origin)
         #expect(await notifications.added == [
-            AlertNotification(id: "ready:\(hash):19000003", title: "Ready to collect", body: "Hollow bones · Riverton Library"),
-            AlertNotification(id: "ready:\(hash):19000009", title: "Ready to collect", body: "A reservation"),
+            AlertNotification(id: "ready:\(hash):19000003", title: "Ready to collect", body: "Hollow bones · Riverton Library",
+                              payload: AlertPayload(kind: .ready, origin: origin, keys: ["19000003"])),
+            AlertNotification(id: "ready:\(hash):19000009", title: "Ready to collect", body: "A reservation",
+                              payload: AlertPayload(kind: .ready, origin: origin, keys: ["19000009"])),
         ])
         #expect(center.alertedKeys(originHash: hash) == ["19000001", "19000003", "19000009"])
 
@@ -241,10 +244,12 @@ struct AlertCenterTests {
         let gregorian = Calendar(identifier: .gregorian)
         #expect(await notifications.added == [
             AlertNotification(id: "due:\(hash):2026-10-20", title: "Due Tuesday 20 Oct", body: "The Love Library",
-                              at: DateComponents(calendar: gregorian, year: 2026, month: 10, day: 18, hour: 7, minute: 45)),
+                              at: DateComponents(calendar: gregorian, year: 2026, month: 10, day: 18, hour: 7, minute: 45),
+                              payload: AlertPayload(kind: .due, origin: origin, keys: ["3"])),
             AlertNotification(id: "due:\(hash):2026-10-25", title: "Due Sunday 25 Oct",
                               body: "Everything to the sea and The secret thread",
-                              at: DateComponents(calendar: gregorian, year: 2026, month: 10, day: 23, hour: 7, minute: 45)),
+                              at: DateComponents(calendar: gregorian, year: 2026, month: 10, day: 23, hour: 7, minute: 45),
+                              payload: AlertPayload(kind: .due, origin: origin, keys: ["4", "5"])),
         ])
         // The old reminder (a renewed loan) is gone; another library's and the ready ones stay.
         #expect(await notifications.pendingIDs() == [
@@ -369,7 +374,8 @@ struct AlertAppModelTests {
         await model.runMorningCheck()
         #expect(await notifications.added == [AlertNotification(
             id: "ready:\(AlertFixtures.hash):\(DemoFixtures.newReadyIrn)", title: "Ready to collect",
-            body: "Hollow bones · Riverton Library")])
+            body: "Hollow bones · Riverton Library",
+            payload: AlertPayload(kind: .ready, origin: AlertFixtures.origin, keys: [DemoFixtures.newReadyIrn]))])
         #expect(model.account.snapshot?.reservations.ready.items.count == 2)
         if case .submit = morningCheck.last {} else { Issue.record("next morning check not scheduled") }
         // A foreground refresh afterwards: nothing new.
@@ -450,6 +456,9 @@ struct AlertAppModelTests {
         #expect(LaunchOptions.parse(["-LSAlertTime", "25:00"]).alertTime == nil)
         #expect(LaunchOptions.parse(["-LSAlertTime", "7.45"]).alertTime == nil)
         #expect(!LaunchOptions.parse([]).morningCheckNow)
+        #expect(LaunchOptions.parse(["-LSDemoAlert", "due-several"]).demoAlert == .dueSeveral)
+        #expect(LaunchOptions.parse(["-LSDemoAlert", "Ready"]).demoAlert == .ready)
+        #expect(LaunchOptions.parse(["-LSDemoAlert", "overdue"]).demoAlert == nil)
     }
 
     @Test func demoNewReadyArrivesOnTheSecondRefresh() async throws {

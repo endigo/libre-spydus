@@ -101,10 +101,11 @@ struct AlertContentTests {
         #expect(!AlertContent.belongs("due:\(AlertContent.originHash("https://other.spydus.com")):2026-03-05", toOriginHash: hash))
     }
 
-    @Test func aTapOpensTheRightYourBooksSegment() {
-        #expect(AlertContent.segment(forNotificationID: "ready:abc:19000001") == .reservations)
-        #expect(AlertContent.segment(forNotificationID: "due:abc:2026-10-15") == .loans)
-        #expect(AlertContent.segment(forNotificationID: "something-else") == nil)
+    @Test func aTapOpensTheRightYourBooksList() {
+        // More in AlertTapTests.
+        #expect(AlertTap(notificationID: "ready:abc:19000001", userInfo: [:])?.segment == .reservations)
+        #expect(AlertTap(notificationID: "due:abc:2026-10-15", userInfo: [:])?.segment == .loans)
+        #expect(AlertTap(notificationID: "something-else", userInfo: [:]) == nil)
     }
 
     // MARK: Time
