@@ -42,6 +42,10 @@ final class CoreBackend: LibraryBackend {
         try await timed("related") { try await client.related(url: url) }
     }
 
+    func cardBarcodeSymbology() async -> BarcodeSymbology {
+        await timed("cardBarcodeSymbology") { await client.cardBarcodeSymbology() }
+    }
+
     func login(username: String, password: String) async throws -> String {
         try await timed("login") { try await client.login(username: username, password: password) }
     }

@@ -18,6 +18,8 @@ actor DemoBackend: LibraryBackend {
     static let username = "demo"
     static let password = "demo"
     static let session = "demo-session"
+    /// The demo account's library card number (§5.9), kept in memory.
+    static let cardNumber = "DEMO0012345"
     /// The core's `ACCOUNT_SNAPSHOT_VERSION` (not exported; DemoBackendTests round-trips a demo
     /// snapshot through `decodeAccountSnapshot`, which fails if the core moves on).
     static let snapshotVersion: UInt32 = 1
@@ -97,6 +99,12 @@ actor DemoBackend: LibraryBackend {
 
     func related(url: String) async throws -> RelatedList {
         try await publicBackend.related(url: url)
+    }
+
+    /// The library's own symbology: a public GET of its mobile config (Canning Code 128,
+    /// Cumberland Code 39), like the real app.
+    func cardBarcodeSymbology() async -> BarcodeSymbology {
+        await publicBackend.cardBarcodeSymbology()
     }
 
     // MARK: Account → fixtures

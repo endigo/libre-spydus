@@ -25,6 +25,18 @@ final class AppModel {
     var accountName: String? { account.snapshot?.accountName }
     var isSignedIn: Bool { session != nil }
 
+    // MARK: Library card (§5.9)
+
+    /// The library card number for the selected library: the one entered on the card sheet, else
+    /// the account's own. Nil: the card sheet asks for it.
+    var cardNumber: String? { Self.cardNumber(saved: savedCardNumber, account: accountCardNumber) }
+    /// Entered or edited on the card sheet; Keychain per origin (in memory in demo mode). Deleted on
+    /// sign-out, kept when the session expires.
+    private(set) var savedCardNumber: String?
+    /// The card number the library account itself lists (its Personal details page). The account
+    /// snapshot doesn't carry it yet, so nil; read it from `account.snapshot` here once it does.
+    var accountCardNumber: String? { nil }
+
     // MARK: Local data
 
     let favourites: FavouritesStore
@@ -72,6 +84,8 @@ final class AppModel {
     /// Bumped whenever `backend` is replaced, so late results for an old library are dropped.
     @ObservationIgnored private var backendGeneration = 0
     @ObservationIgnored private var verificationCompletions: [String: Int] = [:]
+    /// Each library's card barcode symbology once read, so the card shows at once after the first open.
+    @ObservationIgnored private var cardSymbologies: [String: BarcodeSymbology] = [:]
 
     init(dependencies: Dependencies) {
         self.dependencies = dependencies
@@ -185,7 +199,37 @@ final class AppModel {
     }
 
     func signOut() {
+        // The card number goes with the account; an expired session (`report`) keeps it.
+        dependencies.cardNumbers.setValue(nil, for: backend.origin)
+        savedCardNumber = nil
         clearSession()
+    }
+
+    /// Saves the number entered on the card sheet for this library (trimmed); a blank one is
+    /// deleted. It wins over the account's own number.
+    func setCardNumber(_ number: String?) {
+        let trimmed = number?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let value = trimmed?.isEmpty == false ? trimmed : nil
+        dependencies.cardNumbers.setValue(value, for: backend.origin)
+        savedCardNumber = value
+    }
+
+    /// The selected library's card barcode symbology if it has been read before, else nil.
+    var knownCardSymbology: BarcodeSymbology? { cardSymbologies[backend.origin] }
+
+    /// Asks the library which symbology its card scanners read (one public GET, cached in the
+    /// core) and remembers it for `knownCardSymbology`.
+    func loadCardSymbology() async -> BarcodeSymbology {
+        let backend = self.backend
+        let symbology = await backend.cardBarcodeSymbology()
+        cardSymbologies[backend.origin] = symbology
+        return symbology
+    }
+
+    /// `saved` (entered on the card) wins over `account` (the library's own record); blank is none.
+    nonisolated static func cardNumber(saved: String?, account: String?) -> String? {
+        let candidates = [saved, account].compactMap { $0?.trimmingCharacters(in: .whitespacesAndNewlines) }
+        return candidates.first { !$0.isEmpty }
     }
 
     /// Fetches the account snapshot (name, loans, reservations) now, or only when it's out of
@@ -330,11 +374,14 @@ final class AppModel {
         if let verificationCookie { backend.setVerificationCookie(verificationCookie) }
         if library == nil {
             session = nil
+            savedCardNumber = nil
         } else if isDemo {
-            // Demo mode starts signed in as the fixture's "Test Borrower".
+            // Demo mode starts signed in as the fixture's "Test Borrower", with its card.
             session = dependencies.sessions.value(for: origin) ?? DemoBackend.session
+            savedCardNumber = dependencies.cardNumbers.value(for: origin) ?? DemoBackend.cardNumber
         } else {
             session = dependencies.sessions.value(for: origin)
+            savedCardNumber = dependencies.cardNumbers.value(for: origin)
         }
         account.use(origin: library == nil ? nil : origin, session: session, backend: backend)
         favourites.load(origin: library == nil ? nil : origin)
@@ -382,9 +429,11 @@ extension AppModel {
         /// The notification centre, background task scheduler and clock the alerts use; nothing
         /// reaches the system unless set (tests).
         var alertSystem: AlertSystem = .inert
+        /// Library card numbers entered on the card sheet, per origin (§5.9).
+        var cardNumbers: any SecretStore = InMemorySecretStore()
 
-        /// The app's real stores. Demo mode keeps its session in memory (never the Keychain), and
-        /// its account too unless `persistDemoAccount` (then in a folder of its own).
+        /// The app's real stores. Demo mode keeps its session and card number in memory (never the
+        /// Keychain), and its account too unless `persistDemoAccount` (then in a folder of its own).
         /// `demoNewReady` (DEBUG `-LSDemoNewReady`): the demo account has one more reservation ready
         /// from its second refresh on. `alertTime` (DEBUG `-LSAlertTime`) replaces 07:45.
         static func live(demo: Bool, persistDemoAccount: Bool = false, demoRefreshFails: Bool = false,
@@ -404,17 +453,19 @@ extension AppModel {
                         ? DemoBackend.live(origin: origin, failsAccountSnapshot: demoRefreshFails, addsReadyOnNextRefresh: demoNewReady)
                         : CoreBackend(origin: origin)
                 },
-                alertSystem: .live(alertTime: alertTime)
+                alertSystem: .live(alertTime: alertTime),
+                cardNumbers: demo ? InMemorySecretStore() : KeychainSecretStore(service: "com.librespydus.card")
             )
         }
 
-        /// `-LSReset`: forget the library, every session, verification, favourite, recent search,
-        /// saved account and alert setting.
+        /// `-LSReset`: forget the library, every session, verification, card number, favourite,
+        /// recent search, saved account and alert setting.
         func resetPersistentState() {
             defaults.removeObject(forKey: AppModel.libraryKey)
             defaults.removeObject(forKey: "LibreSpydus.recentSearches") // RecentSearchStore.defaultsKey
             sessions.removeAll()
             verificationCookies.removeAll()
+            cardNumbers.removeAll()
             FavouritesStore.deleteAll(in: favouritesDirectory)
             if let accountCacheDirectory { AccountSnapshotCache.deleteAll(in: accountCacheDirectory) }
             AlertCenter.deleteAll(in: defaults)
