@@ -9,6 +9,9 @@ import android.content.Intent
  * `--ez ls_demo_persist true` saves the demo account on the device (normally demo data stays in
  * memory), so a cold relaunch shows it at once; `--ez ls_demo_refresh_fails true` makes every
  * demo account refresh fail like an unreachable library.
+ * Alerts (§5.8): `--ez ls_morning_check_now true` runs the 07:45 morning check once the launch's
+ * account refresh has settled; with `ls_demo`, `--ez ls_demo_new_ready true` makes one more
+ * reservation ready to collect on the demo account's next refresh (after the launch's own).
  *
  * ```
  * adb -s emulator-5554 shell am start -n com.librespydus.app/.MainActivity \
@@ -22,8 +25,10 @@ data class LaunchOptions(
     val reset: Boolean = false,
     val demoPersist: Boolean = false,
     val demoRefreshFails: Boolean = false,
+    val demoNewReady: Boolean = false,
+    val morningCheckNow: Boolean = false,
 ) {
-    val isEmpty: Boolean get() = origin == null && route == null && !demo && !reset
+    val isEmpty: Boolean get() = origin == null && route == null && !demo && !reset && !morningCheckNow
 
     companion object {
         const val EXTRA_ORIGIN = "ls_origin"
@@ -32,6 +37,8 @@ data class LaunchOptions(
         const val EXTRA_RESET = "ls_reset"
         const val EXTRA_DEMO_PERSIST = "ls_demo_persist"
         const val EXTRA_DEMO_REFRESH_FAILS = "ls_demo_refresh_fails"
+        const val EXTRA_DEMO_NEW_READY = "ls_demo_new_ready"
+        const val EXTRA_MORNING_CHECK_NOW = "ls_morning_check_now"
 
         /** From an activity intent; always empty unless [debug]. */
         fun fromIntent(intent: Intent?, debug: Boolean): LaunchOptions {
@@ -51,6 +58,8 @@ data class LaunchOptions(
             reset = flag(extras[EXTRA_RESET]),
             demoPersist = flag(extras[EXTRA_DEMO_PERSIST]),
             demoRefreshFails = flag(extras[EXTRA_DEMO_REFRESH_FAILS]),
+            demoNewReady = flag(extras[EXTRA_DEMO_NEW_READY]),
+            morningCheckNow = flag(extras[EXTRA_MORNING_CHECK_NOW]),
         )
 
         private fun flag(value: Any?): Boolean = when (value) {

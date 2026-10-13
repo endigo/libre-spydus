@@ -89,7 +89,8 @@ private enum class AccountLoad { IDLE, LOADING, FAILED }
 
 /**
  * Profile (docs/native-apps.md §6): the library card + Change library, the account (Sign in /
- * Sign out), human verification for libraries that needed it, About, and (DEBUG) demo mode.
+ * Sign out), notifications while signed in (§5.8), human verification for libraries that needed
+ * it, About, and (DEBUG) demo mode.
  */
 @Composable
 fun ProfileScreen(appState: AppState, navigator: AppNavigator, modifier: Modifier = Modifier) {
@@ -158,6 +159,7 @@ fun ProfileScreen(appState: AppState, navigator: AppNavigator, modifier: Modifie
                 onSignIn = appState::requestLogin,
                 onSignOut = { confirmingSignOut = true },
             )
+            if (signedIn) NotificationsSection(appState)
             if (verified) VerificationSection(libraryName, onClear = { confirmingClear = true })
         } else {
             EmptyStateView(

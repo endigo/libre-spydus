@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -19,6 +20,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
+import uniffi.librespydus_core.AccountSnapshot
 import uniffi.librespydus_core.LibraryInfo
 import uniffi.librespydus_core.SpydusException
 import java.io.File
@@ -48,12 +50,15 @@ class AppState(
     private val io: CoroutineDispatcher = Dispatchers.IO,
     accountStorage: AccountSnapshotStorage = InMemoryAccountSnapshotStorage(),
     now: () -> Long = System::currentTimeMillis,
+    /** "Ready to collect" alerts and due-date reminders (§5.8). */
+    val alerts: Alerts = Alerts.inMemory(io),
 ) {
     private val ops = Mutex()
 
-    /** DEBUG demo options (`ls_demo_persist`, `ls_demo_refresh_fails`), see [LaunchOptions]. */
+    /** DEBUG demo options (`ls_demo_persist`, `ls_demo_refresh_fails`, `ls_demo_new_ready`), see [LaunchOptions]. */
     private var demoPersist = false
     private var demoRefreshFails = false
+    private var demoNewReady = false
 
     /** One backend (one `SpydusClient`) per origin, kept for the app's lifetime. */
     private val clients = mutableMapOf<String, LibraryBackend>()
@@ -94,7 +99,7 @@ class AppState(
      * The signed-in borrower's account, saved on the device per library and refreshed in the
      * background (§5.2a). Your Books, Home's loans shelf and the account name read it.
      */
-    val account = AccountStore(scope, accountStorage, report = ::report, now = now, io = io)
+    val account = AccountStore(scope, accountStorage, report = ::report, now = now, io = io, onRefreshed = ::accountRefreshed)
 
     /** The borrower's name, e.g. "Test Borrower": from [account]'s snapshot, else [refreshAccount]. */
     val accountName: StateFlow<String?> =
@@ -151,6 +156,7 @@ class AppState(
                 favourites.load()
                 libraryStore.get()?.let { activate(it) }
                 _ready.value = true
+                updateMorningCheck()
             }
         }
     }
@@ -190,7 +196,11 @@ class AppState(
         val cookie = withContext(io) { secrets.get(verifyKey(origin)) }
         core.setVerificationCookie(cookie)
         val demo = _isDemo.value
-        val backend = if (demo) DemoBackend(core, withContext(io) { loadDemoData(origin) }, refreshFails = demoRefreshFails) else core
+        val backend = if (demo) {
+            DemoBackend(core, withContext(io) { loadDemoData(origin) }, refreshFails = demoRefreshFails, newReady = demoNewReady)
+        } else {
+            core
+        }
         val session = if (demo) DemoBackend.SESSION else withContext(io) { secrets.get(sessionKey(origin)) }
         val key = cacheKey(backend)
         val saved = if (session != null && key != null) account.loadSaved(key) else null
@@ -208,6 +218,7 @@ class AppState(
         _accountGeneration.update { it + 1 }
         _verificationGeneration.update { it + 1 }
         if (session != null) account.refresh(force = true)
+        updateMorningCheck()
     }
 
     /**
@@ -250,16 +261,20 @@ class AppState(
             _loginNeeded.value = false
             _accountGeneration.update { it + 1 }
             account.refresh(force = true)
+            updateMorningCheck()
         }
     }
 
     /** Signs out of the selected library and deletes its saved account (other libraries keep theirs). */
     suspend fun signOut() {
-        val origin = _backend.value?.origin ?: return
+        val backend = _backend.value ?: return
+        val origin = backend.origin
         _session.value = null
         _fallbackName.value = null
         val forgotten = account.discard()
+        updateMorningCheck()
         withContext(io) { secrets.put(sessionKey(origin), null) }
+        alerts.forget(alertScope(backend))
         forgotten.join()
         _accountGeneration.update { it + 1 }
     }
@@ -304,6 +319,68 @@ class AppState(
     }
 
     // endregion
+    // region Alerts (§5.8)
+
+    /**
+     * Profile's "Ready to collect" switch (after the notification permission was granted). On:
+     * what the saved account already has ready counts as alerted, so only what becomes ready
+     * later is announced.
+     */
+    suspend fun setReadyAlerts(on: Boolean) {
+        val backend = _backend.value
+        val snapshot = account.snapshot.value.takeIf { _session.value != null }
+        alerts.setReadyEnabled(on, backend?.let(::alertScope), snapshot)
+        updateMorningCheck()
+    }
+
+    /** Profile's "Due-date reminders" switch (after the notification permission was granted). */
+    suspend fun setDueReminders(on: Boolean) {
+        alerts.setDueEnabled(on)
+        updateMorningCheck()
+    }
+
+    /**
+     * The 07:45 morning check ([MorningCheckWorker]): once the app has restored its state, fetches
+     * the account with the saved session (joining a refresh already running, e.g. the one a cold
+     * start begins) and saves it like any refresh, which raises "Ready to collect" alerts. Then
+     * posts today's due reminders from the account it has, fresh or saved. Silent on failure;
+     * `NotLoggedIn` signs out as anywhere else in the app.
+     */
+    suspend fun morningCheck() = scope.async {
+        ready.first { it }
+        val backend = _backend.value ?: return@async
+        if (_session.value == null || !alerts.anyEnabled) return@async
+        account.refresh(force = true)?.join()
+        if (backend !== _backend.value || _session.value == null) return@async
+        val snapshot = account.snapshot.value ?: return@async
+        alerts.postDueReminders(alertScope(backend), snapshot)
+    }.await()
+
+    /** The end of a morning check: schedules the next one (or none, signed out / switches off). */
+    fun scheduleNextMorningCheck() {
+        alerts.scheduleNext(signedIn = _session.value != null)
+    }
+
+    /** A notification was tapped: Your Books on [segment], once the app has restored its state. */
+    fun openFromAlert(segment: BorrowedSegment) {
+        scope.launch { ops.withLock { openBorrowed(segment) } }
+    }
+
+    /** Every fresh account snapshot (foreground, pull to refresh, after a change, morning check). */
+    private suspend fun accountRefreshed(backend: LibraryBackend, snapshot: AccountSnapshot) {
+        alerts.process(alertScope(backend), snapshot)
+    }
+
+    /** The morning check is scheduled while signed in with a switch on (§5.8). */
+    private fun updateMorningCheck() {
+        alerts.updateSchedule(signedIn = _session.value != null)
+    }
+
+    /** The library [Alerts] files [backend]'s keys under; demo data under its own. */
+    private fun alertScope(backend: LibraryBackend): String =
+        if (backend.isDemo) "demo:${backend.origin}" else backend.origin
+
+    // endregion
     // region Errors & verification
 
     /**
@@ -314,13 +391,17 @@ class AppState(
         when (error) {
             is SpydusException.HumanVerificationRequired -> _verificationNeeded.value = true
             is SpydusException.NotLoggedIn -> {
-                val origin = _backend.value?.origin
+                val backend = _backend.value
                 if (_session.value != null) {
                     _session.value = null
                     _fallbackName.value = null
                     account.discard()
                     _accountGeneration.update { it + 1 }
-                    if (origin != null) scope.launch(io) { secrets.put(sessionKey(origin), null) }
+                    updateMorningCheck()
+                    if (backend != null) {
+                        scope.launch(io) { secrets.put(sessionKey(backend.origin), null) }
+                        scope.launch { alerts.forget(alertScope(backend)) }
+                    }
                 }
                 _loginNeeded.value = true
             }
@@ -432,6 +513,7 @@ class AppState(
                     _isDemo.value = true
                     demoPersist = options.demoPersist
                     demoRefreshFails = options.demoRefreshFails
+                    demoNewReady = options.demoNewReady
                 }
                 val origin = options.origin
                 when {
@@ -443,6 +525,14 @@ class AppState(
                     options.demo || options.reset -> _library.value?.let { activate(it) }
                 }
                 options.route?.let(::applyRoute)
+                if (options.morningCheckNow) {
+                    // Once the launch's own refresh has settled, so the check fetches a new account.
+                    val launchRefresh = account.runningRefresh
+                    scope.launch {
+                        launchRefresh?.join()
+                        alerts.runMorningCheckNow()
+                    }
+                }
             }
         }
     }
@@ -453,6 +543,7 @@ class AppState(
         favourites.clear()
         account.bind(null, null, null)
         account.deleteAllSaved()
+        alerts.reset()
         clients.values.forEach { it.setVerificationCookie(null) }
         _library.value = null
         _backend.value = null
@@ -534,6 +625,11 @@ class AppState(
                         today = LocalDate.now(),
                     )
                 },
+                alerts = Alerts(
+                    store = SharedPreferencesAlertStore(app.getSharedPreferences(SharedPreferencesAlertStore.PREFS_NAME, Context.MODE_PRIVATE)),
+                    notifier = AndroidAlertNotifier(app),
+                    scheduler = WorkManagerMorningCheck(app),
+                ),
             )
         }
     }
