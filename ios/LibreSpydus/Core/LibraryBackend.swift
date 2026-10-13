@@ -57,6 +57,17 @@ protocol LibraryBackend: Sendable {
     func cancelReservation(url: String, session: String) async throws -> ReserveResult
     func editOptions(url: String, session: String) async throws -> EditOptions
     func editReservation(url: String, session: String, overrides: EditOverrides) async throws -> ReserveResult
+
+    // MARK: My Picks (§5.11; needs a session, not cached)
+
+    /// The reader's Pick list ("My Picks") as a results list: `url` nil for the first page, else its
+    /// `nextPageUrl`. Empty → `noResults`. Each record's `workIrn` is the IRN to remove.
+    func picks(session: String, url: String?) async throws -> SearchResults
+    /// MUTATING, only on the reader's tap: saves a card's `workIrn` or a record's `bibIrn` to the
+    /// list; returns the list's new size.
+    func savePick(irn: String, session: String) async throws -> Int64
+    /// MUTATING, only on the reader's tap: removes `irn` from the list; returns how many remain.
+    func removePick(irn: String, session: String) async throws -> Int64
 }
 
 extension LibraryBackend {
@@ -67,6 +78,14 @@ extension LibraryBackend {
     func featured() async throws -> [FeaturedLink] { [] }
     func collection(url: String) async throws -> FeaturedCollection { FeaturedCollection(title: nil, sections: []) }
     func holdings(url: String) async throws -> [Holding] { [] }
+
+    /// An empty Pick list that never changes, for a backend without one (test fakes).
+    func picks(session: String, url: String?) async throws -> SearchResults {
+        SearchResults(query: "", setId: nil, totalResults: 0, showing: nil, nextPageUrl: nil, prevPageUrl: nil,
+                      noResults: true, records: [])
+    }
+    func savePick(irn: String, session: String) async throws -> Int64 { 0 }
+    func removePick(irn: String, session: String) async throws -> Int64 { 0 }
 }
 
 /// Result ordering for search / `Route.results`; `newest` = most recently added to the catalogue.

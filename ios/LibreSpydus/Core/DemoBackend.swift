@@ -15,6 +15,12 @@ import LibreSpydusCore
 /// refreshing state is visible, and reflects those changes. With `addsReadyOnNextRefresh` (DEBUG
 /// `-LSDemoNewReady`) one more reservation is ready from the second `accountSnapshot` on, so a
 /// "Ready to collect" alert can be shown (docs/native-apps.md §5.8).
+///
+/// My Picks (§5.11) is an in-memory list seeded with two demo records (`seedPickIrns`: "The Midnight
+/// Library" as a work with two formats, "The Love Library" as an edition-level card the way Featured
+/// lists show them); `savePick` adds a card for any IRN this backend has seen (search, page and
+/// record results, the demo catalogue), `removePick` takes it out, both after `mutationDelay`, and
+/// an emptied list is a genuine `noResults` page.
 actor DemoBackend: LibraryBackend {
     static let username = "demo"
     static let password = "demo"
@@ -44,6 +50,18 @@ actor DemoBackend: LibraryBackend {
     private var reservable: [String: (record: SearchRecord, format: RecordFormat)] = [:]
     private var reservedUrls: Set<String> = []
     private var nextIrn = 19_100_000
+    /// The demo account's Pick list, in the order saved.
+    private var pickList: [SearchRecord]
+    /// Search records seen through this backend, by `workIrn`, and records by `bibIrn`: what
+    /// `savePick` lists for an IRN.
+    private var seenRecords: [String: SearchRecord] = [:]
+    private var seenDetails: [String: RecordDetail] = [:]
+
+    /// The demo Pick list's first entries: a work ("The Midnight Library", Book and Large Print) and
+    /// an edition ("The Love Library", edition-level like a Featured list's card).
+    static let seedPickIrns = (work: "15642035", edition: "19242648")
+    /// Records per Pick list page, as the library's `NRECS=20`.
+    static let picksPageSize = 20
 
     init(publicBackend: any LibraryBackend, fixtures: DemoFixtures, mutationDelay: Duration = .milliseconds(600),
          snapshotDelay: Duration = .milliseconds(1500), failsAccountSnapshot: Bool = false,
@@ -55,6 +73,7 @@ actor DemoBackend: LibraryBackend {
         self.snapshotDelay = snapshotDelay
         self.failsAccountSnapshot = failsAccountSnapshot
         self.addsReadyOnNextRefresh = addsReadyOnNextRefresh
+        pickList = Self.seedPicks(fixtures.catalogue, origin: publicBackend.origin)
     }
 
     /// The demo backend the app uses: real public reads for `origin`, bundled account fixtures.
@@ -96,8 +115,14 @@ actor DemoBackend: LibraryBackend {
     }
 
     func record(url: String) async throws -> RecordDetail {
-        if let record = fixtures.catalogue.record(url: url) { return record }
-        return try await publicBackend.record(url: url)
+        let record: RecordDetail
+        if let demo = fixtures.catalogue.record(url: url) {
+            record = demo
+        } else {
+            record = try await publicBackend.record(url: url)
+        }
+        if let irn = record.bibIrn.nonEmpty { seenDetails[irn] = record }
+        return record
     }
 
     func related(url: String) async throws -> RelatedList {
@@ -250,6 +275,96 @@ actor DemoBackend: LibraryBackend {
         return ReserveResult(ok: true, message: "Reservation updated.")
     }
 
+    // MARK: My Picks → in memory
+
+    func picks(session: String, url: String?) async throws -> SearchResults {
+        try check(session)
+        try await Task.sleep(for: mutationDelay)
+        let size = Self.picksPageSize
+        let pageNumber = url.flatMap(Self.picksPage) ?? 1
+        let start = min((pageNumber - 1) * size, pickList.count)
+        let records = pickList[start..<min(start + size, pickList.count)].enumerated().map { offset, record in
+            var record = record
+            record.rank = Int64(start + offset + 1)
+            return record
+        }
+        let next = start + size < pickList.count ? Self.picksURL(origin: origin, page: pageNumber + 1) : nil
+        let previous = pageNumber > 1 ? Self.picksURL(origin: origin, page: pageNumber - 1) : nil
+        return remember(SearchResults(query: nil, setId: DemoCatalogue.setId, totalResults: Int64(pickList.count),
+                                      showing: nil, nextPageUrl: next, prevPageUrl: previous,
+                                      noResults: pickList.isEmpty, records: records))
+    }
+
+    func savePick(irn: String, session: String) async throws -> Int64 {
+        try check(session)
+        try await Task.sleep(for: mutationDelay)
+        guard PickIrn.validated(irn) == irn else { throw SpydusError.Parse(message: "not an IRN: \(irn)") }
+        if !pickList.contains(where: { $0.workIrn == irn }) {
+            // The library's answer for an IRN it doesn't have.
+            guard let card = pickCard(irn: irn) else { throw SpydusError.Upstream(message: "None found") }
+            pickList.append(card)
+        }
+        return Int64(pickList.count)
+    }
+
+    func removePick(irn: String, session: String) async throws -> Int64 {
+        try check(session)
+        try await Task.sleep(for: mutationDelay)
+        guard PickIrn.validated(irn) == irn else { throw SpydusError.Parse(message: "not an IRN: \(irn)") }
+        pickList.removeAll { $0.workIrn == irn }
+        return Int64(pickList.count)
+    }
+
+    /// The card the Pick list shows for `irn`: a results card seen with that `workIrn` (a work, or a
+    /// Featured list's edition), a demo work, else an edition-level card for a demo edition or a
+    /// record seen with that `bibIrn`.
+    private func pickCard(irn: String) -> SearchRecord? {
+        if let record = seenRecords[irn] { return record }
+        let catalogue = fixtures.catalogue
+        if let work = catalogue.works.first(where: { $0.record.workIrn == irn }) { return work.record }
+        if let work = catalogue.works.first(where: { $0.editions.contains { $0.bibIrn == irn } }),
+           let edition = work.editions.first(where: { $0.bibIrn == irn }) {
+            return Self.editionCard(irn: irn, record: edition.record, work: work.record, origin: origin)
+        }
+        return seenDetails[irn].map { Self.editionCard(irn: irn, record: $0, work: nil, origin: origin) }
+    }
+
+    private static func seedPicks(_ catalogue: DemoCatalogue, origin: String) -> [SearchRecord] {
+        let work = catalogue.works.first { $0.record.workIrn == seedPickIrns.work }?.record
+        let edition = catalogue.works.lazy.compactMap { work in
+            work.editions.first { $0.bibIrn == seedPickIrns.edition }.map { (work, $0) }
+        }.first.map { work, edition in
+            editionCard(irn: edition.bibIrn, record: edition.record, work: work.record, origin: origin)
+        }
+        return [work, edition].compactMap { $0 }
+    }
+
+    /// An edition as Featured and Pick lists show it (§5.10): its `workIrn` is the bib's IRN, and its
+    /// one format has no code or label, the card's reserve link and `…/BIBENQ?SETLVL=&IRN=…&FMT=RECFMT`.
+    static func editionCard(irn: String, record: RecordDetail, work: SearchRecord?, origin: String) -> SearchRecord {
+        let author = record.details.first { ["author", "creator"].contains($0.label.lowercased()) }?.values.first?.text
+        let base = "\(origin)/cgi-bin/spydus.exe"
+        return SearchRecord(
+            rank: 1, workIrn: irn, title: record.title.nonEmpty ?? work?.title,
+            detailUrl: "\(base)/FULL/OPAC/ALLENQ/\(DemoCatalogue.setId)/\(irn),1",
+            author: work?.author ?? author, authorRole: work?.authorRole, authorUrl: nil, year: work?.year,
+            language: work?.language, summary: nil, isbn: record.isbn ?? work?.isbn,
+            coverUrls: record.coverUrls.isEmpty ? work?.coverUrls ?? [] : record.coverUrls,
+            formats: [RecordFormat(code: "", label: nil,
+                                   reserveUrl: "\(base)/PGM/OPAC/CCOPT/\(DemoCatalogue.setId)/0/V/0/R/9/ALLENQ?SVL=\(irn)",
+                                   availabilityUrl: "\(base)/ENQ/OPAC/BIBENQ?SETLVL=&IRN=\(irn)&FMT=RECFMT")]
+        )
+    }
+
+    /// The demo list's page `page` (the library's own list is `SVL/OPAC/ALLENQ?ISGLB=1&NRECS=20`).
+    static func picksURL(origin: String, page: Int) -> String {
+        "\(origin)/cgi-bin/spydus.exe/SVL/OPAC/ALLENQ?ISGLB=1&NRECS=\(picksPageSize)&DEMOPAGE=\(page)"
+    }
+
+    private static func picksPage(_ url: String) -> Int? {
+        URLComponents(string: url)?.queryItems?.first { $0.name == "DEMOPAGE" }?.value.flatMap(Int.init)
+    }
+
     // MARK: Helpers
 
     private func check(_ session: String) throws {
@@ -260,6 +375,7 @@ actor DemoBackend: LibraryBackend {
 
     private func remember(_ results: SearchResults) -> SearchResults {
         for record in results.records {
+            if let irn = record.workIrn.nonEmpty { seenRecords[irn] = record }
             for format in record.formats {
                 if let reserveUrl = format.reserveUrl { reservable[reserveUrl] = (record, format) }
             }

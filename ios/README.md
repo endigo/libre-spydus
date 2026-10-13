@@ -120,7 +120,7 @@ Pass them as launch arguments (docs/native-apps.md §5.6):
 | `-LSCollectionItem "<section>\|<words>"` | a Featured collection scrolls to the section and opens its first item whose title has those words |
 | `-LSCollectionScrollTo <section>` | a Featured collection scrolls to that section |
 | `-LSCollectionOpenWebsite YES` | a collection without sections (eLibrary) taps "Open website" |
-| `-LSDetailAction <actions>` | the first book page, once loaded: `format:<code>`, `favourite`, `related`, `bottom`, `copies` (an edition-level item's Copies list), `open-related`, `reserve`, `confirm` (demo only) |
+| `-LSDetailAction <actions>` | the first book page, once loaded: `format:<code>`, `favourite` (signed out: a local favourite; signed in: saves to My Picks, demo mode only), `related`, `bottom`, `copies` (an edition-level item's Copies list), `open-related`, `reserve`, `confirm` (demo only) |
 
 `gallery` opens the **components gallery**, which shows every DesignSystem component on one
 screen. Example:
@@ -159,6 +159,13 @@ xcrun simctl launch --terminate-running-process "$UDID" com.librespydus -LSReset
   location. Reserving the same title twice gives `ok: false`.
 - **`accountSnapshot`** takes 1.5 s, so the refreshing state is visible, and reflects those
   changes. The account is never saved on the device in demo mode (see `-LSPersistDemoAccount`).
+- **My Picks** is an in-memory list seeded with "The Midnight Library" (a work: Book and Large
+  Print chips) and "The Love Library" (an edition-level card, as Featured lists show one; its
+  record and counts come from the demo catalogue offline). `savePick` (0.6 s) appends a card for
+  any IRN the backend has seen (search and page results, records it loaded, the demo works and
+  editions); an IRN it knows nothing about is `Upstream("None found")`, a non-numeric one `Parse`.
+  `removePick` takes it out; both return the new size, and an emptied list is a genuine
+  `noResults`. Pages of 20, like the library's. Relaunching starts from the two seeds again.
 
 Use demo mode to build and screenshot every account screen. Never sign in to a real library
 (docs/native-apps.md §2).
@@ -313,6 +320,37 @@ Only a person may do this. It needs the Search screen (I3) merged.
   synopsis (`BookDetailModel.copies` from `Availability.holdingsUrl` → `holdings`, `CopyRow`:
   branch in title case, status green when available, the library's note, call number).
   Favourites store the format with the item, so a saved one opens the same way.
+- **My Picks** (docs/native-apps.md §5.11): signed in, Favourites is the Pick list on the library
+  account and the book page's bookmark saves to it. `AppModel.picks` is a `PicksStore`, pointed at
+  the current origin and session like `AccountStore` (sign-out, an expired session and a library
+  change clear it). `refresh()` loads the first page of `LibraryBackend.picks(session:url:)`, then
+  the rest in the background up to 10 pages, collecting every record's `workIrn` into `irns`
+  (`contains(_:)`); later pages load as the list scrolls. It loads at launch, sign-in, library
+  change and verification (RootView's `.task(id: model.reloadKey)` → `loadIfNeeded()`), on pull
+  to refresh, and when Favourites comes on screen after a save it doesn't show yet (`isStale`).
+  A failed first load is the error state with Retry; a failed refresh keeps the rows and shows
+  the error as a notice.
+  `setPicked(_:irn:)` flips the IRN at once (a removed row leaves the list at once), calls
+  `savePick` / `removePick`, and flips back on failure; a change is laid over any load that
+  overlaps it. The IRN is `PickIrn.of(ref, record:)`: a `work:` / `bib:` key's IRN, else the loaded
+  record's `bibIrn` (`BookDetailModel.pickIrn`; the bookmark is disabled until it's known).
+  Confirmations ("Saved to My Picks", "Removed from My Picks", "Couldn't update My Picks.", the
+  copy's progress and summary) are `picks.notice`, shown by `PicksNoticeOverlay`, a toast above
+  the tab bar on any screen, and announced to VoiceOver; `NotLoggedIn` takes the usual
+  session-expired path instead. `MyPicksView` is a `List` of `SearchResultCard`s (the search row's
+  card; a list would give a navigation link a chevron) with swipe-to-delete, a long-press menu and
+  a VoiceOver action; signed out, `FavouritesView` shows `LocalFavouritesView`, unchanged.
+  **Copy once:** an interactive `signIn` (never a restored session) with local favourites for a
+  library not asked before sets `picksCopyOffer`; `PicksCopyOfferAlert` (RootView) asks "Add your
+  saved books to My Picks?" once the sign-in sheet has gone. It waits while the app isn't active
+  and comes back if something closed it unanswered (iOS's "Save Password?" prompt can, right after
+  a sign-in). Either answer is remembered per library (UserDefaults
+  `picks.copyOffered.<sha256(origin)>`, demo mode `picks.demo.…`, cleared by `-LSReset`); Add
+  (`PicksStore.copy`) saves the local favourites oldest first, one at a time, loading a `brn:` /
+  `url:` ref's record for its `bibIrn` (skipped without one), stops on a lost session, a
+  verification challenge or a lost connection, shows "Added {k} books to My Picks" (" · {m}
+  couldn't be added"; the error tone when none was added), reloads the list and keeps the local
+  favourites.
 - **Morning check:** the `BGAppRefreshTask` `com.librespydus.morning-check` (Info.plist
   `BGTaskSchedulerPermittedIdentifiers`, `UIBackgroundModes` `fetch`), handled by
   `.backgroundTask(.appRefresh(…))` on the app's scene. `earliestBeginDate` is the next 07:45; it's
@@ -346,6 +384,9 @@ the core's `SearchSort`); `SearchResults.isNoResults` → the core's `noResults`
 `readyAlerts(snapshot:alertedKeys:)`, `dueReminders(snapshot:today:daysBefore:)` and
 `patronItemKey(item:)`; `MyCardModel` → `cardBarcode(cardNumber:symbology:)` and
 `CoreBackend.cardBarcodeSymbology` → `client.cardBarcodeSymbology()`; `CoreBackend.featured` /
-`collection` / `holdings` → `client.featured()`, `client.collection(url:)`, `client.holdings(url:)`. Use `availabilitySummary(availability:)` for availability
+`collection` / `holdings` → `client.featured()`, `client.collection(url:)`, `client.holdings(url:)`;
+`CoreBackend.picks` / `savePick` / `removePick` → `client.picks(session:url:)`,
+`client.savePick(irn:session:)`, `client.removePick(irn:session:)` (never run against a real
+library by a worker: demo mode only, docs/native-apps.md §2). Use `availabilitySummary(availability:)` for availability
 labels and `homeShelves()` / `homeGenres()` for Home. "Reserve" depends on a format's
 `reserveUrl` only — some libraries (Brazoria County) accept holds on ebooks.

@@ -153,6 +153,12 @@ final class BookDetailModel {
         return accountHolding(snapshot: snapshot, bibIrns: irns)
     }
 
+    /// What My Picks keys this book on (§5.11): the opened card's or row's own IRN (`work:` / `bib:`),
+    /// else the loaded record's `bibIrn`; nil until the record has loaded (the bookmark waits).
+    var pickIrn: String? {
+        PickIrn.of(opened, record: record.value)
+    }
+
     /// What a favourite stores: the stable bookmark URL once the record is known, and the formats.
     var favouriteRef: BookRef {
         var saved = ref

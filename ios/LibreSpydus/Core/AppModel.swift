@@ -47,6 +47,12 @@ final class AppModel {
     // MARK: Local data
 
     let favourites: FavouritesStore
+    /// My Picks (§5.11): the Pick list on the library account, which Favourites shows (and the
+    /// bookmark saves to) while signed in.
+    let picks: PicksStore
+    /// After an interactive sign-in: offer once to add this library's local favourites to My Picks
+    /// (`PicksCopyOfferAlert`). Nil when there's nothing to offer.
+    private(set) var picksCopyOffer: PicksCopyOffer?
     /// "Ready to collect" alerts and due-date reminders (§5.8): the Profile switches and the
     /// processing of every fetched snapshot.
     let alerts: AlertCenter
@@ -108,7 +114,11 @@ final class AppModel {
         let alerts = AlertCenter(defaults: dependencies.defaults, system: dependencies.alertSystem,
                                  namespace: dependencies.isDemo ? AlertCenter.demoNamespace : AlertCenter.namespace)
         self.alerts = alerts
+        // Demo mode keeps its own "offered" flags, so it never changes the real ones.
+        picks = PicksStore(defaults: dependencies.defaults,
+                           namespace: dependencies.isDemo ? PicksStore.demoNamespace : PicksStore.namespace)
         account.report = { [weak self] error in self?.report(error) }
+        picks.report = { [weak self] error in self?.report(error) }
         account.didFetch = { snapshot, origin in await alerts.process(snapshot, origin: origin) }
         installSecrets()
     }
@@ -195,8 +205,28 @@ final class AppModel {
         loginNeeded = false
         accountGeneration += 1
         account.use(origin: backend.origin, session: token, backend: backend)
+        picks.use(origin: backend.origin, session: token, backend: backend)
+        offerPicksCopy()
         rescheduleMorningCheck()
         await account.refresh(force: true)
+    }
+
+    /// The reader answered the copy-once offer: remembered for this library either way. Add saves
+    /// the library's local favourites to My Picks, oldest first, and keeps them on the device.
+    func answerPicksCopyOffer(add: Bool) async {
+        guard let offer = picksCopyOffer else { return }
+        picksCopyOffer = nil
+        picks.markOffered(origin: offer.origin)
+        guard add, isSignedIn, offer.origin == backend.origin, favourites.origin == offer.origin else { return }
+        await picks.copy(Array(favourites.items.reversed()))
+    }
+
+    /// After an interactive sign-in (never a restored session): this library's local favourites,
+    /// if any, can go to My Picks, once.
+    private func offerPicksCopy() {
+        let origin = backend.origin
+        guard favourites.origin == origin, !favourites.items.isEmpty, !picks.wasOffered(origin: origin) else { return }
+        picksCopyOffer = PicksCopyOffer(origin: origin, count: favourites.items.count)
     }
 
     /// A hold was placed (or the account otherwise changed outside Your Books): the saved account
@@ -365,6 +395,7 @@ final class AppModel {
         paths = [:]
         pendingSearch = nil
         pendingBorrowedSegment = nil
+        picksCopyOffer = nil
         loginNeeded = false
         verificationNeeded = false
         installSecrets()
@@ -392,6 +423,7 @@ final class AppModel {
             savedCardNumber = dependencies.cardNumbers.value(for: origin)
         }
         account.use(origin: library == nil ? nil : origin, session: session, backend: backend)
+        picks.use(origin: library == nil ? nil : origin, session: session, backend: backend)
         favourites.load(origin: library == nil ? nil : origin)
     }
 
@@ -399,6 +431,8 @@ final class AppModel {
         dependencies.sessions.setValue(nil, for: backend.origin)
         session = nil
         account.clear(origin: backend.origin)
+        picks.use(origin: nil, session: nil, backend: backend)
+        picksCopyOffer = nil
         alerts.forget(origin: backend.origin)
         accountGeneration += 1
         rescheduleMorningCheck()
@@ -467,7 +501,7 @@ extension AppModel {
         }
 
         /// `-LSReset`: forget the library, every session, verification, card number, favourite,
-        /// recent search, saved account and alert setting.
+        /// recent search, saved account, alert setting and My Picks copy offer.
         func resetPersistentState() {
             defaults.removeObject(forKey: AppModel.libraryKey)
             defaults.removeObject(forKey: "LibreSpydus.recentSearches") // RecentSearchStore.defaultsKey
@@ -477,6 +511,7 @@ extension AppModel {
             FavouritesStore.deleteAll(in: favouritesDirectory)
             if let accountCacheDirectory { AccountSnapshotCache.deleteAll(in: accountCacheDirectory) }
             AlertCenter.deleteAll(in: defaults)
+            PicksStore.deleteAll(in: defaults)
         }
     }
 }

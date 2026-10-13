@@ -35,6 +35,8 @@ struct RootView: View {
             .allowsHitTesting(false)
             .accessibilityHidden(true)
         }
+        // My Picks' confirmations, above the tab bar on any screen (§5.11).
+        .overlay(alignment: .bottom) { PicksNoticeOverlay() }
         .safeAreaInset(edge: .bottom, spacing: 0) {
             LSTabBar(selection: model.selectedTab) { model.select($0) }
         }
@@ -66,6 +68,11 @@ struct RootView: View {
             // Launch and library change: the saved account is on screen; fetch a fresh one.
             await model.refreshAccount()
         }
+        .task(id: model.reloadKey) {
+            // Signed in (launch, sign-in, library change, verification): which books are in My Picks.
+            await model.picks.loadIfNeeded()
+        }
+        .picksCopyOfferAlert()
         .onChange(of: scenePhase) { _, phase in
             // Back in the app: refresh the account if it's more than a couple of minutes old.
             if phase == .active { Task { await model.refreshAccount(force: false) } }
