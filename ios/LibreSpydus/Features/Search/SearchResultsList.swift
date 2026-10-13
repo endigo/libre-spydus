@@ -8,14 +8,20 @@ struct SearchResultsList: View {
     let query: String
     /// Re-runs the first page (bumps the request's `attempt`).
     let retry: () -> Void
+    /// The empty state's title; default "No results for “<query>”".
+    var noResultsTitle: String?
 
     var body: some View {
         switch results.phase {
         case .idle, .loading:
             SearchSkeletonList()
         case .noResults:
-            EmptyStateView(systemImage: "text.magnifyingglass", title: "No results for “\(query)”",
-                           message: "Check the spelling, or try fewer or different words.")
+            if let noResultsTitle {
+                EmptyStateView(systemImage: "tray", title: noResultsTitle, message: "Check back soon.")
+            } else {
+                EmptyStateView(systemImage: "text.magnifyingglass", title: "No results for “\(query)”",
+                               message: "Check the spelling, or try fewer or different words.")
+            }
         case .failed(let error):
             // ErrorStateView hides Retry for errors that retrying can't fix.
             ErrorStateView(error: error, retry: retry)

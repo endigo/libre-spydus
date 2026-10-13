@@ -1,4 +1,5 @@
 import Foundation
+import LibreSpydusCore
 
 /// The five tabs (docs/native-apps.md §5.5), all ordinary tab-bar items.
 enum AppTab: String, CaseIterable, Hashable, Identifiable, Sendable {
@@ -48,6 +49,11 @@ enum Route: Hashable, Sendable {
     case detail(BookRef)
     /// A results list (`SearchResultsView(query:sort:title:)`), e.g. Home "View All" or a genre tile.
     case results(query: String, sort: SearchSortOption, title: String)
+    /// A Featured collection (`CollectionView(link:)`, §5.10): one shelf per section.
+    case collection(FeaturedLink)
+    /// A results list that starts from a URL (`ResultsPageView(url:title:)`): a Featured saved
+    /// search or a collection section's "View All". No sort toggle.
+    case resultsPage(url: String, title: String)
 }
 
 /// Root sheets presented by `RootView`, derived from `AppModel` flags.

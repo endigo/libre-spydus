@@ -2,8 +2,9 @@ import Foundation
 import LibreSpydusCore
 import Observation
 
-/// One search, paged: the first page from `searchSorted`, later pages from `nextPageUrl` → `page`
-/// (infinite scroll). Shared by the Search tab and `SearchResultsView`.
+/// One search, paged: the first page from `searchSorted` (or, for a results list given by URL,
+/// `page(url)`), later pages from `nextPageUrl` → `page` (infinite scroll). Shared by the Search
+/// tab, `SearchResultsView` and `ResultsPageView`.
 ///
 /// Records are merged without duplicates (`workIrn`, else `detailUrl`); each page URL is fetched
 /// at most once, and a result that arrives after a newer search started is dropped.
@@ -16,6 +17,9 @@ final class SearchResultsModel {
     struct Request: Hashable, Sendable {
         var query: String
         var sort: SearchSortOption
+        /// A results-list URL to start from (`page(url)`) instead of searching `query`: a Featured
+        /// saved search or collection section (§5.10).
+        var url: String? = nil
         var origin: String
         var verification: Int
         var attempt = 0
@@ -70,7 +74,13 @@ final class SearchResultsModel {
         requestedPages = []
 
         do {
-            let page = try await backend.searchSorted(query: request.query, sort: request.sort)
+            let page: SearchResults
+            if let url = request.url {
+                requestedPages.insert(url)
+                page = try await backend.page(url: url)
+            } else {
+                page = try await backend.searchSorted(query: request.query, sort: request.sort)
+            }
             guard generation == self.generation else { return }
             settledRequest = request
             if page.records.isEmpty {
@@ -171,7 +181,7 @@ struct SearchResultItem: Identifiable, Hashable, Sendable {
     /// `SearchResultsModel.dedupeKey`.
     let key: String?
     let ref: BookRef
-    /// Format chips, one per label.
+    /// Format chips, one per label; none for an edition-level item.
     let formats: [FormatRef]
 
     init(_ record: SearchRecord, key: String?, position: Int) {
@@ -179,6 +189,7 @@ struct SearchResultItem: Identifiable, Hashable, Sendable {
         self.key = key
         ref = BookRef(record)
         var labels = Set<String>()
-        formats = ref.formats.filter { labels.insert($0.displayLabel.lowercased()).inserted }
+        // An edition-level item's one unnamed format (Featured lists, §5.10) gets no chip.
+        formats = ref.formats.isEditionLevel ? [] : ref.formats.filter { labels.insert($0.displayLabel.lowercased()).inserted }
     }
 }

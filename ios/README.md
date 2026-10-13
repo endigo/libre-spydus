@@ -114,6 +114,13 @@ Pass them as launch arguments (docs/native-apps.md §5.6):
 | `-LSAlertTime HH:mm` | due reminders show, and the morning check is scheduled, at this time instead of 07:45, to watch a reminder arrive |
 | `-LSMyCard open` / `-LSMyCard edit` | while signed in: Home opens the "My card" sheet (`edit`: on its entry form, filled in) |
 | `-LSDemoCardNumber <number>` | with `-LSDemo YES`: the demo card number instead of `DEMO0012345`; `none` leaves no number, so the sheet asks for one |
+| `-LSHomeOpen <list>` | Home opens a list as if tapped: `arrivals`, `genre:<key>`, or `featured:<title>` (a Featured tile, e.g. `featured:Library of Things`, once the row has loaded) |
+| `-LSHomeScrollTo loans\|featured` | Home scrolls down to "Your borrowed books" / "Featured" |
+| `-LSCollectionOpen <section>` | a Featured collection opens that section's "View All" (e.g. `Musical Instruments`) |
+| `-LSCollectionItem "<section>\|<words>"` | a Featured collection scrolls to the section and opens its first item whose title has those words |
+| `-LSCollectionScrollTo <section>` | a Featured collection scrolls to that section |
+| `-LSCollectionOpenWebsite YES` | a collection without sections (eLibrary) taps "Open website" |
+| `-LSDetailAction <actions>` | the first book page, once loaded: `format:<code>`, `favourite`, `related`, `bottom`, `copies` (an edition-level item's Copies list), `open-related`, `reserve`, `confirm` (demo only) |
 
 `gallery` opens the **components gallery**, which shows every DesignSystem component on one
 screen. Example:
@@ -234,8 +241,9 @@ Only a person may do this. It needs the Search screen (I3) merged.
   created (`completeVerification(cookie:)`, `clearVerification()`). docs/native-apps.md §5.2
   asks for this persistence. core/README.md's advice to keep the token only in the web view's
   cookie store predates it.
-- **Navigation:** `Route.detail(BookRef)` and `Route.results(query:sort:title:)` are handled by
-  every tab's stack. Use `NavigationLink(value:)` or `model.push(_:on:)`.
+- **Navigation:** `Route.detail(BookRef)`, `Route.results(query:sort:title:)`,
+  `Route.collection(FeaturedLink)` and `Route.resultsPage(url:title:)` are handled by every tab's
+  stack. Use `NavigationLink(value:)` or `model.push(_:on:)`.
 - **`BookRef`** has initialisers from `SearchRecord`, `PatronItem` and `RelatedItem`, plus
   `init(url:)`. `updated(with: RecordDetail)` switches to the stable `bookmarkUrl` and keeps the
   favourite key. A ref from a `PatronItem` loads `patronItemRecordUrl(item:)` (the row's own
@@ -284,6 +292,27 @@ Only a person may do this. It needs the Search screen (I3) merged.
   across the card's full width. The screen goes to full brightness while the sheet is up
   (`BrightnessBoost`, restored on close and when the app leaves the foreground; DEBUG prints
   `🔆 card brightness …`).
+- **Featured collections** (docs/native-apps.md §5.10): `LibraryBackend.featured()`,
+  `collection(url:)` and `holdings(url:)` (`CoreBackend` forwards to the client, `DemoBackend` to
+  the real public backend; test fakes get defaults that return nothing). Home's "Featured" row
+  (`FeaturedRow`, `FeaturedRowModel`) loads on its own, keyed on origin + verification, between
+  "Popular genres" and "Your borrowed books"; it's hidden while loading, when the list is empty
+  (most libraries) and when it fails. Icons map the library's Font Awesome names
+  (`FeaturedIcon`, sparkles for anything else). A tile leads where `FeaturedDestination` says:
+  `.collection` → `CollectionView`, `.search` → `ResultsPageView` (the results list started from
+  `page(url)`: `SearchResultsModel.Request.url`, no sort menu), `.web` → the in-app browser
+  (`SFSafariViewController`, `.inAppBrowser($page)`, http(s) only). `CollectionModel` loads the
+  page, then one shelf per section from its first results page (≤ 20 covers) as the row comes
+  into view, at most 3 at a time (a row scrolled past before its turn waits until it's back);
+  empty sections are hidden, a failed one shows Retry in its row, and a page without sections
+  (eLibrary) shows "This collection is on the library's website." + **Open website**.
+  **Edition-level items** (every card in these lists: one format with an empty code and no label,
+  `[FormatRef].isEditionLevel`) get no format chip in results rows, on the book page or in the
+  reserve sheet; the book page loads the record from that format's `availabilityUrl` first
+  (`DetailRecordSource.candidateURLs`), never re-finds formats, and lists the copies under the
+  synopsis (`BookDetailModel.copies` from `Availability.holdingsUrl` → `holdings`, `CopyRow`:
+  branch in title case, status green when available, the library's note, call number).
+  Favourites store the format with the item, so a saved one opens the same way.
 - **Morning check:** the `BGAppRefreshTask` `com.librespydus.morning-check` (Info.plist
   `BGTaskSchedulerPermittedIdentifiers`, `UIBackgroundModes` `fetch`), handled by
   `.backgroundTask(.appRefresh(…))` on the app's scene. `earliestBeginDate` is the next 07:45; it's
@@ -316,6 +345,7 @@ the core's `SearchSort`); `SearchResults.isNoResults` → the core's `noResults`
 `BookDetailModel.holding(in:)` → `accountHolding(snapshot:bibIrns:)`; `AlertCenter` →
 `readyAlerts(snapshot:alertedKeys:)`, `dueReminders(snapshot:today:daysBefore:)` and
 `patronItemKey(item:)`; `MyCardModel` → `cardBarcode(cardNumber:symbology:)` and
-`CoreBackend.cardBarcodeSymbology` → `client.cardBarcodeSymbology()`. Use `availabilitySummary(availability:)` for availability
+`CoreBackend.cardBarcodeSymbology` → `client.cardBarcodeSymbology()`; `CoreBackend.featured` /
+`collection` / `holdings` → `client.featured()`, `client.collection(url:)`, `client.holdings(url:)`. Use `availabilitySummary(availability:)` for availability
 labels and `homeShelves()` / `homeGenres()` for Home. "Reserve" depends on a format's
 `reserveUrl` only — some libraries (Brazoria County) accept holds on ebooks.

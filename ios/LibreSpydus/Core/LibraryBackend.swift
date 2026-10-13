@@ -34,6 +34,14 @@ protocol LibraryBackend: Sendable {
     /// The symbology the library's card scanners read (§5.9): its mobile config's `barcodeType`,
     /// Code 128 when it has none or it can't be read. Never throws; cached in the core.
     func cardBarcodeSymbology() async -> BarcodeSymbology
+    /// The library's "Featured" collections from its OPAC home page, in order (§5.10); empty for
+    /// most libraries.
+    func featured() async throws -> [FeaturedLink]
+    /// A `.collection` link's page → its sections, each a results list for `page(url:)`; none for a
+    /// page of outside links (eLibrary).
+    func collection(url: String) async throws -> FeaturedCollection
+    /// Every copy of a record: an `Availability.holdingsUrl`.
+    func holdings(url: String) async throws -> [Holding]
 
     // MARK: Account (needs a session from `login`)
 
@@ -54,6 +62,11 @@ protocol LibraryBackend: Sendable {
 extension LibraryBackend {
     /// Code 128, the core's default, for a backend that doesn't ask the library (test fakes).
     func cardBarcodeSymbology() async -> BarcodeSymbology { .code128 }
+
+    /// No Featured list, collections or copies, for a backend that doesn't ask the library (test fakes).
+    func featured() async throws -> [FeaturedLink] { [] }
+    func collection(url: String) async throws -> FeaturedCollection { FeaturedCollection(title: nil, sections: []) }
+    func holdings(url: String) async throws -> [Holding] { [] }
 }
 
 /// Result ordering for search / `Route.results`; `newest` = most recently added to the catalogue.

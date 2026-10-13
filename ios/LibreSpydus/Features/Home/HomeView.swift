@@ -2,13 +2,17 @@ import LibreSpydusCore
 import SwiftUI
 
 /// Home: library logo (→ Profile), greeting with "My card" while signed in (→ the card sheet,
-/// §5.9), search field (→ Search tab), "New arrivals",
-/// "Popular genres" and "Your borrowed books". New arrivals loads with its own skeleton and error;
+/// §5.9), search field (→ Search tab), "New arrivals", "Popular genres", the library's own
+/// "Featured" collections (§5.10, only when it has some) and "Your borrowed books". New arrivals
+/// loads with its own skeleton and error, Featured on its own without either;
 /// the loans come from the saved account, shown at once and fetched again in the background when
 /// out of date. Pull to refresh; reloads on library, verification and sign-in changes.
 struct HomeView: View {
     @Environment(AppModel.self) private var model
     @State private var home = HomeViewModel()
+    @State private var featured = FeaturedRowModel()
+    /// A Featured `.web` link in the in-app browser.
+    @State private var browserPage: BrowserPage?
     @State private var showingCard = false
     /// The card sheet opens on its entry form (DEBUG `-LSMyCard edit`).
     @State private var cardStartsEditing = false
@@ -25,6 +29,10 @@ struct HomeView: View {
                         .padding(.horizontal, Theme.Spacing.l)
                     arrivalsSection
                     genresSection
+                    if featured.isVisible {
+                        FeaturedRow(links: featured.links) { open($0) }
+                            .id(Self.featuredID)
+                    }
                     loansSection
                         .id(Self.loansID)
                 }
@@ -43,8 +51,14 @@ struct HomeView: View {
                 .ignoresSafeArea(edges: .top)
                 .frame(height: 0)
         }
-        .refreshable { await home.refresh(model) }
+        .refreshable {
+            async let links: Void = featured.refresh(backend: model.backend, key: featuredKey)
+            await home.refresh(model)
+            await links
+        }
         .task(id: model.reloadKey) { await home.loadIfNeeded(model) }
+        .task(id: featuredKey) { await featured.loadIfNeeded(backend: model.backend, key: featuredKey) }
+        .inAppBrowser($browserPage)
         .onChange(of: model.selectedTab) { _, tab in
             // Back on Home: refresh the account in the background if it's out of date.
             guard tab == .home, model.isSignedIn else { return }
@@ -66,6 +80,21 @@ struct HomeView: View {
     }
 
     private static let loansID = "home.loans"
+    private static let featuredID = "home.featured"
+
+    /// Featured is public: a new library or verification reloads it, signing in doesn't.
+    private var featuredKey: FeaturedRowModel.Key {
+        FeaturedRowModel.Key(origin: model.backend.origin, verification: model.verificationGeneration)
+    }
+
+    /// A Featured tile: its collection or results list on Home's stack, or its web page.
+    private func open(_ link: FeaturedLink) {
+        switch FeaturedDestination(link) {
+        case .route(let route): model.push(route, on: .home)
+        case .web(let url): browserPage = BrowserPage(url: url)
+        case nil: break
+        }
+    }
 
     // MARK: Header
 
@@ -179,9 +208,11 @@ struct HomeView: View {
     }
 
     #if DEBUG
-    /// Evidence hooks: `-LSHomeOpen arrivals` / `-LSHomeOpen genre:<key>` opens that list as if
-    /// tapped; `-LSHomeScrollTo loans` scrolls down to "Your borrowed books"; `-LSMyCard open|edit`
-    /// opens the card sheet (on its entry form), after `-LSDemoCardNumber` (`MyCardDebugHooks`).
+    /// Evidence hooks: `-LSHomeOpen arrivals` / `-LSHomeOpen genre:<key>` /
+    /// `-LSHomeOpen featured:<title>` opens that list (or collection) as if tapped;
+    /// `-LSHomeScrollTo loans|featured` scrolls down to "Your borrowed books" / "Featured";
+    /// `-LSMyCard open|edit` opens the card sheet (on its entry form), after `-LSDemoCardNumber`
+    /// (`MyCardDebugHooks`).
     private func applyDebugHooks(_ proxy: ScrollViewProxy) async {
         guard !appliedDebugHook else { return }
         appliedDebugHook = true
@@ -191,6 +222,12 @@ struct HomeView: View {
                 model.push(route, on: .home)
             } else if hook.hasPrefix("genre:"), let genre = home.genres.first(where: { $0.key == hook.dropFirst(6) }) {
                 model.push(HomeViewModel.route(for: genre), on: .home)
+            } else if hook.hasPrefix("featured:") {
+                let title = hook.dropFirst("featured:".count)
+                await waitForFeatured()
+                if let link = featured.links.first(where: { $0.title.caseInsensitiveCompare(title) == .orderedSame }) {
+                    open(link)
+                }
             }
         }
         if let open = MyCardDebugHooks.apply(model) {
@@ -200,13 +237,25 @@ struct HomeView: View {
         if defaults.string(forKey: "LSHomeScrollTo") == "loans" {
             try? await Task.sleep(for: .milliseconds(1500))
             withAnimation { proxy.scrollTo(Self.loansID, anchor: .center) }
+        } else if defaults.string(forKey: "LSHomeScrollTo") == "featured" {
+            await waitForFeatured()
+            try? await Task.sleep(for: .milliseconds(800))
+            withAnimation { proxy.scrollTo(Self.featuredID, anchor: .center) }
+        }
+    }
+
+    /// Until the Featured row has tiles (at most 20 s).
+    private func waitForFeatured() async {
+        for _ in 0..<80 {
+            if featured.isVisible { return }
+            try? await Task.sleep(for: .milliseconds(250))
         }
     }
     #endif
 }
 
-/// One cover on a Home shelf.
-private struct ShelfEntry: Identifiable {
+/// One cover on a Home (or Featured collection) shelf.
+struct ShelfEntry: Identifiable {
     let ref: BookRef
     var caption: String?
     var captionColor: Color = Theme.Colors.textSecondary
@@ -216,8 +265,8 @@ private struct ShelfEntry: Identifiable {
     var id: String { ref.id }
 }
 
-/// A horizontal row of covers; tap → book detail.
-private struct CoverShelf: View {
+/// A horizontal row of covers; tap → book detail. Home's shelves and a Featured collection's.
+struct CoverShelf: View {
     let items: [ShelfEntry]
 
     var body: some View {

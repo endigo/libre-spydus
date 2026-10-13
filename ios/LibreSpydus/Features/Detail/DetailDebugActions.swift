@@ -7,13 +7,15 @@ import Foundation
 ///
 /// Applied once, to the first detail screen, after its record loads. Actions (comma-separated):
 /// `format:<code>` selects a format, `favourite` saves the book, `related` scrolls to the
-/// carousels, `bottom` to the end, `open-related` opens the first related item, `reserve` opens
-/// the reserve sheet and `confirm` also confirms it (demo mode only).
+/// carousels, `bottom` to the end, `copies` to an edition-level item's "Copies" list once it has
+/// loaded, `open-related` opens the first related item, `reserve` opens the reserve sheet and
+/// `confirm` also confirms it (demo mode only).
 struct DetailDebugActions: Equatable, Sendable {
     var formatCode: String?
     var favourite = false
     var scrollToRelated = false
     var scrollToBottom = false
+    var scrollToCopies = false
     var openRelated = false
     var reserve = false
     var confirm = false
@@ -26,6 +28,7 @@ struct DetailDebugActions: Equatable, Sendable {
             case "favourite", "favorite": favourite = true
             case "related": scrollToRelated = true
             case "bottom": scrollToBottom = true
+            case "copies": scrollToCopies = true
             case "open-related": openRelated = true
             case "reserve": reserve = true
             case "confirm": reserve = true; confirm = true
