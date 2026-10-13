@@ -318,7 +318,6 @@
     "loadingReservations": "Loading your reservations…",
     "noLoansTitle": "No loans right now",
     "noLoansMessage": "Books on loan from {library} show up here with their due dates.",
-    "renewalsSoon": "Renewals coming soon",
     "renew": "Renew",
     "renewLoan": "Renew loan",
     "loanSwipeHint": "Swipe left on a loan to renew it.",
@@ -369,7 +368,6 @@
     "refreshFailed": "Couldn’t refresh · Showing the saved list",
     "refreshHint": "Fetches your loans and reservations again",
     "_notes": {
-      "renewalsSoon": "Retired by the renew feature (§5.12): remove once neither app uses it.",
       "renew": "Swipe action / button on a loan, and the Renew dialog's confirming button (cancel button: common.notNow).",
       "renewLoan": "Menu item and screen-reader action on a loan row (like editReservation / cancelReservation).",
       "loanSwipeHint": "Footnote under the Loans list (replaces renewalsSoon); touchAndHold variant where the reservation footnote uses touchAndHoldHint.",

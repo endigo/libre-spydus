@@ -2,6 +2,11 @@ package com.librespydus.app.feature.borrowed
 
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.LocalActivity
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.scrollBy
@@ -78,6 +83,7 @@ import com.librespydus.app.ui.components.ErrorStateView
 import com.librespydus.app.ui.components.LoadingView
 import com.librespydus.app.ui.components.SectionHeader
 import com.librespydus.app.ui.components.SegmentedToggle
+import com.librespydus.app.ui.components.ToastPill
 import com.librespydus.app.ui.nav.AppNavigator
 import com.librespydus.app.ui.theme.LsColors
 import com.librespydus.app.ui.theme.LsIcons
@@ -93,7 +99,8 @@ import java.util.Date
  * "Your Books" (docs/native-apps.md §6 Borrowed): Loans | Reservations. Loans are sorted by due
  * date with the danger colour when due within 3 days or overdue; reservations show "Ready to
  * collect" first, then pending. A reservation's Edit (sheet) and Cancel (confirmed) sit behind a
- * swipe toward the leading edge, in its long-press menu and in its TalkBack actions.
+ * swipe toward the leading edge, in its long-press menu and in its TalkBack actions; so does a
+ * loan's Renew (confirmed, §5.12), whose progress and result show as a toast above the tab bar.
  *
  * Both lists come from the account store's snapshot (§5.2a): the saved one shows at once with
  * "Updated …" under the segments while a fresh one loads in the background (when it is over two
@@ -122,10 +129,13 @@ fun BorrowedScreen(appState: AppState, navigator: AppNavigator, modifier: Modifi
     val notice by model.notice.collectAsStateWithLifecycle()
     val confirming by model.confirmingCancel.collectAsStateWithLifecycle()
     val editing by model.editing.collectAsStateWithLifecycle()
+    val renewing by model.renewing.collectAsStateWithLifecycle()
+    val confirmingRenew by model.confirmingRenew.collectAsStateWithLifecycle()
+    val toast by model.toast.collectAsStateWithLifecycle()
     val refreshing by vm.refreshing.collectAsStateWithLifecycle()
     val libraryName = library?.name ?: Copy.Common.yourLibrary
     val listState = rememberLazyListState()
-    // The swiped-open reservation card (one at a time): closed by a scroll, a tap or a segment switch.
+    // The swiped-open card (one at a time): closed by a scroll, a tap or a segment switch.
     val swipe = remember { ReservationSwipeController() }
     val content = remember(snapshot, accountRefreshing, refreshError) {
         BorrowedContent.of(snapshot, accountRefreshing, refreshError, LocalDate.now())
@@ -161,6 +171,12 @@ fun BorrowedScreen(appState: AppState, navigator: AppNavigator, modifier: Modifi
         val id = notice?.id ?: return@LaunchedEffect
         delay(6_000)
         model.dismissNotice(id)
+    }
+    // "Renewing…" stays until the result replaces it; the result goes after a few seconds.
+    LaunchedEffect(toast?.id) {
+        val shown = toast ?: return@LaunchedEffect
+        delay(shown.tone.millis ?: return@LaunchedEffect)
+        model.dismissToast(shown.id)
     }
 
     PullToRefreshBox(
@@ -239,7 +255,15 @@ fun BorrowedScreen(appState: AppState, navigator: AppNavigator, modifier: Modifi
                 }
             }
             when (segment) {
-                BorrowedModel.Segment.LOANS -> loansContent(loans, libraryName, onRetry = vm::retry, onOpen = { navigator.openBook(it.ref) })
+                BorrowedModel.Segment.LOANS -> loansContent(
+                    loans,
+                    libraryName,
+                    renewing = renewing,
+                    swipe = swipe,
+                    onRetry = vm::retry,
+                    onOpen = { navigator.openBook(it.ref) },
+                    onRenew = model::askToRenew,
+                )
                 BorrowedModel.Segment.RESERVATIONS -> reservationsContent(
                     reservations,
                     busy = busy,
@@ -251,6 +275,13 @@ fun BorrowedScreen(appState: AppState, navigator: AppNavigator, modifier: Modifi
                 )
             }
         }
+        RenewToast(
+            toast,
+            onDismiss = model::dismissToast,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(start = LsSpacing.l, end = LsSpacing.l, bottom = LsSpacing.m),
+        )
     }
 
     confirming?.let { row ->
@@ -263,6 +294,23 @@ fun BorrowedScreen(appState: AppState, navigator: AppNavigator, modifier: Modifi
             },
             dismissButton = {
                 TextButton(onClick = { model.askToCancel(null) }) { Text(Copy.YourBooks.keepReservation, color = LsColors.textPrimary) }
+            },
+            containerColor = LsColors.surfaceElevated,
+            titleContentColor = LsColors.textPrimary,
+            textContentColor = LsColors.textSecondary,
+        )
+    }
+
+    confirmingRenew?.let { row ->
+        AlertDialog(
+            onDismissRequest = { model.askToRenew(null) },
+            title = { Text(Copy.YourBooks.renewTitle) },
+            text = { Text(RenewText.confirm(row)) },
+            confirmButton = {
+                TextButton(onClick = { vm.launch { renew(row) } }) { Text(Copy.YourBooks.renew, color = LsColors.primary) }
+            },
+            dismissButton = {
+                TextButton(onClick = { model.askToRenew(null) }) { Text(Copy.Common.notNow, color = LsColors.textPrimary) }
             },
             containerColor = LsColors.surfaceElevated,
             titleContentColor = LsColors.textPrimary,
@@ -358,8 +406,11 @@ private fun LazyListScope.stateItem(key: String, content: @Composable () -> Unit
 private fun LazyListScope.loansContent(
     loans: BorrowedLoad<List<LoanRow>>,
     libraryName: String,
+    renewing: Set<String>,
+    swipe: ReservationSwipeController,
     onRetry: () -> Unit,
     onOpen: (LoanRow) -> Unit,
+    onRenew: (LoanRow) -> Unit,
 ) {
     when (loans) {
         BorrowedLoad.Idle, BorrowedLoad.Loading -> stateItem("loans-loading") { LoadingView(message = Copy.YourBooks.loadingLoans) }
@@ -373,13 +424,15 @@ private fun LazyListScope.loansContent(
                 )
             }
         } else {
-            items(loans.value, key = { "loan-${it.id}" }) { row -> LoanCard(row, onClick = { onOpen(row) }) }
-            item(key = "renewals") { Footnote(AccountIcons.Sync, Copy.YourBooks.renewalsSoon) }
+            items(loans.value, key = { "loan-${it.id}" }) { row -> LoanCard(row, row.id in renewing, swipe, onOpen, onRenew) }
+            if (loans.value.canRenew) {
+                item(key = "loan-swipe-hint") { Footnote(LsIcons.ArrowBack, Copy.YourBooks.loanSwipeHint) }
+            }
         }
     }
 }
 
-/** A muted line under a list (renewals coming soon, the swipe hint). */
+/** A muted line under a list (the swipe hints). */
 @Composable
 private fun Footnote(icon: ImageVector, text: String) {
     Row(
@@ -393,19 +446,50 @@ private fun Footnote(icon: ImageVector, text: String) {
     }
 }
 
+/**
+ * A loan: tap opens the book; Renew (when the library links it) is behind a swipe
+ * ([ReservationSwipeBox]), in a long-press menu and in the card's TalkBack custom actions. While it
+ * renews ([renewing]) the card is dimmed with a spinner and takes no actions.
+ */
 @Composable
-private fun LoanCard(row: LoanRow, onClick: () -> Unit) {
+private fun LoanCard(
+    row: LoanRow,
+    renewing: Boolean,
+    swipe: ReservationSwipeController,
+    onOpen: (LoanRow) -> Unit,
+    onRenew: (LoanRow) -> Unit,
+) {
+    val actions = LoanAction.of(row)
+    val run: (LoanAction) -> Unit = { onRenew(row) }
     val overdue = row.due?.isOverdue == true
-    BookRowCard(
-        title = row.ref.title,
-        coverUrl = row.ref.coverUrl,
-        byLine = Formatting.byLine(row.ref.author),
-        meta = row.meta,
-        metaColor = if (row.isUrgent) LsColors.danger else LsColors.textSecondary,
-        badge = if (overdue) Copy.Loans.overdue else null,
-        badgeColor = LsColors.danger,
-        onClick = onClick,
-    )
+    ActionCard(
+        // Apart from the reservations' ids: one swipe controller serves both lists.
+        swipeId = "loan-${row.id}",
+        label = listOfNotNull(
+            Copy.Loans.overdue.takeIf { overdue },
+            row.ref.title,
+            Formatting.byLine(row.ref.author),
+            row.meta,
+            Copy.YourBooks.renewing.takeIf { renewing },
+        ).joinToString(", "),
+        actions = actions,
+        busy = renewing,
+        swipe = swipe,
+        longClickLabel = Copy.Common.moreOptions,
+        onOpen = { onOpen(row) },
+        onAction = run,
+    ) { modifier ->
+        BookRowCard(
+            title = row.ref.title,
+            coverUrl = row.ref.coverUrl,
+            byLine = Formatting.byLine(row.ref.author),
+            meta = row.meta,
+            metaColor = if (row.isUrgent) LsColors.danger else LsColors.textSecondary,
+            badge = if (overdue) Copy.Loans.overdue else null,
+            badgeColor = LsColors.danger,
+            modifier = modifier,
+        )
+    }
 }
 
 private fun LazyListScope.reservationsContent(
@@ -477,63 +561,94 @@ private fun ReservationCard(
             ReservationAction.CANCEL -> onCancel(row)
         }
     }
-    var menuShown by remember { mutableStateOf(false) }
-    val presses = remember { MutableInteractionSource() }
     val statusColor: Color = when {
         row.isReady -> LsColors.success
         row.isInTransit -> LsColors.warning
         else -> LsColors.textSecondary
     }
-    ReservationSwipeBox(
-        id = row.id,
-        controller = swipe,
-        actions = actions,
-        onAction = run,
-        enabled = !busy,
-        surfaceTop = CARD_RISE,
-    ) {
-        // One TalkBack node for the whole card, read in its own words (the queue place as "number 4 in
-        // the queue", "Updating" while a cancel or edit runs), with the actions on it.
-        val label = listOfNotNull(
+    ActionCard(
+        swipeId = row.id,
+        // Read in its own words: the queue place as "number 4 in the queue", "Updating" while a
+        // cancel or edit runs.
+        label = listOfNotNull(
             row.statusLabel,
             row.ref.title,
             Formatting.byLine(row.ref.author),
             row.spokenMeta,
             Copy.A11y.updating.takeIf { busy },
-        ).joinToString(", ")
+        ).joinToString(", "),
+        actions = actions,
+        busy = busy,
+        swipe = swipe,
+        longClickLabel = Copy.YourBooks.showActions,
+        onOpen = { onOpen(row) },
+        onAction = run,
+    ) { modifier ->
+        BookRowCard(
+            title = row.ref.title,
+            coverUrl = row.ref.coverUrl,
+            byLine = Formatting.byLine(row.ref.author),
+            meta = row.meta,
+            metaColor = if (row.isReady) LsColors.textPrimary else LsColors.textSecondary,
+            badge = row.statusLabel,
+            badgeColor = statusColor,
+            highlighted = row.isReady,
+            modifier = modifier,
+        )
+    }
+}
+
+/**
+ * A Your Books card with [actions]: tap runs [onOpen]; the actions are behind a swipe
+ * ([ReservationSwipeBox]), in a long-press menu ([longClickLabel]) and in its TalkBack custom
+ * actions. TalkBack reads the whole card as one node, [label]. While [busy] the card is dimmed
+ * with a spinner and takes no actions. [card] draws the card with the modifier it's given.
+ */
+@Composable
+private fun <A : SwipeAction> ActionCard(
+    swipeId: String,
+    label: String,
+    actions: List<A>,
+    busy: Boolean,
+    swipe: ReservationSwipeController,
+    longClickLabel: String,
+    onOpen: () -> Unit,
+    onAction: (A) -> Unit,
+    card: @Composable (Modifier) -> Unit,
+) {
+    var menuShown by remember { mutableStateOf(false) }
+    val presses = remember { MutableInteractionSource() }
+    ReservationSwipeBox(
+        id = swipeId,
+        controller = swipe,
+        actions = actions,
+        onAction = onAction,
+        enabled = !busy,
+        surfaceTop = CARD_RISE,
+    ) {
         Box(
             Modifier
                 .combinedClickable(
                     interactionSource = presses,
                     indication = null,
                     enabled = !busy,
-                    onLongClickLabel = if (actions.isEmpty()) null else Copy.YourBooks.showActions,
+                    onLongClickLabel = if (actions.isEmpty()) null else longClickLabel,
                     onLongClick = if (actions.isEmpty()) null else ({
                         swipe.close()
                         menuShown = true
                     }),
                     // A tap while a card is swiped open only closes it.
-                    onClick = { if (!swipe.dismiss()) onOpen(row) },
+                    onClick = { if (!swipe.dismiss()) onOpen() },
                 )
                 // Clears the card's own text (and the cover's label) under it; the click actions stay.
                 .clearAndSetSemantics {
                     contentDescription = label
                     if (!busy) {
-                        customActions = actions.map { action -> CustomAccessibilityAction(action.fullTitle) { run(action); true } }
+                        customActions = actions.map { action -> CustomAccessibilityAction(action.fullTitle) { onAction(action); true } }
                     }
                 },
         ) {
-            BookRowCard(
-                title = row.ref.title,
-                coverUrl = row.ref.coverUrl,
-                byLine = Formatting.byLine(row.ref.author),
-                meta = row.meta,
-                metaColor = if (row.isReady) LsColors.textPrimary else LsColors.textSecondary,
-                badge = row.statusLabel,
-                badgeColor = statusColor,
-                highlighted = row.isReady,
-                modifier = Modifier.alpha(if (busy) 0.7f else 1f),
-            )
+            card(Modifier.alpha(if (busy) 0.7f else 1f))
             // The press ripple, on the card's surface only (not the strip the cover rises into).
             Box(
                 Modifier
@@ -555,13 +670,13 @@ private fun ReservationCard(
             if (actions.isNotEmpty()) {
                 // Anchors the long-press menu under the card's trailing edge.
                 Box(Modifier.align(Alignment.BottomEnd)) {
-                    ReservationMenu(
+                    ActionMenu(
                         expanded = menuShown && !busy,
                         actions = actions,
                         onDismiss = { menuShown = false },
                         onAction = { action ->
                             menuShown = false
-                            run(action)
+                            onAction(action)
                         },
                     )
                 }
@@ -570,13 +685,13 @@ private fun ReservationCard(
     }
 }
 
-/** The long-press menu: "Edit reservation", "Cancel reservation" (destructive, in coral). */
+/** The long-press menu: "Edit reservation", "Cancel reservation" (destructive, in coral); "Renew loan". */
 @Composable
-private fun ReservationMenu(
+private fun <A : SwipeAction> ActionMenu(
     expanded: Boolean,
-    actions: List<ReservationAction>,
+    actions: List<A>,
     onDismiss: () -> Unit,
-    onAction: (ReservationAction) -> Unit,
+    onAction: (A) -> Unit,
 ) {
     DropdownMenu(
         expanded = expanded,
@@ -585,15 +700,28 @@ private fun ReservationMenu(
         containerColor = LsColors.surfaceElevated,
     ) {
         actions.forEach { action ->
-            val (icon, color) = when (action) {
-                ReservationAction.EDIT -> ReservationIcons.Edit to LsColors.textPrimary
-                ReservationAction.CANCEL -> LsIcons.Close to LsColors.danger
-            }
+            val color = if (action.isDestructive) LsColors.danger else LsColors.textPrimary
             DropdownMenuItem(
                 text = { Text(action.fullTitle, style = LsType.body, color = color) },
-                leadingIcon = { Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(20.dp)) },
+                leadingIcon = { Icon(action.icon, contentDescription = null, tint = color, modifier = Modifier.size(20.dp)) },
                 onClick = { onAction(action) },
             )
         }
+    }
+}
+
+/** A renewal's "Renewing…" and its result, in a pill that slides up above the tab bar (§5.12). */
+@Composable
+private fun RenewToast(toast: BorrowedModel.Toast?, onDismiss: (Long) -> Unit, modifier: Modifier = Modifier) {
+    // Kept while the pill slides out.
+    var shown by remember { mutableStateOf(toast) }
+    LaunchedEffect(toast) { toast?.let { shown = it } }
+    AnimatedVisibility(
+        visible = toast != null,
+        enter = slideInVertically { it / 2 } + fadeIn(),
+        exit = slideOutVertically { it / 2 } + fadeOut(),
+        modifier = modifier,
+    ) {
+        shown?.let { ToastPill(it.message, it.tone, successIcon = AccountIcons.CheckCircle, onDismiss = { onDismiss(it.id) }) }
     }
 }

@@ -14,6 +14,7 @@ import uniffi.librespydus_core.Holding
 import uniffi.librespydus_core.PatronList
 import uniffi.librespydus_core.RecordDetail
 import uniffi.librespydus_core.RelatedList
+import uniffi.librespydus_core.RenewResult
 import uniffi.librespydus_core.Reservations
 import uniffi.librespydus_core.ReserveOptions
 import uniffi.librespydus_core.ReserveResult
@@ -24,7 +25,7 @@ import uniffi.librespydus_core.SpydusClient
  * Everything the screens may ask of a library (§5.1): the `SpydusClient` surface plus [origin].
  * Screens never touch `SpydusClient` directly; they get the current backend from
  * `AppState.backend`. Every suspend function throws `SpydusException` (route it through
- * `AppState.report`). Mutations return `ReserveResult` — `ok = false` is data to show.
+ * `AppState.report`). Mutations return `ReserveResult` / `RenewResult` — `ok = false` is data to show.
  */
 interface LibraryBackend {
     /** The library origin, normalised (`https://host`, no trailing `/`). */
@@ -90,6 +91,13 @@ interface LibraryBackend {
 
     /** MUTATING, only on the reader's tap: removes [irn] from the Pick list; returns how many remain. */
     suspend fun removePick(irn: String, session: String): Long = throw UnsupportedOperationException("removePick")
+
+    /**
+     * MUTATING, only after the reader confirms (§5.12): renews the loan whose "Renew loan" action
+     * href is [url]. Not renewed is `ok = false` data (show its `message`); an ended session is
+     * `NotLoggedIn`. Takes a few seconds: the core reads the loans list before and after.
+     */
+    suspend fun renewLoan(url: String, session: String): RenewResult = throw UnsupportedOperationException("renewLoan")
 }
 
 /**
@@ -138,6 +146,8 @@ class CoreBackend(private val client: SpydusClient) : LibraryBackend {
     override suspend fun picks(session: String, url: String?) = io { client.picks(session, url) }
     override suspend fun savePick(irn: String, session: String) = io { client.savePick(irn, session) }
     override suspend fun removePick(irn: String, session: String) = io { client.removePick(irn, session) }
+
+    override suspend fun renewLoan(url: String, session: String) = io { client.renewLoan(url, session) }
 
     private suspend inline fun <T> io(crossinline block: suspend () -> T): T =
         withContext(Dispatchers.IO) { block() }

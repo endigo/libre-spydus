@@ -385,8 +385,6 @@ object Copy {
         /** "Books on loan from {library} show up here with their due dates." */
         fun noLoansMessage(library: String): String =
             "Books on loan from ${library} show up here with their due dates."
-        /** Retired by the renew feature (§5.12): remove once neither app uses it. */
-        const val renewalsSoon = "Renewals coming soon"
         /** Swipe action / button on a loan, and the Renew dialog's confirming button (cancel button: common.notNow). */
         const val renew = "Renew"
         /** Menu item and screen-reader action on a loan row (like editReservation / cancelReservation). */

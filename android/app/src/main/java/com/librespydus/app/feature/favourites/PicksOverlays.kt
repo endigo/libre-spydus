@@ -5,18 +5,10 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -27,23 +19,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.semantics.LiveRegionMode
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.liveRegion
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.librespydus.app.core.AppState
 import com.librespydus.app.core.PicksNotice
 import com.librespydus.app.core.Copy
+import com.librespydus.app.ui.components.ToastPill
+import com.librespydus.app.ui.components.ToastTone
 import com.librespydus.app.ui.components.tabBarContentPadding
 import com.librespydus.app.ui.theme.LsColors
 import com.librespydus.app.ui.theme.LsIcons
-import com.librespydus.app.ui.theme.LsRadius
 import com.librespydus.app.ui.theme.LsSpacing
-import com.librespydus.app.ui.theme.LsType
 import kotlinx.coroutines.delay
 
 /**
@@ -75,7 +60,14 @@ fun PicksOverlays(appState: AppState) {
             enter = slideInVertically { it / 2 } + fadeIn(),
             exit = slideOutVertically { it / 2 } + fadeOut(),
         ) {
-            shown?.let { NoticePill(it, onDismiss = { appState.picks.dismissNotice(it.id) }) }
+            shown?.let {
+                ToastPill(
+                    it.message,
+                    tone = if (it.isError) ToastTone.ERROR else ToastTone.SUCCESS,
+                    successIcon = LsIcons.BookmarkFilled,
+                    onDismiss = { appState.picks.dismissNotice(it.id) },
+                )
+            }
         }
     }
 
@@ -104,34 +96,6 @@ fun PicksOverlays(appState: AppState) {
             titleContentColor = LsColors.textPrimary,
             textContentColor = LsColors.textSecondary,
         )
-    }
-}
-
-@Composable
-private fun NoticePill(notice: PicksNotice, onDismiss: () -> Unit) {
-    val shape = RoundedCornerShape(LsRadius.pill)
-    Row(
-        Modifier
-            .widthIn(max = 520.dp)
-            .shadow(8.dp, shape)
-            .clip(shape)
-            .background(LsColors.surfaceElevated)
-            .clickable(onClickLabel = Copy.Common.dismiss, onClick = onDismiss)
-            .semantics(mergeDescendants = true) {
-                liveRegion = LiveRegionMode.Polite
-                contentDescription = Copy.A11y.labelAndHint(notice.message, Copy.A11y.dismissHint)
-            }
-            .padding(horizontal = LsSpacing.l, vertical = LsSpacing.m),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(LsSpacing.s),
-    ) {
-        Icon(
-            if (notice.isError) LsIcons.Error else LsIcons.BookmarkFilled,
-            contentDescription = null,
-            tint = if (notice.isError) LsColors.danger else LsColors.accent,
-            modifier = Modifier.size(20.dp),
-        )
-        Text(notice.message, style = LsType.bodyStrong, color = LsColors.textPrimary)
     }
 }
 

@@ -21,6 +21,7 @@ import uniffi.librespydus_core.PatronAction
 import uniffi.librespydus_core.PatronItem
 import uniffi.librespydus_core.PatronList
 import uniffi.librespydus_core.PickupChoice
+import uniffi.librespydus_core.RenewResult
 import uniffi.librespydus_core.Reservations
 import uniffi.librespydus_core.ReserveOptions
 import uniffi.librespydus_core.ReserveResult
@@ -29,6 +30,7 @@ import uniffi.librespydus_core.SearchResults
 import uniffi.librespydus_core.SpydusException
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeParseException
 import java.util.Locale
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration
@@ -48,7 +50,9 @@ import kotlin.time.Duration.Companion.milliseconds
  * unreachable library. With [newReady] (DEBUG `ls_demo_new_ready`) the "In transit" reservation
  * arrives at Riverton Library from the second snapshot on, so a "Ready to collect" alert (§5.8)
  * can be shown. My Picks (§5.11) is an in-memory list ([DemoPicks]) seeded with two catalogue
- * records; saves and removes change it after [mutationDelay].
+ * records; saves and removes change it after [mutationDelay]. A renewal (§5.12) takes [renewDelay]
+ * and moves the loan's due date [RENEW_DAYS] later, except "Lessons in chemistry"
+ * ([REFUSING_IRN]), which the library refuses, so both outcomes can be seen.
  */
 class DemoBackend(
     private val public: LibraryBackend,
@@ -56,6 +60,8 @@ class DemoBackend(
     private val today: LocalDate = LocalDate.now(),
     private val mutationDelay: Duration = 600.milliseconds,
     private val snapshotDelay: Duration = 1_500.milliseconds,
+    /** A real renewal takes a few seconds (the core reads the loans list before and after). */
+    private val renewDelay: Duration = 2_500.milliseconds,
     private val refreshFails: Boolean = false,
     private val newReady: Boolean = false,
     private val now: () -> Long = System::currentTimeMillis,
@@ -167,6 +173,26 @@ class DemoBackend(
         requireSession(session)
         delay(mutationDelay)
         return mutex.withLock { pickList.remove(irn) }
+    }
+
+    /**
+     * Renews the loan whose renew link is [url], in memory: its due date moves [RENEW_DAYS] later
+     * (from today when it has none). [REFUSING_IRN] is refused with a library's reason and keeps
+     * its date. Answers like the core: `due` is the date after the attempt.
+     */
+    override suspend fun renewLoan(url: String, session: String): RenewResult {
+        requireSession(session)
+        delay(renewDelay)
+        return mutex.withLock {
+            val index = loanItems.indexOfFirst { it.hasAction(url) }
+            if (index < 0) return@withLock RenewResult(ok = false, message = NOT_ON_LIST, due = null)
+            val item = loanItems[index]
+            val due = item.fields["Due"]
+            if (item.irn == REFUSING_IRN) return@withLock RenewResult(ok = false, message = REFUSAL, due = due)
+            val renewed = DemoData.formatDate((DemoData.parseDate(due) ?: today).plusDays(RENEW_DAYS))
+            loanItems[index] = item.copy(fields = LinkedHashMap(item.fields).apply { this["Due"] = renewed })
+            RenewResult(ok = true, message = null, due = renewed)
+        }
     }
 
     override suspend fun reserveOptions(url: String, session: String): ReserveOptions {
@@ -285,6 +311,18 @@ class DemoBackend(
         /** The demo card's expiry, as a Personal details page writes it. */
         const val CARD_EXPIRES = "12 Mar 2027"
 
+        /** How many days a demo renewal adds to the due date. */
+        const val RENEW_DAYS = 21L
+
+        /** The loan the demo library won't renew ("Lessons in chemistry"). */
+        const val REFUSING_IRN = "29000002"
+
+        /** Its reason, in a library's words. */
+        const val REFUSAL = "This item cannot be renewed as it is reserved by another borrower."
+
+        /** The core's answer for a loan that has left the list (`NOT_ON_LOANS`, core/src/lib.rs). */
+        const val NOT_ON_LIST = "This loan isn’t on your loans list any more."
+
         /** The reservation `ls_demo_new_ready` makes ready (Baby-sitters club, "In transit"). */
         const val NEW_READY_IRN = "19000002"
 
@@ -319,6 +357,13 @@ class DemoData(
 
         /** The OPAC's date style, e.g. "27 Oct 2026". */
         fun formatDate(date: LocalDate): String = DATE.format(date)
+
+        /** A date written by [formatDate]; null for anything else. */
+        fun parseDate(text: String?): LocalDate? = try {
+            text?.trim()?.takeIf { it.isNotEmpty() }?.let { LocalDate.parse(it, DATE) }
+        } catch (e: DateTimeParseException) {
+            null
+        }
 
         /** [read] returns a file's text by name (from [FILES]). */
         fun load(read: (String) -> String, origin: String, today: LocalDate = LocalDate.now()): DemoData {

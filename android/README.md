@@ -140,6 +140,9 @@ checks. Add `-S` to `am start` to force-stop first (launch options apply on a fr
 - Reserve, cancel and edit succeed after about 0.6 s and change the in-memory lists. Nothing is
   ever posted. A reserved row carries the reserved edition's bib IRN, so the book page then shows
   "Reserved · …" in place of Reserve.
+- Renew (docs §5.12) takes about 2.5 s, like a real renewal, and moves the loan's due date 21 days
+  later. "Lessons in chemistry" is refused with a library's reason ("This item cannot be renewed as
+  it is reserved by another borrower."), so both outcomes can be seen.
 - `accountSnapshot` takes about 1.5 s (so the refreshing state shows) and reflects those changes.
 - The demo session is kept in memory only, never in the secure store, and the demo account is never
   saved on the device (unless `ls_demo_persist`, for screenshots).

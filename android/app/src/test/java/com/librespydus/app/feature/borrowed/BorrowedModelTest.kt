@@ -251,15 +251,17 @@ class BorrowedContentTest {
     }
 }
 
-/** Forwards to a DemoBackend, counting account calls; can delay or fail the snapshot and cancels. */
+/** Forwards to a DemoBackend, counting account calls; can delay or fail the snapshot, cancels and renewals. */
 internal class CountingBackend(private val inner: LibraryBackend) : LibraryBackend by inner {
     val cancelCalls = AtomicInteger()
     val snapshotCalls = AtomicInteger()
+    val renewCalls = AtomicInteger()
 
     /** The next `accountSnapshot` answers with what it read, but only after this extra delay. */
     @Volatile var delayNextSnapshot: Duration? = null
     @Volatile var failSnapshot: Exception? = null
     @Volatile var failCancel: Exception? = null
+    @Volatile var failRenew: Exception? = null
 
     override suspend fun accountSnapshot(session: String): AccountSnapshot {
         snapshotCalls.incrementAndGet()
@@ -274,5 +276,11 @@ internal class CountingBackend(private val inner: LibraryBackend) : LibraryBacke
         cancelCalls.incrementAndGet()
         failCancel?.let { throw it }
         return inner.cancelReservation(url, session)
+    }
+
+    override suspend fun renewLoan(url: String, session: String): uniffi.librespydus_core.RenewResult {
+        renewCalls.incrementAndGet()
+        failRenew?.let { throw it }
+        return inner.renewLoan(url, session)
     }
 }

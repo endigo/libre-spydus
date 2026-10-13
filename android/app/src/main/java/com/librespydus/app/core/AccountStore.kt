@@ -130,8 +130,8 @@ class AccountStore(
     }
 
     /**
-     * A reservation was placed, cancelled or edited: a refresh that was already running may have
-     * read the account before the change, so it is replaced by a new one.
+     * A reservation was placed, cancelled or edited, or a loan renewed: a refresh that was already
+     * running may have read the account before the change, so it is replaced by a new one.
      */
     fun refreshAfterChange(): Job? {
         cancelRunning()
@@ -145,6 +145,17 @@ class AccountStore(
     fun removeReservation(href: String) {
         val bound = binding ?: return
         val updated = _snapshot.value?.withoutReservation(href) ?: return
+        _snapshot.value = updated
+        bound.cacheKey?.let { key -> scope.launch { save(bound, key, updated) } }
+    }
+
+    /**
+     * The loan with the action link [href] (its renew link) is now due [due], as the library
+     * writes it: shows the new date straight away, before the refresh that confirms it (§5.12).
+     */
+    fun renewLoan(href: String, due: String) {
+        val bound = binding ?: return
+        val updated = _snapshot.value?.withLoanDue(href, due) ?: return
         _snapshot.value = updated
         bound.cacheKey?.let { key -> scope.launch { save(bound, key, updated) } }
     }
@@ -240,4 +251,15 @@ internal fun AccountSnapshot.withoutReservation(href: String): AccountSnapshot? 
     val pending = reservations.pending.without()
     if (ready === reservations.ready && pending === reservations.pending) return null
     return copy(reservations = Reservations(ready, pending))
+}
+
+/** This snapshot with the loan whose actions include [href] due [due]; null when none has it (or it already is). */
+internal fun AccountSnapshot.withLoanDue(href: String, due: String): AccountSnapshot? {
+    var changed = false
+    val items = loans.items.map { item ->
+        if (item.actions.none { it.href == href } || item.fields["Due"] == due) return@map item
+        changed = true
+        item.copy(fields = LinkedHashMap(item.fields).apply { this["Due"] = due })
+    }
+    return if (changed) copy(loans = PatronList(loans.total, items)) else null
 }
