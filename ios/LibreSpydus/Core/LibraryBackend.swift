@@ -6,8 +6,8 @@ import LibreSpydusCore
 /// from bundled fixtures.
 ///
 /// Errors are the core's `SpydusError`; route them through `AppModel.report(_:)`.
-/// Mutations (`placeReservation`, `cancelReservation`, `editReservation`) return
-/// `ReserveResult(ok: false, …)` as data when the library refuses; that's not an error.
+/// Mutations (`placeReservation`, `cancelReservation`, `editReservation`, `renewLoan`) return
+/// `ok: false` results as data when the library refuses; that's not an error.
 protocol LibraryBackend: Sendable {
     /// Normalised origin, e.g. `https://canning.spydus.com` (no trailing slash).
     var origin: String { get }
@@ -57,6 +57,10 @@ protocol LibraryBackend: Sendable {
     func cancelReservation(url: String, session: String) async throws -> ReserveResult
     func editOptions(url: String, session: String) async throws -> EditOptions
     func editReservation(url: String, session: String, overrides: EditOverrides) async throws -> ReserveResult
+    /// MUTATING, only after the reader confirms (§5.12): renews the loan whose "Renew loan" action
+    /// is `url` (`PatronItem.renewHref`). Takes a few seconds: the core reads the loans list before
+    /// and after, and `ok` says whether the due date moved; `due` is the date after the attempt.
+    func renewLoan(url: String, session: String) async throws -> RenewResult
 
     // MARK: My Picks (§5.11; needs a session, not cached)
 
@@ -86,6 +90,11 @@ extension LibraryBackend {
     }
     func savePick(irn: String, session: String) async throws -> Int64 { 0 }
     func removePick(irn: String, session: String) async throws -> Int64 { 0 }
+
+    /// A library that never renews, for a backend without loans (test fakes).
+    func renewLoan(url: String, session: String) async throws -> RenewResult {
+        RenewResult(ok: false, message: nil, due: nil)
+    }
 }
 
 /// Result ordering for search / `Route.results`; `newest` = most recently added to the catalogue.

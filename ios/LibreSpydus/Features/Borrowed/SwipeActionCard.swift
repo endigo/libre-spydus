@@ -1,22 +1,23 @@
 import SwiftUI
 import UIKit
 
-/// A reservation card that slides left to uncover its actions as rounded tiles beside it, shaped
+/// A Your Books card that slides left to uncover its actions as rounded tiles beside it, shaped
 /// like the card (SwiftUI's `.swipeActions` only works in a `List` and draws flat full-height
-/// buttons). `openID` keeps one card open at a time: starting a swipe on another card closes
-/// the open one, and BorrowedView closes it on a scroll, a tap elsewhere or a tab change.
-/// Swiping only opens the card; an action runs when its tile is tapped.
+/// buttons): a reservation's Edit and Cancel, a loan's Renew. `openID` keeps one card open at a
+/// time: starting a swipe on another card closes the open one, and BorrowedView closes it on a
+/// scroll, a tap elsewhere or a tab change. Swiping only opens the card; an action runs when its
+/// tile is tapped.
 ///
 /// The drag is a UIKit pan that only begins when the finger moves sideways, so a vertical drag
 /// that starts on a card always scrolls the list. It needs iOS 18 (`UIGestureRecognizerRepresentable`):
 /// a SwiftUI `DragGesture` on a card stops the list scrolling, so iOS 17 has no swipe and offers
 /// the same actions in the long-press menu (`SwipeReveal.hint` says which).
-struct ReservationSwipeCard<Content: View>: View {
+struct SwipeActionCard<Action: SwipeTileAction, Content: View>: View {
     let id: String
-    /// Empty: no swipe at all (no links, or a cancel/edit in flight).
-    let actions: [ReservationAction]
+    /// Empty: no swipe at all (no links, or a change in flight).
+    let actions: [Action]
     @Binding var openID: String?
-    let perform: (ReservationAction) -> Void
+    let perform: (Action) -> Void
     @ViewBuilder let content: Content
 
     /// The card's offset while a finger is on it; nil while it rests open or closed.
@@ -53,7 +54,7 @@ struct ReservationSwipeCard<Content: View>: View {
         .accessibilityHidden(true)
     }
 
-    private func tile(_ action: ReservationAction) -> some View {
+    private func tile(_ action: Action) -> some View {
         VStack(spacing: Theme.Spacing.xs) {
             Image(systemName: action.systemImage)
                 .font(.system(size: 20, weight: .semibold))

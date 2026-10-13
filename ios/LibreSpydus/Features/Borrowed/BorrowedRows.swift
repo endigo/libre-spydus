@@ -15,6 +15,8 @@ extension PatronItem {
     var cancelHref: String? { actionHref(matching: "cancel") }
     /// `/edit/i`: the reservation's edit link (`editOptions(url:)` / `editReservation(url:)`).
     var editHref: String? { actionHref(matching: "edit") }
+    /// `/renew/i`: the loan's "Renew loan" link (`renewLoan(url:)`).
+    var renewHref: String? { actionHref(matching: "renew") }
 }
 
 extension Calendar {
@@ -41,6 +43,8 @@ struct LoanRow: Identifiable, Equatable {
     let due: DueStatus?
     /// `fields["Due"]` as the library wrote it.
     let dueText: String?
+    /// The "Renew loan" link; nil when the library offers no renewal for this loan.
+    let renewHref: String?
 
     init(item: PatronItem, today: Date = .now, calendar: Calendar = .libraryDates) {
         self.item = item
@@ -48,6 +52,14 @@ struct LoanRow: Identifiable, Equatable {
         id = item.irn.nonEmpty ?? ref.id
         dueText = item.fields["Due"].nonEmpty
         due = DueStatus(dueText: dueText, today: today, calendar: calendar)
+        renewHref = item.renewHref
+    }
+
+    /// The due date as `Copy.Loans.dueOn` writes it ("27 Oct"), or as the library wrote it when
+    /// the core can't read it (unless that already says "due"); nil without one.
+    var dueDateText: String? {
+        if let due { return Formatting.shortDate(due.dueDate) }
+        return dueText.flatMap { $0.range(of: "due", options: .caseInsensitive) == nil ? $0 : nil }
     }
 
     /// The meta line; an unreadable date is shown as the library wrote it.

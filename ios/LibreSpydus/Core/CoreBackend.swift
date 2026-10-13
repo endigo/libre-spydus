@@ -98,6 +98,10 @@ final class CoreBackend: LibraryBackend {
         try await timed("editReservation") { try await client.editReservation(url: url, session: session, overrides: overrides) }
     }
 
+    func renewLoan(url: String, session: String) async throws -> RenewResult {
+        try await timed("renewLoan") { try await client.renewLoan(url: url, session: session) }
+    }
+
     func picks(session: String, url: String?) async throws -> SearchResults {
         try await timed("picks") { try await client.picks(session: session, url: url) }
     }

@@ -19,7 +19,7 @@
         "actions": [
           {
             "label": "Renew loan",
-            "href": "https://canning.spydus.com/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/78500000/0/RL/1/LOANRENQ?SVL=18000001&SETDESC=x"
+            "href": "https://canning.spydus.com/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/78500000/0/N/3/LOANRENQ?SVL=18000001&SETDESC=Current%20loans"
           }
         ]
       }
@@ -43,7 +43,7 @@
         "actions": [
           {
             "label": "Renew loan",
-            "href": "https://canning.spydus.com/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/78500000/0/RL/1/LOANRENQ?SVL=18000002&SETDESC=x"
+            "href": "https://canning.spydus.com/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/78500000/0/N/3/LOANRENQ?SVL=18000002&SETDESC=Current%20loans"
           }
         ]
       }
@@ -67,7 +67,7 @@
         "actions": [
           {
             "label": "Renew loan",
-            "href": "https://canning.spydus.com/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/78500000/0/RL/1/LOANRENQ?SVL=18000003&SETDESC=x"
+            "href": "https://canning.spydus.com/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/78500000/0/N/3/LOANRENQ?SVL=18000003&SETDESC=Current%20loans"
           }
         ]
       }
@@ -91,7 +91,7 @@
         "actions": [
           {
             "label": "Renew loan",
-            "href": "https://canning.spydus.com/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/78500000/0/RL/1/LOANRENQ?SVL=18000004&SETDESC=x"
+            "href": "https://canning.spydus.com/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/78500000/0/N/3/LOANRENQ?SVL=18000004&SETDESC=Current%20loans"
           }
         ]
       }
@@ -115,7 +115,7 @@
         "actions": [
           {
             "label": "Renew loan",
-            "href": "https://canning.spydus.com/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/78500000/0/RL/1/LOANRENQ?SVL=18000005&SETDESC=x"
+            "href": "https://canning.spydus.com/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/78500000/0/N/3/LOANRENQ?SVL=18000005&SETDESC=Current%20loans"
           }
         ]
       }

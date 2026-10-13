@@ -3,8 +3,8 @@ import LibreSpydusCore
 import Observation
 
 /// State for "Your Books": the cards built from the saved account (`AppModel.account`), cancel/edit
-/// results, and which rows have a mutation in flight (one at a time per row, so nothing is
-/// submitted twice).
+/// results, renewals (§5.12), and which rows have a mutation in flight (one at a time per row, so
+/// nothing is submitted twice).
 @MainActor
 @Observable
 final class BorrowedViewModel {
@@ -28,6 +28,20 @@ final class BorrowedViewModel {
         var isError: Bool
     }
 
+    /// A renewal's progress or result, shown as a toast above the tab bar (`RenewToastOverlay`).
+    struct ToastMessage: Identifiable, Equatable {
+        enum Tone: Equatable {
+            /// Stays until the result replaces it.
+            case progress
+            case success
+            case error
+        }
+
+        let id = UUID()
+        var message: String
+        var tone: Tone
+    }
+
     /// The cards for one account snapshot.
     struct Lists: Equatable {
         var loans: [LoanRow]
@@ -37,10 +51,16 @@ final class BorrowedViewModel {
     var segment: Segment = .loans
     /// Rows with a cancel or edit in flight.
     private(set) var busyRows: Set<String> = []
+    /// Loans with a renewal in flight.
+    private(set) var renewingRows: Set<String> = []
     var notice: Notice?
+    /// "Renewing…", then the renewal's result.
+    var toast: ToastMessage?
     /// The row whose "Cancel" was tapped, awaiting confirmation.
     var confirmingCancel: ReservationRow?
-    /// The reservation whose swipe actions are showing (one card at a time).
+    /// The loan whose "Renew" was tapped, awaiting confirmation.
+    var confirmingRenew: LoanRow?
+    /// The card whose swipe actions are showing (one card at a time, in the segment on screen).
     var swipedRowID: String?
     /// The row whose edit sheet is shown.
     var editing: ReservationRow?
@@ -78,6 +98,7 @@ final class BorrowedViewModel {
     func appear(_ model: AppModel) async {
         guard model.isSignedIn else {
             busyRows = []
+            renewingRows = []
             swipedRowID = nil
             return
         }
@@ -120,6 +141,54 @@ final class BorrowedViewModel {
         } catch {
             guard model.reloadKey == key, let shown = report(error, model: model) else { return }
             notice = Notice(message: shown.message, isError: true)
+        }
+    }
+
+    // MARK: Renew
+
+    func isRenewing(_ row: LoanRow) -> Bool {
+        renewingRows.contains(row.id)
+    }
+
+    /// Asks to confirm renewing `row` (not while it's renewing). Its swipe actions stay out until
+    /// the user answers.
+    func requestRenew(_ row: LoanRow) {
+        guard row.renewHref != nil, !renewingRows.contains(row.id) else { return }
+        confirmingRenew = row
+    }
+
+    /// Renews `row` after the user confirmed: the card shows progress and "Renewing…" while the
+    /// library answers (a few seconds), then the result; the account is fetched again either way,
+    /// so the card, Home's "Your loans" and the due-date reminders follow. A renewed loan shows its
+    /// new date at once. Ignored while that loan is renewing or once it's gone.
+    func renew(_ row: LoanRow, model: AppModel) async {
+        guard let href = row.renewHref, let session = model.session, !renewingRows.contains(row.id),
+              lists(model)?.loans.contains(where: { $0.id == row.id }) == true else { return }
+        let key = model.reloadKey
+        let backend = model.backend
+        renewingRows.insert(row.id)
+        if swipedRowID == row.id { swipedRowID = nil }
+        let progress = ToastMessage(message: Copy.YourBooks.renewing, tone: .progress)
+        toast = progress
+        defer { renewingRows.remove(row.id) }
+        do {
+            let result = try await model.account.performChange {
+                try await backend.renewLoan(url: href, session: session)
+            } accepted: { _ in true }
+            guard model.reloadKey == key else { return dismiss(progress) }
+            if result.ok {
+                if let due = result.due.nonEmpty {
+                    model.account.update { $0 = $0.renewingLoan(actionHref: href, due: due) }
+                }
+                toast = ToastMessage(message: RenewText.renewed(due: result.due), tone: .success)
+            } else {
+                toast = ToastMessage(message: RenewText.refused(result), tone: .error)
+            }
+        } catch {
+            guard model.reloadKey == key else { return dismiss(progress) }
+            // A lost session signs out and asks to sign in again (§5.2): that says enough.
+            guard report(error, model: model) != nil, !Self.isSessionExpired(error) else { return dismiss(progress) }
+            toast = ToastMessage(message: Copy.YourBooks.renewFailed, tone: .error)
         }
     }
 
@@ -171,6 +240,15 @@ final class BorrowedViewModel {
         guard editing != nil, Self.needsRootSheet(error) else { return model.report(error) }
         deferredError = error
         return UserFacingError(error, libraryName: model.libraryName)
+    }
+
+    /// Takes `progress` down unless something has replaced it.
+    private func dismiss(_ progress: ToastMessage) {
+        if toast?.id == progress.id { toast = nil }
+    }
+
+    private static func isSessionExpired(_ error: any Error) -> Bool {
+        if case .NotLoggedIn = error as? SpydusError { true } else { false }
     }
 
     /// Errors `AppModel.report` answers with a root sheet (login, verification).

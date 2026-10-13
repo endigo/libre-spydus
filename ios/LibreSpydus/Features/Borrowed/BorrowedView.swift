@@ -3,7 +3,8 @@ import SwiftUI
 /// "Your Books" (docs/native-apps.md §6 Borrowed): Loans | Reservations. Loans are sorted by due
 /// date with the danger colour when due within 3 days or overdue; reservations show "Ready to
 /// collect" first, then pending. A reservation's Edit (sheet) and Cancel (confirmed) sit behind a
-/// swipe to the left, in its long-press menu and in its VoiceOver actions.
+/// swipe to the left, in its long-press menu and in its VoiceOver actions; so does a loan's Renew
+/// (confirmed, §5.12), with "Renewing…" and the result as a toast above the tab bar.
 ///
 /// Both lists come from the saved account (`AppModel.account`, §5.2a): shown at once, with
 /// "Updated 12 min ago" under the segments, and fetched again in the background when it's out of
@@ -69,6 +70,13 @@ struct BorrowedView: View {
             // Confirmed or dismissed: either way the card closes.
             if answered { closeSwipe() }
         }
+        .onChange(of: viewModel.confirmingRenew == nil) { _, answered in
+            if answered { closeSwipe() }
+        }
+        .renewLoanConfirmation($viewModel.confirmingRenew) { row in
+            Task { await viewModel.renew(row, model: model) }
+        }
+        .overlay(alignment: .bottom) { RenewToastOverlay(toast: $viewModel.toast) }
         .onChange(of: viewModel.notice) { _, notice in
             if let notice { AccessibilityNotification.Announcement(notice.message).post() }
         }
@@ -178,26 +186,56 @@ struct BorrowedView: View {
             ForEach(rows) { row in
                 loanCard(row)
             }
-            Label(Copy.YourBooks.renewalsSoon, systemImage: "arrow.triangle.2.circlepath")
-                .themeFont(.caption)
-                .foregroundStyle(Theme.Colors.textMuted)
-                .frame(maxWidth: .infinity)
-                .padding(.top, Theme.Spacing.s)
+            if rows.hasActions {
+                swipeHint(for: .loans)
+            }
         }
     }
 
     private func loanCard(_ row: LoanRow) -> some View {
+        @Bindable var viewModel = viewModel
+        let renewing = viewModel.isRenewing(row)
+        let actions = LoanAction.available(for: row, busy: renewing)
         let overdue = row.due?.isOverdue == true
-        return BookRowCard(row.ref, meta: row.meta,
-                           metaColor: row.isUrgent ? Theme.Colors.danger : Theme.Colors.textSecondary,
-                           chips: overdue ? [Chip(text: Copy.Loans.overdue, tone: .danger, systemImage: "exclamationmark.circle")] : [])
-            .contentShape(RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
-            .onTapGesture { open(row.ref) }
-            .accessibilityElement(children: .ignore)
-            .accessibilityLabel(accessibilityText([row.ref.title, Formatting.byline(row.ref.author),
-                                                   overdue ? Copy.Loans.overdue : nil, row.meta]))
-            .accessibilityAddTraits(.isButton)
-            .accessibilityAction { open(row.ref) }
+        let cardShape = RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous)
+        return SwipeActionCard(id: row.id, actions: actions, openID: $viewModel.swipedRowID) { action in
+            perform(action, on: row)
+        } content: {
+            BookRowCard(row.ref, meta: row.meta,
+                        metaColor: row.isUrgent ? Theme.Colors.danger : Theme.Colors.textSecondary,
+                        chips: overdue ? [Chip(text: Copy.Loans.overdue, tone: .danger, systemImage: "exclamationmark.circle")] : [])
+                .overlay(alignment: .trailing) {
+                    if renewing { busyIndicator }
+                }
+                .contentShape(cardShape)
+                .contentShape(.contextMenuPreview, cardShape)
+                .onTapGesture { tapCard(row.ref) }
+                .contextMenu {
+                    ForEach(actions) { action in
+                        Button(action.menuTitle, systemImage: action.systemImage) { perform(action, on: row) }
+                            .accessibilityHint(Copy.YourBooks.renewHint)
+                    }
+                }
+        }
+        .opacity(renewing ? 0.7 : 1)
+        .allowsHitTesting(!renewing)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(accessibilityText([row.ref.title, Formatting.byline(row.ref.author),
+                                               overdue ? Copy.Loans.overdue : nil, row.meta,
+                                               renewing ? Copy.A11y.updating : nil]))
+        .accessibilityAddTraits(.isButton)
+        .accessibilityAction { open(row.ref) }
+        .accessibilityActions {
+            ForEach(actions) { action in
+                Button(action.menuTitle) { perform(action, on: row) }
+            }
+        }
+    }
+
+    private func perform(_ action: LoanAction, on row: LoanRow) {
+        switch action {
+        case .renew: viewModel.requestRenew(row)
+        }
     }
 
     // MARK: Reservations
@@ -233,17 +271,22 @@ struct BorrowedView: View {
                 }
             }
             if sections.hasActions {
-                let hint = SwipeReveal.hint()
-                Label(hint.text, systemImage: hint.systemImage)
-                    .themeFont(.caption)
-                    .foregroundStyle(Theme.Colors.textMuted)
-                    .multilineTextAlignment(.center)
-                    .frame(maxWidth: .infinity)
-                    .padding(.top, Theme.Spacing.s)
-                    // VoiceOver lists Edit and Cancel as actions on each card instead.
-                    .accessibilityHidden(true)
+                swipeHint(for: .reservations)
             }
         }
+    }
+
+    /// The footnote under a list whose cards have swipe actions.
+    private func swipeHint(for segment: BorrowedViewModel.Segment) -> some View {
+        let hint = SwipeReveal.hint(for: segment)
+        return Label(hint.text, systemImage: hint.systemImage)
+            .themeFont(.caption)
+            .foregroundStyle(Theme.Colors.textMuted)
+            .multilineTextAlignment(.center)
+            .frame(maxWidth: .infinity)
+            .padding(.top, Theme.Spacing.s)
+            // VoiceOver lists the actions on each card instead.
+            .accessibilityHidden(true)
     }
 
     private func reservationCard(_ row: ReservationRow) -> some View {
@@ -251,22 +294,18 @@ struct BorrowedView: View {
         let busy = viewModel.isBusy(row)
         let actions = ReservationAction.available(for: row, busy: busy)
         let cardShape = RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous)
-        return ReservationSwipeCard(id: row.id, actions: actions, openID: $viewModel.swipedRowID) { action in
+        return SwipeActionCard(id: row.id, actions: actions, openID: $viewModel.swipedRowID) { action in
             perform(action, on: row)
         } content: {
             BookRowCard(row.ref, meta: row.meta,
                         metaColor: row.isReady ? Theme.Colors.textPrimary : Theme.Colors.textSecondary,
                         chips: [statusChip(row)], highlighted: row.isReady)
                 .overlay(alignment: .trailing) {
-                    if busy {
-                        ProgressView()
-                            .tint(Theme.Colors.textSecondary)
-                            .padding(.trailing, Theme.Spacing.xl)
-                    }
+                    if busy { busyIndicator }
                 }
                 .contentShape(cardShape)
                 .contentShape(.contextMenuPreview, cardShape)
-                .onTapGesture { tapReservation(row) }
+                .onTapGesture { tapCard(row.ref) }
                 .contextMenu {
                     ForEach(actions) { action in
                         Button(action.menuTitle, systemImage: action.systemImage, role: action.role) {
@@ -300,12 +339,19 @@ struct BorrowedView: View {
     }
 
     /// Opens the book, or only closes the swipe actions while a card shows them.
-    private func tapReservation(_ row: ReservationRow) {
+    private func tapCard(_ ref: BookRef) {
         if viewModel.swipedRowID != nil {
             closeSwipe()
         } else {
-            open(row.ref)
+            open(ref)
         }
+    }
+
+    /// On a card while its cancel, edit or renewal runs.
+    private var busyIndicator: some View {
+        ProgressView()
+            .tint(Theme.Colors.textSecondary)
+            .padding(.trailing, Theme.Spacing.xl)
     }
 
     private func statusChip(_ row: ReservationRow) -> Chip {

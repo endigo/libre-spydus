@@ -87,8 +87,9 @@ struct BorrowedReservationTests {
         #expect(short.editHref == "\(base)/ER/1/RSVCENQ?SVL=2")
         #expect(short.cancelHref == "\(base)/C/5/RSVCENQ?SVL=2")
 
-        let loan = item("Book", actions: [("Renew loan", "\(base)/RL/1/LOANRENQ?SVL=3")])
+        let loan = item("Book", actions: [("Renew loan", "\(base)/N/3/LOANRENQ?SVL=3")])
         #expect(loan.cancelHref == nil && loan.editHref == nil)
+        #expect(loan.renewHref == "\(base)/N/3/LOANRENQ?SVL=3")
         #expect(item("Book", actions: [("Cancel reservation", " ")]).cancelHref == nil)
     }
 
