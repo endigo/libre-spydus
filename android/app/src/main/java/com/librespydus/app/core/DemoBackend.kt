@@ -124,7 +124,10 @@ class DemoBackend(
             snapshots++
             if (newReady && snapshots >= 2) arrive()
         }
-        return AccountSnapshot(SNAPSHOT_VERSION, accountLinks.name, loans(session), reservations(session), now())
+        return AccountSnapshot(
+            SNAPSHOT_VERSION, accountLinks.name, loans(session), reservations(session), now(),
+            cardNumber = CARD_NUMBER, cardExpires = CARD_EXPIRES,
+        )
     }
 
     /**
@@ -249,6 +252,9 @@ class DemoBackend(
 
         /** The demo account's library card number (§5.9), kept in memory only. */
         const val CARD_NUMBER = "DEMO0012345"
+
+        /** The demo card's expiry, as a Personal details page writes it. */
+        const val CARD_EXPIRES = "12 Mar 2027"
 
         /** The reservation `ls_demo_new_ready` makes ready (Baby-sitters club, "In transit"). */
         const val NEW_READY_IRN = "19000002"

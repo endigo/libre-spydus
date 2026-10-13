@@ -54,9 +54,9 @@ class AppState(
     val alerts: Alerts = Alerts.inMemory(io),
     /**
      * The card number the library account itself gives (§5.9), for [cardNumber] when none is saved
-     * on the device. The core doesn't read one yet (Personal details), so: none.
+     * on the device: the core reads it from the account's Personal details page.
      */
-    private val accountCardNumber: (AccountSnapshot) -> String? = { null },
+    private val accountCardNumber: (AccountSnapshot) -> String? = ::accountCardNumberOf,
 ) {
     private val ops = Mutex()
 
@@ -88,7 +88,7 @@ class AppState(
     private val _accountGeneration = MutableStateFlow(0)
     private val _savedCardNumber = MutableStateFlow<String?>(null)
 
-    /** Demo card numbers by origin, in memory only; an origin not in the map has [DemoBackend.CARD_NUMBER]. */
+    /** Demo card numbers entered or edited on the card, by origin, in memory only (the demo account's own is in its snapshot). */
     private val demoCardNumbers = mutableMapOf<String, String?>()
 
     /** False until persisted state has been restored (show a splash meanwhile). */
@@ -122,6 +122,15 @@ class AppState(
     val cardNumber: StateFlow<String?> =
         combine(_savedCardNumber, account.snapshot) { saved, snapshot -> saved ?: snapshot?.let(accountCardNumber) }
             .stateIn(scope, SharingStarted.Eagerly, null)
+
+    /**
+     * When the card expires ("12 Mar 2027", as the Personal details page writes it), while the card
+     * shown is the account's own (not a different number entered on the device).
+     */
+    val cardExpires: StateFlow<String?> =
+        combine(_savedCardNumber, account.snapshot) { saved, snapshot ->
+            snapshot?.cardExpires?.takeIf { saved == null || saved == snapshot.let(accountCardNumber) }
+        }.stateIn(scope, SharingStarted.Eagerly, null)
 
     /** Demo mode (§5.4, debug `ls_demo`): fixture account data, no account network calls. */
     val isDemo: StateFlow<Boolean> = _isDemo.asStateFlow()
@@ -356,8 +365,7 @@ class AppState(
         else withContext(io) { secrets.put(cardKey(backend.origin), number) }
     }
 
-    private fun demoCardNumber(origin: String): String? =
-        if (origin in demoCardNumbers) demoCardNumbers[origin] else DemoBackend.CARD_NUMBER
+    private fun demoCardNumber(origin: String): String? = demoCardNumbers[origin]
 
     // endregion
     // region Alerts (§5.8)
@@ -634,6 +642,9 @@ class AppState(
         internal fun sessionKey(origin: String) = "session:$origin"
         internal fun verifyKey(origin: String) = "verify:$origin"
         internal fun cardKey(origin: String) = "card.$origin"
+
+        /** The account's own card number (from its Personal details page), or null. */
+        internal fun accountCardNumberOf(snapshot: AccountSnapshot): String? = snapshot.cardNumber?.trim()?.takeIf(String::isNotEmpty)
 
         /** A [LibraryInfo] for an origin that isn't in (or couldn't be read from) the directory. */
         internal fun fallbackLibrary(origin: String): LibraryInfo {

@@ -110,6 +110,7 @@ private fun MyCardContent(appState: AppState, onClose: () -> Unit) {
     val backend by appState.backend.collectAsStateWithLifecycle()
     val accountName by appState.accountName.collectAsStateWithLifecycle()
     val number by appState.cardNumber.collectAsStateWithLifecycle()
+    val expires by appState.cardExpires.collectAsStateWithLifecycle()
     val origin = backend?.origin
     var symbology by remember(origin) { mutableStateOf(origin?.let(CardSymbologies.shared::cached)) }
     var editing by rememberSaveable { mutableStateOf(false) }
@@ -158,7 +159,7 @@ private fun MyCardContent(appState: AppState, onClose: () -> Unit) {
                 onCancel = if (editing && number != null) ({ editing = false }) else null,
             )
         } else {
-            LibraryCardView(library, accountName, content)
+            LibraryCardView(library, accountName, content, expires)
             Text(
                 "Show this at the library desk or self-checkout.",
                 style = LsType.body,
@@ -177,7 +178,7 @@ private fun MyCardContent(appState: AppState, onClose: () -> Unit) {
 
 /** The white card (white in any theme: scanners need black on white). */
 @Composable
-private fun LibraryCardView(library: LibraryInfo?, accountName: String?, content: CardContent) {
+private fun LibraryCardView(library: LibraryInfo?, accountName: String?, content: CardContent, expires: String?) {
     val shape = RoundedCornerShape(20.dp)
     Column(
         Modifier
@@ -204,6 +205,7 @@ private fun LibraryCardView(library: LibraryInfo?, accountName: String?, content
             is CardContent.Barcode -> Column(verticalArrangement = Arrangement.spacedBy(LsSpacing.s)) {
                 BarcodeView(content.barcode, MyCardLogic.barcodeDescription(content.number), Modifier.fillMaxWidth().height(BARCODE_HEIGHT))
                 CardNumberText(content.barcode.text)
+                ExpiryText(expires)
             }
             is CardContent.Loading -> Column(verticalArrangement = Arrangement.spacedBy(LsSpacing.s)) {
                 Box(
@@ -216,6 +218,7 @@ private fun LibraryCardView(library: LibraryInfo?, accountName: String?, content
                     CircularProgressIndicator(color = LsColors.onSheetSecondary, strokeWidth = 3.dp, modifier = Modifier.size(32.dp))
                 }
                 CardNumberText(content.number)
+                ExpiryText(expires)
             }
             is CardContent.Unencodable -> Column(
                 Modifier.padding(horizontal = LsSpacing.xl),
@@ -251,6 +254,19 @@ private fun CardNumberText(text: String) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = LsSpacing.l),
+    )
+}
+
+/** "Expires 12 Mar 2027" under the number, when the account gives the card's expiry. */
+@Composable
+private fun ExpiryText(expires: String?) {
+    val date = expires?.trim()?.takeIf { it.isNotEmpty() } ?: return
+    Text(
+        "Expires $date",
+        style = LsType.caption,
+        color = LsColors.onSheetSecondary,
+        textAlign = TextAlign.Center,
+        modifier = Modifier.fillMaxWidth(),
     )
 }
 

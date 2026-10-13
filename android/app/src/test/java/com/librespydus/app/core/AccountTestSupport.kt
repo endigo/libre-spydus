@@ -19,11 +19,15 @@ internal class SnapshotBackend(
     var calls = 0
     var fail: Exception? = null
 
+    /** The card number and expiry the account's Personal details page gives (§5.9). */
+    var cardNumber: String? = null
+    var cardExpires: String? = null
+
     override suspend fun accountSnapshot(session: String): AccountSnapshot {
         calls++
         delay(delayMs)
         fail?.let { throw it }
-        return accountSnapshot(name = "Reader for $session", fetchedAtMs = clock())
+        return accountSnapshot(name = "Reader for $session", fetchedAtMs = clock()).copy(cardNumber = cardNumber, cardExpires = cardExpires)
     }
 }
 

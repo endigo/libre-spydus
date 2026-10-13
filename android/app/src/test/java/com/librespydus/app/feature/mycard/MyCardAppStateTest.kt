@@ -52,7 +52,7 @@ class MyCardAppStateTest {
         library: LibraryInfo? = canning,
         sessions: Map<String, String> = mapOf(canning.origin to "tok", hutt.origin to "tok2"),
         secrets: InMemorySecretStore = InMemorySecretStore(),
-        accountCardNumber: (AccountSnapshot) -> String? = { null },
+        accountCardNumber: (AccountSnapshot) -> String? = AppState::accountCardNumberOf,
     ): Fixture {
         val io = StandardTestDispatcher(testScheduler)
         sessions.forEach { (origin, token) -> secrets.put(AppState.sessionKey(origin), token) }
@@ -187,15 +187,38 @@ class MyCardAppStateTest {
     }
 
     @Test
-    fun theAccountGivesNoNumberYet() = runTest {
-        // The default stub: the core doesn't read Personal details yet.
+    fun anAccountWithoutACardNumberAsksForIt() = runTest {
+        // Its Personal details page had no card number (or didn't load).
         val f = started(fixture())
         assertTrue(f.state.account.snapshot.value != null)
         assertNull(f.state.cardNumber.value)
+        assertNull(f.state.cardExpires.value)
     }
 
     @Test
-    fun demoModeHasItsNumberInMemoryOnly() = runTest {
+    fun theAccountsCardNumberAndExpiryFromPersonalDetails() = runTest {
+        val f = fixture()
+        f.state.start()
+        advanceTimeBy(1)
+        f.backends.getValue(canning.origin).apply { cardNumber = " CL114X0000001 "; cardExpires = "12 Mar 2027" }
+        advanceUntilIdle()
+        assertEquals("CL114X0000001", f.state.cardNumber.value)
+        assertEquals("12 Mar 2027", f.state.cardExpires.value)
+        assertNull(f.secrets.get(AppState.cardKey(canning.origin))) // nothing saved: it's the account's
+
+        // A different number entered on the card wins, and the account's expiry isn't its expiry.
+        f.state.setCardNumber("OTHER123")
+        advanceUntilIdle()
+        assertEquals("OTHER123", f.state.cardNumber.value)
+        assertNull(f.state.cardExpires.value)
+        // The same number entered keeps the expiry.
+        f.state.setCardNumber("CL114X0000001")
+        advanceUntilIdle()
+        assertEquals("12 Mar 2027", f.state.cardExpires.value)
+    }
+
+    @Test
+    fun demoModeHasItsAccountsNumberAndKeepsEditsInMemory() = runTest {
         val f = started(fixture(library = null, sessions = emptyMap()))
         f.state.applyLaunchOptions(LaunchOptions(origin = canning.origin, demo = true))
         advanceUntilIdle()
@@ -208,13 +231,14 @@ class MyCardAppStateTest {
         assertEquals("CL114D0001234", f.state.cardNumber.value)
         assertNull(f.secrets.get(AppState.cardKey(canning.origin)))
 
-        // Signed out, the demo number is gone too; signing in again doesn't bring it back.
+        // Signed out, the entered number is gone; signing in again shows the demo account's own.
         f.state.signOut()
         advanceUntilIdle()
         assertNull(f.state.cardNumber.value)
         f.state.signIn("demo", "demo")
         advanceUntilIdle()
-        assertNull(f.state.cardNumber.value)
+        assertEquals(DemoBackend.CARD_NUMBER, f.state.cardNumber.value)
+        assertEquals(DemoBackend.CARD_EXPIRES, f.state.cardExpires.value)
         assertNull(f.secrets.get(AppState.cardKey(canning.origin)))
     }
 }
