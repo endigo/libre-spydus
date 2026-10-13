@@ -28,8 +28,11 @@ import java.net.URI
 import java.time.LocalDate
 import kotlin.time.Duration.Companion.seconds
 
-/** A destination to open inside a tab's stack (consumed by that tab's NavHost). */
-data class PendingNavigation(val tab: Tab, val route: Route)
+/**
+ * A destination to open inside a tab's stack (consumed by that tab's NavHost). [fromRoot]: the
+ * stack is popped back to the tab's root first, so Back from [route] lands there.
+ */
+data class PendingNavigation(val tab: Tab, val route: Route, val fromRoot: Boolean = false)
 
 /**
  * The app's single source of truth (§5.2), one instance held by [com.librespydus.app.LibreSpydusApplication]
@@ -427,9 +430,37 @@ class AppState(
         alerts.scheduleNext(signedIn = _session.value != null)
     }
 
-    /** A notification was tapped: Your Books on [segment], once the app has restored its state. */
-    fun openFromAlert(segment: BorrowedSegment) {
-        scope.launch { ops.withLock { openBorrowed(segment) } }
+    /**
+     * A notification was tapped (§5.8 "Tap"): once the app has restored its state (on a cold launch
+     * the saved account is loaded first), Your Books on the alert's list with the book page of the
+     * item it names pushed over it, or just the list ([AlertRouting]).
+     */
+    fun openFromAlert(tap: AlertTap) {
+        scope.launch {
+            ready.first { it }
+            ops.withLock {
+                val snapshot = account.snapshot.value.takeIf { _session.value != null }
+                open(AlertRouting.destination(tap, _library.value?.origin, snapshot))
+            }
+        }
+    }
+
+    private fun open(destination: AlertDestination) {
+        val book = destination.book
+        if (book == null) {
+            openBorrowed(destination.segment)
+        } else {
+            // Your Books' list underneath (on the right segment once it shows), so Back lands there.
+            _pendingBorrowedSegment.value = destination.segment
+            navigate(Tab.BORROWED, Route.Detail(book), fromRoot = true)
+        }
+    }
+
+    /** DEBUG `ls_demo_post_alerts`: one of each alert from the demo account, once it has loaded. */
+    private suspend fun postDemoAlerts() {
+        val backend = _backend.value?.takeIf { it.isDemo } ?: return
+        val snapshot = account.snapshot.value ?: return
+        alerts.postSamples(alertScope(backend), snapshot)
     }
 
     /** Every fresh account snapshot (foreground, pull to refresh, after a change, morning check). */
@@ -447,8 +478,7 @@ class AppState(
         if (backend.isDemo) "demo:${backend.origin}" else backend.origin
 
     /** The library [Alerts] files [backend]'s keys under; demo data under its own. */
-    private fun alertScope(backend: LibraryBackend): String =
-        if (backend.isDemo) "demo:${backend.origin}" else backend.origin
+    private fun alertScope(backend: LibraryBackend): String = Alerts.scope(backend.origin, backend.isDemo)
 
     // endregion
     // region Errors & verification
@@ -545,16 +575,19 @@ class AppState(
     /** Returns and clears the pending search (the Search screen calls it once it shows). */
     fun consumePendingSearch(): String? = _pendingSearch.value.also { _pendingSearch.value = null }
 
-    /** Switches to [tab] and pushes [route] onto its stack. */
-    fun navigate(tab: Tab, route: Route) {
-        _pendingNavigation.value = PendingNavigation(tab, route)
+    /** Switches to [tab] and pushes [route] onto its stack ([fromRoot]: over the tab's root). */
+    fun navigate(tab: Tab, route: Route, fromRoot: Boolean = false) {
+        _pendingNavigation.value = PendingNavigation(tab, route, fromRoot)
         _selectedTab.value = tab
     }
 
-    fun consumePendingNavigation(tab: Tab): Route? {
+    fun consumePendingNavigation(tab: Tab): Route? = takePendingNavigation(tab)?.route
+
+    /** Returns and clears the navigation pending for [tab]. */
+    fun takePendingNavigation(tab: Tab): PendingNavigation? {
         val pending = _pendingNavigation.value?.takeIf { it.tab == tab } ?: return null
         _pendingNavigation.value = null
-        return pending.route
+        return pending
     }
 
     /** Switches to Your Books, back at its list, showing [segment] (the book page's held-status pill). */
@@ -596,6 +629,13 @@ class AppState(
                     options.demo || options.reset -> _library.value?.let { activate(it) }
                 }
                 options.route?.let(::applyRoute)
+                if (options.demoPostAlerts && _isDemo.value) {
+                    val launchRefresh = account.runningRefresh
+                    scope.launch {
+                        launchRefresh?.join()
+                        postDemoAlerts()
+                    }
+                }
                 if (options.morningCheckNow) {
                     // Once the launch's own refresh has settled, so the check fetches a new account.
                     val launchRefresh = account.runningRefresh

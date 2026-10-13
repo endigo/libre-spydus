@@ -43,8 +43,10 @@ class AlertsContentTest {
 
     @Test
     fun readyNotification() {
-        val n = AlertText.ready("abc", "19000001", item("19000001", "Dune", mapOf("Pickup location" to "Riverton Library")))
+        val n = AlertText.ready("abc", "https://canning.spydus.com", "19000001", item("19000001", "Dune", mapOf("Pickup location" to "Riverton Library")))
         assertEquals("ready:abc:19000001", n.id)
+        assertEquals("https://canning.spydus.com", n.origin)
+        assertEquals(listOf("19000001"), n.keys)
         assertEquals("Ready to collect", n.title)
         assertEquals("Dune · Riverton Library", n.body)
         assertEquals(AlertKind.READY, n.kind)
@@ -84,8 +86,10 @@ class AlertsContentTest {
             remindOn = today.toSimpleDate(),
             items = listOf(loan("1", "Project Hail Mary", "15 Oct 2026"), loan("2", "Dune", "15 Oct 2026")),
         )
-        val n = AlertText.due("abc", reminder, today)
+        val n = AlertText.due("abc", "https://canning.spydus.com", reminder, today)
         assertEquals("due:abc:2026-10-15", n.id)
+        assertEquals("https://canning.spydus.com", n.origin)
+        assertEquals(listOf("1", "2"), n.keys)
         assertEquals("Due Thursday 15 Oct", n.title)
         assertEquals("Project Hail Mary and Dune", n.body)
         assertEquals(AlertKind.DUE, n.kind)

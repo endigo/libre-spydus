@@ -150,10 +150,12 @@ private fun TabNavHost(tab: Tab, appState: AppState, reselects: Flow<Tab>) {
     val pending by appState.pendingNavigation.collectAsStateWithLifecycle()
 
     LaunchedEffect(pending) {
-        appState.consumePendingNavigation(tab)?.let { route ->
-            // The tab's own root (AppState.openBorrowed) pops back to it instead of pushing another.
-            if (route == Route.root(tab)) navController.popBackStack(navController.graph.startDestinationId, inclusive = false)
-            else navController.navigate(route)
+        appState.takePendingNavigation(tab)?.let { (_, route, fromRoot) ->
+            // The tab's own root (AppState.openBorrowed) pops back to it instead of pushing another;
+            // a tapped alert's book page goes straight over the root, so Back lands on Your Books.
+            val root = route == Route.root(tab)
+            if (root || fromRoot) navController.popBackStack(navController.graph.startDestinationId, inclusive = false)
+            if (!root) navController.navigate(route)
         }
     }
     LaunchedEffect(navController) {

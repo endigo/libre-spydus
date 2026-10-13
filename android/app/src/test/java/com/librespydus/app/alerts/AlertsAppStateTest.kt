@@ -1,7 +1,10 @@
 package com.librespydus.app.alerts
 
+import com.librespydus.app.core.AlertKind
+import com.librespydus.app.core.AlertTap
 import com.librespydus.app.core.Alerts
 import com.librespydus.app.core.AppState
+import com.librespydus.app.core.BookRef
 import com.librespydus.app.core.BorrowedSegment
 import com.librespydus.app.core.DemoData
 import com.librespydus.app.core.FakeBackend
@@ -12,6 +15,8 @@ import com.librespydus.app.core.InMemoryLibraryStore
 import com.librespydus.app.core.InMemorySecretStore
 import com.librespydus.app.core.LaunchOptions
 import com.librespydus.app.core.LibraryBackend
+import com.librespydus.app.core.PendingNavigation
+import com.librespydus.app.core.Route
 import com.librespydus.app.core.Tab
 import com.librespydus.app.core.UserFacingError
 import kotlinx.coroutines.CoroutineScope
@@ -246,10 +251,93 @@ class AlertsAppStateTest {
     fun aTappedAlertOpensYourBooksOnItsSegment() = runTest {
         val f = fixture()
         f.state.start()
-        f.state.openFromAlert(BorrowedSegment.RESERVATIONS)
+        f.state.openFromAlert(AlertTap(BorrowedSegment.RESERVATIONS))
         advanceUntilIdle()
         assertEquals(Tab.BORROWED, f.state.selectedTab.value)
         assertEquals(BorrowedSegment.RESERVATIONS, f.state.consumePendingBorrowedSegment())
+    }
+
+    private val hailMary = loan("29000001", "Project Hail Mary", "15 Oct 2026")
+
+    @Test
+    fun aTappedReadyAlertOpensTheBookPageOverReservations() = runTest {
+        val f = fixture()
+        f.backend.next = snapshot(ready = listOf(dune))
+        f.state.start()
+        advanceUntilIdle()
+        f.state.openFromAlert(AlertTap(BorrowedSegment.RESERVATIONS, AlertKind.READY, canning.origin, listOf("19000001")))
+        advanceUntilIdle()
+        assertEquals(Tab.BORROWED, f.state.selectedTab.value)
+        // Popped back to the list first, so Back from the book page lands on Your Books.
+        assertEquals(PendingNavigation(Tab.BORROWED, Route.Detail(BookRef.from(dune)), fromRoot = true), f.state.takePendingNavigation(Tab.BORROWED))
+        assertEquals(BorrowedSegment.RESERVATIONS, f.state.consumePendingBorrowedSegment())
+    }
+
+    @Test
+    fun aTappedAlertFallsBackToTheList() = runTest {
+        val f = fixture()
+        f.backend.next = snapshot(loans = listOf(hailMary, loan("29000002", "Lessons in chemistry", "15 Oct 2026")))
+        f.state.start()
+        advanceUntilIdle()
+        val taps = listOf(
+            AlertTap(BorrowedSegment.LOANS, AlertKind.DUE, canning.origin, listOf("29000001", "29000002")), // several loans
+            AlertTap(BorrowedSegment.LOANS, AlertKind.DUE, canning.origin, listOf("29000009")), // returned
+            AlertTap(BorrowedSegment.LOANS, AlertKind.DUE, "https://hutt.spydus.co.nz", listOf("29000001")), // another library
+            AlertTap(BorrowedSegment.LOANS), // an older build's notification
+        )
+        for (tap in taps) {
+            f.state.selectTab(Tab.HOME)
+            f.state.openFromAlert(tap)
+            advanceUntilIdle()
+            assertEquals(Tab.BORROWED, f.state.selectedTab.value)
+            assertEquals(PendingNavigation(Tab.BORROWED, Route.Borrowed), f.state.takePendingNavigation(Tab.BORROWED))
+            assertEquals(BorrowedSegment.LOANS, f.state.consumePendingBorrowedSegment())
+        }
+    }
+
+    @Test
+    fun aSignedOutLibraryFallsBackToTheList() = runTest {
+        val storage = InMemoryAccountSnapshotStorage().apply { save(canning.origin, snapshot(loans = listOf(hailMary))) }
+        val f = fixture(session = null, storage = storage)
+        f.state.start()
+        f.state.openFromAlert(AlertTap(BorrowedSegment.LOANS, AlertKind.DUE, canning.origin, listOf("29000001")))
+        advanceUntilIdle()
+        assertEquals(PendingNavigation(Tab.BORROWED, Route.Borrowed), f.state.takePendingNavigation(Tab.BORROWED))
+    }
+
+    @Test
+    fun aColdLaunchFromAnAlertRoutesOnceTheSavedAccountIsLoaded() = runTest {
+        // Offline: only the saved account can name the loan.
+        val storage = InMemoryAccountSnapshotStorage().apply { save(canning.origin, snapshot(loans = listOf(hailMary))) }
+        val f = fixture(storage = storage)
+        f.backend.fail = SpydusException.Network("offline")
+        // MainActivity hands over the tap while the Application's restore is still running.
+        f.state.openFromAlert(AlertTap(BorrowedSegment.LOANS, AlertKind.DUE, canning.origin, listOf("29000001")))
+        f.state.start()
+        advanceUntilIdle()
+        assertEquals(PendingNavigation(Tab.BORROWED, Route.Detail(BookRef.from(hailMary)), fromRoot = true), f.state.takePendingNavigation(Tab.BORROWED))
+        assertEquals(BorrowedSegment.LOANS, f.state.consumePendingBorrowedSegment())
+        assertEquals(1, f.backend.calls) // the launch's own refresh, which failed
+    }
+
+    @Test
+    fun theDemoHookPostsOneOfEachAlert() = runTest {
+        val f = fixture(library = null, session = null)
+        f.state.start()
+        f.state.applyLaunchOptions(LaunchOptions(origin = canning.origin, demo = true, demoPostAlerts = true))
+        advanceUntilIdle()
+        val hash = Alerts.originHash("demo:${canning.origin}")
+        assertEquals(
+            listOf(
+                Triple("ready:$hash:19000001", "Ready to collect", listOf("19000001")),
+                Triple("due:$hash:2026-10-15", "Due Thursday 15 Oct", listOf("29000001")),
+                Triple("due:$hash:2026-10-29", "Due Thursday 29 Oct", listOf("29000001", "29000002", "29000003")),
+            ),
+            f.notifier.posted.map { Triple(it.id, it.title, it.keys) },
+        )
+        assertEquals("Project Hail Mary and 2 more", f.notifier.posted.last().body)
+        assertTrue(f.notifier.posted.all { it.origin == canning.origin })
+        assertTrue(f.store.readyKeys.isEmpty()) // nothing remembered
     }
 
     @Test

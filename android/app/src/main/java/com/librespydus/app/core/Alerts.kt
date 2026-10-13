@@ -23,9 +23,10 @@ import java.time.LocalDate
  * post: [AppState] calls [process] after every successful `accountSnapshot` and
  * [postDueReminders] from the morning check ([MorningCheckWorker]).
  *
- * A *scope* is the library the alerts belong to: its origin, or `demo:<origin>` for demo data so
- * the demo account's keys never mix with the real one's. Its [originHash] (sha256, like the
- * account cache) names the saved keys and the notification ids.
+ * A *scope* is the library the alerts belong to ([scope]): its origin, or `demo:<origin>` for demo
+ * data so the demo account's keys never mix with the real one's. Its [originHash] (sha256, like the
+ * account cache) names the saved keys and the notification ids; each notification also carries the
+ * plain origin ([originOf]) for its tap (§5.8 "Tap").
  *
  * The switches are app-wide and both off by default. Turning "Ready to collect" on remembers what
  * is already waiting ([setReadyEnabled]); turning a switch off forgets its state.
@@ -94,7 +95,7 @@ class Alerts(
         val saved = store.readyKeys(hash)
         val result = readyAlerts(snapshot, saved.orEmpty())
         val announced = if (saved == null) emptyList() else result.newItems
-        announced.forEach { item -> notifier.post(AlertText.ready(hash, patronItemKey(item), item)) }
+        announced.forEach { item -> notifier.post(AlertText.ready(hash, originOf(scope), patronItemKey(item), item)) }
         store.setReadyKeys(hash, result.alertedKeys)
         if (announced.isNotEmpty()) Log.i(TAG, "posted ${announced.size} ready-to-collect alert(s)")
     }
@@ -114,7 +115,7 @@ class Alerts(
         var posted = 0
         for (reminder in dueReminders(snapshot, day.toSimpleDate(), DAYS_BEFORE)) {
             if (reminder.remindOn.toLocalDate() != day || store.duePostedOn(hash, reminder.key) == day) continue
-            notifier.post(AlertText.due(hash, reminder, day))
+            notifier.post(AlertText.due(hash, originOf(scope), reminder, day))
             store.setDuePosted(hash, reminder.key, day)
             posted++
         }
@@ -157,6 +158,22 @@ class Alerts(
     /** DEBUG `ls_morning_check_now`: runs the morning check now. */
     fun runMorningCheckNow() = scheduler.runNow()
 
+    /**
+     * DEBUG `ls_demo_post_alerts` (demo mode only): one of each alert from [snapshot] at once,
+     * whatever the switches say and without remembering anything, so their taps can be tried:
+     * "Ready to collect" for the first ready reservation, the reminder for the first due date (one
+     * loan in the demo account) and one reminder naming every loan that has a reminder (on the
+     * last of their due dates).
+     */
+    suspend fun postSamples(scope: String, snapshot: AccountSnapshot, day: LocalDate = today()) = locked {
+        val hash = originHash(scope)
+        val origin = originOf(scope)
+        snapshot.reservations.ready.items.firstOrNull()?.let { notifier.post(AlertText.ready(hash, origin, patronItemKey(it), it)) }
+        val reminders = dueReminders(snapshot, day.toSimpleDate(), DAYS_BEFORE)
+        reminders.firstOrNull()?.let { notifier.post(AlertText.due(hash, origin, it, day)) }
+        if (reminders.size > 1) notifier.post(AlertText.due(hash, origin, reminders.last().copy(items = reminders.flatMap { it.items }), day))
+    }
+
     /** Off the main thread, one at a time, and finished even if the caller is cancelled (keys saved after posting). */
     private suspend fun locked(block: suspend () -> Unit) =
         withContext(io + NonCancellable) { mutex.withLock { block() } }
@@ -166,6 +183,14 @@ class Alerts(
 
         /** Due-date reminders come two days ahead. */
         const val DAYS_BEFORE: UInt = 2u
+
+        private const val DEMO_PREFIX = "demo:"
+
+        /** The scope [origin]'s alerts are filed under: the origin, or `demo:<origin>` for demo data. */
+        fun scope(origin: String, demo: Boolean): String = if (demo) "$DEMO_PREFIX$origin" else origin
+
+        /** The library origin of [scope]. */
+        fun originOf(scope: String): String = scope.removePrefix(DEMO_PREFIX)
 
         fun originHash(scope: String): String = FileAccountSnapshotStorage.sha256(scope)
 
