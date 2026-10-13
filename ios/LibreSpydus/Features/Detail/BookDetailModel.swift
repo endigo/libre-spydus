@@ -3,7 +3,7 @@ import LibreSpydusCore
 import Observation
 
 /// State for one `BookDetailView`: the record, formats (given or re-found), availability per
-/// format and the related panels. Every call goes through the `LibraryBackend` passed in, and
+/// format, the related panels and, for an edition-level item, its copies. Every call goes through the `LibraryBackend` passed in, and
 /// failures that need the app (verification, sign-in) go through `report`.
 @MainActor
 @Observable
@@ -45,6 +45,11 @@ final class BookDetailModel {
     /// Keyed by `availabilityUrl`, so switching back to a format doesn't fetch it again.
     private(set) var availability: [String: Loadable<FormatAvailability>] = [:]
     private(set) var related: [RelatedPanel: Loadable<[BookRef]>] = [:]
+    /// An edition-level item's copies, from its availability's `holdingsUrl` (the "Copies" list,
+    /// §5.10); `.idle` for any other book.
+    private(set) var copies: Loadable<[CopyRow]> = .idle
+    /// The holdings URL `copies` was loaded from.
+    @ObservationIgnored private var copiesURL: String?
     /// The related links whose panels were requested (a record upgrade brings new ones).
     @ObservationIgnored private var relatedRequestedFor: RecordRelated?
     /// A format was picked on screen: the patron's edition is no longer selected for them.
@@ -66,6 +71,17 @@ final class BookDetailModel {
 
     var selectedFormat: FormatRef? {
         selectedFormatIndex.flatMap { formats.indices.contains($0) ? formats[$0] : nil }
+    }
+
+    /// A Featured list's item (§5.10): one format without a code. No format chips; the record and
+    /// counts load through that format, and the page lists its copies.
+    var isEditionLevel: Bool { formats.isEditionLevel }
+
+    /// Where an edition-level item's copies are listed, once its availability has come back (nil
+    /// before, and for any other book).
+    var copiesSource: String? {
+        guard isEditionLevel, let url = selectedFormat?.availabilityUrl.nonEmpty else { return nil }
+        return availability[url]?.value?.holdingsUrl
     }
 
     /// The format "Reserve" reserves: the selected one, when it has a reserve URL (physical, or
@@ -250,6 +266,28 @@ final class BookDetailModel {
             setAvailability(.success(try await backend.availability(url: url)), url: url, report: report)
         } catch {
             setAvailability(.failure(error), url: url, report: report)
+        }
+    }
+
+    /// An edition-level item's copies (`holdings(url:)` of `copiesSource`), once per URL; again
+    /// after a failure.
+    func loadCopies(backend: any LibraryBackend, report: Reporter) async {
+        guard let url = copiesSource else { return }
+        if url == copiesURL {
+            switch copies {
+            case .loaded, .loading: return
+            case .idle, .failed: break
+            }
+        }
+        copiesURL = url
+        copies = .loading
+        do {
+            let holdings = try await backend.holdings(url: url)
+            guard url == copiesURL else { return }
+            copies = .loaded(CopyRow.rows(holdings))
+        } catch {
+            guard url == copiesURL else { return }
+            copies = report(error).map { .failed($0) } ?? .idle
         }
     }
 

@@ -3,7 +3,8 @@ import LibreSpydusCore
 
 /// Demo mode (DEBUG, `-LSDemo YES`; docs/native-apps.md §5.4).
 ///
-/// Public reads (search/page/availability/record/related) go to a real backend: public GETs are
+/// Public reads (search/page/availability/record/related, the Featured collections and copies)
+/// go to a real backend: public GETs are
 /// allowed. The demo account's own books are the exception: `DemoCatalogue` answers for them
 /// offline, the way the OPAC does (a loan's session-set link loads an empty record, the
 /// session-free one the full record). Every account call is answered from `DemoFixtures` and never
@@ -107,6 +108,18 @@ actor DemoBackend: LibraryBackend {
     /// Cumberland Code 39), like the real app.
     func cardBarcodeSymbology() async -> BarcodeSymbology {
         await publicBackend.cardBarcodeSymbology()
+    }
+
+    func featured() async throws -> [FeaturedLink] {
+        try await publicBackend.featured()
+    }
+
+    func collection(url: String) async throws -> FeaturedCollection {
+        try await publicBackend.collection(url: url)
+    }
+
+    func holdings(url: String) async throws -> [Holding] {
+        try await publicBackend.holdings(url: url)
     }
 
     // MARK: Account → fixtures

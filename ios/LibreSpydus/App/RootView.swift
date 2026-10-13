@@ -103,6 +103,10 @@ private struct TabStack: View {
                             BookDetailView(ref: ref)
                         case let .results(query, sort, title):
                             SearchResultsView(query: query, sort: sort, title: title)
+                        case .collection(let link):
+                            CollectionView(link: link)
+                        case let .resultsPage(url, title):
+                            ResultsPageView(url: url, title: title)
                         }
                     }
                     .tabBarClearance()

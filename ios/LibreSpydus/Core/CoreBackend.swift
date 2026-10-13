@@ -46,6 +46,18 @@ final class CoreBackend: LibraryBackend {
         await timed("cardBarcodeSymbology") { await client.cardBarcodeSymbology() }
     }
 
+    func featured() async throws -> [FeaturedLink] {
+        try await timed("featured") { try await client.featured() }
+    }
+
+    func collection(url: String) async throws -> FeaturedCollection {
+        try await timed("collection") { try await client.collection(url: url) }
+    }
+
+    func holdings(url: String) async throws -> [Holding] {
+        try await timed("holdings") { try await client.holdings(url: url) }
+    }
+
     func login(username: String, password: String) async throws -> String {
         try await timed("login") { try await client.login(username: username, password: password) }
     }

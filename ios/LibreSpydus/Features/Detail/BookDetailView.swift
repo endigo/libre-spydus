@@ -53,6 +53,9 @@ struct BookDetailView: View {
         .task(id: model.selectedFormat?.availabilityUrl) {
             await model.loadAvailability(backend: app.backend, report: app.report)
         }
+        .task(id: model.copiesSource) {
+            await model.loadCopies(backend: app.backend, report: app.report)
+        }
         .onChange(of: reserveRequest != nil) { _, reserving in
             // A login/verification sheet from a background refresh waits until this one closes.
             if reserving { app.isPresentingFeatureSheet = true }
@@ -83,7 +86,7 @@ struct BookDetailView: View {
             actions
                 .zIndex(1)
                 .padding(.bottom, -actionsOverlap)
-            DetailSheetContent(model: model, retry: reload, startRelated: startRelated)
+            DetailSheetContent(model: model, retry: reload, startRelated: startRelated, retryCopies: retryCopies)
                 .padding(.top, actionsOverlap + Theme.Spacing.l)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                 .background(alignment: .top) {
@@ -121,9 +124,7 @@ struct BookDetailView: View {
                 HeldStatusPill(status: held) { app.openYourBooks(on: held.segment) }
             } else if let format = model.reservableFormat {
                 PrimaryPillButton(title: "Reserve", fillsWidth: true) { borrow(format) }
-                    .accessibilityHint(app.isSignedIn
-                        ? "Reserve the \(format.displayLabel.lowercased())"
-                        : "Sign in to reserve the \(format.displayLabel.lowercased())")
+                    .accessibilityHint(reserveHint(format))
                     // Held or not isn't known yet: keep the slot, show nothing.
                     .opacity(awaitingHolding ? 0 : 1)
                     .disabled(awaitingHolding)
@@ -140,6 +141,13 @@ struct BookDetailView: View {
             .sensoryFeedback(.selection, trigger: isFavourite)
         }
         .padding(.horizontal, Theme.Spacing.xl)
+    }
+
+    /// "Reserve the book" / "Sign in to reserve the book"; an edition-level item's format has no
+    /// name, so "this item".
+    private func reserveHint(_ format: FormatRef) -> String {
+        let what = format.isEditionLevel ? "this item" : "the \(format.displayLabel.lowercased())"
+        return app.isSignedIn ? "Reserve \(what)" : "Sign in to reserve \(what)"
     }
 
     private func borrow(_ format: FormatRef) {
@@ -179,6 +187,10 @@ struct BookDetailView: View {
         model.startRelated(backend: app.backend)
     }
 
+    private func retryCopies() {
+        Task { await model.loadCopies(backend: app.backend, report: app.report) }
+    }
+
     #if DEBUG
     /// `-LSDetailAction` screenshot hooks (DetailDebugActions).
     private func apply(_ actions: DetailDebugActions, scroller: ScrollViewProxy) async {
@@ -205,6 +217,11 @@ struct BookDetailView: View {
         }
         if actions.scrollToBottom {
             withAnimation { scroller.scrollTo(Self.bottomID, anchor: .bottom) }
+        }
+        if actions.scrollToCopies, model.isEditionLevel {
+            await wait { model.copiesSource == nil || model.copies.value == nil }
+            try? await Task.sleep(for: .milliseconds(300))
+            withAnimation { scroller.scrollTo(DetailSheetContent.copiesID, anchor: .top) }
         }
         if actions.openRelated,
            let first = RelatedPanel.allCases.lazy.compactMap({ model.related[$0]?.value?.first }).first {

@@ -81,8 +81,11 @@ struct ReserveSheet: View {
                         .foregroundStyle(Theme.Colors.textSecondary)
                         .lineLimit(1)
                 }
-                Chip(format: request.format)
-                    .padding(.top, Theme.Spacing.xs)
+                // An edition-level item's one format has no name to show.
+                if !request.format.isEditionLevel {
+                    Chip(format: request.format)
+                        .padding(.top, Theme.Spacing.xs)
+                }
             }
         }
         .accessibilityElement(children: .combine)

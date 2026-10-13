@@ -1,16 +1,20 @@
 import LibreSpydusCore
 import SwiftUI
 
-/// The white sheet under the detail header: synopsis, subject chips, details and the related
-/// carousels, with loading / empty / error states.
+/// The white sheet under the detail header: synopsis, subject chips, an edition-level item's
+/// copies, details and the related carousels, with loading / empty / error states.
 struct DetailSheetContent: View {
     let model: BookDetailModel
     let retry: () -> Void
     /// Called when the carousels first scroll into view (they load lazily).
     let startRelated: () -> Void
+    /// Loads an edition-level item's copies again after a failure.
+    let retryCopies: () -> Void
 
     /// Scroll target just above the carousels.
     static let relatedID = "detail-related"
+    /// Scroll target at the "Copies" list.
+    static let copiesID = "detail-copies"
 
     var body: some View {
         LazyVStack(alignment: .leading, spacing: Theme.Spacing.xl) {
@@ -32,6 +36,7 @@ struct DetailSheetContent: View {
         let summary = record.summary.nonEmpty
         let subjects = model.subjects
         let facts = model.facts
+        let showsCopies = model.copiesSource != nil && model.copies.value?.isEmpty != true
         if let summary {
             VStack(alignment: .leading, spacing: Theme.Spacing.s) {
                 SectionHeader(title: "Synopsis", onSheet: true)
@@ -41,6 +46,10 @@ struct DetailSheetContent: View {
         if !subjects.isEmpty {
             SubjectChips(subjects: subjects)
                 .padding(.top, summary == nil ? 0 : -Theme.Spacing.s)
+        }
+        if showsCopies {
+            CopiesList(state: model.copies, retry: retryCopies)
+                .id(Self.copiesID)
         }
         if !facts.isEmpty {
             DetailFactsList(facts: facts)
@@ -55,7 +64,7 @@ struct DetailSheetContent: View {
                 RelatedCarousel(panel: panel, state: model.related[panel] ?? .loading)
             }
         }
-        if summary == nil, subjects.isEmpty, facts.isEmpty, !model.hasRelatedPanels {
+        if summary == nil, subjects.isEmpty, !showsCopies, facts.isEmpty, !model.hasRelatedPanels {
             Text("The library has no more details for this title.")
                 .themeFont(.body)
                 .foregroundStyle(Theme.Colors.onSheetSecondary)
@@ -166,6 +175,89 @@ private struct DetailFactsList: View {
                 .lineLimit(5)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .accessibilityElement(children: .combine)
+    }
+}
+
+// MARK: - Copies
+
+/// An edition-level item's copies (§5.10): location, status (green when on the shelf), the
+/// library's note and the call number, one row per copy.
+private struct CopiesList: View {
+    let state: Loadable<[CopyRow]>
+    let retry: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.s) {
+            SectionHeader(title: "Copies", onSheet: true)
+            switch state {
+            case .idle, .loading:
+                HStack(spacing: Theme.Spacing.s) {
+                    ProgressView()
+                        .controlSize(.small)
+                        .tint(Theme.Colors.onSheetSecondary)
+                    Text("Loading copies…")
+                }
+                .themeFont(.caption)
+                .foregroundStyle(Theme.Colors.onSheetSecondary)
+                .padding(.vertical, Theme.Spacing.s)
+                .accessibilityElement(children: .combine)
+            case .failed(let error):
+                HStack(spacing: Theme.Spacing.s) {
+                    Text("Couldn't load copies")
+                        .foregroundStyle(Theme.Colors.onSheetSecondary)
+                    if error.canRetry {
+                        Button("Retry", action: retry)
+                            .foregroundStyle(Theme.Colors.primary)
+                            .buttonStyle(.borderless)
+                            .accessibilityLabel("Retry loading copies")
+                    }
+                }
+                .themeFont(.caption)
+                .padding(.vertical, Theme.Spacing.s)
+            case .loaded(let rows):
+                VStack(spacing: 0) {
+                    ForEach(Array(rows.enumerated()), id: \.offset) { index, row in
+                        CopyRowView(row: row)
+                            .padding(.vertical, Theme.Spacing.s)
+                        if index < rows.count - 1 {
+                            Rectangle()
+                                .fill(Theme.Colors.chipOnSheet)
+                                .frame(height: 1)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+private struct CopyRowView: View {
+    let row: CopyRow
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.xs / 2) {
+            Text(row.location)
+                .themeFont(.bodyStrong)
+                .foregroundStyle(Theme.Colors.onSheet)
+            if let status = row.status {
+                Text(status)
+                    .themeFont(.body)
+                    .foregroundStyle(row.available ? Theme.Colors.success : Theme.Colors.onSheet)
+            }
+            if let description = row.description {
+                Text(description)
+                    .themeFont(.body)
+                    .foregroundStyle(Theme.Colors.onSheetSecondary)
+            }
+            if let callNumber = row.callNumber {
+                Text(callNumber)
+                    .themeFont(.caption)
+                    .foregroundStyle(Theme.Colors.onSheetSecondary)
+                    .accessibilityLabel("Call number \(callNumber)")
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .accessibilityElement(children: .combine)
     }
 }

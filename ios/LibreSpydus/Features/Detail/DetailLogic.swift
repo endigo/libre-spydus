@@ -12,13 +12,15 @@ enum DetailRecordSource {
     /// A search record's `detailUrl` (`…/FULL/OPAC/ALLWRKENQ/…`) loads the OPAC's work-level page:
     /// a summary but no subjects, imprint, ISBNs, similar titles or other editions. A format's
     /// `availabilityUrl` loads the full bib page (the core supports it), so it comes first for
-    /// work-level refs. Bib URLs (loans, related items, saved bookmarks) are tried first as they are,
+    /// work-level refs and edition-level items (§5.10). Bib URLs (loans, related items, saved bookmarks) are tried first as they are,
     /// except a loan's or reservation's own set link saved before (`bibIrn` given): its
     /// session-free form goes first.
     static func candidateURLs(refURL: String?, bibIrn: String? = nil, format: FormatRef?) -> [String] {
         let formatURL = format?.availabilityUrl.nonEmpty
         let refURL = refURL.nonEmpty
-        let ordered = isWorkLevel(refURL)
+        // An edition-level item's format URL (`…/BIBENQ?SETLVL=&IRN=…`) is its bib record without a
+        // set; its card's own link holds a set id that expires.
+        let ordered = isWorkLevel(refURL) || format?.isEditionLevel == true
             ? [formatURL, refURL]
             : [sessionFreeURL(refURL, bibIrn: bibIrn), refURL, formatURL]
         var seen = Set<String>()
@@ -71,20 +73,78 @@ enum FormatSelection {
     }
 }
 
-/// A format's availability as the detail page keeps it: the counts' summary, and which edition
-/// (bib record) the format is.
+extension FormatRef {
+    /// The one format the core gives an edition-level item (a Featured list's card, §5.10): no
+    /// code and no label, the card's own reserve link and `…/BIBENQ?SETLVL=&IRN=…&FMT=RECFMT`.
+    var isEditionLevel: Bool {
+        code.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && label.nonEmpty == nil
+    }
+}
+
+extension [FormatRef] {
+    /// An edition-level item: exactly one format, without a code. It gets no format chip or
+    /// picker, loads its record through that format and lists its copies.
+    var isEditionLevel: Bool {
+        count == 1 && self[0].isEditionLevel
+    }
+}
+
+/// A format's availability as the detail page keeps it: the counts' summary, which edition
+/// (bib record) the format is, and where its copies are listed.
 struct FormatAvailability: Equatable, Sendable {
     var summary: AvailabilitySummary
     /// `Availability.bibRecordIrn`: the edition the patron may have on loan or reserved.
     var bibRecordIrn: String?
+    /// `Availability.holdingsUrl`: every copy (`holdings(url:)`), for an edition-level item's
+    /// "Copies" list.
+    var holdingsUrl: String?
 
-    init(summary: AvailabilitySummary, bibRecordIrn: String?) {
+    init(summary: AvailabilitySummary, bibRecordIrn: String?, holdingsUrl: String? = nil) {
         self.summary = summary
         self.bibRecordIrn = bibRecordIrn
+        self.holdingsUrl = holdingsUrl
     }
 
     init(_ availability: Availability) {
-        self.init(summary: availabilitySummary(availability: availability), bibRecordIrn: availability.bibRecordIrn.nonEmpty)
+        self.init(summary: availabilitySummary(availability: availability), bibRecordIrn: availability.bibRecordIrn.nonEmpty,
+                  holdingsUrl: availability.holdingsUrl.nonEmpty)
+    }
+}
+
+// MARK: - Copies
+
+/// One row of an edition-level item's "Copies" list (§5.10): where the copy is, its status (green
+/// when it's on the shelf), the library's note on it and its call number.
+struct CopyRow: Hashable, Sendable {
+    /// The branch in title case ("RIVERTON LIBRARY" → "Riverton Library").
+    var location: String
+    var status: String?
+    var available: Bool
+    var description: String?
+    var callNumber: String?
+
+    init(location: String, status: String?, available: Bool, description: String? = nil, callNumber: String? = nil) {
+        self.location = location
+        self.status = status
+        self.available = available
+        self.description = description
+        self.callNumber = callNumber
+    }
+
+    init(_ holding: Holding) {
+        self.init(location: holding.location.nonEmpty.map(Self.titleCased) ?? holding.collection.nonEmpty ?? "Copy",
+                  status: holding.status.nonEmpty, available: holding.available,
+                  description: holding.description.nonEmpty, callNumber: holding.callNumber.nonEmpty)
+    }
+
+    static func rows(_ holdings: [Holding]) -> [CopyRow] {
+        holdings.map(CopyRow.init)
+    }
+
+    /// "RIVERTON LIBRARY" → "Riverton Library"; mixed case is kept.
+    static func titleCased(_ text: String) -> String {
+        guard text == text.uppercased(), text.contains(where: \.isLetter) else { return text }
+        return text.capitalized(with: Locale(identifier: "en_AU"))
     }
 }
 
