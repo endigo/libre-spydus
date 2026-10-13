@@ -307,7 +307,7 @@ fun BorrowedScreen(appState: AppState, navigator: AppNavigator, modifier: Modifi
             title = { Text(Copy.YourBooks.renewTitle) },
             text = { Text(RenewText.confirm(row)) },
             confirmButton = {
-                TextButton(onClick = { vm.launch { renew(row) } }) { Text(Copy.YourBooks.renew, color = LsColors.primary) }
+                TextButton(onClick = { vm.launch { renew(row) } }) { Text(Copy.YourBooks.renew, color = LsColors.textPrimary, fontWeight = FontWeight.SemiBold) }
             },
             dismissButton = {
                 TextButton(onClick = { model.askToRenew(null) }) { Text(Copy.Common.notNow, color = LsColors.textPrimary) }

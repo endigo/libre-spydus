@@ -26,17 +26,20 @@ struct ProfileView: View {
         }
         .screenBackground()
         .toolbar(.hidden, for: .navigationBar)
-        .confirmationDialog(Copy.Profile.signOutTitle(library: model.libraryName), isPresented: $confirmingSignOut,
-                            titleVisibility: .visible) {
-            Button(Copy.Account.signOut, role: .destructive) { model.signOut() }
-        } message: {
-            Text(Copy.Profile.signOutMessage)
-        }
-        .confirmationDialog(Copy.Profile.clearVerificationTitle, isPresented: $confirmingClearVerification,
-                            titleVisibility: .visible) {
-            Button(Copy.Profile.clearVerification, role: .destructive) { clearVerification() }
-        } message: {
-            Text(Copy.Profile.clearVerificationMessage(library: model.libraryName).capitalisedFirst)
+        .dialogs {
+            Color.clear
+                .confirmationDialog(Copy.Profile.signOutTitle(library: model.libraryName), isPresented: $confirmingSignOut,
+                                    titleVisibility: .visible) {
+                    Button(Copy.Account.signOut, role: .destructive) { model.signOut() }
+                } message: {
+                    Text(Copy.Profile.signOutMessage)
+                }
+                .confirmationDialog(Copy.Profile.clearVerificationTitle, isPresented: $confirmingClearVerification,
+                                    titleVisibility: .visible) {
+                    Button(Copy.Profile.clearVerification, role: .destructive) { clearVerification() }
+                } message: {
+                    Text(Copy.Profile.clearVerificationMessage(library: model.libraryName).capitalisedFirst)
+                }
         }
     }
 

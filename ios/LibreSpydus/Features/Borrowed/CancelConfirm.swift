@@ -6,16 +6,18 @@ extension View {
     /// anything else keeps the reservation.
     func cancelReservationConfirmation(for row: ReservationRow, confirming: Binding<ReservationRow?>,
                                        onConfirm: @escaping (ReservationRow) -> Void) -> some View {
-        confirmationDialog(
-            Copy.YourBooks.cancelTitle,
-            isPresented: Binding(get: { confirming.wrappedValue?.id == row.id },
-                                 set: { if !$0, confirming.wrappedValue?.id == row.id { confirming.wrappedValue = nil } }),
-            titleVisibility: .visible
-        ) {
-            Button(Copy.YourBooks.cancelReservation, role: .destructive) { onConfirm(row) }
-            Button(Copy.YourBooks.keepReservation, role: .cancel) {}
-        } message: {
-            Text(CancelConfirm.message(for: row))
+        dialogs {
+            Color.clear.confirmationDialog(
+                Copy.YourBooks.cancelTitle,
+                isPresented: Binding(get: { confirming.wrappedValue?.id == row.id },
+                                     set: { if !$0, confirming.wrappedValue?.id == row.id { confirming.wrappedValue = nil } }),
+                titleVisibility: .visible
+            ) {
+                Button(Copy.YourBooks.cancelReservation, role: .destructive) { onConfirm(row) }
+                Button(Copy.YourBooks.keepReservation, role: .cancel) {}
+            } message: {
+                Text(CancelConfirm.message(for: row))
+            }
         }
     }
 }

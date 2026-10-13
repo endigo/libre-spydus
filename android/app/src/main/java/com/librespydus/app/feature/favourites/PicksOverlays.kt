@@ -19,6 +19,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.librespydus.app.core.AppState
 import com.librespydus.app.core.PicksNotice
@@ -87,7 +88,7 @@ fun PicksOverlays(appState: AppState) {
             title = { Text(Copy.Picks.offerTitle) },
             text = { Text(current.message) },
             confirmButton = {
-                TextButton(onClick = { appState.picks.answerOffer(add = true) }) { Text(Copy.Common.add, color = LsColors.primary) }
+                TextButton(onClick = { appState.picks.answerOffer(add = true) }) { Text(Copy.Common.add, color = LsColors.textPrimary, fontWeight = FontWeight.SemiBold) }
             },
             dismissButton = {
                 TextButton(onClick = { appState.picks.answerOffer(add = false) }) { Text(Copy.Common.notNow, color = LsColors.textPrimary) }

@@ -513,6 +513,13 @@ Shared components (I1/A1): `CoverImage` (async + placeholder), `ShelfCover` (cov
 `CircleIconButton`, `GenreTile`, `Chip`, `LoadingView`, `EmptyStateView`, `ErrorStateView(retry)`,
 `PlaceholderScreen`, the custom tab bar.
 
+**Dialogs** (alerts, confirmation dialogs, both apps): a destructive action (cancel a reservation,
+sign out, clear verification) is red — iOS `role: .destructive` (system red), Android `danger`; every
+other button is neutral `textPrimary`, with the confirming action bold (iOS
+`.keyboardShortcut(.defaultAction)`, Android SemiBold). The coral `primary` is never used in a dialog:
+there it reads as destructive (`primary` and `danger` are the same colour). iOS hosts dialogs with
+`.dialogs { … }`, which gives them the neutral tint instead of the app-wide coral.
+
 ### 7.1 Copy: one wording, both apps, every screen
 Every piece of text a reader sees or hears (titles, buttons, labels, chips, empty and error states,
 toasts, alerts, notifications, accessibility labels and hints) comes from **`design/copy.json`**,

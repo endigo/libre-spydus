@@ -73,17 +73,20 @@ extension View {
     /// "Renew this loan?" while `confirming` holds a loan: Renew runs `onConfirm`, Not now keeps
     /// the loan as it is. Renewing is a real change at the library, so it only runs after Renew.
     func renewLoanConfirmation(_ confirming: Binding<LoanRow?>, onConfirm: @escaping (LoanRow) -> Void) -> some View {
-        alert(
-            Copy.YourBooks.renewTitle,
-            isPresented: Binding(get: { confirming.wrappedValue != nil },
-                                 set: { if !$0 { confirming.wrappedValue = nil } }),
-            presenting: confirming.wrappedValue
-        ) { row in
-            Button(Copy.Common.notNow, role: .cancel) {}
-            Button(Copy.YourBooks.renew) { onConfirm(row) }
-                .accessibilityHint(Copy.YourBooks.renewHint)
-        } message: { row in
-            Text(RenewText.confirmMessage(for: row))
+        dialogs {
+            Color.clear.alert(
+                Copy.YourBooks.renewTitle,
+                isPresented: Binding(get: { confirming.wrappedValue != nil },
+                                     set: { if !$0 { confirming.wrappedValue = nil } }),
+                presenting: confirming.wrappedValue
+            ) { row in
+                Button(Copy.Common.notNow, role: .cancel) {}
+                Button(Copy.YourBooks.renew) { onConfirm(row) }
+                    .keyboardShortcut(.defaultAction)
+                    .accessibilityHint(Copy.YourBooks.renewHint)
+            } message: { row in
+                Text(RenewText.confirmMessage(for: row))
+            }
         }
     }
 }

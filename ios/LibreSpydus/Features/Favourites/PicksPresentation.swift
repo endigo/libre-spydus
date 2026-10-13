@@ -90,11 +90,14 @@ private struct PicksCopyOfferAlert: ViewModifier {
                 guard !Task.isCancelled, model.picksCopyOffer == offer, canPresent else { return }
                 shown = offer
             }
-            .alert(Copy.Picks.offerTitle, isPresented: isPresented, presenting: shown) { _ in
-                Button(Copy.Common.notNow, role: .cancel) { answer(add: false) }
-                Button(Copy.Common.add) { answer(add: true) }
-            } message: { offer in
-                Text(Copy.Picks.offerMessage(count: offer.count))
+            .dialogs {
+                Color.clear.alert(Copy.Picks.offerTitle, isPresented: isPresented, presenting: shown) { _ in
+                    Button(Copy.Common.notNow, role: .cancel) { answer(add: false) }
+                    Button(Copy.Common.add) { answer(add: true) }
+                        .keyboardShortcut(.defaultAction)
+                } message: { offer in
+                    Text(Copy.Picks.offerMessage(count: offer.count))
+                }
             }
     }
 
