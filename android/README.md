@@ -221,6 +221,45 @@ adb -s emulator-5556 shell am start -S -n com.librespydus.app/.MainActivity \
   --es ls_origin https://cumberlandlibraries.spydus.com --ez ls_demo true --ez ls_open_card true
 ```
 
+## Featured collections (docs §5.10)
+
+Home shows a "Featured" row between "Popular genres" and "Your borrowed books" for libraries
+whose OPAC home page has a Featured list (Canning: What's New, Coming Soon, eLibrary, First Nations,
+Languages Other Than English, Library of Things, Local History, More to Celebrate). It loads on its
+own (`HomeFeaturedModel`, once per library and verification, again on pull to refresh) and is
+hidden when the list is empty or fails: most libraries (Hutt, Geelong, Cumberland) have none.
+
+- **Tiles** (`FeaturedRow.kt`): a `surface` card with the library's Font Awesome icon on a tinted
+  circle (`FeaturedIcon.forName`: book, balloons → celebration, computer, circle, globe, game-board
+  → puzzle piece, map-location-dot → map, user-circle → person in a circle, anything else →
+  sparkles) and the title in two lines.
+- **Tap** (`AppNavigator.openFeatured`): `COLLECTION` → `Route.Collection(title, url)`;
+  `SEARCH` → `Route.ListResults(url, title)`; `WEB` → the in-app browser (`InAppBrowser`, a Custom
+  Tab in the app's navy via `androidx.browser`, else the default browser).
+- **Collection screen** (`CollectionScreen`, `CollectionModel`): `collection(url)`, then one shelf per
+  section (title, "View All" → `ListResults`, covers from the first `page(section.url)`, up to 20).
+  A shelf loads when its row is composed (scrolled into view), at most three at a time (a
+  `Semaphore`); an empty section is hidden, a failed one shows Retry in its row. A page without
+  sections (eLibrary), or whose sections all came back empty, shows "This collection is on the
+  library's website." / "Nothing here right now" and **Open website**.
+- **Results by URL** (`ListResultsScreen`): the Search results list started from `page(url)`
+  (`SearchResultsModel.Request.url`), paged by `nextPageUrl`, without the sort menu.
+- **Edition-level items** (every item in those lists): one format with an empty code and no label
+  (`EditionLevel`). Rows, the book page and the reserve sheet show no format chip; the book page
+  loads the record through `format.availabilityUrl` first, never re-finds formats, and adds a
+  **Copies** list from `holdings(availability.holdingsUrl)` (branch title-cased, status green when
+  available, the copy's note, the call number). Favourites keep the format, so a saved item opens
+  the same way. Reserve works as for any format (demo mode only while developing).
+
+`LibraryBackend.featured()` / `collection(url)` / `holdings(url)` default to empty (test fakes);
+`CoreBackend` forwards to the core, `DemoBackend` to the real library (public GETs).
+
+```sh
+# Canning's Featured row; Hutt has none
+adb -s emulator-5556 shell am start -S -n com.librespydus.app/.MainActivity --es ls_origin https://canning.spydus.com --ez ls_demo true
+adb -s emulator-5556 shell am start -S -n com.librespydus.app/.MainActivity --es ls_origin https://hutt.spydus.co.nz
+```
+
 ## Code map (`app/src/main/java/com/librespydus/app/`)
 
 | path | owner | what |
@@ -242,7 +281,8 @@ adb -s emulator-5556 shell am start -S -n com.librespydus.app/.MainActivity \
 | `ui/components/` | A1 | `CoverImage`, `ShelfCover`, `BookRowCard`, `SectionHeader`, `SearchField`, `PrimaryPillButton`, `SecondaryPillButton`, `CircleIconButton`, `LsTopBar`, `GenreTile`, `Chip`, `SegmentedToggle`, `LoadingView`, `EmptyStateView`, `ErrorStateView`, `PlaceholderScreen`, `LsTabBar`, `ComponentGallery` |
 | `ui/nav/` | A1 | `LibreSpydusRoot` (splash, onboarding, tabs, AppState-driven sheets), one `NavHost` per tab, `AppNavigator`, `LocalAppState` |
 | `feature/onboarding/`, `feature/profile/`, `feature/borrowed/`, `feature/favourites/` | A2 | `LibraryPickerScreen`, `LoginSheet`, `VerificationScreen`, `ProfileScreen` (+ A7 `NotificationsSection`), `BorrowedScreen`, `FavouritesScreen` |
-| `feature/home/`, `feature/search/`, `feature/detail/` | A3 | `HomeScreen`, `SearchScreen`, `SearchResultsScreen`, `BookDetailScreen` |
+| `feature/home/`, `feature/search/`, `feature/detail/` | A3 (+ A9) | `HomeScreen`, `SearchScreen`, `SearchResultsScreen` (+ `ListResultsScreen`), `BookDetailScreen` (+ the edition-level "Copies" list) |
+| `feature/featured/` | A9 | Featured collections (§5.10): `FeaturedRow` (Home section + tiles), `HomeFeaturedModel`, `CollectionScreen` / `CollectionModel`, `FeaturedLogic` (icon mapping, routing, `EditionLevel`, `CopyRow`), `FeaturedIcons`, `InAppBrowser` |
 | `feature/mycard/` | A8 | My card (§5.9): `MyCardButton` (Home header), `MyCardSheet` (card, entry form, `BarcodeView`, brightness), `MyCardLogic` (content, `BarcodeLayout`, `CardSymbologies`, `BrightnessBoost`) |
 
 ### Notes for screen authors (waves 2–3)

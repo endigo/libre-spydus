@@ -83,6 +83,50 @@ fun SearchResultsScreen(route: Route.Results, appState: AppState, navigator: App
     }
 }
 
+/**
+ * A results list that starts from a URL (`ListResults(url, title)`, §5.10): a collection
+ * section's "View All", a Featured saved search. The same list as [SearchResultsScreen], first
+ * page from `page(url)`, without a sort menu.
+ */
+@Composable
+fun ListResultsScreen(route: Route.ListResults, appState: AppState, navigator: AppNavigator, modifier: Modifier = Modifier) {
+    val backend by appState.backend.collectAsStateWithLifecycle()
+    val verification by appState.verificationGeneration.collectAsStateWithLifecycle()
+    val report = remember(appState) { appState.browseReporter() }
+    var attempt by rememberSaveable { mutableIntStateOf(0) }
+    val model: SearchResultsModel = viewModel()
+    val state by model.state.collectAsStateWithLifecycle()
+
+    val currentBackend = backend
+    val request = currentBackend?.let {
+        SearchResultsModel.Request(route.title, ResultsSort.RELEVANCE, it.origin, verification, attempt, url = route.url)
+    }
+    LaunchedEffect(request) {
+        if (request == null || currentBackend == null) return@LaunchedEffect
+        model.viewModelScope.launch { model.load(request, currentBackend, report) }
+    }
+
+    Column(
+        modifier
+            .fillMaxSize()
+            .background(LsColors.background)
+            .statusBarsPadding(),
+    ) {
+        LsTopBar(title = route.title, onBack = navigator::back)
+        SearchResultsList(
+            state = state,
+            query = route.title,
+            onRetry = { attempt += 1 },
+            onLoadMore = { model.viewModelScope.launch { model.loadMore() } },
+            onRetryLoadMore = { model.viewModelScope.launch { model.retryLoadMore() } },
+            onOpen = navigator::openBook,
+            modifier = Modifier.weight(1f),
+            noResultsTitle = "Nothing in “${route.title}” right now",
+            noResultsMessage = "Check back soon.",
+        )
+    }
+}
+
 @Composable
 private fun SortMenu(selected: ResultsSort, onSelect: (ResultsSort) -> Unit) {
     var open by remember { mutableStateOf(false) }

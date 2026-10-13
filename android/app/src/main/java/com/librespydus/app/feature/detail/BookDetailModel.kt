@@ -7,6 +7,8 @@ import com.librespydus.app.core.FormatRef
 import com.librespydus.app.core.LibraryBackend
 import com.librespydus.app.core.ResultsSort
 import com.librespydus.app.core.UserFacingError
+import com.librespydus.app.feature.featured.CopyRow
+import com.librespydus.app.feature.featured.EditionLevel
 import com.librespydus.app.feature.search.BrowseLoadable
 import com.librespydus.app.feature.search.BrowseReporter
 import com.librespydus.app.feature.search.errorOrNull
@@ -68,8 +70,45 @@ data class DetailState(
     val related: Map<RelatedPanel, BrowseLoadable<List<BookRef>>> = emptyMap(),
     /** [BookDetailModel.selectHeldFormat] is still picking the patron's edition. */
     val choosingHeldFormat: Boolean = false,
+    /** An edition-level item's copies (§5.10), keyed by holdings URL. */
+    val copies: Map<String, BrowseLoadable<List<CopyRow>>> = emptyMap(),
 ) {
     val selectedFormat: FormatRef? get() = selectedFormatIndex?.let { formats.getOrNull(it) }
+
+    /**
+     * One bib with no format tabs (every item of a Featured collection, §5.10): no format chips,
+     * no format re-find, and a "Copies" list on the page.
+     */
+    val isEditionLevel: Boolean get() = EditionLevel.isEditionLevel(formats)
+
+    /** Format chips to pick from: only when there is more than one real format. */
+    val showsFormatChips: Boolean get() = formats.size > 1 && !isEditionLevel
+
+    /** The selected format's holdings URL, once its availability has loaded. */
+    val holdingsUrl: String?
+        get() = selectedFormat?.availabilityUrl.trimmedOrNull()?.let { availability[it]?.valueOrNull?.holdingsUrl }
+
+    /**
+     * The "Copies" section of an edition-level item: loading until the availability (then the
+     * holdings) arrive; null — no section — for other items, when the availability failed or has no
+     * holdings link, and when there are no copies.
+     */
+    val copiesSection: BrowseLoadable<List<CopyRow>>?
+        get() {
+            if (!isEditionLevel) return null
+            val url = selectedFormat?.availabilityUrl.trimmedOrNull() ?: return null
+            val loaded = when (val availabilityState = availability[url] ?: BrowseLoadable.Idle) {
+                BrowseLoadable.Idle, BrowseLoadable.Loading -> return BrowseLoadable.Loading
+                is BrowseLoadable.Failed -> return null
+                is BrowseLoadable.Loaded -> availabilityState.value
+            }
+            val holdings = loaded.holdingsUrl ?: return null
+            return when (val state = copies[holdings] ?: BrowseLoadable.Idle) {
+                BrowseLoadable.Idle -> BrowseLoadable.Loading
+                is BrowseLoadable.Loaded -> state.takeIf { it.value.isNotEmpty() }
+                else -> state
+            }
+        }
 
     /**
      * The format "Reserve" reserves: the selected one, when it has a reserve URL (physical, or
@@ -264,6 +303,33 @@ class BookDetailModel(
             val shown = report(e)
             _state.update { it.copy(formatLookup = if (shown != null) FormatLookup.Failed(shown) else FormatLookup.Pending) }
         }
+    }
+
+    /**
+     * An edition-level item's copies, from its availability's holdings URL (once per URL; again
+     * after a failure). Nothing for other items or before the availability is in.
+     */
+    suspend fun loadCopies(backend: LibraryBackend, report: BrowseReporter) {
+        val state = _state.value
+        if (!state.isEditionLevel) return
+        val url = state.holdingsUrl ?: return
+        when (state.copies[url]) {
+            is BrowseLoadable.Loaded, BrowseLoadable.Loading -> return
+            else -> Unit
+        }
+        setCopies(url, BrowseLoadable.Loading)
+        try {
+            setCopies(url, BrowseLoadable.Loaded(CopyRow.rows(backend.holdings(url))))
+        } catch (e: CancellationException) {
+            setCopies(url, BrowseLoadable.Idle)
+            throw e
+        } catch (e: Exception) {
+            setCopies(url, report(e)?.let { BrowseLoadable.Failed(it) } ?: BrowseLoadable.Idle)
+        }
+    }
+
+    private fun setCopies(url: String, value: BrowseLoadable<List<CopyRow>>) {
+        _state.update { it.copy(copies = it.copies + (url to value)) }
     }
 
     /** The selected format's availability (once per URL; again after a failure). */

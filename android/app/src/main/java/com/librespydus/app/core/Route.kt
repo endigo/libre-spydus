@@ -40,7 +40,7 @@ enum class ResultsSort(val label: String) {
 
 /**
  * Type-safe navigation destinations inside a tab's stack (ui/nav). Each tab's root is its own
- * route; [Detail] and [Results] can be pushed onto any tab.
+ * route; [Detail], [Results], [Collection] and [ListResults] can be pushed onto any tab.
  */
 @Serializable
 sealed interface Route {
@@ -60,6 +60,18 @@ sealed interface Route {
         val sort: ResultsSort = ResultsSort.RELEVANCE,
         val title: String? = null,
     ) : Route
+
+    /**
+     * A library's featured collection (§5.10, A9): one shelf per section of the page at [url],
+     * titled with the Featured link's [title].
+     */
+    @Serializable data class Collection(val title: String, val url: String) : Route
+
+    /**
+     * A results list that starts from a URL (`page(url)`, then `nextPageUrl`) instead of a query:
+     * a collection section's "View All", a Featured saved search (§5.10). No sort toggle.
+     */
+    @Serializable data class ListResults(val url: String, val title: String) : Route
 
     companion object {
         fun root(tab: Tab): Route = when (tab) {

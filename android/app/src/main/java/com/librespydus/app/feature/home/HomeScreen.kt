@@ -32,6 +32,8 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.librespydus.app.core.AppState
 import com.librespydus.app.core.Tab
+import com.librespydus.app.feature.featured.FeaturedSection
+import com.librespydus.app.feature.featured.HomeFeaturedModel
 import com.librespydus.app.feature.mycard.MyCardButton
 import com.librespydus.app.feature.mycard.MyCardDebugHooks
 import com.librespydus.app.feature.mycard.MyCardSheet
@@ -51,8 +53,9 @@ import kotlinx.coroutines.launch
 
 /**
  * Home (§6): library logo (→ Profile), greeting with "My card" (§5.9, signed in), search field
- * (→ Search tab), "New arrivals", "Popular genres" and "Your borrowed books". New arrivals loads
- * on its own (reloads on library and verification changes); the loans shelf and greeting come
+ * (→ Search tab), "New arrivals", "Popular genres", "Featured" (§5.10, only for libraries with a
+ * Featured list) and "Your borrowed books". New arrivals and Featured load on their own (reload on
+ * library and verification changes); the loans shelf and greeting come
  * from the account store's snapshot (§5.2a), shown at once and refreshed in the background when it
  * is over two minutes old. Each shelf has its own skeleton and error; pull to refresh reloads both.
  */
@@ -60,6 +63,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun HomeScreen(appState: AppState, navigator: AppNavigator, modifier: Modifier = Modifier) {
     val model: HomeModel = viewModel()
+    val featuredModel: HomeFeaturedModel = viewModel()
     val library by appState.library.collectAsStateWithLifecycle()
     val backend by appState.backend.collectAsStateWithLifecycle()
     val session by appState.session.collectAsStateWithLifecycle()
@@ -69,6 +73,7 @@ fun HomeScreen(appState: AppState, navigator: AppNavigator, modifier: Modifier =
     val accountRefreshing by appState.account.isRefreshing.collectAsStateWithLifecycle()
     val accountError by appState.account.lastRefreshError.collectAsStateWithLifecycle()
     val arrivals by model.arrivals.collectAsStateWithLifecycle()
+    val featured by featuredModel.links.collectAsStateWithLifecycle()
     val loans = remember(snapshot, accountRefreshing, accountError) { HomeLoans.state(snapshot, accountRefreshing, accountError) }
     val report = remember(appState) { appState.browseReporter() }
     var refreshing by remember { mutableStateOf(false) }
@@ -86,7 +91,10 @@ fun HomeScreen(appState: AppState, navigator: AppNavigator, modifier: Modifier =
     val context = HomeLoadContext(currentBackend, key, report)
 
     // Loads run in the model's scope: pushing a detail screen mid-load doesn't cancel them.
-    LaunchedEffect(key) { model.viewModelScope.launch { model.loadIfNeeded(context) } }
+    LaunchedEffect(key) {
+        model.viewModelScope.launch { model.loadIfNeeded(context) }
+        featuredModel.viewModelScope.launch { featuredModel.loadIfNeeded(currentBackend, key) }
+    }
     LaunchedEffect(currentBackend, session) { appState.account.refresh() }
     LaunchedEffect(currentBackend) { if (MyCardDebugHooks.run(activity, appState)) showingCard = true }
 
@@ -97,8 +105,10 @@ fun HomeScreen(appState: AppState, navigator: AppNavigator, modifier: Modifier =
             model.viewModelScope.launch {
                 try {
                     val account = appState.account.refresh(force = true)
+                    val featuredRefresh = featuredModel.viewModelScope.launch { featuredModel.refresh(currentBackend, key) }
                     model.refresh(context)
                     account?.join()
+                    featuredRefresh.join()
                 } finally {
                     refreshing = false
                 }
@@ -186,6 +196,9 @@ fun HomeScreen(appState: AppState, navigator: AppNavigator, modifier: Modifier =
                     }
                 }
             }
+
+            // Featured: the library's own collections (§5.10); nothing at all when it has none.
+            FeaturedSection(featured, navigator)
 
             // Your borrowed books
             Column(verticalArrangement = Arrangement.spacedBy(LsSpacing.m)) {

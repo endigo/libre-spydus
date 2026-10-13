@@ -118,6 +118,12 @@ fun BookDetailScreen(book: BookRef, appState: AppState, navigator: AppNavigator,
         val b = currentBackend ?: return@LaunchedEffect
         model.viewModelScope.launch { model.loadAvailability(b, report) }
     }
+    // An edition-level item's "Copies" list, once its availability names the holdings (§5.10).
+    val holdingsUrl = state.holdingsUrl
+    LaunchedEffect(holdingsUrl, verification) {
+        val b = currentBackend ?: return@LaunchedEffect
+        if (holdingsUrl != null) model.viewModelScope.launch { model.loadCopies(b, report) }
+    }
     LaunchedEffect(session) {
         val format = pendingBorrow ?: return@LaunchedEffect
         if (session == null) return@LaunchedEffect
@@ -197,6 +203,7 @@ fun BookDetailScreen(book: BookRef, appState: AppState, navigator: AppNavigator,
                     onStartRelated = { currentBackend?.let(model::startRelated) },
                     onOpenBook = navigator::openBook,
                     onOpenSubject = { navigator.openResults(it.query, ResultsSort.RELEVANCE, it.label) },
+                    onRetryCopies = { currentBackend?.let { b -> model.viewModelScope.launch { model.loadCopies(b, report) } } },
                     modifier = Modifier
                         .padding(top = ActionsHeight / 2)
                         .fillMaxWidth()
@@ -296,7 +303,7 @@ private fun DetailHeader(
                 }
             }
         }
-        if (state.formats.size > 1) {
+        if (state.showsFormatChips) {
             FlowRow(
                 Modifier.semantics { contentDescription = "Formats" },
                 horizontalArrangement = Arrangement.spacedBy(LsSpacing.s),
@@ -402,7 +409,8 @@ private fun DetailActions(
         if (held != null) {
             HeldStatusPill(held, onClick = { onOpenHeld(held.segment) }, modifier = Modifier.weight(1f))
         } else if (reservable != null) {
-            val what = reservable.displayLabel.lowercase()
+            // An edition-level item's format has no label (§5.10).
+            val what = reservable.displayLabel.trim().lowercase().ifEmpty { null }?.let { "the $it" } ?: "this item"
             val alpha by animateFloatAsState(if (awaitingHolding) 0f else 1f, label = "reserve")
             PrimaryPillButton(
                 text = "Reserve",
@@ -414,7 +422,7 @@ private fun DetailActions(
                         if (awaitingHolding) {
                             Modifier.clearAndSetSemantics { }
                         } else {
-                            Modifier.semantics { contentDescription = if (signedIn) "Reserve the $what" else "Sign in to reserve the $what" }
+                            Modifier.semantics { contentDescription = if (signedIn) "Reserve $what" else "Sign in to reserve $what" }
                         },
                     ),
             )

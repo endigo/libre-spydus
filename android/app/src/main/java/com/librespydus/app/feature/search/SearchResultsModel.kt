@@ -7,6 +7,7 @@ import com.librespydus.app.core.FormatRef
 import com.librespydus.app.core.LibraryBackend
 import com.librespydus.app.core.ResultsSort
 import com.librespydus.app.core.UserFacingError
+import com.librespydus.app.feature.featured.EditionLevel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -15,8 +16,9 @@ import kotlinx.coroutines.flow.update
 import uniffi.librespydus_core.SearchRecord
 
 /**
- * One search, paged: the first page from `searchSorted`, later pages from `nextPageUrl` → `page`
- * (infinite scroll). Shared by the Search tab and [SearchResultsScreen].
+ * One search, paged: the first page from `searchSorted` (or, for a [Request.url], `page(url)`),
+ * later pages from `nextPageUrl` → `page` (infinite scroll). Shared by the Search tab,
+ * [SearchResultsScreen] and [ListResultsScreen].
  *
  * Records are merged without duplicates (`workIrn`, else `detailUrl`); each page URL is fetched at
  * most once, and a result that arrives after a newer search started is dropped. Calls run on the
@@ -35,6 +37,11 @@ class SearchResultsModel : ViewModel() {
         val origin: String,
         val verification: Int,
         val attempt: Int = 0,
+        /**
+         * A results list to start from instead of [query] (§5.10: a collection section, a Featured
+         * saved search); [sort] doesn't apply.
+         */
+        val url: String? = null,
     )
 
     sealed interface Phase {
@@ -101,7 +108,10 @@ class SearchResultsModel : ViewModel() {
         _state.value = State(phase = Phase.Loading, request = request)
 
         try {
-            val page = backend.searchSorted(request.query, request.sort)
+            val page = request.url?.let { url ->
+                requestedPages += url
+                backend.page(url)
+            } ?: backend.searchSorted(request.query, request.sort)
             if (generation != this.generation) return
             settledRequest = request
             if (page.records.isEmpty()) {
@@ -225,7 +235,9 @@ data class SearchResultItem(
         fun from(record: SearchRecord, key: String?, position: Int): SearchResultItem {
             val ref = BookRef.from(record)
             val labels = mutableSetOf<String>()
+            // An edition-level item's one format has no code or label: no chip (§5.10).
             val formats = ref.formats
+                .filterNot { EditionLevel.isEditionLevel(it) }
                 .filter { labels.add(it.displayLabel.lowercase()) }
                 .map { ResultFormat(it, it.displayLabel, CoreHelpers.isDigitalFormat(it)) }
             return SearchResultItem(id = key ?: "row:$position", key = key, ref = ref, formats = formats)

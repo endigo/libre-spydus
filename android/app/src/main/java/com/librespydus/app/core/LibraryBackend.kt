@@ -8,6 +8,9 @@ import uniffi.librespydus_core.Availability
 import uniffi.librespydus_core.BarcodeSymbology
 import uniffi.librespydus_core.EditOptions
 import uniffi.librespydus_core.EditOverrides
+import uniffi.librespydus_core.FeaturedCollection
+import uniffi.librespydus_core.FeaturedLink
+import uniffi.librespydus_core.Holding
 import uniffi.librespydus_core.PatronList
 import uniffi.librespydus_core.RecordDetail
 import uniffi.librespydus_core.RelatedList
@@ -61,6 +64,18 @@ interface LibraryBackend {
      * public mobile config, Code 128 when it has none. Never throws (the core falls back to Code 128).
      */
     suspend fun cardBarcodeSymbology(): BarcodeSymbology = BarcodeSymbology.CODE128
+
+    /**
+     * The library's "Featured" list on its OPAC home page (§5.10), in order; empty for most
+     * libraries. Public, cached in the core.
+     */
+    suspend fun featured(): List<FeaturedLink> = emptyList()
+
+    /** A featured collection page (`FeaturedKind.COLLECTION`): its titled saved searches, if any. */
+    suspend fun collection(url: String): FeaturedCollection = FeaturedCollection(null, emptyList())
+
+    /** One row per copy for an `Availability.holdingsUrl` (the book page's "Copies" list, §5.10). */
+    suspend fun holdings(url: String): List<Holding> = emptyList()
 }
 
 /**
@@ -101,6 +116,10 @@ class CoreBackend(private val client: SpydusClient) : LibraryBackend {
         io { client.editReservation(url, session, overrides) }
 
     override suspend fun cardBarcodeSymbology() = io { client.cardBarcodeSymbology() }
+
+    override suspend fun featured() = io { client.featured() }
+    override suspend fun collection(url: String) = io { client.collection(url) }
+    override suspend fun holdings(url: String) = io { client.holdings(url) }
 
     private suspend inline fun <T> io(crossinline block: suspend () -> T): T =
         withContext(Dispatchers.IO) { block() }

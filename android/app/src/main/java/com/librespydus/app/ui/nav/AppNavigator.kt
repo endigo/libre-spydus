@@ -10,6 +10,7 @@ import com.librespydus.app.core.BookRef
 import com.librespydus.app.core.ResultsSort
 import com.librespydus.app.core.Route
 import com.librespydus.app.core.Tab
+import com.librespydus.app.feature.featured.InAppBrowser
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.serializer
@@ -36,6 +37,15 @@ interface AppNavigator {
 
     /** Switches to the Search tab with [query] prefilled (Home's search field). */
     fun openSearch(query: String = "")
+
+    /** A library's featured collection (§5.10 `collection(FeaturedLink)`): one shelf per section. */
+    fun openCollection(title: String, url: String)
+
+    /** A results list that starts from [url] (§5.10: a section's "View All", a Featured saved search). */
+    fun openList(url: String, title: String)
+
+    /** A web page in the in-app browser (Custom Tabs). */
+    fun openWeb(url: String)
 }
 
 internal class TabNavigator(
@@ -55,6 +65,12 @@ internal class TabNavigator(
     override fun switchTab(tab: Tab) = appState.selectTab(tab)
 
     override fun openSearch(query: String) = appState.openSearch(query)
+
+    override fun openCollection(title: String, url: String) = navController.navigate(Route.Collection(title, url))
+
+    override fun openList(url: String, title: String) = navController.navigate(Route.ListResults(url, title))
+
+    override fun openWeb(url: String) = InAppBrowser.open(navController.context, url)
 }
 
 /** A [NavType] carrying any @Serializable value as JSON (BookRef, ResultsSort in routes). */
