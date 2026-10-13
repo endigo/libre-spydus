@@ -43,9 +43,19 @@ enum Formatting {
 
     /// "27 Oct"; "27 Oct 2027" when it isn't this year (docs/native-apps.md §7.1).
     static func shortDate(_ date: Date, now: Date = .now, calendar: Calendar = .current) -> String {
+        dayMonth(date, now: now, calendar: calendar, locale: .current)
+    }
+
+    /// "3 Nov", "5 Jan 2027" (the year only when it isn't this year): day first in every locale,
+    /// as Android's `d MMM` pattern writes it (§7.1); only the month name follows the locale.
+    private static func dayMonth(_ date: Date, now: Date, calendar: Calendar, locale: Locale) -> String {
         let sameYear = calendar.component(.year, from: date) == calendar.component(.year, from: now)
-        let style = Date.FormatStyle(calendar: calendar, timeZone: calendar.timeZone).day().month(.abbreviated)
-        return date.formatted(sameYear ? style : style.year())
+        let formatter = DateFormatter()
+        formatter.calendar = calendar
+        formatter.timeZone = calendar.timeZone
+        formatter.locale = locale
+        formatter.dateFormat = sameYear ? "d MMM" : "d MMM yyyy"
+        return formatter.string(from: date)
     }
 
     /// When the saved account was fetched, relative to `now`: "Updated just now",
@@ -65,9 +75,7 @@ enum Formatting {
         case 1: return Copy.YourBooks.updatedYesterday(time: time)
         case 2..<7: return Copy.YourBooks.updatedOn(day: date.formatted(style.weekday(.wide)), time: time)
         default:
-            let sameYear = calendar.component(.year, from: date) == calendar.component(.year, from: now)
-            let day = date.formatted(sameYear ? style.day().month(.abbreviated) : style.day().month(.abbreviated).year())
-            return Copy.YourBooks.updatedOn(day: day, time: time)
+            return Copy.YourBooks.updatedOn(day: dayMonth(date, now: now, calendar: calendar, locale: locale), time: time)
         }
     }
 

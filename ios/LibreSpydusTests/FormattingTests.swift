@@ -45,10 +45,11 @@ struct FormattingTests {
         let now = try #require(DueDate.parse("24 Oct 2026", calendar: calendar))
         let thisYear = try #require(DueDate.parse("27 Oct 2026", calendar: calendar))
         let nextYear = try #require(DueDate.parse("5 Jan 2027", calendar: calendar))
-        #expect(Formatting.shortDate(thisYear, now: now, calendar: calendar)
-            == thisYear.formatted(Date.FormatStyle(calendar: calendar, timeZone: calendar.timeZone).day().month(.abbreviated)))
+        // Day first in every locale, as on Android (§7.1): "27 Oct", never "Oct 27".
+        #expect(Formatting.shortDate(thisYear, now: now, calendar: calendar).hasPrefix("27 "))
         #expect(!Formatting.shortDate(thisYear, now: now, calendar: calendar).contains("2026"))
-        #expect(Formatting.shortDate(nextYear, now: now, calendar: calendar).contains("2027"))
+        #expect(Formatting.shortDate(nextYear, now: now, calendar: calendar).hasPrefix("5 "))
+        #expect(Formatting.shortDate(nextYear, now: now, calendar: calendar).hasSuffix(" 2027"))
     }
 
     @Test func userFacingErrors() {
