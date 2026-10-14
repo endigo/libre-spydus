@@ -795,12 +795,48 @@ public protocol SpydusClientProtocol: AnyObject, Sendable {
     func reserveOptions(url: String, session: String) async throws  -> ReserveOptions
     
     /**
+     * Saves `book` under `key`, replacing what was saved. At most `saved::MAX_SAVED_BOOKS` per
+     * library: saving one more deletes the least recently saved. Never fails; a write that
+     * fails is skipped.
+     */
+    func saveBook(key: String, book: SavedBook) async 
+    
+    /**
+     * Saves the `featured()` links, as `save_book` saves.
+     */
+    func saveFeatured(links: [FeaturedLink]) async 
+    
+    /**
      * Save a record to the reader's active Pick list: a results card's `workIrn` (a work, or an
      * edition on saved-search lists) or a record's `bibIrn`. Returns how many records the list
      * now holds. MUTATING — call only when the reader taps save. Saving one already on the list
      * changes nothing.
      */
     func savePick(irn: String, session: String) async throws  -> Int64
+    
+    /**
+     * Saves a Home shelf's first results page under `key`, as `save_book` saves.
+     */
+    func saveShelf(key: String, results: SearchResults) async 
+    
+    /**
+     * The book page saved under `key` (a `BookRef.id`: `work:…`, `bib:…` or `brn:…`), from the
+     * device only, never the network. `None` when nothing is saved, saved pages are off, or the
+     * file doesn't read back (it is deleted).
+     */
+    func savedBook(key: String)  -> SavedBook?
+    
+    /**
+     * The `featured()` links saved last, as `saved_book` reads. An empty list is a library
+     * without a Featured list.
+     */
+    func savedFeatured()  -> [FeaturedLink]?
+    
+    /**
+     * The Home shelf saved under `key` (a `Shelf.key`, e.g. `new_arrivals`): its first results
+     * page, as `saved_book` reads.
+     */
+    func savedShelf(key: String)  -> SearchResults?
     
     /**
      * Keyword search → the first results page (server.ts:55-67), in relevance order: exactly
@@ -816,6 +852,14 @@ public protocol SpydusClientProtocol: AnyObject, Sendable {
      * (`nextPageUrl` → `page`) keep the order. Cached 10 min per sort and case-insensitive query.
      */
     func searchSorted(query: String, sort: SearchSort) async throws  -> SearchResults
+    
+    /**
+     * Turns saved pages on (`docs/native-apps.md` §5.13): `dir` is a folder in the app's caches
+     * directory, and this library's pages go in a folder of their own under it. `None` or a
+     * blank path turns them off (the default): the `saved_*` calls return `None` and the `save_*`
+     * calls do nothing. `set_verification_cookie` leaves saved pages alone.
+     */
+    func setSavedPagesDir(dir: String?) 
     
     /**
      * Sets, or with `None` / a blank string clears, the cookie sent with every later request:
@@ -1354,6 +1398,48 @@ open func reserveOptions(url: String, session: String)async throws  -> ReserveOp
 }
     
     /**
+     * Saves `book` under `key`, replacing what was saved. At most `saved::MAX_SAVED_BOOKS` per
+     * library: saving one more deletes the least recently saved. Never fails; a write that
+     * fails is skipped.
+     */
+open func saveBook(key: String, book: SavedBook)async   {
+    return
+        try!  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_librespydus_core_fn_method_spydusclient_save_book(
+                        self.uniffiCloneHandle(),FfiConverterString.lower(key),FfiConverterTypeSavedBook_lower(book)
+                )
+            },
+            pollFunc: ffi_librespydus_core_rust_future_poll_void,
+            completeFunc: ffi_librespydus_core_rust_future_complete_void,
+            freeFunc: ffi_librespydus_core_rust_future_free_void,
+            liftFunc: { $0 },
+            errorHandler: nil
+            
+        )
+}
+    
+    /**
+     * Saves the `featured()` links, as `save_book` saves.
+     */
+open func saveFeatured(links: [FeaturedLink])async   {
+    return
+        try!  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_librespydus_core_fn_method_spydusclient_save_featured(
+                        self.uniffiCloneHandle(),FfiConverterSequenceTypeFeaturedLink.lower(links)
+                )
+            },
+            pollFunc: ffi_librespydus_core_rust_future_poll_void,
+            completeFunc: ffi_librespydus_core_rust_future_complete_void,
+            freeFunc: ffi_librespydus_core_rust_future_free_void,
+            liftFunc: { $0 },
+            errorHandler: nil
+            
+        )
+}
+    
+    /**
      * Save a record to the reader's active Pick list: a results card's `workIrn` (a work, or an
      * edition on saved-search lists) or a record's `bibIrn`. Returns how many records the list
      * now holds. MUTATING — call only when the reader taps save. Saving one already on the list
@@ -1373,6 +1459,68 @@ open func savePick(irn: String, session: String)async throws  -> Int64  {
             liftFunc: FfiConverterInt64.lift,
             errorHandler: FfiConverterTypeSpydusError_lift
         )
+}
+    
+    /**
+     * Saves a Home shelf's first results page under `key`, as `save_book` saves.
+     */
+open func saveShelf(key: String, results: SearchResults)async   {
+    return
+        try!  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_librespydus_core_fn_method_spydusclient_save_shelf(
+                        self.uniffiCloneHandle(),FfiConverterString.lower(key),FfiConverterTypeSearchResults_lower(results)
+                )
+            },
+            pollFunc: ffi_librespydus_core_rust_future_poll_void,
+            completeFunc: ffi_librespydus_core_rust_future_complete_void,
+            freeFunc: ffi_librespydus_core_rust_future_free_void,
+            liftFunc: { $0 },
+            errorHandler: nil
+            
+        )
+}
+    
+    /**
+     * The book page saved under `key` (a `BookRef.id`: `work:…`, `bib:…` or `brn:…`), from the
+     * device only, never the network. `None` when nothing is saved, saved pages are off, or the
+     * file doesn't read back (it is deleted).
+     */
+open func savedBook(key: String) -> SavedBook?  {
+    return try!  FfiConverterOptionTypeSavedBook.lift(try! rustCall() {
+        uniffiCallStatus in
+    uniffi_librespydus_core_fn_method_spydusclient_saved_book(
+            self.uniffiCloneHandle(),
+        FfiConverterString.lower(key),uniffiCallStatus
+    )
+})
+}
+    
+    /**
+     * The `featured()` links saved last, as `saved_book` reads. An empty list is a library
+     * without a Featured list.
+     */
+open func savedFeatured() -> [FeaturedLink]?  {
+    return try!  FfiConverterOptionSequenceTypeFeaturedLink.lift(try! rustCall() {
+        uniffiCallStatus in
+    uniffi_librespydus_core_fn_method_spydusclient_saved_featured(
+            self.uniffiCloneHandle(),uniffiCallStatus
+    )
+})
+}
+    
+    /**
+     * The Home shelf saved under `key` (a `Shelf.key`, e.g. `new_arrivals`): its first results
+     * page, as `saved_book` reads.
+     */
+open func savedShelf(key: String) -> SearchResults?  {
+    return try!  FfiConverterOptionTypeSearchResults.lift(try! rustCall() {
+        uniffiCallStatus in
+    uniffi_librespydus_core_fn_method_spydusclient_saved_shelf(
+            self.uniffiCloneHandle(),
+        FfiConverterString.lower(key),uniffiCallStatus
+    )
+})
 }
     
     /**
@@ -1416,6 +1564,21 @@ open func searchSorted(query: String, sort: SearchSort)async throws  -> SearchRe
             liftFunc: FfiConverterTypeSearchResults_lift,
             errorHandler: FfiConverterTypeSpydusError_lift
         )
+}
+    
+    /**
+     * Turns saved pages on (`docs/native-apps.md` §5.13): `dir` is a folder in the app's caches
+     * directory, and this library's pages go in a folder of their own under it. `None` or a
+     * blank path turns them off (the default): the `saved_*` calls return `None` and the `save_*`
+     * calls do nothing. `set_verification_cookie` leaves saved pages alone.
+     */
+open func setSavedPagesDir(dir: String?)  {try! rustCall() {
+        uniffiCallStatus in
+    uniffi_librespydus_core_fn_method_spydusclient_set_saved_pages_dir(
+            self.uniffiCloneHandle(),
+        FfiConverterOptionString.lower(dir),uniffiCallStatus
+    )
+}
 }
     
     /**
@@ -4182,6 +4345,83 @@ public func FfiConverterTypeReserveResult_lower(_ value: ReserveResult) -> RustB
 }
 
 
+/**
+ * A book page as last loaded, for the app to show at once the next time it opens while a fresh one
+ * loads (`SpydusClient::saved_book` / `save_book`, `docs/native-apps.md` §5.13): the record and
+ * the related lists, one per `RecordRelated` link. Availability and copies are never saved.
+ */
+public struct SavedBook: Equatable, Hashable {
+    public var record: RecordDetail
+    /**
+     * `None`: that list wasn't loaded (or failed) when the page was saved.
+     */
+    public var similar: RelatedList?
+    public var author: RelatedList?
+    public var series: RelatedList?
+    public var versions: RelatedList?
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(record: RecordDetail, 
+        /**
+         * `None`: that list wasn't loaded (or failed) when the page was saved.
+         */similar: RelatedList?, author: RelatedList?, series: RelatedList?, versions: RelatedList?) {
+        self.record = record
+        self.similar = similar
+        self.author = author
+        self.series = series
+        self.versions = versions
+    }
+
+    
+
+    
+}
+
+#if compiler(>=6)
+extension SavedBook: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeSavedBook: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SavedBook {
+        return
+            try SavedBook(
+                record: FfiConverterTypeRecordDetail.read(from: &buf), 
+                similar: FfiConverterOptionTypeRelatedList.read(from: &buf), 
+                author: FfiConverterOptionTypeRelatedList.read(from: &buf), 
+                series: FfiConverterOptionTypeRelatedList.read(from: &buf), 
+                versions: FfiConverterOptionTypeRelatedList.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: SavedBook, into buf: inout [UInt8]) {
+        FfiConverterTypeRecordDetail.write(value.record, into: &buf)
+        FfiConverterOptionTypeRelatedList.write(value.similar, into: &buf)
+        FfiConverterOptionTypeRelatedList.write(value.author, into: &buf)
+        FfiConverterOptionTypeRelatedList.write(value.series, into: &buf)
+        FfiConverterOptionTypeRelatedList.write(value.versions, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeSavedBook_lift(_ buf: RustBuffer) throws -> SavedBook {
+    return try FfiConverterTypeSavedBook.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeSavedBook_lower(_ value: SavedBook) -> RustBuffer {
+    return FfiConverterTypeSavedBook.lower(value)
+}
+
+
 public struct SearchRecord: Equatable, Hashable {
     public var rank: Int64?
     /**
@@ -5309,6 +5549,78 @@ fileprivate struct FfiConverterOptionTypeCardBarcode: FfiConverterRustBuffer {
 #if swift(>=5.8)
 @_documentation(visibility: private)
 #endif
+fileprivate struct FfiConverterOptionTypeRelatedList: FfiConverterRustBuffer {
+    typealias SwiftType = RelatedList?
+
+    public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
+        guard let value = value else {
+            writeInt(&buf, Int8(0))
+            return
+        }
+        writeInt(&buf, Int8(1))
+        FfiConverterTypeRelatedList.write(value, into: &buf)
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SwiftType {
+        switch try readInt(&buf) as Int8 {
+        case 0: return nil
+        case 1: return try FfiConverterTypeRelatedList.read(from: &buf)
+        default: throw UniffiInternalError.unexpectedOptionalTag
+        }
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterOptionTypeSavedBook: FfiConverterRustBuffer {
+    typealias SwiftType = SavedBook?
+
+    public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
+        guard let value = value else {
+            writeInt(&buf, Int8(0))
+            return
+        }
+        writeInt(&buf, Int8(1))
+        FfiConverterTypeSavedBook.write(value, into: &buf)
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SwiftType {
+        switch try readInt(&buf) as Int8 {
+        case 0: return nil
+        case 1: return try FfiConverterTypeSavedBook.read(from: &buf)
+        default: throw UniffiInternalError.unexpectedOptionalTag
+        }
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterOptionTypeSearchResults: FfiConverterRustBuffer {
+    typealias SwiftType = SearchResults?
+
+    public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
+        guard let value = value else {
+            writeInt(&buf, Int8(0))
+            return
+        }
+        writeInt(&buf, Int8(1))
+        FfiConverterTypeSearchResults.write(value, into: &buf)
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SwiftType {
+        switch try readInt(&buf) as Int8 {
+        case 0: return nil
+        case 1: return try FfiConverterTypeSearchResults.read(from: &buf)
+        default: throw UniffiInternalError.unexpectedOptionalTag
+        }
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 fileprivate struct FfiConverterOptionTypeShowing: FfiConverterRustBuffer {
     typealias SwiftType = Showing?
 
@@ -5349,6 +5661,30 @@ fileprivate struct FfiConverterOptionTypeSimpleDate: FfiConverterRustBuffer {
         switch try readInt(&buf) as Int8 {
         case 0: return nil
         case 1: return try FfiConverterTypeSimpleDate.read(from: &buf)
+        default: throw UniffiInternalError.unexpectedOptionalTag
+        }
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterOptionSequenceTypeFeaturedLink: FfiConverterRustBuffer {
+    typealias SwiftType = [FeaturedLink]?
+
+    public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
+        guard let value = value else {
+            writeInt(&buf, Int8(0))
+            return
+        }
+        writeInt(&buf, Int8(1))
+        FfiConverterSequenceTypeFeaturedLink.write(value, into: &buf)
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SwiftType {
+        switch try readInt(&buf) as Int8 {
+        case 0: return nil
+        case 1: return try FfiConverterSequenceTypeFeaturedLink.read(from: &buf)
         default: throw UniffiInternalError.unexpectedOptionalTag
         }
     }
@@ -6268,13 +6604,34 @@ private let initializationResult: InitializationResult = {
     if (uniffi_librespydus_core_checksum_method_spydusclient_reserve_options() != 26217) {
         return InitializationResult.apiChecksumMismatch
     }
+    if (uniffi_librespydus_core_checksum_method_spydusclient_save_book() != 53523) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_librespydus_core_checksum_method_spydusclient_save_featured() != 37637) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_librespydus_core_checksum_method_spydusclient_save_pick() != 15428) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_librespydus_core_checksum_method_spydusclient_save_shelf() != 2366) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_librespydus_core_checksum_method_spydusclient_saved_book() != 61428) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_librespydus_core_checksum_method_spydusclient_saved_featured() != 11653) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_librespydus_core_checksum_method_spydusclient_saved_shelf() != 60012) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_librespydus_core_checksum_method_spydusclient_search() != 20559) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_librespydus_core_checksum_method_spydusclient_search_sorted() != 26635) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_librespydus_core_checksum_method_spydusclient_set_saved_pages_dir() != 12958) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_librespydus_core_checksum_method_spydusclient_set_verification_cookie() != 7) {

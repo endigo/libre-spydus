@@ -151,7 +151,10 @@ modules: [Bool], text}?` · `SpydusClient.cardBarcodeSymbology() async -> Barcod
 `AccountLinks.personalDetailsUrl` (default nil) · (I11/A9, §5.10) `SpydusClient.featured() ->
 [FeaturedLink{title, description?, icon?, kind: .collection|.search|.web, url}]` ·
 `collection(url) -> FeaturedCollection{title?, sections: [FeaturedSection{title, url}]}` ·
-`holdings(url) -> [Holding{location?, collection?, callNumber?, status?, description?, available}]`.
+`holdings(url) -> [Holding{location?, collection?, callNumber?, status?, description?, available}]` ·
+(I16/A14, §5.13) `SpydusClient.setSavedPagesDir(dir?)`, `savedBook(key) -> SavedBook?` /
+`saveBook(key, book)`, `savedShelf(key) -> SearchResults?` / `saveShelf(key, results)`,
+`savedFeatured() -> [FeaturedLink]?` / `saveFeatured(links)`.
 Newest = `SORTS=MAIN.CREATED_DATE.DESC]MAIN.CREATED_TIME.DESC` (the OPAC's own new-items RSS order).
 
 ## 5. App architecture (same shape on both platforms)
@@ -211,7 +214,8 @@ iOS launch arguments / Android intent extras:
 - `-LSRoute <route>` / `--es ls_route <route>`: `home`, `search:<query>`, `results:<query>`,
   `detail:<url>`, `borrowed`, `favourites`, `profile`, `libraries`, `login`, `verify`.
 - `-LSDemo YES` / `--ez ls_demo true` — demo mode, already signed in as "Test Borrower".
-- `-LSReset YES` / `--ez ls_reset true` — clear persisted library/session/favourites first.
+- `-LSReset YES` / `--ez ls_reset true` — clear persisted library/session/favourites (and saved
+  pages, §5.13) first.
 Example: `xcrun simctl launch <udid> com.librespydus -LSLibraryOrigin https://canning.spydus.com -LSDemo YES -LSRoute borrowed`;
 `adb -s emulator-5554 shell am start -n com.librespydus.app/.MainActivity --es ls_origin https://canning.spydus.com --ez ls_demo true --es ls_route borrowed`.
 
@@ -428,6 +432,80 @@ see whether the due date moved). Copy: `design/copy.json` `yourBooks.renew*` / `
   another borrower.") — so both outcomes can be seen.
 - **Verification:** workers use demo mode only — never renew on a real account. The user does the
   first real renewal on the phone; the coordinator checks the result and the loans list.
+
+### 5.13 Saved pages: book pages and Home open at once (I16 iOS / A14 Android)
+A catalogue page the reader has seen shows at once the next time, from the device, while a fresh
+copy loads; the fresh copy replaces it on screen when it arrives. Public catalogue data only:
+availability, copies, the formats search and anything from the account are **never** saved (the
+account has its own saved snapshot, §5.2a). Core (`core/README.md`, "Saved pages"):
+`setSavedPagesDir(dir)`, `savedBook(key) -> SavedBook{record, similar?, author?, series?, versions?}?`
+/ `saveBook(key, book)`, `savedShelf(key) -> SearchResults?` / `saveShelf(key, results)`,
+`savedFeatured() -> [FeaturedLink]?` / `saveFeatured(links)`. The `saved…` reads are sync and only
+read the device (iOS may call them on the main actor; Android calls them on `Dispatchers.IO` like
+every backend call); the `save…` writes are async and never throw. **No new copy:** nothing on screen
+says a page came from the device (unlike the account's "Updated …").
+- **Turning it on:** `CoreBackend` calls `setSavedPagesDir` right after creating its `SpydusClient`:
+  iOS `URL.cachesDirectory/SavedPages`, Android `File(context.cacheDir, "saved-pages")`. The core
+  keeps one folder per library under it (changing library keeps each library's pages) and at most
+  300 books per library (the least recently saved go first). The system may empty caches; the next
+  open then loads as it does today. Kept on sign-out (public pages, like a browser's cache);
+  `-LSReset` / `ls_reset` deletes the folder. `LibraryBackend` gains the six calls (the no-library
+  default returns nil / does nothing); `DemoBackend` forwards them to its public `CoreBackend`, as it
+  does `record`, so demo mode saves pages too.
+- **One rule for every saved page:** show the saved copy at once, still ask the library for a fresh
+  one, show the fresh one when it arrives and save it. The core's in-memory caches (10 min for
+  records, lists and searches) still apply, so going back and forth between screens doesn't ask the
+  library again; anything older does. When the fresh request fails, the saved copy stays on screen:
+  the error goes to `report` as usual (verification still opens its sheet) but the screen shows no
+  error state and no message for it. Pull to refresh is unchanged and keeps what's shown until the
+  fresh copy arrives.
+- **Book page.** Key = the opened ref's `BookRef.id` when it starts with `work:`, `bib:` or `brn:`.
+  Any other ref (`url:`, `title:`) is neither read nor saved: its URL carries a search's set id.
+  1. On load, before any request: `savedBook(key)` → its record shown as loaded (the header's
+     `ref` filled in from it as from a fetched record) and each non-nil list as that carousel's
+     items (filtered as today, e.g. without the book itself). No spinner for the record or those
+     carousels.
+  2. The record is then fetched exactly as today (same URLs, same order). The formats lookup (a ref
+     without formats) and the selected format's availability don't wait for it: they start at once
+     from the saved record. Availability, copies and "On loan / Reserved" work exactly as today; the
+     availability line shows `detail.checkingAvailability` until the live answer.
+  3. The fresh record replaces the saved one in place, except that a work-level record
+     (`isWorkLevel(bookmarkUrl)`) never replaces a bib record on screen (the upgrade path loads the
+     bib). The fresh record's related links usually differ from the saved ones (they carry a new set
+     id): **each carousel keeps its saved items until its fresh list arrives**, then shows that one
+     (empty → hidden). A carousel the fresh record no longer links to is hidden. Fresh lists still
+     load when the carousels come into view, as today.
+  4. **Save** after each fresh success — when the fresh record arrives, and again when a fresh list
+     arrives: `saveBook(key, SavedBook{record, similar, author, series, versions})` with the record on
+     screen and, per carousel, the newest list that loaded (fresh, else the saved one; nil when
+     neither). Raw `RelatedList`s, unfiltered. A page whose requests all failed saves nothing.
+- **Home.**
+  - **New arrivals** (key = its `Shelf.key`, `new_arrivals`): whenever Home loads the shelf (launch,
+    library change, verification, sign-in/out — today's triggers), `savedShelf(key)` → covers shown
+    at once, built from the results exactly as a fresh first page is; then the fresh `searchSorted`
+    runs the way pull to refresh does (covers stay). Results the shelf can show (records, or a
+    genuine `noResults`) → shown and `saveShelf(key, results)`. An unrecognised page (no records,
+    `noResults` false) is never saved and, with saved covers on screen, doesn't replace them.
+  - **Featured row:** `savedFeatured()` → tiles shown at once (a saved empty list: no row), then the
+    fresh `featured()`. Success → shown and `saveFeatured(links)`, an empty list too. Failure → the
+    saved tiles stay (no saved tiles: hidden, as today).
+  - "Your loans" already comes from the saved account (§5.2a); the genre tiles are built in.
+- **Not saved (for now):** search results, results lists, Collection screens, My Picks, Your Books.
+- **Timing log (DEBUG, iOS, §5.6):** a `saved…` read that finds a page prints
+  `⏱ core saved book: from cache` (`saved shelf`, `saved featured`); the fresh request after it
+  prints its usual line. That's how to see both halves of a reopened page.
+- **Tests** (model tests with a fake backend): a saved book shows before any request; the fresh
+  record replaces it; a failed refresh keeps it and shows no error state; carousels keep their saved
+  items until their fresh lists arrive; a fresh work-level record doesn't replace a saved bib record;
+  `url:` / `title:` refs neither read nor save; a save follows the record and each fresh list. Home:
+  saved covers and tiles show first, fresh ones replace and are saved, a failure or an unrecognised
+  page keeps the saved ones.
+- **Verification:** public pages only (§2). Open a book and Home on a real library, then relaunch
+  the app and open the same book: it appears at once. iOS: the timing log shows `saved book` then
+  `record`; screenshot the reopened page before its availability arrives (record and carousels
+  drawn, the availability line still checking). Android (no timing log): relaunch with the emulator
+  offline (`adb shell cmd connectivity airplane-mode enable`, `disable` after): Home's covers and
+  tiles and the book page (record and carousels) still show, and only the availability line fails.
 
 ### 5.7 User-facing errors
 `Network` → "Can't reach {library}. Check your connection." · `HumanVerificationRequired` →

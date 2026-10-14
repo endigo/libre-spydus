@@ -35,6 +35,7 @@ core/
     timing.rs           opt-in timing log (set_timing_sink): network and parse time per page
     crypto.rs           encrypt.js → PEM, RSA PKCS#1 v1.5 (JSEncrypt-compatible) PIN encryption
     cache.rs            thread-safe TTL cache
+    saved.rs            saved pages: book pages and Home lists kept on the device, per library
     parse/              HTML → records (search, availability, record, reserve, account, decode)
     bin/spydus-cli.rs   host CLI printing a public endpoint's JSON
     bin/uniffi-bindgen.rs
@@ -97,7 +98,8 @@ means Canning. The async methods each return a record or throw `SpydusError`.
 - Timing log: `set_timing_sink(sink)` installs a `TimingSink` (a foreign trait the app
   implements; `None` turns it off). Every page a call loads reports a `Timing`: `operation`
   (`search "q"`, `search newest "q"`, `results page`, `availability`, `record format`,
-  `record`, `related`, `account`, `loans`, `reservations ready` / `pending`), `networkMs`
+  `record`, `related`, `account`, `loans`, `reservations ready` / `pending`; a saved page found
+  on the device: `saved book`, `saved shelf`, `saved featured`), `networkMs`
   (request sent → whole page received; for `account`, both of its GETs), `parseMs`, `bytes`
   (decompressed), `cached` (a cache hit: no request, times 0) and `failed` (how long the
   request took to fail). `record(sink:)` runs on the core's worker threads. The apps install
@@ -181,6 +183,29 @@ when it isn't a year; the blurb comes from `div.summary` itself.
 Saving the account on the device: `encodeAccountSnapshot(snapshot)` → JSON `String` and
 `decodeAccountSnapshot(json)` → `AccountSnapshot` (throws `Parse` for malformed JSON or a snapshot
 written with another `ACCOUNT_SNAPSHOT_VERSION`, currently 1 — drop it and fetch a new one).
+
+### Saved pages
+
+Book pages and Home lists the app shows at once on the next visit, from the device, while a fresh
+copy loads (`docs/native-apps.md` §5.13). Public catalogue data only; availability and copies are
+never saved. The core writes and reads the files; the app decides what to save and when.
+
+| call | does |
+|---|---|
+| `setSavedPagesDir(dir?)` (sync) | Turns saved pages on: `dir` is a folder in the app's caches directory. This library's pages go in a folder of their own under it, so each library keeps its own. `nil` or blank turns them off (the default): reads return `nil`, saves do nothing. `setVerificationCookie` leaves saved pages alone. |
+| `savedBook(key)` → `SavedBook?` (sync) | The book page saved under `key` (a `BookRef.id`: `work:…`, `bib:…`, `brn:…`). `SavedBook{record, similar?, author?, series?, versions?}`: the record and the related lists, one per `RecordRelated` link, `nil` for a list that wasn't loaded. Reads the device only, never the network. |
+| `saveBook(key, book)` (async) | Saves it, replacing what was saved. At most 300 books per library (`saved::MAX_SAVED_BOOKS`); saving one more deletes the least recently saved. Never throws: a write that fails is skipped. |
+| `savedShelf(key)` → `SearchResults?` / `saveShelf(key, results)` | A Home shelf's first results page, under its `Shelf.key` (`new_arrivals`). |
+| `savedFeatured()` → `[FeaturedLink]?` / `saveFeatured(links)` | The `featured()` links. A saved empty list is a library without a Featured list. |
+
+Files: `<dir>/<origin>/books/<key>.json`, `<dir>/<origin>/shelves/<key>.json` and
+`<dir>/<origin>/featured.json`, each name encoded by `saved::file_name` (lower-case letters, digits,
+`-` and `.` as they are, any other byte as `_` and two hex digits, so `work:15642035` is
+`work_3a15642035` and no two keys share a file, even on a case-insensitive file system). A key that
+encodes to more than 200 characters (a URL) is neither saved nor read. Each file holds
+`{"version": SAVED_PAGES_VERSION, "value": …}` (currently 1; bump it when a saved record changes
+shape). A file that doesn't read back (malformed, another version) is deleted and reads as absent.
+A save writes a temporary file and renames it into place, so a read never sees half a file.
 
 `Availability.counts` keys seen on live libraries are only `copies` (item records, any status),
 `available` (on the shelf now; some libraries only, present even at 0) and `reserved`
