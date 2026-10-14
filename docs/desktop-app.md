@@ -253,7 +253,9 @@ The shell creates screen entities and keeps one per stack entry, so going back d
 | input | `field` |
 | `sidebar*` | the phones' tab bar: `tabBar` (white), `tabActive` (navy), `tabInactive` |
 
-- Dialogs and popovers are white (`sheet` / `onSheet`), like the phones' system dialogs.
+- Dialogs are white (`sheet` / `onSheet`, set by `ui::sheet_dialog`), like the phones' system
+  dialogs. Menus, dropdown lists and other popovers are dark (`popover` = `surface`, text
+  `textPrimary`), because gpui-kit draws their items in the theme's `foreground`.
 - Dialog buttons follow native-apps.md §7 "Dialogs": a destructive action is red, every other
   button neutral, the confirming one bold, and coral never appears in a dialog.
 - Type sizes are the tokens' sizes; radii and spacing likewise.
