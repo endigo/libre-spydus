@@ -28,13 +28,46 @@ pub fn byline(raw_author: Option<&str>) -> Option<String> {
     author_name(raw_author).map(|name| Copy::Detail::byline(&name))
 }
 
-/// "Test Borrower" → "Test"; "Borrower, Test" → "Test".
+/// The given name from an account name as libraries write it (iOS `HomeGreeting.firstName`):
+/// "Smith, Jane" (surname first) or "Jane Smith". Titles ("Mrs", "Dr.") are skipped, ALL-CAPS and
+/// all-lowercase names are capitalised ("SMITH, JANE" → "Jane"), and a bare initial ("J. Smith")
+/// gives `None`.
 pub fn first_name(account_name: Option<&str>) -> Option<String> {
+    const HONORIFICS: [&str; 13] =
+        ["mr", "mrs", "ms", "miss", "mx", "dr", "prof", "professor", "sir", "dame", "rev", "fr", "master"];
     let name = non_empty(account_name)?;
-    if let Some((surname, given)) = name.split_once(',') {
-        return given.split_whitespace().next().map(str::to_owned).or_else(|| Some(surname.trim().to_owned()));
+    let comma = name.find(',');
+    let given = comma.map_or(name.as_str(), |at| &name[at + 1..]);
+    let mut words: Vec<&str> = given
+        .split_whitespace()
+        .map(|word| word.trim_matches(|c: char| c.is_ascii_punctuation() && c != '-' && c != '\''))
+        .filter(|word| !word.is_empty() && !HONORIFICS.contains(&word.to_lowercase().as_str()))
+        .collect();
+    // After a comma every word is a given name, so "Smith, J. Jane" can skip the initial; without
+    // one, the word after an initial is likely the surname.
+    if comma.is_some() {
+        words.retain(|word| word.chars().count() > 1);
     }
-    name.split_whitespace().next().map(str::to_owned)
+    let first = words.first()?;
+    if first.chars().count() < 2 || !first.chars().any(char::is_alphabetic) {
+        return None;
+    }
+    Some(normalised_case(first))
+}
+
+/// "JANE" / "jane" → "Jane", "MARY-JANE" → "Mary-Jane"; mixed case ("McKenzie") is kept.
+fn normalised_case(word: &str) -> String {
+    if word != word.to_uppercase() && word != word.to_lowercase() {
+        return word.to_owned();
+    }
+    word.to_lowercase()
+        .split('-')
+        .map(|part| {
+            let mut chars = part.chars();
+            chars.next().map_or_else(String::new, |first| first.to_uppercase().chain(chars).collect())
+        })
+        .collect::<Vec<_>>()
+        .join("-")
 }
 
 /// Home's greeting: "Hello Test!" signed in, else "Hello!".
@@ -198,6 +231,28 @@ mod tests {
         assert_eq!(greeting(Some("Test Borrower")), "Hello Test!");
         assert_eq!(greeting(Some("Borrower, Test")), "Hello Test!");
         assert_eq!(greeting(None), "Hello!");
+        // The iOS HomeGreetingTests cases.
+        for (account, expected) in [
+            ("Borrower, Test", "Test"),
+            ("Test Borrower", "Test"),
+            ("Smith, Jane Mary", "Jane"),
+            ("SMITH, JANE", "Jane"),
+            ("jane smith", "Jane"),
+            ("Watson, MARY-JANE", "Mary-Jane"),
+            ("O'Brien, Siobhán", "Siobhán"),
+            ("Mrs Jane Smith", "Jane"),
+            ("Smith, Dr. Jane", "Jane"),
+            ("Smith, J. Jane", "Jane"),
+            ("  Jane   Smith  ", "Jane"),
+            ("Jane", "Jane"),
+            ("McKenzie, DeShawn", "DeShawn"),
+        ] {
+            assert_eq!(first_name(Some(account)).as_deref(), Some(expected), "{account}");
+        }
+        for account in [None, Some(""), Some("   "), Some("Smith,"), Some("J. Smith"), Some("Mr"), Some("12345678")] {
+            assert_eq!(first_name(account), None, "{account:?}");
+            assert_eq!(greeting(account), "Hello!");
+        }
         assert_eq!(result_count(Some(1234)).as_deref(), Some("1,234 results"));
         assert_eq!(result_count(Some(1)).as_deref(), Some("1 result"));
     }
