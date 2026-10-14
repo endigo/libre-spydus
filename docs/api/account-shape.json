@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "tenant": "Canning Libraries / OPAC context",
-  "purpose": "Sanitized selector and field-shape fixture for a future Flutter HTML compatibility parser; contains no account or reading values.",
+  "purpose": "Sanitized selector and field-shape fixture for an HTML compatibility parser; contains no account or reading values.",
   "source_snapshots": [
     ".private/web/auth/mobile-dashboard.html",
     ".private/web/auth/loans-1.html",

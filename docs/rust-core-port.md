@@ -1,5 +1,9 @@
 # LibreSpydus Rust core — port contract
 
+> **Historical.** The port is done and the middleware has been removed (it's in git history:
+> `git show 0d223a2:middleware/`). The Rust core is now the source of truth, and its goldens are
+> kept by hand (`core/tests/golden/MANIFEST.md`).
+
 Shared spec for every worker porting the Bun/TS middleware (`middleware/`) to the Rust crate
 `librespydus-core` in `core/`. **Read this whole file before editing anything.**
 Approved plan: `/Users/tsogt/.claude/plans/partitioned-wondering-otter.md`.

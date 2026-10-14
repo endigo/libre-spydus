@@ -1,6 +1,6 @@
 # Canning OPAC web contracts
 
-Collected 11 October 2026 from [Canning Libraries OPAC](https://canning.spydus.com/cgi-bin/spydus.exe/MSGTRN/OPAC/HOME). This inventory covers public browser contracts and authorised authenticated read-only OPAC requests to support the Flutter investigation. It does **not** establish every native app API contract. The native app's captured requests and managed assembly evidence belong in the main endpoint inventory.
+Collected 11 October 2026 from [Canning Libraries OPAC](https://canning.spydus.com/cgi-bin/spydus.exe/MSGTRN/OPAC/HOME). This inventory covers public browser contracts and authorised authenticated read-only OPAC requests to support the rebuild investigation. It does **not** establish every native app API contract. The native app's captured requests and managed assembly evidence belong in the main endpoint inventory.
 
 The [machine-readable inventory](web-endpoints.json) contains 36 route/action entries with source snippets (authenticated IDs parameterized), line and column locations, confidence, query/body details, and mutation flags; 33 configured search-category options; and 9 exact lazy-fragment links. Original first-party snapshots and SHA-256 fetch provenance are under `.private/web/public/`. Files there remain private/ignored. The authenticated follow-up used an app-derived session cookie stored privately. Exact requests, response headers and account HTML are in `.private/web/auth/reads.har`; the HAR omits request Cookie values, while response headers/HTML remain private. No reservation, renewal, cancellation, edit, notification-read, review, list change, logout, or authenticator action was submitted.
 
@@ -73,7 +73,7 @@ The authenticated list form `#frmSVL` uses GET. `SubmitSetoptsAction` (`spydus.j
 
 The follow-up retained **14 private read captures**, including failed `WQUP` context probes and successful OPAC reads. The 36-entry JSON inventory contains **4 additional authenticated read contracts and 5 additional static mutation references**, alongside the original 27 public entries. Account-entry behavior is attached to the existing dashboard entry.
 
-### HTML field mapping for Flutter
+### HTML field mapping
 
 [account-shape.json](account-shape.json) records selectors and extraction types without member names, barcodes, reading titles, dates, counts, identifiers or tokens. The observed account dashboard uses `.brw-dashboard-item` anchors with `.brw-dashboard-item-header`, `.brw-dashboard-item-body` and `.brw-dashboard-item-footer`; preserve the anchor href as a read navigation target.
 
@@ -116,8 +116,8 @@ Sources: local `detail.html`, `search.html`, `holdings.html`; [modal.js](https:/
 
 Sources: `spydus.js` lines 893–1040 and `modal.js` lines 248–350. None of these APIs was called. Their presence in the OPAC scripts does not prove the mobile app uses them or that Canning enables every feature.
 
-## Flutter implications and remaining evidence
+## Client implications and remaining evidence
 
-Public catalogue HTML can inform screen/data mapping, but use native app API evidence to select the Flutter transport and model contracts. Keep catalogue search, record ID, work ID, result set ID and patron ID distinct. Preserve server-provided workflow links and query strings if implementing an OPAC compatibility layer. Avoid calling any GET action automatically on page load: reservation, list, quick review and logout links can change state.
+Public catalogue HTML can inform screen/data mapping, but use native app API evidence to select the client's transport and model contracts. Keep catalogue search, record ID, work ID, result set ID and patron ID distinct. Preserve server-provided workflow links and query strings if implementing an OPAC compatibility layer. Avoid calling any GET action automatically on page load: reservation, list, quick review and logout links can change state.
 
 Authenticated Canning account, current-loan, pickup-reservation and pending-reservation HTML reads are now verified. Remaining gaps include charges/history, account notification-read semantics, renewal/cancellation/edit eligibility and success/error responses, reservation creation pickup/confirmation, expiry behavior and native JSON counterparts. Those need further managed-code evidence or authorised request observations. This inventory makes no claim to cover every endpoint.

@@ -55,7 +55,6 @@ first. The core's own contract is `docs/rust-core-port.md`; its public API is `c
 design/tokens.json                      # coordinator (read-only for workers)
 docs/native-apps.md                     # coordinator (this file)
 core/                                   # P (wave 1) — see its spec
-middleware/src/**, middleware/scripts/  # P (TS side of P1 only)
 ios/
   LibreSpydus.xcodeproj                 # I1 — Xcode 16+ folder-synchronized groups: adding a file
                                         #      under ios/LibreSpydus/ must NOT edit project.pbxproj

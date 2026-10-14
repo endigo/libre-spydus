@@ -1,8 +1,8 @@
 //! LibreSpydus core: the on-device Spydus OPAC client + HTML parsers shared by the native
-//! iOS (SwiftUI) and Android (Compose) apps via UniFFI. Port of the Bun/TS `middleware/`.
-//! Contract: `docs/rust-core-port.md`.
+//! iOS (SwiftUI) and Android (Compose) apps via UniFFI. Ported from a Bun/TS middleware, since
+//! removed (`git show 0d223a2:middleware/`). Contract: `docs/rust-core-port.md`.
 //!
-//! [`SpydusClient`] is the FFI facade. It replicates `middleware/src/server.ts`: the origin guard
+//! [`SpydusClient`] is the FFI facade. As the middleware's `server.ts` did, it has the origin guard
 //! on every URL argument, the `/record` fragment → bib-page resolution, concurrent reservation
 //! lists, and the same in-memory TTL caches. One client talks to one library (its origin);
 //! [`list_libraries`] is the directory the app picks that library from. [`app`] holds the pure

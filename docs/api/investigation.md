@@ -13,7 +13,7 @@ Inspected 11 October 2026, Australia/Perth. Target package: `com.civica.civicasp
 | Signed-in account | Account, current loans, pickup and pending reservations read successfully | Reproduced HTTP reads using captured session; not original WebView request attribution |
 | Renewal/reservation actions | Exact selected/all renewal and cancellation links, edit and reserve references recovered | No actions submitted; resulting status/errors unverified |
 | Self issue/return and wallet | Native declarations recovered | Canning config disables self issue/return; wallet requests not exercised |
-| Flutter data mapping | JSON types plus account HTML field selectors documented | No Flutter application or HTML parser implemented yet |
+| Client data mapping | JSON types plus account HTML field selectors documented | Parsers implemented later in LibreSpydus's Rust core (`core/src/parse/`) |
 
 The native capture includes session validation, server version, notifications, branches, configuration, containers, announcements, and keyword search. Canning returned empty containers/announcements in this session. Empty lists do not establish all possible item schemas; compiled DTOs provide separate static evidence.
 

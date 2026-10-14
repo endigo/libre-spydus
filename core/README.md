@@ -1,14 +1,14 @@
 # librespydus-core
 
-The shared on-device core of LibreSpydus. It's a Rust port of the Bun/TS `middleware/` that
-the native iOS (SwiftUI) and Android (Compose) apps call through [UniFFI](https://github.com/mozilla/uniffi-rs).
-It talks to a Spydus OPAC directly from the device, and it parses OPAC HTML into the same
-camelCase JSON-shaped records the middleware returns. The apps therefore need no server in
-between. Any library in Civica's public Spydus directory can be used (see
+The shared on-device core of LibreSpydus, which the native iOS (SwiftUI) and Android (Compose)
+apps call through [UniFFI](https://github.com/mozilla/uniffi-rs). It talks to a Spydus OPAC
+directly from the device and parses OPAC HTML into camelCase JSON-shaped records, so the apps
+need no server in between. Any library in Civica's public Spydus directory can be used (see
 [Multi-library use](#multi-library-use)); Canning (`https://canning.spydus.com`) is the default.
 
-The TS middleware is the **source of truth**. Every parser is golden-tested against the TS
-output, and `scripts/oracle-diff.sh` diffs the two live. The porting contract is in
+It began as a port of a Bun/TS middleware, since removed (it's in git history:
+`git show 0d223a2:middleware/`). The core is now the source of truth. Its goldens started as the
+TS parsers' output and are kept by hand (see [Test](#test)). The porting contract is in
 [`docs/rust-core-port.md`](../docs/rust-core-port.md).
 
 ## Layout
@@ -17,7 +17,7 @@ output, and `scripts/oracle-diff.sh` diffs the two live. The porting contract is
 core/
   Cargo.toml            lib name `librespydus_core`; crate-type lib + staticlib + cdylib
   src/
-    lib.rs              SpydusClient — the UniFFI facade (replicates middleware/src/server.ts)
+    lib.rs              SpydusClient — the UniFFI facade
                         + list_libraries, user_agent
     app.rs              pure helpers both apps share: digital formats, availability label,
                         due dates, home-screen genres and shelves
@@ -41,8 +41,7 @@ core/
     bin/uniffi-bindgen.rs
   tests/                one integration test per module + common/ helpers
     fixtures/           captured public pages, synthetic/ hand-written pages, private/ (see below)
-    golden/             TS parser output for each fixture; MANIFEST.md maps fixture → TS fn → Rust fn
-  scripts/oracle-diff.sh      live middleware-vs-core diff (Canning)
+    golden/             expected JSON for each fixture; MANIFEST.md maps fixture → TS fn → Rust fn
   scripts/library-survey.py   live multi-library compatibility survey
   generated/{swift,kotlin}  generated bindings (checked in)
 ```
@@ -58,7 +57,7 @@ the human-verification web view the same one (see [Human verification](#multi-li
 `SpydusClient(origin)` → one client per library; `origin` is a `LibraryInfo.origin`, and `nil`
 means Canning. The async methods each return a record or throw `SpydusError`.
 
-| method | middleware route | cache |
+| method | former middleware route | cache |
 |---|---|---|
 | `origin()` → `String` (sync) | | |
 | `setVerificationCookie(cookie)` (sync) | | drops every cache |
@@ -87,7 +86,7 @@ means Canning. The async methods each return a record or throw `SpydusError`.
   order.
 - A blank session gives `NotLoggedIn`. A login the library doesn't accept gives `CredentialsRejected`.
 - Place, cancel and edit are **mutating**, so call them only after the user confirms. If one
-  can't be done, the result is `ok: false` data, not an error (the middleware's HTTP 409). A
+  can't be done, the result is `ok: false` data, not an error. A
   logged-out session gives `message: "Please sign in again."`.
 - Errors: `Network` (transport, timeouts), `OriginForbidden`, `CredentialsRejected`,
   `NotLoggedIn`, `Upstream` (non-2xx, "no bib record link in format fragment"), `Parse` (bad
@@ -307,11 +306,11 @@ cargo test --test search    # one module
 cargo clippy --all-targets
 ```
 
-- **Golden tests** run each Rust parser on a fixture and compare the JSON with the TS parser's
-  output in `tests/golden/`. Key order is ignored. On a mismatch, the actual JSON is written to
-  `target/golden-actual/<golden>` and the first differing JSON pointers are listed. To regenerate
-  the goldens after changing a fixture or a TS parser, run
-  `bun middleware/scripts/emit-golden.ts`.
+- **Golden tests** run each Rust parser on a fixture and compare the JSON with `tests/golden/`.
+  Key order is ignored. On a mismatch, the actual JSON is written to
+  `target/golden-actual/<golden>` and the first differing JSON pointers are listed. The goldens
+  began as the TS parsers' output. When a parser change is meant to change one, review the
+  actual JSON and copy it over the golden.
 - **Private goldens.** `tests/fixtures/private/` and `tests/golden/private/` hold one real
   account's pages (loans, holds, the reserve form). They're staged locally and are **not
   distributed**. Tests that use them check `common::private_available()` and skip cleanly when
@@ -326,8 +325,8 @@ cargo clippy --all-targets
 
 ## CLI
 
-`spydus-cli` prints a public endpoint's result as pretty camelCase JSON, the same shape as the
-middleware's response:
+`spydus-cli` prints a public endpoint's result as pretty camelCase JSON, the same records the
+apps get:
 
 ```sh
 cargo run --bin spydus-cli -- search "the midnight library"
@@ -346,36 +345,6 @@ It has public reads only, with no account commands. `SPYDUS_ORIGIN` overrides th
 On an error, stderr gets `spydus-cli <command>: <error>`, for example
 `spydus-cli search: human verification required`. The exit code is 1 on an error and 2 on a
 usage error.
-
-## Live oracle diff
-
-```sh
-core/scripts/oracle-diff.sh
-```
-
-The script needs `cargo`, `curl` and `jq`. It uses the middleware on `http://localhost:8787`
-(override with `MW_URL`). If the middleware isn't running, the script starts it with
-`bun run src/server.ts` on `MW_URL`'s port (`PORT=…`) and stops it at the end. The TS middleware
-has no sort parameter, so the diff covers relevance search only (`searchSorted(q, .relevance)`
-sends the same request).
-
-For four fixed queries, it diffs `/search`. It then takes the first record that has a format
-availability URL (BK preferred) and diffs `/availability` and `/record` on that URL, followed by
-`/related` on the record's first related panel. The fourth query, `zzqxjv`, is nonsense, so it
-diffs the OPAC's "did not find any records" page (`noResults: true`) and SKIPs the rest. Both
-sides are normalised with `jq -S`, and the script prints a per-endpoint PASS/DIFF summary. It
-exits non-zero on any DIFF.
-
-Two kinds of live nondeterminism are handled, and each one is shown in the PASS line:
-
-- **Set IDs.** Spydus creates a new result-set ID on every search or bib-page fetch and puts it in
-  URLs (`/BIBENQ/<set>?…&SETID=<set>`), so the two sides always see different numbers. When the
-  raw JSON differs, each side's own set IDs are masked and the pair is compared again. This gives
-  `PASS … (set ids masked)`.
-- **Availability counts.** Counts can change between the two fetches. On a counts-only diff, the
-  pair is re-run once after the middleware's 60 s availability cache has expired.
-
-The script only makes public GETs. It never logs in or sends a POST.
 
 ## Multi-library survey
 
