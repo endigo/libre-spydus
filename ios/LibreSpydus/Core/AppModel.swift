@@ -1,6 +1,7 @@
 import Foundation
 import LibreSpydusCore
 import Observation
+import UIKit
 
 /// App-wide state (docs/native-apps.md §5.2), injected with `.environment(model)`;
 /// read it in a view with `@Environment(AppModel.self) private var model`.
@@ -51,11 +52,13 @@ final class AppModel {
     /// bookmark saves to) while signed in.
     let picks: PicksStore
     /// After an interactive sign-in: offer once to add this library's local favourites to My Picks
-    /// (`PicksCopyOfferAlert`). Nil when there's nothing to offer.
+    /// (`picksCopyOfferAlert`). Nil when there's nothing to offer.
     private(set) var picksCopyOffer: PicksCopyOffer?
     /// "Ready to collect" alerts and due-date reminders (§5.8): the Profile switches and the
     /// processing of every fetched snapshot.
     let alerts: AlertCenter
+    /// Sign back in with Face ID (§5.14): the kept details, the offer, a sign-in with the check.
+    let biometrics: BiometricSignIn
 
     // MARK: Navigation
 
@@ -117,6 +120,9 @@ final class AppModel {
         // Demo mode keeps its own "offered" flags, so it never changes the real ones.
         picks = PicksStore(defaults: dependencies.defaults,
                            namespace: dependencies.isDemo ? PicksStore.demoNamespace : PicksStore.namespace)
+        // Demo mode keeps its own "Not now" answers too.
+        biometrics = BiometricSignIn(vault: dependencies.biometricVault, defaults: dependencies.defaults,
+                                     namespace: dependencies.isDemo ? BiometricSignIn.demoNamespace : BiometricSignIn.namespace)
         account.report = { [weak self] error in self?.report(error) }
         picks.report = { [weak self] error in self?.report(error) }
         account.didFetch = { snapshot, origin in await alerts.process(snapshot, origin: origin) }
@@ -154,7 +160,9 @@ final class AppModel {
     func dismiss(_ sheet: RootSheet) {
         switch sheet {
         case .verification: verificationNeeded = false
-        case .login: loginNeeded = false
+        case .login:
+            loginNeeded = false
+            biometrics.sheetClosed()
         case .libraryPicker: libraryPickerPresented = false
         }
     }
@@ -194,8 +202,10 @@ final class AppModel {
     // MARK: Account
 
     /// Logs in and stores the session for this origin. Throws `SpydusError` (show it with
-    /// `UserFacingError(error, libraryName:)`; `report(_:)` for verification).
-    func signIn(username: String, password: String) async throws {
+    /// `UserFacingError(error, libraryName:)`; `report(_:)` for verification). `typed`: the sign-in
+    /// form's details, which may be kept for Face ID and are followed by the offers; a sign-in with
+    /// the check (§5.14) offers nothing.
+    func signIn(username: String, password: String, typed: Bool = true) async throws {
         let generation = backendGeneration
         let backend = self.backend
         let token = try await backend.login(username: username, password: password)
@@ -204,9 +214,14 @@ final class AppModel {
         dependencies.sessions.setValue(token, for: backend.origin)
         loginNeeded = false
         accountGeneration += 1
-        account.use(origin: backend.origin, session: token, backend: backend)
+        // A sign-in with Face ID is the account on screen (a typed one with another username deletes
+        // its details), so its saved data stays until the fresh one.
+        account.use(origin: backend.origin, session: token, backend: backend, sameAccount: !typed)
         picks.use(origin: backend.origin, session: token, backend: backend)
-        offerPicksCopy()
+        if typed {
+            biometrics.didSignInByTyping(SignInDetails(username: username, pin: password), origin: backend.origin)
+            offerPicksCopy()
+        }
         rescheduleMorningCheck()
         await account.refresh(force: true)
     }
@@ -236,9 +251,11 @@ final class AppModel {
     }
 
     func signOut() {
-        // The card number goes with the account; an expired session (`report`) keeps it.
+        // The card number and Face ID's details go with the account; an expired session (`report`)
+        // keeps them.
         dependencies.cardNumbers.setValue(nil, for: backend.origin)
         savedCardNumber = nil
+        biometrics.forget(origin: backend.origin)
         clearSession()
     }
 
@@ -269,6 +286,20 @@ final class AppModel {
         return candidates.first { !$0.isEmpty }
     }
 
+    #if DEBUG
+    /// Profile › Developer › Expire session (§5.14): an invalid session in place of the real one,
+    /// then a refresh, so the library (or `DemoBackend`) answers `NotLoggedIn`.
+    func expireSessionForDebugging() async {
+        guard session != nil else { return }
+        let expired = "expired-session"
+        session = expired
+        dependencies.sessions.setValue(expired, for: backend.origin)
+        account.use(origin: backend.origin, session: expired, backend: backend, sameAccount: true)
+        picks.use(origin: backend.origin, session: expired, backend: backend)
+        await account.refresh(force: true)
+    }
+    #endif
+
     /// Fetches the account snapshot (name, loans, reservations) now, or only when it's out of
     /// date unless `force`; a lost session clears itself through `report`. Returns false only
     /// when the request failed; a library page without a name is a success with
@@ -283,7 +314,8 @@ final class AppModel {
 
     /// Routes a failed call (docs/native-apps.md §5.7) and returns what to show, or nil for a
     /// cancellation. `HumanVerificationRequired` presents the verification sheet; `NotLoggedIn`
-    /// clears the session and presents login.
+    /// signs back in with Face ID when the library has details kept (§5.14), else clears the
+    /// session and presents login.
     @discardableResult
     func report(_ error: any Error) -> UserFacingError? {
         if error is CancellationError { return nil }
@@ -298,6 +330,7 @@ final class AppModel {
             }
             verificationNeeded = true
         case .NotLoggedIn:
+            if signBackInWithBiometrics() { break }
             clearSession()
             loginNeeded = true
         default:
@@ -425,9 +458,17 @@ final class AppModel {
         account.use(origin: library == nil ? nil : origin, session: session, backend: backend)
         picks.use(origin: library == nil ? nil : origin, session: session, backend: backend)
         favourites.load(origin: library == nil ? nil : origin)
+        biometrics.use(origin: library == nil ? nil : origin)
     }
 
-    private func clearSession() {
+    /// Whether the app is in the foreground, where the Face ID check can run.
+    func isAppActive() -> Bool {
+        dependencies.isAppActive()
+    }
+
+    /// Signs out of this library without forgetting its card number or Face ID's details (an
+    /// ended session; `signOut` forgets them).
+    func clearSession() {
         dependencies.sessions.setValue(nil, for: backend.origin)
         session = nil
         account.clear(origin: backend.origin)
@@ -467,19 +508,29 @@ extension AppModel {
         var accountCacheDirectory: URL?
         /// DEBUG `-LSPersistDemoAccount`: demo mode saves its account too (otherwise it never does).
         var persistsDemoAccount = false
+        /// Where the core saves pages (§5.13; `CoreBackend.savedPagesDirectory`), so `-LSReset`
+        /// can delete them; nil in tests.
+        var savedPagesDirectory: URL?
         var makeBackend: @MainActor (_ origin: String?) -> any LibraryBackend
         /// The notification centre, background task scheduler and clock the alerts use; nothing
         /// reaches the system unless set (tests).
         var alertSystem: AlertSystem = .inert
         /// Library card numbers entered on the card sheet, per origin (§5.9).
         var cardNumbers: any SecretStore = InMemorySecretStore()
+        /// Face ID's sign-in details per origin (§5.14); none by default (tests pass a fake).
+        var biometricVault: any BiometricVault = NoBiometricVault()
+        /// Whether the app is in the foreground (the Face ID check can't run in the background).
+        var isAppActive: @MainActor () -> Bool = { true }
 
         /// The app's real stores. Demo mode keeps its session and card number in memory (never the
         /// Keychain), and its account too unless `persistDemoAccount` (then in a folder of its own).
         /// `demoNewReady` (DEBUG `-LSDemoNewReady`): the demo account has one more reservation ready
-        /// from its second refresh on. `alertTime` (DEBUG `-LSAlertTime`) replaces 07:45.
+        /// from its second refresh on. `alertTime` (DEBUG `-LSAlertTime`) replaces 07:45. `demoKeychain`
+        /// (DEBUG `-LSDemoKeychain`): demo mode keeps Face ID's details in the Keychain, under its own
+        /// service, instead of memory.
         static func live(demo: Bool, persistDemoAccount: Bool = false, demoRefreshFails: Bool = false,
-                         demoNewReady: Bool = false, alertTime: DateComponents = AlertContent.alertTime) -> Dependencies {
+                         demoNewReady: Bool = false, demoKeychain: Bool = false,
+                         alertTime: DateComponents = AlertContent.alertTime) -> Dependencies {
             Dependencies(
                 defaults: .standard,
                 sessions: demo ? InMemorySecretStore() : KeychainSecretStore(service: "com.librespydus.session"),
@@ -490,18 +541,23 @@ extension AppModel {
                     ? AccountSnapshotCache.defaultDirectory.appending(path: "Demo", directoryHint: .isDirectory)
                     : AccountSnapshotCache.defaultDirectory,
                 persistsDemoAccount: demo && persistDemoAccount,
+                savedPagesDirectory: CoreBackend.savedPagesDirectory,
                 makeBackend: { origin -> any LibraryBackend in
                     demo
                         ? DemoBackend.live(origin: origin, failsAccountSnapshot: demoRefreshFails, addsReadyOnNextRefresh: demoNewReady)
                         : CoreBackend(origin: origin)
                 },
                 alertSystem: .live(alertTime: alertTime),
-                cardNumbers: demo ? InMemorySecretStore() : KeychainSecretStore(service: "com.librespydus.card")
+                cardNumbers: demo ? InMemorySecretStore() : KeychainSecretStore(service: "com.librespydus.card"),
+                biometricVault: demo && !demoKeychain ? MemoryBiometricVault() as any BiometricVault
+                    : KeychainBiometricVault(service: demo ? "com.librespydus.signin.demo" : "com.librespydus.signin"),
+                isAppActive: { UIApplication.shared.applicationState == .active }
             )
         }
 
         /// `-LSReset`: forget the library, every session, verification, card number, favourite,
-        /// recent search, saved account, alert setting and My Picks copy offer.
+        /// recent search, saved account, saved page, alert setting, My Picks copy offer and Face ID
+        /// sign-in.
         func resetPersistentState() {
             defaults.removeObject(forKey: AppModel.libraryKey)
             defaults.removeObject(forKey: "LibreSpydus.recentSearches") // RecentSearchStore.defaultsKey
@@ -510,8 +566,10 @@ extension AppModel {
             cardNumbers.removeAll()
             FavouritesStore.deleteAll(in: favouritesDirectory)
             if let accountCacheDirectory { AccountSnapshotCache.deleteAll(in: accountCacheDirectory) }
+            if let savedPagesDirectory { try? FileManager.default.removeItem(at: savedPagesDirectory) }
             AlertCenter.deleteAll(in: defaults)
             PicksStore.deleteAll(in: defaults)
+            BiometricSignIn.deleteAll(vault: biometricVault, defaults: defaults)
         }
     }
 }

@@ -204,6 +204,10 @@ final class DetailBackend: LibraryBackend, @unchecked Sendable {
     private var _recordURLs: [String] = []
     private var _searches: [String] = []
     private var _relatedURLs: [String] = []
+    /// Saved pages (§5.13), in memory.
+    let saved = SavedPagesFake()
+    /// Runs as each `record` request goes out (before its answer).
+    var beforeRecord: (@Sendable () async -> Void)?
 
     init(records: [String: Result<RecordDetail, SpydusError>], searchRecords: [SearchRecord] = [],
          availability: [String: Availability] = [:], related: [String: Result<RelatedList, SpydusError>] = [:]) {
@@ -241,6 +245,7 @@ final class DetailBackend: LibraryBackend, @unchecked Sendable {
     }
 
     func record(url: String) async throws -> RecordDetail {
+        if let beforeRecord { await beforeRecord() }
         let result = lock.withLock {
             _recordURLs.append(url)
             return records[url]

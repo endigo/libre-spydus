@@ -13,7 +13,8 @@ import uniffi.librespydus_core.FeaturedLink
  * Home's "Featured" row (§5.10): the library's own collections from `featured()`, loaded on its
  * own beside the other shelves. Most libraries have no such list, so the row is [links] only when
  * there are some: empty, still loading and failed all hide it, and a failure is never reported on
- * Home (a challenge or lost connection shows on New arrivals anyway).
+ * Home (a challenge or lost connection shows on New arrivals anyway). The tiles saved on the device
+ * show while it loads and stay when it fails (§5.13).
  */
 class HomeFeaturedModel : ViewModel() {
     private val _links = MutableStateFlow<List<FeaturedLink>>(emptyList())
@@ -38,21 +39,27 @@ class HomeFeaturedModel : ViewModel() {
     private suspend fun load(backend: LibraryBackend, key: HomeReloadKey, keepContent: Boolean) {
         val generation = ++generation
         loadingKey = key
-        // Another library's tiles never show over this one's.
-        if (!keepContent || key.origin != loadedKey?.origin) _links.value = emptyList()
+        // Another library's tiles never show over this one's; its own saved ones do.
+        if (!keepContent || key.origin != loadedKey?.origin) {
+            _links.value = emptyList()
+            val saved = backend.savedFeatured()
+            if (saved != null && generation == this.generation) _links.value = usable(saved)
+        }
         try {
-            val links = backend.featured().filter { it.title.isNotBlank() && it.url.isNotBlank() }
+            val links = backend.featured()
             if (generation != this.generation) return
             loadedKey = key
-            _links.value = links
+            _links.value = usable(links)
+            backend.saveFeatured(links)
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
             if (generation != this.generation) return
             loadedKey = key
-            if (!keepContent) _links.value = emptyList()
         } finally {
             if (generation == this.generation) loadingKey = null
         }
     }
+
+    private fun usable(links: List<FeaturedLink>) = links.filter { it.title.isNotBlank() && it.url.isNotBlank() }
 }

@@ -45,6 +45,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.librespydus.app.BuildConfig
 import com.librespydus.app.core.AppState
+import com.librespydus.app.core.BiometricText
 import com.librespydus.app.core.Copy
 import com.librespydus.app.core.UserFacingError
 import com.librespydus.app.feature.onboarding.AccountCard
@@ -106,6 +107,8 @@ fun ProfileScreen(appState: AppState, navigator: AppNavigator, modifier: Modifie
     val snapshot by appState.account.snapshot.collectAsStateWithLifecycle()
     val accountRefreshing by appState.account.isRefreshing.collectAsStateWithLifecycle()
     val refreshError by appState.account.lastRefreshError.collectAsStateWithLifecycle()
+    val biometricAvailable by appState.biometricAvailable.collectAsStateWithLifecycle()
+    val biometricOn by appState.biometricOn.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
     var loadingName by remember { mutableStateOf(false) }
     var confirmingSignOut by rememberSaveable { mutableStateOf(false) }
@@ -162,6 +165,8 @@ fun ProfileScreen(appState: AppState, navigator: AppNavigator, modifier: Modifie
                 onRetry = { appState.account.refresh(force = true) },
                 onSignIn = appState::requestLogin,
                 onSignOut = { confirmingSignOut = true },
+                // §5.14: shown while signed in and the phone can run the check.
+                biometric = if (biometricAvailable) BiometricSwitch(biometricOn) { on -> scope.launch { appState.setBiometricSignIn(on) } } else null,
             )
             if (signedIn) NotificationsSection(appState)
             if (verified) VerificationSection(libraryName, onClear = { confirmingClear = true })
@@ -176,7 +181,7 @@ fun ProfileScreen(appState: AppState, navigator: AppNavigator, modifier: Modifie
             )
         }
         AboutSection()
-        if (BuildConfig.DEBUG) DeveloperSection(demo)
+        if (BuildConfig.DEBUG) DeveloperSection(demo, onExpireSession = if (signedIn) ({ scope.launch { appState.expireSessionForDebug() } }) else null)
     }
 
     if (confirmingSignOut) {
@@ -260,6 +265,9 @@ private fun PlaceChip(text: String, modifier: Modifier = Modifier) {
     }
 }
 
+/** Profile's "Sign in with fingerprint" switch (§5.14): on while the library has details. */
+private class BiometricSwitch(val on: Boolean, val onChange: (Boolean) -> Unit)
+
 @Composable
 private fun AccountSection(
     signedIn: Boolean,
@@ -269,6 +277,7 @@ private fun AccountSection(
     onRetry: () -> Unit,
     onSignIn: () -> Unit,
     onSignOut: () -> Unit,
+    biometric: BiometricSwitch?,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(LsSpacing.m)) {
         AccountSectionHeader(Copy.Profile.account)
@@ -317,6 +326,15 @@ private fun AccountSection(
                                 .padding(horizontal = LsSpacing.s, vertical = LsSpacing.xs),
                         )
                     }
+                }
+                if (biometric != null) {
+                    AccountDivider()
+                    AlertSwitchRow(
+                        Copy.Biometrics.signInWith(BiometricText.METHOD),
+                        Copy.Biometrics.switchSubtitle(libraryName),
+                        biometric.on,
+                        biometric.onChange,
+                    )
                 }
                 AccountDivider()
                 AccountRowButton(Copy.Account.signOut, AccountIcons.Logout, onSignOut, tint = LsColors.danger)
@@ -377,8 +395,9 @@ private fun AboutSection() {
     }
 }
 
+/** [onExpireSession]: signed in, "Expire session" (§5.14) ends the session at the library's end. */
 @Composable
-private fun DeveloperSection(demo: Boolean) {
+private fun DeveloperSection(demo: Boolean, onExpireSession: (() -> Unit)?) {
     // Debug builds only: never shown to readers, so its words aren't in the copy catalogue.
     if (BuildConfig.DEBUG) {
         Column(verticalArrangement = Arrangement.spacedBy(LsSpacing.m)) {
@@ -405,6 +424,10 @@ private fun DeveloperSection(demo: Boolean) {
                     style = LsType.caption,
                     color = LsColors.textSecondary,
                 )
+                if (onExpireSession != null) {
+                    AccountDivider()
+                    AccountRowButton("Expire session", AccountIcons.Logout, onExpireSession, tint = LsColors.warning)
+                }
             }
         }
     }

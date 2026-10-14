@@ -165,10 +165,21 @@ struct ProfileView: View {
                     .buttonStyle(.borderless)
             }
         }
+        if let biometry = model.biometrics.biometry {
+            ProfileDivider()
+            ProfileSwitchRow(title: Copy.Biometrics.signInWith(method: biometry.name),
+                             subtitle: Copy.Biometrics.switchSubtitle(library: model.libraryName),
+                             systemImage: biometry.systemImage, isOn: biometricSignIn)
+        }
         ProfileDivider()
         ProfileRowButton(title: Copy.Account.signOut, systemImage: "rectangle.portrait.and.arrow.right", tint: Theme.Colors.danger) {
             confirmingSignOut = true
         }
+    }
+
+    /// On while this library has Face ID's details kept, or while turning it on is under way (§5.14).
+    private var biometricSignIn: Binding<Bool> {
+        Binding(get: { model.biometrics.isSwitchedOn }, set: { model.setBiometricSignIn($0) })
     }
 
     @ViewBuilder
@@ -295,6 +306,13 @@ struct ProfileView: View {
                     .themeFont(.caption)
                     .foregroundStyle(Theme.Colors.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
+                if model.isSignedIn {
+                    ProfileDivider()
+                    // Face ID sign-in (§5.14): the next refresh finds the session ended.
+                    ProfileRowButton(title: "Expire session", systemImage: "clock.badge.xmark") {
+                        Task { await model.expireSessionForDebugging() }
+                    }
+                }
             }
         }
     }

@@ -54,13 +54,15 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.librespydus.app.core.AppState
 import com.librespydus.app.core.BookRef
-import com.librespydus.app.core.BorrowedSegment
 import com.librespydus.app.core.Copy
 import com.librespydus.app.core.CoreHelpers
 import com.librespydus.app.core.FormatRef
 import com.librespydus.app.core.Formatting
 import com.librespydus.app.core.PickIrn
 import com.librespydus.app.core.ResultsSort
+import com.librespydus.app.feature.borrowed.LoanRow
+import com.librespydus.app.feature.borrowed.RenewLoanDialog
+import com.librespydus.app.feature.borrowed.RenewToast
 import com.librespydus.app.feature.onboarding.AccountIcons
 import com.librespydus.app.feature.search.BrowseIcons
 import com.librespydus.app.feature.search.browseReporter
@@ -109,6 +111,9 @@ fun BookDetailScreen(book: BookRef, appState: AppState, navigator: AppNavigator,
     var pendingBorrow by remember { mutableStateOf<FormatRef?>(null) }
     /** A reserve failure that needs a root sheet (sign in again, verification), reported once the reserve sheet is gone. */
     var deferredError by remember { mutableStateOf<Throwable?>(null) }
+    val confirmingRenew by model.renewal.confirming.collectAsStateWithLifecycle()
+    val renewing by model.renewal.renewing.collectAsStateWithLifecycle()
+    val renewToast by model.renewal.toast.collectAsStateWithLifecycle()
 
     val currentBackend = backend
     LaunchedEffect(verification, currentBackend) {
@@ -136,6 +141,12 @@ fun BookDetailScreen(book: BookRef, appState: AppState, navigator: AppNavigator,
         // Let the login sheet finish closing before this screen opens its own.
         delay(650)
         if (appState.session.value != null && !appState.loginNeeded.value) reserveRequest = ReserveRequest(format, model.state.value.ref)
+    }
+    // "Renewing…" stays until the result replaces it; the result goes after a few seconds.
+    LaunchedEffect(renewToast?.id) {
+        val shown = renewToast ?: return@LaunchedEffect
+        delay(shown.tone.millis ?: return@LaunchedEffect)
+        model.renewal.dismiss(shown.id)
     }
     LaunchedEffect(loginNeeded) {
         // The login sheet was closed without signing in: forget the borrow.
@@ -177,63 +188,81 @@ fun BookDetailScreen(book: BookRef, appState: AppState, navigator: AppNavigator,
             snapshot.reservations.pending.items.isNotEmpty()
     } == true
 
-    Column(
-        modifier
-            .fillMaxSize()
-            .background(LsColors.background),
-    ) {
-        // Fixed navy bar: scrolled content passes under it, never under the status bar.
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .background(LsColors.background)
-                .statusBarsPadding()
-                .padding(horizontal = LsSpacing.l, vertical = LsSpacing.s),
-        ) {
-            CircleIconButton(
-                LsIcons.ArrowBack, Copy.Common.back, navigator::back,
-                size = 44.dp, iconSize = 24.dp, background = LsColors.surface, contentColor = LsColors.textPrimary, shadow = false,
-            )
-        }
+    Box(modifier.fillMaxSize()) {
         Column(
             Modifier
-                .weight(1f)
-                .fillMaxWidth()
-                .verticalScroll(rememberScrollState()),
+                .fillMaxSize()
+                .background(LsColors.background),
         ) {
-            DetailHeader(
-                state = state,
-                onSelectFormat = model::select,
-                onRetryAvailability = { currentBackend?.let { b -> model.viewModelScope.launch { model.loadAvailability(b, report) } } },
-                onRetryLookup = { currentBackend?.let { b -> model.viewModelScope.launch { model.refindFormats(b, report) } } },
-            )
-            Box(Modifier.fillMaxWidth()) {
-                DetailSheetContent(
-                    state = state,
-                    onRetry = { currentBackend?.let { b -> model.viewModelScope.launch { model.load(b, report) } } },
-                    onStartRelated = { currentBackend?.let(model::startRelated) },
-                    onOpenBook = navigator::openBook,
-                    onOpenSubject = { navigator.openResults(it.query, ResultsSort.RELEVANCE, it.label) },
-                    onRetryCopies = { currentBackend?.let { b -> model.viewModelScope.launch { model.loadCopies(b, report) } } },
-                    modifier = Modifier
-                        .padding(top = ActionsHeight / 2)
-                        .fillMaxWidth()
-                        .sheetBackground()
-                        .padding(top = ActionsHeight / 2 + LsSpacing.l),
-                )
-                DetailActions(
-                    reservable = state.reservableFormat,
-                    held = held,
-                    awaitingHolding = awaitingHolding,
-                    onOpenHeld = appState::openBorrowed,
-                    signedIn = session != null,
-                    bookmark = bookmark,
-                    onBorrow = ::borrow,
-                    onToggleBookmark = ::toggleBookmark,
-                    modifier = Modifier.align(Alignment.TopCenter),
+            // Fixed navy bar: scrolled content passes under it, never under the status bar.
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .background(LsColors.background)
+                    .statusBarsPadding()
+                    .padding(horizontal = LsSpacing.l, vertical = LsSpacing.s),
+            ) {
+                CircleIconButton(
+                    LsIcons.ArrowBack, Copy.Common.back, navigator::back,
+                    size = 44.dp, iconSize = 24.dp, background = LsColors.surface, contentColor = LsColors.textPrimary, shadow = false,
                 )
             }
+            Column(
+                Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState()),
+            ) {
+                DetailHeader(
+                    state = state,
+                    onSelectFormat = model::select,
+                    onRetryAvailability = { currentBackend?.let { b -> model.viewModelScope.launch { model.loadAvailability(b, report) } } },
+                    onRetryLookup = { currentBackend?.let { b -> model.viewModelScope.launch { model.refindFormats(b, report) } } },
+                )
+                Box(Modifier.fillMaxWidth()) {
+                    DetailSheetContent(
+                        state = state,
+                        onRetry = { currentBackend?.let { b -> model.viewModelScope.launch { model.load(b, report) } } },
+                        onStartRelated = { currentBackend?.let(model::startRelated) },
+                        onOpenBook = navigator::openBook,
+                        onOpenSubject = { navigator.openResults(it.query, ResultsSort.RELEVANCE, it.label) },
+                        onRetryCopies = { currentBackend?.let { b -> model.viewModelScope.launch { model.loadCopies(b, report) } } },
+                        modifier = Modifier
+                            .padding(top = ActionsHeight / 2)
+                            .fillMaxWidth()
+                            .sheetBackground()
+                            .padding(top = ActionsHeight / 2 + LsSpacing.l),
+                    )
+                    DetailActions(
+                        reservable = state.reservableFormat,
+                        held = held,
+                        awaitingHolding = awaitingHolding,
+                        renewing = renewing,
+                    // A loan the library lets the patron renew asks to renew it (§5.12); any other pill opens Your Books.
+                    onTapHeld = { status ->
+                        val loan = status.renewableLoan
+                        if (loan != null) model.renewal.ask(LoanRow.of(loan)) else appState.openBorrowed(status.segment)
+                    },
+                        signedIn = session != null,
+                        bookmark = bookmark,
+                        onBorrow = ::borrow,
+                        onToggleBookmark = ::toggleBookmark,
+                        modifier = Modifier.align(Alignment.TopCenter),
+                    )
+                }
+            }
         }
+        RenewToast(
+            renewToast,
+            onDismiss = model.renewal::dismiss,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(start = LsSpacing.l, end = LsSpacing.l, bottom = LsSpacing.m),
+        )
+    }
+
+    confirmingRenew?.let { row ->
+        RenewLoanDialog(row, onRenew = { model.viewModelScope.launch { model.renewal.renew(row, appState) } }, onDismiss = { model.renewal.ask(null) })
     }
 
     reserveRequest?.let { request ->
@@ -409,7 +438,9 @@ private fun DetailActions(
     held: HeldStatus?,
     /** Held or not isn't known yet: Reserve keeps its slot but shows nothing. */
     awaitingHolding: Boolean,
-    onOpenHeld: (BorrowedSegment) -> Unit,
+    /** A renewal from the pill is running: a spinner in its icon's place. */
+    renewing: Boolean,
+    onTapHeld: (HeldStatus) -> Unit,
     signedIn: Boolean,
     bookmark: DetailBookmark,
     onBorrow: (FormatRef) -> Unit,
@@ -424,7 +455,7 @@ private fun DetailActions(
         horizontalArrangement = Arrangement.spacedBy(LsSpacing.m),
     ) {
         if (held != null) {
-            HeldStatusPill(held, onClick = { onOpenHeld(held.segment) }, modifier = Modifier.weight(1f))
+            HeldStatusPill(held, renewing = renewing, onClick = { if (!renewing) onTapHeld(held) }, modifier = Modifier.weight(1f))
         } else if (reservable != null) {
             // An edition-level item's format has no label (§5.10).
             val format = reservable.displayLabel.trim().lowercase().ifEmpty { null }
@@ -468,10 +499,11 @@ private fun DetailActions(
 /**
  * "On loan · Due 14 Oct", "Ready to collect · Riverton Library", "Reserved · …": the size of the
  * Reserve pill it replaces, but a quiet surface with a tinted icon and text, so it reads as a
- * status rather than an action. Tapping it opens Your Books on that list.
+ * status rather than an action. Tapping it asks to renew a renewable loan, else opens Your Books on
+ * that list. While renewing, a spinner replaces the icon.
  */
 @Composable
-private fun HeldStatusPill(status: HeldStatus, onClick: () -> Unit, modifier: Modifier = Modifier) {
+private fun HeldStatusPill(status: HeldStatus, renewing: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val (icon, tint) = when (status.tone) {
         HeldStatus.Tone.LOAN -> LsIcons.BookFilled to LsColors.textPrimary
         HeldStatus.Tone.OVERDUE -> LsIcons.Error to LsColors.danger
@@ -489,7 +521,7 @@ private fun HeldStatusPill(status: HeldStatus, onClick: () -> Unit, modifier: Mo
             .clickable(onClick = onClick)
             // One element: "On loan, due 14 October. Opens Your Books", a button.
             .clearAndSetSemantics {
-                contentDescription = Copy.A11y.labelAndHint(status.accessibilityLabel, HeldStatus.HINT)
+                contentDescription = Copy.A11y.labelAndHint(status.accessibilityLabel, status.hint)
                 role = Role.Button
                 onClick { onClick(); true }
             }
@@ -497,7 +529,11 @@ private fun HeldStatusPill(status: HeldStatus, onClick: () -> Unit, modifier: Mo
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(LsSpacing.s, Alignment.CenterHorizontally),
     ) {
-        Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(20.dp))
+        if (renewing) {
+            CircularProgressIndicator(color = tint, strokeWidth = 2.dp, modifier = Modifier.size(20.dp))
+        } else {
+            Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(20.dp))
+        }
         Text(status.text, style = LsType.bodyStrong, color = tint, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }

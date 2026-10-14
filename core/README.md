@@ -1,14 +1,14 @@
 # librespydus-core
 
-The shared on-device core of LibreSpydus. It's a Rust port of the Bun/TS `middleware/` that
-the native iOS (SwiftUI) and Android (Compose) apps call through [UniFFI](https://github.com/mozilla/uniffi-rs).
-It talks to a Spydus OPAC directly from the device, and it parses OPAC HTML into the same
-camelCase JSON-shaped records the middleware returns. The apps therefore need no server in
-between. Any library in Civica's public Spydus directory can be used (see
+The shared on-device core of LibreSpydus, which the native iOS (SwiftUI) and Android (Compose)
+apps call through [UniFFI](https://github.com/mozilla/uniffi-rs). It talks to a Spydus OPAC
+directly from the device and parses OPAC HTML into camelCase JSON-shaped records, so the apps
+need no server in between. Any library in Civica's public Spydus directory can be used (see
 [Multi-library use](#multi-library-use)); Canning (`https://canning.spydus.com`) is the default.
 
-The TS middleware is the **source of truth**. Every parser is golden-tested against the TS
-output, and `scripts/oracle-diff.sh` diffs the two live. The porting contract is in
+It began as a port of a Bun/TS middleware, since removed (it's in git history:
+`git show 0d223a2:middleware/`). The core is now the source of truth. Its goldens started as the
+TS parsers' output and are kept by hand (see [Test](#test)). The porting contract is in
 [`docs/rust-core-port.md`](../docs/rust-core-port.md).
 
 ## Layout
@@ -17,7 +17,7 @@ output, and `scripts/oracle-diff.sh` diffs the two live. The porting contract is
 core/
   Cargo.toml            lib name `librespydus_core`; crate-type lib + staticlib + cdylib
   src/
-    lib.rs              SpydusClient — the UniFFI facade (replicates middleware/src/server.ts)
+    lib.rs              SpydusClient — the UniFFI facade
                         + list_libraries, user_agent
     app.rs              pure helpers both apps share: digital formats, availability label,
                         due dates, home-screen genres and shelves
@@ -35,13 +35,13 @@ core/
     timing.rs           opt-in timing log (set_timing_sink): network and parse time per page
     crypto.rs           encrypt.js → PEM, RSA PKCS#1 v1.5 (JSEncrypt-compatible) PIN encryption
     cache.rs            thread-safe TTL cache
+    saved.rs            saved pages: book pages and Home lists kept on the device, per library
     parse/              HTML → records (search, availability, record, reserve, account, decode)
     bin/spydus-cli.rs   host CLI printing a public endpoint's JSON
     bin/uniffi-bindgen.rs
   tests/                one integration test per module + common/ helpers
     fixtures/           captured public pages, synthetic/ hand-written pages, private/ (see below)
-    golden/             TS parser output for each fixture; MANIFEST.md maps fixture → TS fn → Rust fn
-  scripts/oracle-diff.sh      live middleware-vs-core diff (Canning)
+    golden/             expected JSON for each fixture; MANIFEST.md maps fixture → TS fn → Rust fn
   scripts/library-survey.py   live multi-library compatibility survey
   generated/{swift,kotlin}  generated bindings (checked in)
 ```
@@ -57,7 +57,7 @@ the human-verification web view the same one (see [Human verification](#multi-li
 `SpydusClient(origin)` → one client per library; `origin` is a `LibraryInfo.origin`, and `nil`
 means Canning. The async methods each return a record or throw `SpydusError`.
 
-| method | middleware route | cache |
+| method | former middleware route | cache |
 |---|---|---|
 | `origin()` → `String` (sync) | | |
 | `setVerificationCookie(cookie)` (sync) | | drops every cache |
@@ -86,7 +86,7 @@ means Canning. The async methods each return a record or throw `SpydusError`.
   order.
 - A blank session gives `NotLoggedIn`. A login the library doesn't accept gives `CredentialsRejected`.
 - Place, cancel and edit are **mutating**, so call them only after the user confirms. If one
-  can't be done, the result is `ok: false` data, not an error (the middleware's HTTP 409). A
+  can't be done, the result is `ok: false` data, not an error. A
   logged-out session gives `message: "Please sign in again."`.
 - Errors: `Network` (transport, timeouts), `OriginForbidden`, `CredentialsRejected`,
   `NotLoggedIn`, `Upstream` (non-2xx, "no bib record link in format fragment"), `Parse` (bad
@@ -97,7 +97,8 @@ means Canning. The async methods each return a record or throw `SpydusError`.
 - Timing log: `set_timing_sink(sink)` installs a `TimingSink` (a foreign trait the app
   implements; `None` turns it off). Every page a call loads reports a `Timing`: `operation`
   (`search "q"`, `search newest "q"`, `results page`, `availability`, `record format`,
-  `record`, `related`, `account`, `loans`, `reservations ready` / `pending`), `networkMs`
+  `record`, `related`, `account`, `loans`, `reservations ready` / `pending`; a saved page found
+  on the device: `saved book`, `saved shelf`, `saved featured`), `networkMs`
   (request sent → whole page received; for `account`, both of its GETs), `parseMs`, `bytes`
   (decompressed), `cached` (a cache hit: no request, times 0) and `failed` (how long the
   request took to fail). `record(sink:)` runs on the core's worker threads. The apps install
@@ -181,6 +182,29 @@ when it isn't a year; the blurb comes from `div.summary` itself.
 Saving the account on the device: `encodeAccountSnapshot(snapshot)` → JSON `String` and
 `decodeAccountSnapshot(json)` → `AccountSnapshot` (throws `Parse` for malformed JSON or a snapshot
 written with another `ACCOUNT_SNAPSHOT_VERSION`, currently 1 — drop it and fetch a new one).
+
+### Saved pages
+
+Book pages and Home lists the app shows at once on the next visit, from the device, while a fresh
+copy loads (`docs/native-apps.md` §5.13). Public catalogue data only; availability and copies are
+never saved. The core writes and reads the files; the app decides what to save and when.
+
+| call | does |
+|---|---|
+| `setSavedPagesDir(dir?)` (sync) | Turns saved pages on: `dir` is a folder in the app's caches directory. This library's pages go in a folder of their own under it, so each library keeps its own. `nil` or blank turns them off (the default): reads return `nil`, saves do nothing. `setVerificationCookie` leaves saved pages alone. |
+| `savedBook(key)` → `SavedBook?` (sync) | The book page saved under `key` (a `BookRef.id`: `work:…`, `bib:…`, `brn:…`). `SavedBook{record, similar?, author?, series?, versions?}`: the record and the related lists, one per `RecordRelated` link, `nil` for a list that wasn't loaded. Reads the device only, never the network. |
+| `saveBook(key, book)` (async) | Saves it, replacing what was saved. At most 300 books per library (`saved::MAX_SAVED_BOOKS`); saving one more deletes the least recently saved. Never throws: a write that fails is skipped. |
+| `savedShelf(key)` → `SearchResults?` / `saveShelf(key, results)` | A Home shelf's first results page, under its `Shelf.key` (`new_arrivals`). |
+| `savedFeatured()` → `[FeaturedLink]?` / `saveFeatured(links)` | The `featured()` links. A saved empty list is a library without a Featured list. |
+
+Files: `<dir>/<origin>/books/<key>.json`, `<dir>/<origin>/shelves/<key>.json` and
+`<dir>/<origin>/featured.json`, each name encoded by `saved::file_name` (lower-case letters, digits,
+`-` and `.` as they are, any other byte as `_` and two hex digits, so `work:15642035` is
+`work_3a15642035` and no two keys share a file, even on a case-insensitive file system). A key that
+encodes to more than 200 characters (a URL) is neither saved nor read. Each file holds
+`{"version": SAVED_PAGES_VERSION, "value": …}` (currently 1; bump it when a saved record changes
+shape). A file that doesn't read back (malformed, another version) is deleted and reads as absent.
+A save writes a temporary file and renames it into place, so a read never sees half a file.
 
 `Availability.counts` keys seen on live libraries are only `copies` (item records, any status),
 `available` (on the shelf now; some libraries only, present even at 0) and `reserved`
@@ -282,11 +306,11 @@ cargo test --test search    # one module
 cargo clippy --all-targets
 ```
 
-- **Golden tests** run each Rust parser on a fixture and compare the JSON with the TS parser's
-  output in `tests/golden/`. Key order is ignored. On a mismatch, the actual JSON is written to
-  `target/golden-actual/<golden>` and the first differing JSON pointers are listed. To regenerate
-  the goldens after changing a fixture or a TS parser, run
-  `bun middleware/scripts/emit-golden.ts`.
+- **Golden tests** run each Rust parser on a fixture and compare the JSON with `tests/golden/`.
+  Key order is ignored. On a mismatch, the actual JSON is written to
+  `target/golden-actual/<golden>` and the first differing JSON pointers are listed. The goldens
+  began as the TS parsers' output. When a parser change is meant to change one, review the
+  actual JSON and copy it over the golden.
 - **Private goldens.** `tests/fixtures/private/` and `tests/golden/private/` hold one real
   account's pages (loans, holds, the reserve form). They're staged locally and are **not
   distributed**. Tests that use them check `common::private_available()` and skip cleanly when
@@ -301,8 +325,8 @@ cargo clippy --all-targets
 
 ## CLI
 
-`spydus-cli` prints a public endpoint's result as pretty camelCase JSON, the same shape as the
-middleware's response:
+`spydus-cli` prints a public endpoint's result as pretty camelCase JSON, the same records the
+apps get:
 
 ```sh
 cargo run --bin spydus-cli -- search "the midnight library"
@@ -321,36 +345,6 @@ It has public reads only, with no account commands. `SPYDUS_ORIGIN` overrides th
 On an error, stderr gets `spydus-cli <command>: <error>`, for example
 `spydus-cli search: human verification required`. The exit code is 1 on an error and 2 on a
 usage error.
-
-## Live oracle diff
-
-```sh
-core/scripts/oracle-diff.sh
-```
-
-The script needs `cargo`, `curl` and `jq`. It uses the middleware on `http://localhost:8787`
-(override with `MW_URL`). If the middleware isn't running, the script starts it with
-`bun run src/server.ts` on `MW_URL`'s port (`PORT=…`) and stops it at the end. The TS middleware
-has no sort parameter, so the diff covers relevance search only (`searchSorted(q, .relevance)`
-sends the same request).
-
-For four fixed queries, it diffs `/search`. It then takes the first record that has a format
-availability URL (BK preferred) and diffs `/availability` and `/record` on that URL, followed by
-`/related` on the record's first related panel. The fourth query, `zzqxjv`, is nonsense, so it
-diffs the OPAC's "did not find any records" page (`noResults: true`) and SKIPs the rest. Both
-sides are normalised with `jq -S`, and the script prints a per-endpoint PASS/DIFF summary. It
-exits non-zero on any DIFF.
-
-Two kinds of live nondeterminism are handled, and each one is shown in the PASS line:
-
-- **Set IDs.** Spydus creates a new result-set ID on every search or bib-page fetch and puts it in
-  URLs (`/BIBENQ/<set>?…&SETID=<set>`), so the two sides always see different numbers. When the
-  raw JSON differs, each side's own set IDs are masked and the pair is compared again. This gives
-  `PASS … (set ids masked)`.
-- **Availability counts.** Counts can change between the two fetches. On a counts-only diff, the
-  pair is re-run once after the middleware's 60 s availability cache has expired.
-
-The script only makes public GETs. It never logs in or sends a POST.
 
 ## Multi-library survey
 

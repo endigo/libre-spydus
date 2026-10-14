@@ -302,20 +302,7 @@ fun BorrowedScreen(appState: AppState, navigator: AppNavigator, modifier: Modifi
     }
 
     confirmingRenew?.let { row ->
-        AlertDialog(
-            onDismissRequest = { model.askToRenew(null) },
-            title = { Text(Copy.YourBooks.renewTitle) },
-            text = { Text(RenewText.confirm(row)) },
-            confirmButton = {
-                TextButton(onClick = { vm.launch { renew(row) } }) { Text(Copy.YourBooks.renew, color = LsColors.textPrimary, fontWeight = FontWeight.SemiBold) }
-            },
-            dismissButton = {
-                TextButton(onClick = { model.askToRenew(null) }) { Text(Copy.Common.notNow, color = LsColors.textPrimary) }
-            },
-            containerColor = LsColors.surfaceElevated,
-            titleContentColor = LsColors.textPrimary,
-            textContentColor = LsColors.textSecondary,
-        )
+        RenewLoanDialog(row, onRenew = { vm.launch { renew(row) } }, onDismiss = { model.askToRenew(null) })
     }
 
     editing?.let { row ->
@@ -517,13 +504,17 @@ private fun LazyListScope.reservationsContent(
                 return
             }
             if (sections.ready.isNotEmpty()) {
-                item(key = "ready-header") { SectionHeader(Copy.YourBooks.readyToCollect, Modifier.padding(top = LsSpacing.xs)) }
+                item(key = "ready-header") {
+                    SectionHeader(Copy.YourBooks.readyCount(sections.ready.size), Modifier.padding(top = LsSpacing.xs))
+                }
                 items(sections.ready, key = { "reservation-${it.id}" }) { row ->
                     ReservationCard(row, row.id in busy, swipe, onOpen, onCancel, onEdit)
                 }
             }
             if (sections.pending.isNotEmpty()) {
-                item(key = "pending-header") { SectionHeader(Copy.YourBooks.pending, Modifier.padding(top = LsSpacing.xs)) }
+                item(key = "pending-header") {
+                    SectionHeader(Copy.YourBooks.pendingCount(sections.pending.size), Modifier.padding(top = LsSpacing.xs))
+                }
                 items(sections.pending, key = { "reservation-${it.id}" }) { row ->
                     ReservationCard(row, row.id in busy, swipe, onOpen, onCancel, onEdit)
                 }
@@ -710,9 +701,31 @@ private fun <A : SwipeAction> ActionMenu(
     }
 }
 
+/**
+ * "Renew this loan?" (§5.12): Renew runs [onRenew]; Not now keeps the loan as it is. Renewing is a
+ * real change at the library, so it only runs after Renew. Your Books and the book page's pill.
+ */
+@Composable
+internal fun RenewLoanDialog(row: LoanRow, onRenew: () -> Unit, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(Copy.YourBooks.renewTitle) },
+        text = { Text(RenewText.confirm(row)) },
+        confirmButton = {
+            TextButton(onClick = onRenew) { Text(Copy.YourBooks.renew, color = LsColors.textPrimary, fontWeight = FontWeight.SemiBold) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(Copy.Common.notNow, color = LsColors.textPrimary) }
+        },
+        containerColor = LsColors.surfaceElevated,
+        titleContentColor = LsColors.textPrimary,
+        textContentColor = LsColors.textSecondary,
+    )
+}
+
 /** A renewal's "Renewing…" and its result, in a pill that slides up above the tab bar (§5.12). */
 @Composable
-private fun RenewToast(toast: BorrowedModel.Toast?, onDismiss: (Long) -> Unit, modifier: Modifier = Modifier) {
+internal fun RenewToast(toast: BorrowedModel.Toast?, onDismiss: (Long) -> Unit, modifier: Modifier = Modifier) {
     // Kept while the pill slides out.
     var shown by remember { mutableStateOf(toast) }
     LaunchedEffect(toast) { toast?.let { shown = it } }

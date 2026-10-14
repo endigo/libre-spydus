@@ -20,6 +20,11 @@ final class LoginFormModel {
         cardNumber.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
+    /// The sheet opened: the error a sign-in with Face ID left (§5.14), if any.
+    func appear(_ model: AppModel) {
+        if let shown = model.biometrics.takeFormError() { error = shown }
+    }
+
     /// Signs in; true on success (the sheet closes because `AppModel` clears `loginNeeded`).
     @discardableResult
     func submit(to model: AppModel) async -> Bool {
@@ -35,6 +40,19 @@ final class LoginFormModel {
             let shown = model.report(error)
             self.error = shown?.kind == .verificationRequired ? nil : shown
             return false
+        }
+    }
+
+    /// "Sign in with Face ID": the check, then a sign-in with the kept details. Cancelled → the
+    /// form stays as it is; the library's error shows like a typed sign-in's.
+    func signInWithBiometrics(_ model: AppModel) async {
+        guard !isSigningIn else { return }
+        isSigningIn = true
+        error = nil
+        defer { isSigningIn = false }
+        if case .failed(let failure) = await model.signInWithBiometrics() {
+            let shown = model.report(failure)
+            error = shown?.kind == .verificationRequired ? nil : shown
         }
     }
 

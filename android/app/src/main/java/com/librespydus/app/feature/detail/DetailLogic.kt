@@ -13,6 +13,7 @@ import uniffi.librespydus_core.DetailRow
 import uniffi.librespydus_core.RecordDetail
 import uniffi.librespydus_core.RecordRelated
 import uniffi.librespydus_core.RelatedList
+import uniffi.librespydus_core.SavedBook
 import uniffi.librespydus_core.SearchRecord
 import java.text.Normalizer
 import java.util.Locale
@@ -269,6 +270,14 @@ enum class RelatedPanel(val title: String) {
         SERIES -> related.series
         VERSIONS -> related.versions
     }.trimmedOrNull()
+
+    /** This panel's list in a page saved on the device (§5.13). */
+    fun list(saved: SavedBook): RelatedList? = when (this) {
+        SIMILAR -> saved.similar
+        AUTHOR -> saved.author
+        SERIES -> saved.series
+        VERSIONS -> saved.versions
+    }
 
     companion object {
         /**

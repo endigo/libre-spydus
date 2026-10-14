@@ -116,6 +116,32 @@
     }
   },
 
+  "biometrics": {
+    "faceId": "Face ID",
+    "touchId": "Touch ID",
+    "opticId": "Optic ID",
+    "fingerprint": "fingerprint",
+    "signInWith": "Sign in with {method}",
+    "offerTitle": "Sign in with {method} next time?",
+    "offerMessage": "When {library} signs you out, sign back in with {method} instead of typing your PIN. Your card number and PIN stay on this phone, locked by {method}.",
+    "use": "Use {method}",
+    "switchSubtitle": "No PIN to type when {library} signs you out.",
+    "turnOnNote": "Sign in once more to turn on {method}.",
+    "reason": "Sign in to {library}",
+    "enterPin": "Enter PIN",
+    "faceIdUsage": "Signs you back in to your library without typing your PIN.",
+    "_notes": {
+      "faceId": "{method} (§5.14): iOS picks faceId / touchId / opticId from LAContext.biometryType; Android always says fingerprint. The only words that differ between the apps (§7.1).",
+      "signInWith": "Sign-in sheet's secondary button and Profile's switch title.",
+      "offerTitle": "Alert after a typed sign-in; buttons use(method) / common.notNow. {library} = the library's name.",
+      "switchSubtitle": "Profile switch subtitle under signInWith.",
+      "turnOnNote": "Above the sign-in fields when the sheet was opened by turning Profile's switch on.",
+      "reason": "iOS LAContext localizedReason (shown with Touch ID and after a failed Face ID); Android BiometricPrompt title.",
+      "enterPin": "iOS localizedFallbackTitle; Android BiometricPrompt negative button. Both show the sign-in form.",
+      "faceIdUsage": "iOS Info.plist NSFaceIDUsageDescription, copied there by hand (gen_copy doesn't write the plist). Swift doesn't use the constant."
+    }
+  },
+
   "myCard": {
     "button": "My card",
     "buttonHint": "Shows your library card’s barcode",
@@ -256,7 +282,7 @@
       "reservedAtLabel": "§7.1 glossary: 'collect from' (was 'pick up at').",
       "reservedQueue": "Numeric queue place.",
       "reservedQueueText": "A queue place the library writes as text ('1 of 3'). §7.1 bans 'rank' (was 'Reserved · Rank {n}').",
-      "heldHint": "The already-yours pill opens Your Books on the right list."
+      "heldHint": "The already-yours pill opens Your Books on the right list; a renewable loan's pill asks to renew it instead (hint yourBooks.renewHint)."
     }
   },
 
@@ -334,6 +360,8 @@
     "noReservationsMessage": "Tap Reserve on any book and follow it here until it’s ready to collect.",
     "readyToCollect": "Ready to collect",
     "pending": "Pending",
+    "readyCount": "Ready to collect ({count})",
+    "pendingCount": "Pending ({count})",
     "collectFrom": "Collect from {branch}",
     "collectFromBy": "Collect from {branch} by {date}",
     "collectBy": "Collect by {date}",
@@ -375,9 +403,10 @@
       "renewing": "Progress toast while renewLoan runs (it takes a few seconds: it reads the loans list before and after).",
       "renewed": "Success toast; {date} = RenewResult.due as loans.dueOn writes it. renewedNoDate when due is missing.",
       "renewFailed": "Error toast when renewLoan throws (not NotLoggedIn). When RenewResult.ok is false, show RenewResult.message (the library's reason or the core's) as the error toast instead.",
-      "renewHint": "Screen-reader hint on the Renew action.",
+      "renewHint": "Screen-reader hint on the Renew action, and on the book page's On loan pill of a loan that can be renewed.",
       "show": "Label of the Loans | Reservations picker (read by screen readers, not shown).",
-      "readyToCollect": "Section header and the ready card's status chip (§7.1; was 'Ready for pickup'). Pending cards show the library's own status, else 'Pending'.",
+      "readyToCollect": "The ready card's status chip (§7.1; was 'Ready for pickup'). Pending cards show the library's own status, else 'Pending'.",
+      "readyCount": "Reservations section headers with how many are in each, as loansCount / reservationsCount write the segments: 'Ready to collect (2)', 'Pending (3)'.",
       "collectFrom": "Card meta line (§7.1; was 'Pick up at {branch}'). {branch} title-cased when the library shouts it.",
       "collectBy": "Ready card with no branch: 'Collect by 17 Oct' (was 'Pick up by …').",
       "queuePlace": "Pending card meta: '#4 in queue · Placed 2 Oct'.",
@@ -586,13 +615,16 @@
 
   "login": {
     "title": "Sign in",
-    "cardLabel": "Library card number",
-    "cardPlaceholder": "Card number",
+    "cardLabel": "Username / library card number",
+    "cardPlaceholder": "Username or card number",
     "pinLabel": "PIN / password",
     "pinPlaceholder": "PIN or password",
     "privacyNote": "LibreSpydus signs in directly with {library} and doesn’t store your PIN.",
+    "privacyNoteBiometrics": "LibreSpydus signs in directly with {library}. It keeps your PIN on this phone only if you turn on {method}.",
     "_notes": {
-      "title": "The sheet's title; its button is account.signIn (account.signingIn while it runs) and its close button common.close."
+      "privacyNoteBiometrics": "Replaces privacyNote when the phone can use {method} (§5.14), since turning it on keeps the PIN.",
+      "title": "The sheet's title; its button is account.signIn (account.signingIn while it runs) and its close button common.close.",
+      "cardLabel": "Libraries accept either the patron's username or their library card number here."
     }
   },
 

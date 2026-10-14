@@ -22,6 +22,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import uniffi.librespydus_core.AccountSnapshot
 import uniffi.librespydus_core.PatronItem
+import uniffi.librespydus_core.SearchResults
 import java.time.LocalDate
 import java.time.chrono.IsoChronology
 import java.time.format.DateTimeFormatter
@@ -71,6 +72,11 @@ class HomeModel(
 
     suspend fun retryArrivals(context: HomeLoadContext) = loadArrivals(context, keepContent = false)
 
+    /**
+     * The shelf's covers. Without [keepContent] (a new library, verification), the covers saved on
+     * the device show at once while fresh ones load (§5.13); with it (pull to refresh) the covers on
+     * screen stay.
+     */
     private suspend fun loadArrivals(context: HomeLoadContext, keepContent: Boolean) {
         val key = context.key
         val shelf = arrivalsShelf ?: run {
@@ -80,31 +86,45 @@ class HomeModel(
         }
         val generation = ++arrivalsGeneration
         arrivalsLoadingKey = key
-        if (!(keepContent && _arrivals.value.valueOrNull != null)) _arrivals.value = BrowseLoadable.Loading
+        val showsSaved = !keepContent && showSavedArrivals(shelf, context.backend, generation)
+        if (!showsSaved && !(keepContent && _arrivals.value.valueOrNull != null)) _arrivals.value = BrowseLoadable.Loading
         try {
             val results = context.backend.searchSorted(shelf.query, shelf.sort)
             if (generation != arrivalsGeneration) return
             arrivalsLoadedKey = key
             if (results.records.isEmpty() && !results.noResults) {
-                _arrivals.value = BrowseLoadable.Failed(SearchResultsModel.UNRECOGNISED_PAGE)
+                if (!showsSaved) _arrivals.value = BrowseLoadable.Failed(SearchResultsModel.UNRECOGNISED_PAGE)
                 return
             }
-            // One cover per book: `ref.id` is the shelf's identity (records without a work IRN or
-            // URL fall back to their title).
-            val books = SearchResultsModel.merge(emptyList(), results.records).map { it.ref }.distinctBy { it.id }
-            _arrivals.value = BrowseLoadable.Loaded(books.take(SHELF_LIMIT))
+            _arrivals.value = BrowseLoadable.Loaded(books(results))
+            context.backend.saveShelf(shelf.key, results)
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
             if (generation != arrivalsGeneration) return
             val shown = context.report(e) ?: return
             arrivalsLoadedKey = key
-            if (keepContent && _arrivals.value.valueOrNull != null) return
+            if ((keepContent || showsSaved) && _arrivals.value.valueOrNull != null) return
             _arrivals.value = BrowseLoadable.Failed(shown)
         } finally {
             if (generation == arrivalsGeneration) arrivalsLoadingKey = null
         }
     }
+
+    /** Shows the shelf's covers saved on the device, if any that the shelf can show. */
+    private suspend fun showSavedArrivals(shelf: Shelf, backend: LibraryBackend, generation: Int): Boolean {
+        val saved = backend.savedShelf(shelf.key) ?: return false
+        if (generation != arrivalsGeneration || (saved.records.isEmpty() && !saved.noResults)) return false
+        _arrivals.value = BrowseLoadable.Loaded(books(saved))
+        return true
+    }
+
+    /**
+     * One cover per book, at most [SHELF_LIMIT]: `ref.id` is the shelf's identity (records without
+     * a work IRN or URL fall back to their title).
+     */
+    private fun books(results: SearchResults): List<BookRef> =
+        SearchResultsModel.merge(emptyList(), results.records).map { it.ref }.distinctBy { it.id }.take(SHELF_LIMIT)
 
     /** "View All" on New arrivals. */
     val arrivalsRoute: Route.Results?

@@ -298,6 +298,20 @@ pub struct AccountSnapshot {
     pub card_expires: Option<String>,
 }
 
+/// A book page as last loaded, for the app to show at once the next time it opens while a fresh one
+/// loads (`SpydusClient::saved_book` / `save_book`, `docs/native-apps.md` §5.13): the record and
+/// the related lists, one per `RecordRelated` link. Availability and copies are never saved.
+#[derive(uniffi::Record, serde::Serialize, serde::Deserialize, Debug, Clone, PartialEq, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct SavedBook {
+    pub record: RecordDetail,
+    /// `None`: that list wasn't loaded (or failed) when the page was saved.
+    pub similar: Option<RelatedList>,
+    pub author: Option<RelatedList>,
+    pub series: Option<RelatedList>,
+    pub versions: Option<RelatedList>,
+}
+
 /// Links extracted from the authenticated account (BRWENQ) page.
 #[derive(uniffi::Record, serde::Serialize, serde::Deserialize, Debug, Clone, PartialEq, Default)]
 #[serde(rename_all = "camelCase")]

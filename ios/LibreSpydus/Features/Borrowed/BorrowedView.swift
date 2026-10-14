@@ -257,14 +257,14 @@ struct BorrowedView: View {
                 .frame(minHeight: Self.stateHeight)
         } else {
             if !sections.ready.isEmpty {
-                SectionHeader(title: Copy.YourBooks.readyToCollect)
+                SectionHeader(title: Copy.YourBooks.readyCount(count: sections.ready.count))
                     .padding(.top, Theme.Spacing.xs)
                 ForEach(sections.ready) { row in
                     reservationCard(row)
                 }
             }
             if !sections.pending.isEmpty {
-                SectionHeader(title: Copy.YourBooks.pending)
+                SectionHeader(title: Copy.YourBooks.pendingCount(count: sections.pending.count))
                     .padding(.top, Theme.Spacing.xs)
                 ForEach(sections.pending) { row in
                     reservationCard(row)

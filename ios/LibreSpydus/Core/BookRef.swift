@@ -87,6 +87,13 @@ struct BookRef: Codable, Hashable, Identifiable, Sendable {
         return Optional(String(id.dropFirst(4))).nonEmpty
     }
 
+    /// What its book page is saved under on the device (§5.13): the id when it is an IRN or BRN
+    /// (`work:`, `bib:`, `brn:`). Nil for a `url:` or `title:` id: a URL carries a search's set id,
+    /// so the same book would be saved again under every search.
+    var savedPageKey: String? {
+        ["work:", "bib:", "brn:"].contains { id.hasPrefix($0) } ? id : nil
+    }
+
     /// This ref updated from its loaded record: stable bookmark URL, better cover/ISBN/title.
     /// Keeps `id` so a favourite toggled before and after loading stays the same entry.
     func updated(with detail: RecordDetail) -> BookRef {

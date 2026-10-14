@@ -27,6 +27,8 @@ import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import uniffi.librespydus_core.RecordDetail
 import uniffi.librespydus_core.RecordRelated
+import uniffi.librespydus_core.RelatedList
+import uniffi.librespydus_core.SavedBook
 import uniffi.librespydus_core.SpydusException
 
 /**
@@ -206,8 +208,32 @@ class BookDetailModel(
     private val _state = MutableStateFlow(DetailState(ref = opened))
     val state: StateFlow<DetailState> = _state.asStateFlow()
 
+    /** Renewing from the "On loan" pill (§5.12). */
+    val renewal = PillRenewal()
+
     /** The related links whose panels were requested (a record upgrade brings new ones). */
     private var relatedRequestedFor: RecordRelated? = null
+
+    /**
+     * The page saved on the device is on screen and its fresh record hasn't come back (§5.13). Its
+     * related links are from an older search set, so the carousels wait for the fresh ones.
+     */
+    private var showsSavedRecord = false
+
+    /** The saved page was looked for (once, before the first request). */
+    private var savedPageRead = false
+
+    /** A fresh record is loading behind the saved one. */
+    private var refreshingRecord = false
+
+    /** The carousels came into view while the saved record was on screen. */
+    private var relatedWanted = false
+
+    /** Carousels still showing saved (or an earlier record's) items until their fresh list arrives. */
+    private var staleRelated: Set<RelatedPanel> = emptySet()
+
+    /** The newest list each carousel loaded (fresh, else saved), unfiltered: what a save stores. */
+    private var relatedLists: Map<RelatedPanel, RelatedList> = emptyMap()
 
     /** The user picked a format: [selectHeldFormat] no longer changes the selection. */
     private var userSelected = false
@@ -221,11 +247,30 @@ class BookDetailModel(
 
     /**
      * Loads what's missing: the record, then (for a ref without formats) its formats. Safe to call
-     * again after a failure or verification.
+     * again after a failure or verification. The page saved on the device shows first (§5.13): its
+     * record is then fetched again while the formats are found from it.
      */
     suspend fun load(backend: LibraryBackend, report: BrowseReporter) {
-        if (_state.value.record.isLoading) return
+        if (_state.value.record.isLoading || refreshingRecord) return
+        showSavedPage(backend)
+        if (showsSavedRecord) {
+            refreshingRecord = true
+            try {
+                coroutineScope {
+                    launch { loadRecord(backend, report) }
+                    loadFormats(backend, report)
+                }
+            } finally {
+                refreshingRecord = false
+            }
+            return
+        }
         if (_state.value.record.valueOrNull == null) loadRecord(backend, report)
+        loadFormats(backend, report)
+    }
+
+    /** With the record on screen: re-finds a ref's missing formats, then picks the patron's edition. */
+    private suspend fun loadFormats(backend: LibraryBackend, report: BrowseReporter) {
         when (_state.value.formatLookup) {
             FormatLookup.Pending, is FormatLookup.Failed -> refindFormats(backend, report)
             else -> Unit
@@ -242,10 +287,10 @@ class BookDetailModel(
         val urls = DetailRecordSource.candidateUrls(opened, _state.value.selectedFormat)
         if (urls.isEmpty()) {
             val error = UserFacingError(UserFacingError.Kind.UNEXPECTED, Copy.Detail.noRecordLink)
-            _state.update { it.copy(record = BrowseLoadable.Failed(error)) }
+            if (!showsSavedRecord) _state.update { it.copy(record = BrowseLoadable.Failed(error)) }
             return
         }
-        _state.update { it.copy(record = BrowseLoadable.Loading) }
+        if (!showsSavedRecord) _state.update { it.copy(record = BrowseLoadable.Loading) }
         var failure: Exception? = null
         for (url in urls) {
             try {
@@ -254,16 +299,21 @@ class BookDetailModel(
                     failure = EmptyRecordException(url)
                     continue
                 }
-                apply(detail)
+                applyFresh(detail, backend)
                 return
             } catch (e: CancellationException) {
-                _state.update { it.copy(record = BrowseLoadable.Idle) }
+                if (!showsSavedRecord) _state.update { it.copy(record = BrowseLoadable.Idle) }
                 throw e
             } catch (e: Exception) {
                 failure = e
                 // A challenge or a lost connection fails the other URL the same way.
                 if (e is SpydusException.HumanVerificationRequired || e is SpydusException.Network) break
             }
+        }
+        if (showsSavedRecord) {
+            // The saved page stays on screen, without an error; verification still asks.
+            failure?.let(report)
+            return
         }
         val shown = failure?.let(report)
         _state.update { it.copy(record = if (shown != null) BrowseLoadable.Failed(shown) else BrowseLoadable.Idle) }
@@ -396,8 +446,15 @@ class BookDetailModel(
         }
     }
 
-    /** Starts loading the related panels once per record, when the carousels come into view. */
+    /**
+     * Starts loading the related panels once per record, when the carousels come into view. The
+     * saved record's links are from an older search set: those wait for the fresh record.
+     */
     fun startRelated(backend: LibraryBackend) {
+        if (showsSavedRecord) {
+            relatedWanted = true
+            return
+        }
         val links = _state.value.record.valueOrNull?.related ?: return
         if (relatedRequestedFor == links) return
         relatedRequestedFor = links
@@ -412,37 +469,48 @@ class BookDetailModel(
 
     /**
      * Every related panel the record links to, concurrently (at most four GETs). A failed or empty
-     * panel is hidden, never reported.
+     * panel is hidden, never reported; one showing saved items keeps them when it fails. The page is
+     * saved again once fresh lists came back.
      */
     suspend fun loadRelated(backend: LibraryBackend) {
         val detail = _state.value.record.valueOrNull ?: return
         val pending = RelatedPanel.entries.mapNotNull { panel ->
             val url = panel.url(detail.related) ?: return@mapNotNull null
             when (_state.value.related[panel]) {
-                is BrowseLoadable.Loaded, BrowseLoadable.Loading -> null
+                BrowseLoadable.Loading -> null
+                is BrowseLoadable.Loaded -> if (panel in staleRelated) panel to url else null
                 else -> panel to url
             }
         }
         if (pending.isEmpty()) return
-        _state.update { state -> state.copy(related = state.related + pending.map { it.first to BrowseLoadable.Loading }) }
+        val loading = pending.filter { it.first !in staleRelated }.map { it.first to BrowseLoadable.Loading }
+        _state.update { state -> state.copy(related = state.related + loading) }
+        var loadedAny = false
         coroutineScope {
             for ((panel, url) in pending) {
                 launch {
-                    val result: BrowseLoadable<List<BookRef>> = try {
-                        BrowseLoadable.Loaded(RelatedPanel.items(backend.related(url), excludingBrn = detail.brn))
+                    fun sameRecord() = _state.value.record.valueOrNull?.related == detail.related
+                    val list = try {
+                        backend.related(url)
                     } catch (e: CancellationException) {
-                        _state.update { it.copy(related = it.related + (panel to BrowseLoadable.Idle)) }
+                        if (panel !in staleRelated) _state.update { it.copy(related = it.related + (panel to BrowseLoadable.Idle)) }
                         throw e
                     } catch (e: Exception) {
-                        BrowseLoadable.Failed(UserFacingError.from(e))
+                        if (panel !in staleRelated && sameRecord()) {
+                            _state.update { it.copy(related = it.related + (panel to BrowseLoadable.Failed(UserFacingError.from(e)))) }
+                        }
+                        return@launch
                     }
-                    _state.update { state ->
-                        if (state.record.valueOrNull?.related == detail.related) state.copy(related = state.related + (panel to result))
-                        else state
-                    }
+                    if (!sameRecord()) return@launch
+                    staleRelated = staleRelated - panel
+                    relatedLists = relatedLists + (panel to list)
+                    loadedAny = true
+                    val items = RelatedPanel.items(list, excludingBrn = detail.brn)
+                    _state.update { it.copy(related = it.related + (panel to BrowseLoadable.Loaded(items))) }
                 }
             }
         }
+        if (loadedAny) savePage(backend)
     }
 
     /**
@@ -461,18 +529,76 @@ class BookDetailModel(
         } catch (e: Exception) {
             return
         }
-        if (!DetailRecordSource.isEmpty(detail)) apply(detail)
+        if (!DetailRecordSource.isEmpty(detail)) applyFresh(detail, backend)
+    }
+
+    /**
+     * Shows the page saved on the device for this book (§5.13), once, before the first request: its
+     * record, and its lists as the carousels' items until fresh ones arrive.
+     */
+    private suspend fun showSavedPage(backend: LibraryBackend) {
+        if (savedPageRead) return
+        savedPageRead = true
+        if (_state.value.record.valueOrNull != null) return
+        val key = opened.savedPageKey ?: return
+        val saved = backend.savedBook(key) ?: return
+        if (DetailRecordSource.isEmpty(saved.record) || _state.value.record.valueOrNull != null) return
+        apply(saved.record)
+        showsSavedRecord = true
+        val lists = RelatedPanel.entries.mapNotNull { panel -> panel.list(saved)?.let { panel to it } }.toMap()
+        relatedLists = lists
+        staleRelated = lists.keys
+        val items = lists.mapValues { (_, list) -> BrowseLoadable.Loaded(RelatedPanel.items(list, excludingBrn = saved.record.brn)) }
+        _state.update { it.copy(related = it.related + items) }
+    }
+
+    /**
+     * A record just fetched: shown and saved. A work-level record (no subjects or related titles)
+     * never replaces a bib record on screen, saved or loaded by the upgrade path while the saved
+     * page's record was refreshing.
+     */
+    private suspend fun applyFresh(detail: RecordDetail, backend: LibraryBackend) {
+        showsSavedRecord = false
+        val current = _state.value.record.valueOrNull
+        val keepsBib = DetailRecordSource.isWorkLevel(detail.bookmarkUrl) && current != null &&
+            !DetailRecordSource.isWorkLevel(current.bookmarkUrl)
+        if (!keepsBib) apply(detail)
+        if (relatedWanted) {
+            relatedWanted = false
+            startRelated(backend)
+        }
+        if (!keepsBib) savePage(backend)
+    }
+
+    /**
+     * Saves the page on the device (§5.13) after something fresh came back: the record on screen
+     * and, for each carousel it links to, the newest list that loaded.
+     */
+    private suspend fun savePage(backend: LibraryBackend) {
+        val key = opened.savedPageKey ?: return
+        val detail = _state.value.record.valueOrNull ?: return
+        val lists = relatedLists.filterKeys { it.url(detail.related) != null }
+        val book = SavedBook(
+            record = detail,
+            similar = lists[RelatedPanel.SIMILAR],
+            author = lists[RelatedPanel.AUTHOR],
+            series = lists[RelatedPanel.SERIES],
+            versions = lists[RelatedPanel.VERSIONS],
+        )
+        backend.saveBook(key, book)
     }
 
     private fun apply(detail: RecordDetail) {
-        _state.update { state ->
-            val current = state.record.valueOrNull
-            state.copy(
-                record = BrowseLoadable.Loaded(detail),
-                ref = state.ref.updatedWith(detail),
-                related = if (current != null && current.related != detail.related) emptyMap() else state.related,
-            )
+        val state = _state.value
+        val current = state.record.valueOrNull
+        var related = state.related
+        if (current != null && current.related != detail.related) {
+            // New links (a fresh record's carry a new search set): carousels with items keep them
+            // until their new lists arrive; the others load again.
+            staleRelated = related.filterValues { it is BrowseLoadable.Loaded }.keys
+            related = related.filterKeys { it in staleRelated }
         }
+        _state.update { it.copy(record = BrowseLoadable.Loaded(detail), ref = it.ref.updatedWith(detail), related = related) }
     }
 
     companion object {

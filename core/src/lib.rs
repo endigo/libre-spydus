@@ -1,8 +1,8 @@
 //! LibreSpydus core: the on-device Spydus OPAC client + HTML parsers shared by the native
-//! iOS (SwiftUI) and Android (Compose) apps via UniFFI. Port of the Bun/TS `middleware/`.
-//! Contract: `docs/rust-core-port.md`.
+//! iOS (SwiftUI) and Android (Compose) apps via UniFFI. Ported from a Bun/TS middleware, since
+//! removed (`git show 0d223a2:middleware/`). Contract: `docs/rust-core-port.md`.
 //!
-//! [`SpydusClient`] is the FFI facade. It replicates `middleware/src/server.ts`: the origin guard
+//! [`SpydusClient`] is the FFI facade. As the middleware's `server.ts` did, it has the origin guard
 //! on every URL argument, the `/record` fragment → bib-page resolution, concurrent reservation
 //! lists, and the same in-memory TTL caches. One client talks to one library (its origin);
 //! [`list_libraries`] is the directory the app picks that library from. [`app`] holds the pure
@@ -21,6 +21,7 @@ pub mod error;
 pub mod fetch;
 mod messages;
 pub mod parse;
+pub mod saved;
 pub mod timing;
 pub mod types;
 
@@ -29,10 +30,13 @@ pub use types::*;
 
 use std::collections::HashMap;
 use std::future::Future;
+use std::path::PathBuf;
 use std::sync::{Arc, LazyLock, PoisonError, RwLock};
 use std::time::Duration;
 
 use regex::Regex;
+use serde::Serialize;
+use serde::de::DeserializeOwned;
 
 use cache::TtlCache;
 use fetch::Http;
@@ -41,6 +45,7 @@ use parse::availability::{parse_availability, parse_holdings};
 use parse::decode::js_trim;
 use parse::record::{bib_link_from_fragment, parse_brief_cards, parse_record_detail};
 use parse::search::parse_search_results;
+use saved::{MAX_SAVED_BOOKS, SavedPages};
 
 /// search / page / record / related (server.ts:59, 73, 102, 130).
 const LIST_TTL: Duration = Duration::from_secs(10 * 60);
@@ -87,6 +92,8 @@ pub struct SpydusClient {
     /// Replaced wholesale by `set_verification_cookie` (see there). Each call works on the set
     /// it read when it started.
     caches: RwLock<Arc<Caches>>,
+    /// Where this library's saved pages go (`saved.rs`); `None` until the app sets a folder.
+    saved: RwLock<Option<Arc<SavedPages>>>,
 }
 
 /// The middleware's TTL caches (server.ts:59-146).
@@ -126,6 +133,7 @@ impl SpydusClient {
                 other => other.to_string(),
             }),
             caches: RwLock::default(),
+            saved: RwLock::default(),
         })
     }
 
@@ -301,6 +309,51 @@ impl SpydusClient {
             .await
         })
         .await
+    }
+
+    /// Turns saved pages on (`docs/native-apps.md` §5.13): `dir` is a folder in the app's caches
+    /// directory, and this library's pages go in a folder of their own under it. `None` or a
+    /// blank path turns them off (the default): the `saved_*` calls return `None` and the `save_*`
+    /// calls do nothing. `set_verification_cookie` leaves saved pages alone.
+    pub fn set_saved_pages_dir(&self, dir: Option<String>) {
+        let pages = dir.and_then(|dir| SavedPages::new(&dir, &self.origin)).map(Arc::new);
+        *self.saved.write().unwrap_or_else(PoisonError::into_inner) = pages;
+    }
+
+    /// The book page saved under `key` (a `BookRef.id`: `work:…`, `bib:…` or `brn:…`), from the
+    /// device only, never the network. `None` when nothing is saved, saved pages are off, or the
+    /// file doesn't read back (it is deleted).
+    pub fn saved_book(&self, key: String) -> Option<SavedBook> {
+        self.read_saved("saved book", |pages| pages.book(&key))
+    }
+
+    /// Saves `book` under `key`, replacing what was saved. At most `saved::MAX_SAVED_BOOKS` per
+    /// library: saving one more deletes the least recently saved. Never fails; a write that
+    /// fails is skipped.
+    pub async fn save_book(&self, key: String, book: SavedBook) {
+        self.write_saved(|pages| pages.book(&key), book, Some(MAX_SAVED_BOOKS)).await;
+    }
+
+    /// The Home shelf saved under `key` (a `Shelf.key`, e.g. `new_arrivals`): its first results
+    /// page, as `saved_book` reads.
+    pub fn saved_shelf(&self, key: String) -> Option<SearchResults> {
+        self.read_saved("saved shelf", |pages| pages.shelf(&key))
+    }
+
+    /// Saves a Home shelf's first results page under `key`, as `save_book` saves.
+    pub async fn save_shelf(&self, key: String, results: SearchResults) {
+        self.write_saved(|pages| pages.shelf(&key), results, None).await;
+    }
+
+    /// The `featured()` links saved last, as `saved_book` reads. An empty list is a library
+    /// without a Featured list.
+    pub fn saved_featured(&self) -> Option<Vec<FeaturedLink>> {
+        self.read_saved("saved featured", |pages| Some(pages.featured()))
+    }
+
+    /// Saves the `featured()` links, as `save_book` saves.
+    pub async fn save_featured(&self, links: Vec<FeaturedLink>) {
+        self.write_saved(|pages| Some(pages.featured()), links, None).await;
     }
 
     /// The barcode symbology the library's card scanners read, for `card_barcode`: the
@@ -567,6 +620,38 @@ impl SpydusClient {
 
     fn http(&self) -> Result<&Http, SpydusError> {
         self.http.as_ref().map_err(|message| SpydusError::Parse { message: message.clone() })
+    }
+
+    /// The saved page at `path`'s file, reported to the timing log as a cache hit for `operation`.
+    fn read_saved<V: DeserializeOwned>(
+        &self,
+        operation: &str,
+        path: impl FnOnce(&SavedPages) -> Option<PathBuf>,
+    ) -> Option<V> {
+        let pages = self.saved.read().unwrap_or_else(PoisonError::into_inner).clone()?;
+        let value = saved::read(&path(&pages)?)?;
+        timing::cache_hit(operation);
+        Some(value)
+    }
+
+    /// Writes `value` to `path`'s file on a blocking thread; with `keep`, then trims its folder
+    /// to that many pages.
+    async fn write_saved<V: Serialize + Send + 'static>(
+        &self,
+        path: impl FnOnce(&SavedPages) -> Option<PathBuf>,
+        value: V,
+        keep: Option<usize>,
+    ) {
+        let Some(pages) = self.saved.read().unwrap_or_else(PoisonError::into_inner).clone() else { return };
+        let Some(path) = path(&pages) else { return };
+        let write = tokio::task::spawn_blocking(move || {
+            if saved::write(&path, &value).is_ok()
+                && let (Some(keep), Some(folder)) = (keep, path.parent())
+            {
+                saved::evict(folder, keep);
+            }
+        });
+        let _ = write.await;
     }
 
     /// The origin guard every URL argument passes first (server.ts:72 etc.).

@@ -780,11 +780,25 @@ internal object IntegrityCheckingUniffiLib {
     ): Int
     external fun uniffi_librespydus_core_checksum_method_spydusclient_reserve_options(
     ): Int
+    external fun uniffi_librespydus_core_checksum_method_spydusclient_save_book(
+    ): Int
+    external fun uniffi_librespydus_core_checksum_method_spydusclient_save_featured(
+    ): Int
     external fun uniffi_librespydus_core_checksum_method_spydusclient_save_pick(
+    ): Int
+    external fun uniffi_librespydus_core_checksum_method_spydusclient_save_shelf(
+    ): Int
+    external fun uniffi_librespydus_core_checksum_method_spydusclient_saved_book(
+    ): Int
+    external fun uniffi_librespydus_core_checksum_method_spydusclient_saved_featured(
+    ): Int
+    external fun uniffi_librespydus_core_checksum_method_spydusclient_saved_shelf(
     ): Int
     external fun uniffi_librespydus_core_checksum_method_spydusclient_search(
     ): Int
     external fun uniffi_librespydus_core_checksum_method_spydusclient_search_sorted(
+    ): Int
+    external fun uniffi_librespydus_core_checksum_method_spydusclient_set_saved_pages_dir(
     ): Int
     external fun uniffi_librespydus_core_checksum_method_spydusclient_set_verification_cookie(
     ): Int
@@ -863,12 +877,26 @@ internal object UniffiLib {
     ): Long
     external fun uniffi_librespydus_core_fn_method_spydusclient_reserve_options(`ptr`: Long,`url`: RustBuffer.ByValue,`session`: RustBuffer.ByValue,
     ): Long
+    external fun uniffi_librespydus_core_fn_method_spydusclient_save_book(`ptr`: Long,`key`: RustBuffer.ByValue,`book`: RustBuffer.ByValue,
+    ): Long
+    external fun uniffi_librespydus_core_fn_method_spydusclient_save_featured(`ptr`: Long,`links`: RustBuffer.ByValue,
+    ): Long
     external fun uniffi_librespydus_core_fn_method_spydusclient_save_pick(`ptr`: Long,`irn`: RustBuffer.ByValue,`session`: RustBuffer.ByValue,
     ): Long
+    external fun uniffi_librespydus_core_fn_method_spydusclient_save_shelf(`ptr`: Long,`key`: RustBuffer.ByValue,`results`: RustBuffer.ByValue,
+    ): Long
+    external fun uniffi_librespydus_core_fn_method_spydusclient_saved_book(`ptr`: Long,`key`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    external fun uniffi_librespydus_core_fn_method_spydusclient_saved_featured(`ptr`: Long,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    external fun uniffi_librespydus_core_fn_method_spydusclient_saved_shelf(`ptr`: Long,`key`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
     external fun uniffi_librespydus_core_fn_method_spydusclient_search(`ptr`: Long,`query`: RustBuffer.ByValue,
     ): Long
     external fun uniffi_librespydus_core_fn_method_spydusclient_search_sorted(`ptr`: Long,`query`: RustBuffer.ByValue,`sort`: RustBuffer.ByValue,
     ): Long
+    external fun uniffi_librespydus_core_fn_method_spydusclient_set_saved_pages_dir(`ptr`: Long,`dir`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): Unit
     external fun uniffi_librespydus_core_fn_method_spydusclient_set_verification_cookie(`ptr`: Long,`cookie`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
     external fun uniffi_librespydus_core_fn_clone_timingsink(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
@@ -1144,13 +1172,34 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
     if ((lib.uniffi_librespydus_core_checksum_method_spydusclient_reserve_options() and 0xFFFF) != 26217) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
+    if ((lib.uniffi_librespydus_core_checksum_method_spydusclient_save_book() and 0xFFFF) != 53523) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_librespydus_core_checksum_method_spydusclient_save_featured() and 0xFFFF) != 37637) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
     if ((lib.uniffi_librespydus_core_checksum_method_spydusclient_save_pick() and 0xFFFF) != 15428) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_librespydus_core_checksum_method_spydusclient_save_shelf() and 0xFFFF) != 2366) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_librespydus_core_checksum_method_spydusclient_saved_book() and 0xFFFF) != 61428) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_librespydus_core_checksum_method_spydusclient_saved_featured() and 0xFFFF) != 11653) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_librespydus_core_checksum_method_spydusclient_saved_shelf() and 0xFFFF) != 60012) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if ((lib.uniffi_librespydus_core_checksum_method_spydusclient_search() and 0xFFFF) != 20559) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if ((lib.uniffi_librespydus_core_checksum_method_spydusclient_search_sorted() and 0xFFFF) != 26635) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_librespydus_core_checksum_method_spydusclient_set_saved_pages_dir() and 0xFFFF) != 12958) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if ((lib.uniffi_librespydus_core_checksum_method_spydusclient_set_verification_cookie() and 0xFFFF) != 7) {
@@ -1866,12 +1915,48 @@ public interface SpydusClientInterface {
     suspend fun `reserveOptions`(`url`: kotlin.String, `session`: kotlin.String): ReserveOptions
     
     /**
+     * Saves `book` under `key`, replacing what was saved. At most `saved::MAX_SAVED_BOOKS` per
+     * library: saving one more deletes the least recently saved. Never fails; a write that
+     * fails is skipped.
+     */
+    suspend fun `saveBook`(`key`: kotlin.String, `book`: SavedBook)
+    
+    /**
+     * Saves the `featured()` links, as `save_book` saves.
+     */
+    suspend fun `saveFeatured`(`links`: List<FeaturedLink>)
+    
+    /**
      * Save a record to the reader's active Pick list: a results card's `workIrn` (a work, or an
      * edition on saved-search lists) or a record's `bibIrn`. Returns how many records the list
      * now holds. MUTATING — call only when the reader taps save. Saving one already on the list
      * changes nothing.
      */
     suspend fun `savePick`(`irn`: kotlin.String, `session`: kotlin.String): kotlin.Long
+    
+    /**
+     * Saves a Home shelf's first results page under `key`, as `save_book` saves.
+     */
+    suspend fun `saveShelf`(`key`: kotlin.String, `results`: SearchResults)
+    
+    /**
+     * The book page saved under `key` (a `BookRef.id`: `work:…`, `bib:…` or `brn:…`), from the
+     * device only, never the network. `None` when nothing is saved, saved pages are off, or the
+     * file doesn't read back (it is deleted).
+     */
+    fun `savedBook`(`key`: kotlin.String): SavedBook?
+    
+    /**
+     * The `featured()` links saved last, as `saved_book` reads. An empty list is a library
+     * without a Featured list.
+     */
+    fun `savedFeatured`(): List<FeaturedLink>?
+    
+    /**
+     * The Home shelf saved under `key` (a `Shelf.key`, e.g. `new_arrivals`): its first results
+     * page, as `saved_book` reads.
+     */
+    fun `savedShelf`(`key`: kotlin.String): SearchResults?
     
     /**
      * Keyword search → the first results page (server.ts:55-67), in relevance order: exactly
@@ -1887,6 +1972,14 @@ public interface SpydusClientInterface {
      * (`nextPageUrl` → `page`) keep the order. Cached 10 min per sort and case-insensitive query.
      */
     suspend fun `searchSorted`(`query`: kotlin.String, `sort`: SearchSort): SearchResults
+    
+    /**
+     * Turns saved pages on (`docs/native-apps.md` §5.13): `dir` is a folder in the app's caches
+     * directory, and this library's pages go in a folder of their own under it. `None` or a
+     * blank path turns them off (the default): the `saved_*` calls return `None` and the `save_*`
+     * calls do nothing. `set_verification_cookie` leaves saved pages alone.
+     */
+    fun `setSavedPagesDir`(`dir`: kotlin.String?)
     
     /**
      * Sets, or with `None` / a blank string clears, the cookie sent with every later request:
@@ -2614,6 +2707,59 @@ open class SpydusClient: Disposable, AutoCloseable, SpydusClientInterface
 
     
     /**
+     * Saves `book` under `key`, replacing what was saved. At most `saved::MAX_SAVED_BOOKS` per
+     * library: saving one more deletes the least recently saved. Never fails; a write that
+     * fails is skipped.
+     */
+    @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
+    override suspend fun `saveBook`(`key`: kotlin.String, `book`: SavedBook) {
+        return uniffiRustCallAsync(
+        callWithHandle { uniffiHandle ->
+            UniffiLib.uniffi_librespydus_core_fn_method_spydusclient_save_book(
+                uniffiHandle,
+                
+        FfiConverterString.lower(`key`),
+        FfiConverterTypeSavedBook.lower(`book`),
+            )
+        },
+        { future, callback, continuation -> UniffiLib.ffi_librespydus_core_rust_future_poll_void(future, callback, continuation) },
+        { future, continuation -> UniffiLib.ffi_librespydus_core_rust_future_complete_void(future, continuation) },
+        { future -> UniffiLib.ffi_librespydus_core_rust_future_free_void(future) },
+        // lift function
+        { },
+        
+        // Error FFI converter
+        UniffiNullRustCallStatusErrorHandler,
+    )
+    }
+
+    
+    /**
+     * Saves the `featured()` links, as `save_book` saves.
+     */
+    @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
+    override suspend fun `saveFeatured`(`links`: List<FeaturedLink>) {
+        return uniffiRustCallAsync(
+        callWithHandle { uniffiHandle ->
+            UniffiLib.uniffi_librespydus_core_fn_method_spydusclient_save_featured(
+                uniffiHandle,
+                
+        FfiConverterSequenceTypeFeaturedLink.lower(`links`),
+            )
+        },
+        { future, callback, continuation -> UniffiLib.ffi_librespydus_core_rust_future_poll_void(future, callback, continuation) },
+        { future, continuation -> UniffiLib.ffi_librespydus_core_rust_future_complete_void(future, continuation) },
+        { future -> UniffiLib.ffi_librespydus_core_rust_future_free_void(future) },
+        // lift function
+        { },
+        
+        // Error FFI converter
+        UniffiNullRustCallStatusErrorHandler,
+    )
+    }
+
+    
+    /**
      * Save a record to the reader's active Pick list: a results card's `workIrn` (a work, or an
      * edition on saved-search lists) or a record's `bibIrn`. Returns how many records the list
      * now holds. MUTATING — call only when the reader taps save. Saving one already on the list
@@ -2640,6 +2786,86 @@ open class SpydusClient: Disposable, AutoCloseable, SpydusClientInterface
         SpydusException.ErrorHandler,
     )
     }
+
+    
+    /**
+     * Saves a Home shelf's first results page under `key`, as `save_book` saves.
+     */
+    @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
+    override suspend fun `saveShelf`(`key`: kotlin.String, `results`: SearchResults) {
+        return uniffiRustCallAsync(
+        callWithHandle { uniffiHandle ->
+            UniffiLib.uniffi_librespydus_core_fn_method_spydusclient_save_shelf(
+                uniffiHandle,
+                
+        FfiConverterString.lower(`key`),
+        FfiConverterTypeSearchResults.lower(`results`),
+            )
+        },
+        { future, callback, continuation -> UniffiLib.ffi_librespydus_core_rust_future_poll_void(future, callback, continuation) },
+        { future, continuation -> UniffiLib.ffi_librespydus_core_rust_future_complete_void(future, continuation) },
+        { future -> UniffiLib.ffi_librespydus_core_rust_future_free_void(future) },
+        // lift function
+        { },
+        
+        // Error FFI converter
+        UniffiNullRustCallStatusErrorHandler,
+    )
+    }
+
+    
+    /**
+     * The book page saved under `key` (a `BookRef.id`: `work:…`, `bib:…` or `brn:…`), from the
+     * device only, never the network. `None` when nothing is saved, saved pages are off, or the
+     * file doesn't read back (it is deleted).
+     */override fun `savedBook`(`key`: kotlin.String): SavedBook? {
+            return FfiConverterOptionalTypeSavedBook.lift(
+    callWithHandle {
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_librespydus_core_fn_method_spydusclient_saved_book(
+        it,
+        
+        FfiConverterString.lower(`key`),_status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
+     * The `featured()` links saved last, as `saved_book` reads. An empty list is a library
+     * without a Featured list.
+     */override fun `savedFeatured`(): List<FeaturedLink>? {
+            return FfiConverterOptionalSequenceTypeFeaturedLink.lift(
+    callWithHandle {
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_librespydus_core_fn_method_spydusclient_saved_featured(
+        it,
+        _status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
+     * The Home shelf saved under `key` (a `Shelf.key`, e.g. `new_arrivals`): its first results
+     * page, as `saved_book` reads.
+     */override fun `savedShelf`(`key`: kotlin.String): SearchResults? {
+            return FfiConverterOptionalTypeSearchResults.lift(
+    callWithHandle {
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_librespydus_core_fn_method_spydusclient_saved_shelf(
+        it,
+        
+        FfiConverterString.lower(`key`),_status)
+}
+    }
+    )
+    }
+    
 
     
     /**
@@ -2696,6 +2922,25 @@ open class SpydusClient: Disposable, AutoCloseable, SpydusClientInterface
         SpydusException.ErrorHandler,
     )
     }
+
+    
+    /**
+     * Turns saved pages on (`docs/native-apps.md` §5.13): `dir` is a folder in the app's caches
+     * directory, and this library's pages go in a folder of their own under it. `None` or a
+     * blank path turns them off (the default): the `saved_*` calls return `None` and the `save_*`
+     * calls do nothing. `set_verification_cookie` leaves saved pages alone.
+     */override fun `setSavedPagesDir`(`dir`: kotlin.String?)
+        = 
+    callWithHandle {
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_librespydus_core_fn_method_spydusclient_set_saved_pages_dir(
+        it,
+        
+        FfiConverterOptionalString.lower(`dir`),_status)
+}
+    }
+    
+    
 
     
     /**
@@ -4935,6 +5180,67 @@ public object FfiConverterTypeReserveResult: FfiConverterRustBuffer<ReserveResul
 
 
 
+/**
+ * A book page as last loaded, for the app to show at once the next time it opens while a fresh one
+ * loads (`SpydusClient::saved_book` / `save_book`, `docs/native-apps.md` §5.13): the record and
+ * the related lists, one per `RecordRelated` link. Availability and copies are never saved.
+ */
+data class SavedBook (
+    var `record`: RecordDetail
+    , 
+    /**
+     * `None`: that list wasn't loaded (or failed) when the page was saved.
+     */
+    var `similar`: RelatedList?
+    , 
+    var `author`: RelatedList?
+    , 
+    var `series`: RelatedList?
+    , 
+    var `versions`: RelatedList?
+    
+){
+    
+
+    
+
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeSavedBook: FfiConverterRustBuffer<SavedBook> {
+    override fun read(buf: ByteBuffer): SavedBook {
+        return SavedBook(
+            FfiConverterTypeRecordDetail.read(buf),
+            FfiConverterOptionalTypeRelatedList.read(buf),
+            FfiConverterOptionalTypeRelatedList.read(buf),
+            FfiConverterOptionalTypeRelatedList.read(buf),
+            FfiConverterOptionalTypeRelatedList.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: SavedBook) = (
+            FfiConverterTypeRecordDetail.allocationSize(value.`record`) +
+            FfiConverterOptionalTypeRelatedList.allocationSize(value.`similar`) +
+            FfiConverterOptionalTypeRelatedList.allocationSize(value.`author`) +
+            FfiConverterOptionalTypeRelatedList.allocationSize(value.`series`) +
+            FfiConverterOptionalTypeRelatedList.allocationSize(value.`versions`)
+    )
+
+    override fun write(value: SavedBook, buf: ByteBuffer) {
+            FfiConverterTypeRecordDetail.write(value.`record`, buf)
+            FfiConverterOptionalTypeRelatedList.write(value.`similar`, buf)
+            FfiConverterOptionalTypeRelatedList.write(value.`author`, buf)
+            FfiConverterOptionalTypeRelatedList.write(value.`series`, buf)
+            FfiConverterOptionalTypeRelatedList.write(value.`versions`, buf)
+    }
+}
+
+
+
 data class SearchRecord (
     var `rank`: kotlin.Long?
     , 
@@ -5797,6 +6103,102 @@ public object FfiConverterOptionalTypeCardBarcode: FfiConverterRustBuffer<CardBa
 /**
  * @suppress
  */
+public object FfiConverterOptionalTypeRelatedList: FfiConverterRustBuffer<RelatedList?> {
+    override fun read(buf: ByteBuffer): RelatedList? {
+        if (buf.get().toInt() == 0) {
+            return null
+        }
+        return FfiConverterTypeRelatedList.read(buf)
+    }
+
+    override fun allocationSize(value: RelatedList?): ULong {
+        if (value == null) {
+            return 1UL
+        } else {
+            return 1UL + FfiConverterTypeRelatedList.allocationSize(value)
+        }
+    }
+
+    override fun write(value: RelatedList?, buf: ByteBuffer) {
+        if (value == null) {
+            buf.put(0)
+        } else {
+            buf.put(1)
+            FfiConverterTypeRelatedList.write(value, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterOptionalTypeSavedBook: FfiConverterRustBuffer<SavedBook?> {
+    override fun read(buf: ByteBuffer): SavedBook? {
+        if (buf.get().toInt() == 0) {
+            return null
+        }
+        return FfiConverterTypeSavedBook.read(buf)
+    }
+
+    override fun allocationSize(value: SavedBook?): ULong {
+        if (value == null) {
+            return 1UL
+        } else {
+            return 1UL + FfiConverterTypeSavedBook.allocationSize(value)
+        }
+    }
+
+    override fun write(value: SavedBook?, buf: ByteBuffer) {
+        if (value == null) {
+            buf.put(0)
+        } else {
+            buf.put(1)
+            FfiConverterTypeSavedBook.write(value, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterOptionalTypeSearchResults: FfiConverterRustBuffer<SearchResults?> {
+    override fun read(buf: ByteBuffer): SearchResults? {
+        if (buf.get().toInt() == 0) {
+            return null
+        }
+        return FfiConverterTypeSearchResults.read(buf)
+    }
+
+    override fun allocationSize(value: SearchResults?): ULong {
+        if (value == null) {
+            return 1UL
+        } else {
+            return 1UL + FfiConverterTypeSearchResults.allocationSize(value)
+        }
+    }
+
+    override fun write(value: SearchResults?, buf: ByteBuffer) {
+        if (value == null) {
+            buf.put(0)
+        } else {
+            buf.put(1)
+            FfiConverterTypeSearchResults.write(value, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
 public object FfiConverterOptionalTypeShowing: FfiConverterRustBuffer<Showing?> {
     override fun read(buf: ByteBuffer): Showing? {
         if (buf.get().toInt() == 0) {
@@ -5851,6 +6253,38 @@ public object FfiConverterOptionalTypeSimpleDate: FfiConverterRustBuffer<SimpleD
         } else {
             buf.put(1)
             FfiConverterTypeSimpleDate.write(value, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterOptionalSequenceTypeFeaturedLink: FfiConverterRustBuffer<List<FeaturedLink>?> {
+    override fun read(buf: ByteBuffer): List<FeaturedLink>? {
+        if (buf.get().toInt() == 0) {
+            return null
+        }
+        return FfiConverterSequenceTypeFeaturedLink.read(buf)
+    }
+
+    override fun allocationSize(value: List<FeaturedLink>?): ULong {
+        if (value == null) {
+            return 1UL
+        } else {
+            return 1UL + FfiConverterSequenceTypeFeaturedLink.allocationSize(value)
+        }
+    }
+
+    override fun write(value: List<FeaturedLink>?, buf: ByteBuffer) {
+        if (value == null) {
+            buf.put(0)
+        } else {
+            buf.put(1)
+            FfiConverterSequenceTypeFeaturedLink.write(value, buf)
         }
     }
 }

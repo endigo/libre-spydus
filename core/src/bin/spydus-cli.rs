@@ -1,6 +1,5 @@
 //! Host CLI over the `SpydusClient` facade: prints a public endpoint's result as the same
-//! camelCase JSON the Bun middleware returns (used by `scripts/oracle-diff.sh` and
-//! `scripts/library-survey.py`).
+//! camelCase JSON the apps get (used by `scripts/library-survey.py`).
 //!
 //!   spydus-cli search [--sort relevance|newest] "<query>"
 //!   spydus-cli <page|availability|record|related|holdings|collection> "<url>"

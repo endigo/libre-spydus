@@ -53,9 +53,10 @@ enum FeaturedDestination: Equatable, Sendable {
 
 // MARK: - Home's row
 
-/// Home's "Featured" row: `featured()`, loaded with Home but on its own. Nothing shows while it
-/// loads, when the library has no such list, or when it fails (no error on Home; most libraries
-/// have no list). A refresh that fails keeps the tiles already shown.
+/// Home's "Featured" row: `featured()`, loaded with Home but on its own. The tiles saved on the
+/// device show while it loads (§5.13). Otherwise nothing shows while it loads, when the library has
+/// no such list, or when it fails (no error on Home; most libraries have no list). A refresh that
+/// fails keeps the tiles already shown.
 @MainActor
 @Observable
 final class FeaturedRowModel {
@@ -89,8 +90,12 @@ final class FeaturedRowModel {
     }
 
     private func load(backend: any LibraryBackend, key: Key) async {
-        // Another library's tiles never show while this one's load.
-        if linksOrigin != key.origin { links = [] }
+        // Another library's tiles never show while this one's load; its tiles saved on the device
+        // do (§5.13).
+        if linksOrigin != key.origin {
+            links = backend.savedFeatured() ?? []
+            linksOrigin = key.origin
+        }
         generation += 1
         let generation = generation
         do {
@@ -99,6 +104,7 @@ final class FeaturedRowModel {
             links = loaded
             linksOrigin = key.origin
             loadedKey = key
+            await backend.saveFeatured(links: loaded)
         } catch {
             guard generation == self.generation else { return }
             // Hidden, no error: Home's other shelves report verification and network problems.

@@ -15,6 +15,11 @@ struct BookDetailView: View {
     /// A reserve-sheet failure that needs a root sheet (sign in again, verification). It's reported
     /// after the reserve sheet is gone: two sheets can't be up at once.
     @State private var deferredError: (any Error)?
+    /// The loan whose "On loan" pill was tapped, awaiting the renew confirmation (§5.12).
+    @State private var confirmingRenew: LoanRow?
+    @State private var isRenewing = false
+    /// "Renewing…", then the renewal's result.
+    @State private var renewToast: BorrowedViewModel.ToastMessage?
 
     private static let bottomID = "detail-bottom"
 
@@ -71,9 +76,15 @@ struct BookDetailView: View {
             }
             .environment(app)
         }
-        .onChange(of: app.isSignedIn) { _, signedIn in
-            if signedIn { continuePendingBorrow() }
+        .onChange(of: app.accountGeneration) {
+            // Signed in, by typing or back in with Face ID (§5.14, which keeps `isSignedIn`):
+            // carry on with the reservation.
+            if app.isSignedIn { continuePendingBorrow() }
         }
+        .renewLoanConfirmation($confirmingRenew) { row in
+            Task { await renew(row) }
+        }
+        .overlay(alignment: .bottom) { RenewToastOverlay(toast: $renewToast) }
         .onChange(of: app.loginNeeded) { _, needed in
             // The login sheet was closed without signing in: forget the borrow.
             if !needed, !app.isSignedIn { pendingBorrow = nil }
@@ -120,7 +131,7 @@ struct BookDetailView: View {
     private var actions: some View {
         HStack(spacing: Theme.Spacing.m) {
             if let held {
-                HeldStatusPill(status: held) { app.openYourBooks(on: held.segment) }
+                HeldStatusPill(status: held, isRenewing: isRenewing) { tapHeld(held) }
             } else if let format = model.reservableFormat {
                 PrimaryPillButton(title: Copy.Detail.reserve, fillsWidth: true) { borrow(format) }
                     .accessibilityHint(reserveHint(format))
@@ -185,6 +196,40 @@ struct BookDetailView: View {
             pendingBorrow = format
             app.loginNeeded = true
         }
+    }
+
+    /// The "On loan" pill of a loan the library lets the patron renew asks to renew it (§5.12);
+    /// any other pill opens Your Books on its list.
+    private func tapHeld(_ held: HeldStatus) {
+        if let loan = held.renewableLoan {
+            if !isRenewing { confirmingRenew = LoanRow(item: loan) }
+        } else {
+            app.openYourBooks(on: held.segment)
+        }
+    }
+
+    /// Renews the loan after the reader confirmed, as Your Books does: "Renewing…", then the
+    /// result as a toast; the pill follows the account to the new due date.
+    private func renew(_ row: LoanRow) async {
+        guard !isRenewing else { return }
+        isRenewing = true
+        defer { isRenewing = false }
+        let progress = BorrowedViewModel.ToastMessage(message: Copy.YourBooks.renewing, tone: .progress)
+        renewToast = progress
+        do {
+            if let result = try await app.renew(row) {
+                renewToast = BorrowedViewModel.ToastMessage(renewal: result)
+                return
+            }
+        } catch {
+            // A lost session signs out and asks to sign in again (§5.2): that says enough.
+            let sessionExpired = if case .NotLoggedIn = error as? SpydusError { true } else { false }
+            if app.report(error) != nil, !sessionExpired {
+                renewToast = BorrowedViewModel.ToastMessage(message: Copy.YourBooks.renewFailed, tone: .error)
+                return
+            }
+        }
+        if renewToast?.id == progress.id { renewToast = nil }
     }
 
     private func continuePendingBorrow() {
@@ -259,6 +304,12 @@ struct BookDetailView: View {
         if actions.openRelated,
            let first = RelatedPanel.allCases.lazy.compactMap({ model.related[$0]?.value?.first }).first {
             app.push(.detail(first))
+        }
+        if actions.tapHeld || actions.renew {
+            await wait { held == nil }
+            if actions.tapHeld, let held { tapHeld(held) }
+            // Demo mode only: never a real renewal.
+            if actions.renew, app.isDemo, let loan = held?.renewableLoan { await renew(LoanRow(item: loan)) }
         }
         // Demo mode, or signed out (which only raises the login sheet): never a real reservation.
         if actions.reserve, app.isDemo || !app.isSignedIn, let format = model.reservableFormat {
@@ -410,15 +461,22 @@ private struct DetailHeader: View {
 }
 
 /// Reserve's slot when the patron already has the edition: a status, not a primary action
-/// (elevated surface, tinted icon and text), that opens Your Books on the loan or reservation.
+/// (elevated surface, tinted icon and text). It asks to renew a renewable loan, else opens Your
+/// Books on the loan or reservation. While renewing, a spinner replaces the icon.
 private struct HeldStatusPill: View {
     let status: HeldStatus
+    var isRenewing = false
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
             HStack(spacing: Theme.Spacing.s) {
-                Image(systemName: status.systemImage)
+                if isRenewing {
+                    ProgressView()
+                        .tint(tint)
+                } else {
+                    Image(systemName: status.systemImage)
+                }
                 Text(status.text)
                     .themeFont(.bodyStrong)
                     .lineLimit(1)
@@ -435,8 +493,9 @@ private struct HeldStatusPill: View {
         .buttonStyle(PressScaleStyle())
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(status.accessibilityLabel)
-        .accessibilityHint(Copy.Detail.heldHint)
+        .accessibilityHint(status.accessibilityHint)
         .accessibilityAddTraits(.isButton)
+        .disabled(isRenewing)
     }
 
     private var tint: Color {

@@ -55,7 +55,6 @@ first. The core's own contract is `docs/rust-core-port.md`; its public API is `c
 design/tokens.json                      # coordinator (read-only for workers)
 docs/native-apps.md                     # coordinator (this file)
 core/                                   # P (wave 1) — see its spec
-middleware/src/**, middleware/scripts/  # P (TS side of P1 only)
 ios/
   LibreSpydus.xcodeproj                 # I1 — Xcode 16+ folder-synchronized groups: adding a file
                                         #      under ios/LibreSpydus/ must NOT edit project.pbxproj
@@ -151,7 +150,10 @@ modules: [Bool], text}?` · `SpydusClient.cardBarcodeSymbology() async -> Barcod
 `AccountLinks.personalDetailsUrl` (default nil) · (I11/A9, §5.10) `SpydusClient.featured() ->
 [FeaturedLink{title, description?, icon?, kind: .collection|.search|.web, url}]` ·
 `collection(url) -> FeaturedCollection{title?, sections: [FeaturedSection{title, url}]}` ·
-`holdings(url) -> [Holding{location?, collection?, callNumber?, status?, description?, available}]`.
+`holdings(url) -> [Holding{location?, collection?, callNumber?, status?, description?, available}]` ·
+(I16/A14, §5.13) `SpydusClient.setSavedPagesDir(dir?)`, `savedBook(key) -> SavedBook?` /
+`saveBook(key, book)`, `savedShelf(key) -> SearchResults?` / `saveShelf(key, results)`,
+`savedFeatured() -> [FeaturedLink]?` / `saveFeatured(links)`.
 Newest = `SORTS=MAIN.CREATED_DATE.DESC]MAIN.CREATED_TIME.DESC` (the OPAC's own new-items RSS order).
 
 ## 5. App architecture (same shape on both platforms)
@@ -211,7 +213,8 @@ iOS launch arguments / Android intent extras:
 - `-LSRoute <route>` / `--es ls_route <route>`: `home`, `search:<query>`, `results:<query>`,
   `detail:<url>`, `borrowed`, `favourites`, `profile`, `libraries`, `login`, `verify`.
 - `-LSDemo YES` / `--ez ls_demo true` — demo mode, already signed in as "Test Borrower".
-- `-LSReset YES` / `--ez ls_reset true` — clear persisted library/session/favourites first.
+- `-LSReset YES` / `--ez ls_reset true` — clear persisted library/session/favourites (and saved
+  pages, §5.13) first.
 Example: `xcrun simctl launch <udid> com.librespydus -LSLibraryOrigin https://canning.spydus.com -LSDemo YES -LSRoute borrowed`;
 `adb -s emulator-5554 shell am start -n com.librespydus.app/.MainActivity --es ls_origin https://canning.spydus.com --ez ls_demo true --es ls_route borrowed`.
 
@@ -413,7 +416,10 @@ see whether the due date moved). Copy: `design/copy.json` `yourBooks.renew*` / `
   Android: the same swipe action as reservations plus the long-press menu and a TalkBack custom
   action **Renew loan**. The footnote under the Loans list is `loanSwipeHint` (iOS 17 fallback
   `loanTouchAndHoldHint`), replacing "Renewals coming soon" (delete `renewalsSoon` once unused).
-  No renew on the book page or Home for now.
+  **Book page:** the "On loan" pill (§6 "Already yours") of a loan with a renew action asks to renew
+  it — the same confirmation, toasts and account refresh, a spinner in the pill while it runs, and the
+  pill moves to the new due date; hint `renewHint`. Without a renew action it opens Your Books ›
+  Loans as before. No renew on Home.
 - **Confirm:** an alert/dialog `renewTitle` — `renewMessage(title, date)` (date as `loans.dueOn`;
   `renewMessageNoDate` without one) — **Renew** / **Not now**.
 - **While renewing:** the row shows progress and its actions are disabled; toast `renewing`.
@@ -428,6 +434,177 @@ see whether the due date moved). Copy: `design/copy.json` `yourBooks.renew*` / `
   another borrower.") — so both outcomes can be seen.
 - **Verification:** workers use demo mode only — never renew on a real account. The user does the
   first real renewal on the phone; the coordinator checks the result and the loans list.
+
+### 5.13 Saved pages: book pages and Home open at once (I16 iOS / A14 Android)
+A catalogue page the reader has seen shows at once the next time, from the device, while a fresh
+copy loads; the fresh copy replaces it on screen when it arrives. Public catalogue data only:
+availability, copies, the formats search and anything from the account are **never** saved (the
+account has its own saved snapshot, §5.2a). Core (`core/README.md`, "Saved pages"):
+`setSavedPagesDir(dir)`, `savedBook(key) -> SavedBook{record, similar?, author?, series?, versions?}?`
+/ `saveBook(key, book)`, `savedShelf(key) -> SearchResults?` / `saveShelf(key, results)`,
+`savedFeatured() -> [FeaturedLink]?` / `saveFeatured(links)`. The `saved…` reads are sync and only
+read the device (iOS may call them on the main actor; Android calls them on `Dispatchers.IO` like
+every backend call); the `save…` writes are async and never throw. **No new copy:** nothing on screen
+says a page came from the device (unlike the account's "Updated …").
+- **Turning it on:** `CoreBackend` calls `setSavedPagesDir` right after creating its `SpydusClient`:
+  iOS `URL.cachesDirectory/SavedPages`, Android `File(context.cacheDir, "saved-pages")`. The core
+  keeps one folder per library under it (changing library keeps each library's pages) and at most
+  300 books per library (the least recently saved go first). The system may empty caches; the next
+  open then loads as it does today. Kept on sign-out (public pages, like a browser's cache);
+  `-LSReset` / `ls_reset` deletes the folder. `LibraryBackend` gains the six calls (the no-library
+  default returns nil / does nothing); `DemoBackend` forwards them to its public `CoreBackend`, as it
+  does `record`, so demo mode saves pages too.
+- **One rule for every saved page:** show the saved copy at once, still ask the library for a fresh
+  one, show the fresh one when it arrives and save it. The core's in-memory caches (10 min for
+  records, lists and searches) still apply, so going back and forth between screens doesn't ask the
+  library again; anything older does. When the fresh request fails, the saved copy stays on screen:
+  the error goes to `report` as usual (verification still opens its sheet) but the screen shows no
+  error state and no message for it. Pull to refresh is unchanged and keeps what's shown until the
+  fresh copy arrives.
+- **Book page.** Key = the opened ref's `BookRef.id` when it starts with `work:`, `bib:` or `brn:`.
+  Any other ref (`url:`, `title:`) is neither read nor saved: its URL carries a search's set id.
+  1. On load, before any request: `savedBook(key)` → its record shown as loaded (the header's
+     `ref` filled in from it as from a fetched record) and each non-nil list as that carousel's
+     items (filtered as today, e.g. without the book itself). No spinner for the record or those
+     carousels.
+  2. The record is then fetched exactly as today (same URLs, same order). The formats lookup (a ref
+     without formats) and the selected format's availability don't wait for it: they start at once
+     from the saved record. Availability, copies and "On loan / Reserved" work exactly as today; the
+     availability line shows `detail.checkingAvailability` until the live answer.
+  3. The fresh record replaces the saved one in place, except that a work-level record
+     (`isWorkLevel(bookmarkUrl)`) never replaces a bib record on screen (the upgrade path loads the
+     bib). The fresh record's related links usually differ from the saved ones (they carry a new set
+     id): **each carousel keeps its saved items until its fresh list arrives**, then shows that one
+     (empty → hidden). A carousel the fresh record no longer links to is hidden. Fresh lists still
+     load when the carousels come into view, as today.
+  4. **Save** after each fresh success — when the fresh record arrives, and again once the
+     carousels' fresh lists have come back: `saveBook(key, SavedBook{record, similar, author, series, versions})` with the record on
+     screen and, per carousel, the newest list that loaded (fresh, else the saved one; nil when
+     neither). Raw `RelatedList`s, unfiltered. A page whose requests all failed saves nothing.
+- **Home.**
+  - **New arrivals** (key = its `Shelf.key`, `new_arrivals`): whenever Home loads the shelf (launch,
+    library change, verification, sign-in/out — today's triggers), `savedShelf(key)` → covers shown
+    at once, built from the results exactly as a fresh first page is; then the fresh `searchSorted`
+    runs the way pull to refresh does (covers stay). Results the shelf can show (records, or a
+    genuine `noResults`) → shown and `saveShelf(key, results)`. An unrecognised page (no records,
+    `noResults` false) is never saved and, with saved covers on screen, doesn't replace them.
+  - **Featured row:** `savedFeatured()` → tiles shown at once (a saved empty list: no row), then the
+    fresh `featured()`. Success → shown and `saveFeatured(links)`, an empty list too. Failure → the
+    saved tiles stay (no saved tiles: hidden, as today).
+  - "Your loans" already comes from the saved account (§5.2a); the genre tiles are built in.
+- **Not saved (for now):** search results, results lists, Collection screens, My Picks, Your Books.
+- **Timing log (DEBUG, iOS, §5.6):** a `saved…` read that finds a page prints
+  `⏱ core saved book: from cache` (`saved shelf`, `saved featured`); the fresh request after it
+  prints its usual line. That's how to see both halves of a reopened page.
+- **Tests** (model tests with a fake backend): a saved book shows before any request; the fresh
+  record replaces it; a failed refresh keeps it and shows no error state; carousels keep their saved
+  items until their fresh lists arrive; a fresh work-level record doesn't replace a saved bib record;
+  `url:` / `title:` refs neither read nor save; a save follows the record and each fresh list. Home:
+  saved covers and tiles show first, fresh ones replace and are saved, a failure or an unrecognised
+  page keeps the saved ones.
+- **Verification:** public pages only (§2). Open a book and Home on a real library, then relaunch
+  the app and open the same book: it appears at once. iOS: the timing log shows `saved book` then
+  `record`; screenshot the reopened page before its availability arrives (record and carousels
+  drawn, the availability line still checking). Android (no timing log): relaunch with the emulator
+  offline (`adb shell cmd connectivity airplane-mode enable`, `disable` after): Home's covers and
+  tiles and the book page (record and carousels) still show, and only the availability line fails.
+
+### 5.14 Sign back in with Face ID (I17 iOS / A15 Android)
+The library ends a session after a while; the next call throws `NotLoggedIn` and today the reader
+types their card number and PIN again (§5.2). With this on, the phone's face or fingerprint check
+signs them back in instead. Off until the reader turns it on, per library. No core change: it calls
+`login(username, password)` as the form does. Copy: `design/copy.json` `biometrics.*`.
+- **The check's name** `{method}`: iOS from `LAContext.biometryType`: `faceId` "Face ID",
+  `touchId` "Touch ID", `opticId` "Optic ID"; Android always `fingerprint` "fingerprint" (a
+  phone with a strong face check may offer it in the prompt too). The one place the apps' words
+  differ (Face ID is Apple's name; §7.1).
+- **Available** when the phone can run a strong biometric check now: iOS
+  `canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics)`; Android
+  `BiometricManager.canAuthenticate(BIOMETRIC_STRONG) == BIOMETRIC_SUCCESS`. Not available → none of
+  this shows (saved details are left alone and used again once it's back).
+- **What's kept:** per library origin, the username / card number and PIN of a typed sign-in that
+  succeeded, as JSON `{"username","pin"}`; readable only after a biometric check; never backed up,
+  never logged.
+  - iOS: Keychain generic password, service `com.librespydus.signin`, account = origin,
+    `SecAccessControl(.biometryCurrentSet)` with `kSecAttrAccessibleWhenPasscodeSetThisDeviceOnly`.
+    Read: evaluate an `LAContext` (`localizedReason` = `reason(library)`, `localizedFallbackTitle` =
+    `enterPin`), then `SecItemCopyMatching` with `kSecUseAuthenticationContext` = that context (one
+    prompt). Whether a library has details: its plain username item (no prompt). Info.plist
+    `NSFaceIDUsageDescription` = `faceIdUsage`.
+  - Android: `androidx.biometric` `BiometricPrompt` (`BIOMETRIC_STRONG`; `MainActivity` becomes a
+    `FragmentActivity`). AES-256-GCM key `librespydus_signin` in the Android Keystore,
+    `setUserAuthenticationRequired(true)`, `setInvalidatedByBiometricEnrollment(true)`, a check per
+    use (API 30+ `setUserAuthenticationParameters(0, AUTH_BIOMETRIC_STRONG)`); per origin one small
+    JSON file (IV + ciphertext, and the username in plain) in `noBackupFilesDir/signin/`. Saving and reading each pass the cipher through
+    the prompt as a `CryptoObject`. Prompt: title `reason(library)`, negative button `enterPin`.
+  - A face or finger added since (iOS: the item no longer reads; Android:
+    `KeyPermanentlyInvalidatedException`) → the details are deleted and the sign-in form shows; the
+    next typed sign-in offers again.
+  - The username is also kept where it reads without the check (iOS: a plain Keychain item, service
+    `com.librespydus.signin.username`, since on a phone even an attributes-only query of the
+    protected item needs the check; Android: in the same file as the ciphertext). A typed sign-in with a different username
+    (case and spaces aside) deletes the details, so the check never signs in to the previous
+    account; the offer then follows as usual. The same username keeps them.
+  - Demo mode keeps the details in memory (gone on relaunch) but runs the real biometric check.
+- **Turning on: the offer.** After a typed sign-in succeeds (the form; never a restored session or a
+  biometric sign-in), when available, this library has no details and the reader hasn't answered
+  Not now for it: alert `offerTitle(method)` — `offerMessage(library, method)` — **`use(method)`** /
+  **Not now** (`common.notNow`). Use → the check (Android: encrypting) → saved. A cancelled or failed
+  check saves nothing and isn't remembered. Not now → remembered for this library until sign-out.
+  The PIN stays in memory only until the answer. My Picks' copy offer (§5.11) waits until this one
+  is answered.
+- **Profile.** In the Account card while signed in and available: a switch `signInWith(method)`,
+  subtitle `switchSubtitle(library)`, on when this library has details. Off → details deleted at
+  once (no check). On → the sign-in sheet opens with `turnOnNote(method)` above the fields; its next
+  typed sign-in saves the details without the question: the check runs as Use would, once the sheet
+  (and iOS's own "Save Password?" prompt) has gone. Closing the sheet leaves it off.
+- **Signing back in.** `report(NotLoggedIn)` when this library has details (and no biometric sign-in
+  is running): instead of clearing the session and presenting login, start a biometric sign-in. The
+  session and saved account stay on screen until it ends; more `NotLoggedIn`s meanwhile are
+  ignored. The check (`reason(library)`, fallback `enterPin`) → `signIn(username, pin)` exactly as
+  from the form (session saved, `accountGeneration` bumped, screens reload) but with no offers.
+  In the background (iOS not `.active`, Android not resumed) it waits, and starts when the app is
+  next in the foreground; a typed sign-in meanwhile ends the wait. Android also waits for the app's
+  window to have focus before any check that starts by itself (sign back in, and the check after
+  the offer or Profile's switch), because Google's "Save password" dialog cancels a
+  `BiometricPrompt` under it; a check the system cancels that way shows again once focus returns
+  (at most 3 times). The sheet's own button doesn't wait.
+  - Cancel / `enterPin` / a failed check / not available → the session is cleared as today and the
+    sign-in sheet shows the form. Details kept; the sheet doesn't start the check again by itself.
+  - `CredentialsRejected` (the PIN changed) → details deleted, session cleared, the form with
+    `errors.credentialsRejected`.
+  - Any other error → session cleared, the form with that error (§5.7; verification opens its sheet
+    as usual). Details kept.
+- **Sign-in sheet.** Its note under the button is `login.privacyNoteBiometrics(library, method)`
+  instead of `privacyNote` whenever the check is available ("doesn’t store your PIN" stops being
+  true once it's on). When this library has details and the check is available: a secondary button
+  `signInWith(method)` under **Sign in**. Opening the sheet starts the check at once, unless it
+  opened because a check was just cancelled or failed. Success closes the sheet like a typed
+  sign-in.
+- **Sign out** deletes this library's details and its Not now; changing library keeps each
+  library's; `-LSReset` / `ls_reset` deletes them all.
+- **Debug (DEBUG builds):** Profile › Developer gains **Expire session** (signed in only): stores an
+  invalid session in place of the real one and refreshes the account, so the library (or
+  `DemoBackend`) answers `NotLoggedIn`. In demo mode the app starts signed in, so turn it on from
+  Profile's switch (sign in with demo / demo), then Expire session. iOS `-LSDemoKeychain YES` (with
+  `-LSDemo`): demo mode keeps the details in the Keychain (service `com.librespydus.signin.demo`)
+  instead of memory, so the real store runs and survives a relaunch.
+- **Tests** (fake vault and prompt): the offer follows a typed sign-in only; Not now is remembered
+  and cleared by sign-out; `NotLoggedIn` with details → a biometric sign-in with no login sheet and
+  the session kept until it ends; cancelled → the form, no second automatic check; rejected →
+  details deleted and the error shown; another error → details kept; background waits for the
+  foreground; Profile off deletes, on opens the sheet and saves without asking; sign-out deletes;
+  the picks offer waits for this one.
+- **Verification:** demo mode only (§2). iOS simulator: enrol Face ID
+  (`xcrun simctl spawn <udid> notifyutil -s com.apple.BiometricKit.enrollmentChanged 1` then
+  `-p com.apple.BiometricKit.enrollmentChanged`), and at a prompt
+  `notifyutil -p com.apple.BiometricKit_Sim.pearl.match` (`…pearl.nomatch` to fail). Android
+  emulator: set a screen lock (`adb shell locksettings set-pin 1234`), enrol a fingerprint in
+  Settings with `adb -s <emu> emu finger touch 1`, and touch again at the prompt; screenshot the
+  prompt with `adb emu screenrecord screenshot <file>` (`screencap` is black: it's a secure window),
+  and clear the lock after (`adb shell locksettings clear --old 1234`). The Keystore path has an
+  instrumented test (`KeystoreBiometricVaultTest`, the host touches the sensor). Screenshots: the
+  offer, Profile's switch, the check over the app after Expire session, and the app signed back in.
 
 ### 5.7 User-facing errors
 `Network` → "Can't reach {library}. Check your connection." · `HumanVerificationRequired` →
@@ -468,7 +645,7 @@ available summary, expiry picker (`expiryChoices`), Confirm → `placeReservatio
 **Already yours (I8/A6):** when the saved account (§5.2a) has the shown format's bib on loan or
 reserved (`accountHolding`), the Reserve pill is replaced by a status pill — "On loan · Due 14 Oct",
 "Ready to collect · Riverton Library", "Reserved · Riverton Library" — that opens Your Books on the
-right segment. A page opened from Your Books selects the format that is on loan/reserved.
+right segment; a loan with a renew action asks to renew it instead (§5.12). A page opened from Your Books selects the format that is on loan/reserved.
 
 **Your Books (I5/A2; tab label "Your Books").** Segments: **Loans** | **Reservations**. Cards
 (surface colour, radius card): cover, title, "By author", meta line — loans: "Due 27 Oct ·
@@ -478,19 +655,22 @@ by <date>"). Reservation actions are hidden by default: swipe a card left to rev
 **Edit** (accent; sheet: pickup choice, delay until, not required after → `editReservation`)
 and **Cancel** (danger; confirm dialog → `cancelReservation`) tiles — a full swipe only opens
 the card, one card open at a time; long-press and screen-reader actions offer the same two;
-a footnote hints "Swipe left on a reservation to edit or cancel it." (I6/A4). Ready-for-pickup
-reservations first, highlighted. Pull to refresh. Signed out → sign-in prompt.
+a footnote hints "Swipe left on a reservation to edit or cancel it." (I6/A4). Ready-to-collect
+reservations first, highlighted. The two groups' headers say how many each holds: "Ready to
+collect (2)", "Pending (3)" (a group with none is left out). Pull to refresh. Signed out →
+sign-in prompt.
 
 **My Picks (I5/A2; §5.11 when signed in).** Local list/grid of saved books (cover cards), tap → detail, swipe/long-press
 to remove, empty state.
 
 **Profile (I2/A2).** Library card (logo, name, origin, region), account name when signed in,
-Sign in / Sign out, Change library, verification status for libraries that needed it ("Verified
-on this device" + "Clear verification"), app version, "Not affiliated with Civica or your
-library" note.
+Sign in / Sign out, the "Sign in with Face ID" switch (§5.14), Change library, verification
+status for libraries that needed it ("Verified on this device" + "Clear verification"), app
+version, "Not affiliated with Civica or your library" note.
 
-**Login (I2/A2).** Sheet: library name/logo, "Library card number", "PIN / password" (secure),
-Sign in → `signIn`; errors per §5.7. Demo mode hint visible in DEBUG.
+**Login (I2/A2).** Sheet: library name/logo, "Username / library card number", "PIN / password" (secure),
+Sign in → `signIn`; errors per §5.7. Demo mode hint visible in DEBUG. With Face ID on for the
+library, a "Sign in with Face ID" button under Sign in (§5.14).
 
 **Verification (I2/A2).** Sheet with a web view on the library origin using the core's
 `userAgent()`; copy: "{Library} asks you to confirm you're human. Complete the check below."
@@ -550,6 +730,7 @@ the same rules. Debug-only screens (component galleries, demo hints) are exempt.
 | The library's human check | "**confirm** you’re human" (title "Confirm you’re human"); the feature is "verification" | verify you’re human |
 | The library's web pages | the library’s **website** | site, web page |
 | Errors | button **Retry**; "Can’t reach {library}. Check your connection."; "Something went wrong" | Try again (as a button), Oops |
+| The phone's face or fingerprint check | **Sign in with {method}**: Face ID / Touch ID / Optic ID (iOS), "fingerprint" (Android) (§5.14) | biometrics, Face Unlock, biometric login |
 
 **Style:** sentence case everywhere (buttons, titles, alerts, toasts, menus), except the names
 above (My Picks, Your Books, My card) and "View All". Curly apostrophes and quotes (’ “ ”), the
@@ -559,7 +740,8 @@ and error paragraphs, never titles, buttons, labels, chips or toasts. Plurals us
 only when it isn't this year. Accessibility labels are the visible text or a short noun phrase;
 hints start with a third-person verb ("Opens Profile", "Shows this collection"). The two apps may
 differ only where the gesture differs (iOS "Swipe left…", Android "Touch and hold…"): those
-strings are platform variants of one key in the JSON.
+strings are platform variants of one key in the JSON. The other difference is the name of the
+phone's face or fingerprint check (§5.14), filled in as `{method}`.
 
 ## 8. Build, run & evidence
 

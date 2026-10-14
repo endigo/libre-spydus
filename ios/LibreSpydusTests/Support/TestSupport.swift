@@ -35,7 +35,10 @@ final class FakeBackend: LibraryBackend, @unchecked Sendable {
     func availability(url: String) async throws -> Availability { throw SpydusError.Upstream(message: "fake") }
     func record(url: String) async throws -> RecordDetail { throw SpydusError.Upstream(message: "fake") }
     func related(url: String) async throws -> RelatedList { RelatedList(items: []) }
+    /// Thrown by `login` instead of its answer (a lost connection, say).
+    var loginError: SpydusError?
     func login(username: String, password: String) async throws -> String {
+        if let loginError { throw loginError }
         guard password == "ok" else { throw SpydusError.CredentialsRejected(message: "credentials rejected") }
         return "fake-session"
     }

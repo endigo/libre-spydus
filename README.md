@@ -2,11 +2,11 @@
 
 Inspected **Spydus Library 2.0.6** on Orca's **Pixel_10_Pro**, using `npx rea-agents@latest` (6.3.0 during extraction; 6.4.0 for final checks), Orca CLI, managed assembly inspection, and local HTTP captures. The signed-in library is **City of Canning**.
 
-The app uses two transports: native JSON APIs and an embedded Spydus OPAC website. Native catalogue search returns a URL to an HTML results page; loans and reservations are HTML pages too. A Flutter rebuild needs adapters for both.
+The app uses two transports: native JSON APIs and an embedded Spydus OPAC website. Native catalogue search returns a URL to an HTML results page; loans and reservations are HTML pages too. LibreSpydus, the rebuild below, reads the OPAC website directly.
 
 ```mermaid
 flowchart LR
-  App[Flutter app] --> Discovery[Library discovery API]
+  App[Spydus Library app] --> Discovery[Library discovery API]
   App --> Identity[Spydus identity service]
   Identity --> Tokens[Access and refresh tokens]
   Tokens --> Native[Canning native JSON APIs]
@@ -37,13 +37,9 @@ Service bases:
 
 Import the Postman collection to inspect request templates. Its JSON API calls and web action references include operations that alter the real library account; the investigation only exercised reads and existing-session validation. The collection has no automatic execution scripts.
 
-## Flutter implementation starting point
+## LibreSpydus
 
-1. Build library discovery, configuration, branches, announcements, and notifications from the native contracts.
-2. Implement the observed identity/session bridge, separating bearer authentication from OPAC cookies.
-3. Render catalogue, loans, and reservations as Flutter widgets using a dedicated HTML parser and the documented field selectors. Keep result-set identifiers and server-supplied action links in the models.
-4. Cache library configuration and public resources; avoid loading OPAC JavaScript/CSS for native list screens. Measure backend latency separately from rendering time.
-5. Verify renewal, reservation changes, checkout/return, wallet operations, and expired-session behavior before enabling them.
+LibreSpydus is the rebuild: native SwiftUI (`ios/`) and Jetpack Compose (`android/`) apps on a shared Rust core (`core/`, through UniFFI) that talks to the library's OPAC directly from the phone, with no server in between. The build contract is [docs/native-apps.md](docs/native-apps.md), and the core's API is in [core/README.md](core/README.md).
 
 This is a reconstruction of the installed client's observable and compiled contracts. It does not claim an exhaustive inventory of Spydus's server APIs. Authentication exchange/refresh, mutations, tenant-disabled features, and error/expiry cases still have explicitly documented gaps.
 

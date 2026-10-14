@@ -7,6 +7,7 @@ import coil3.SingletonImageLoader
 import coil3.request.crossfade
 import com.librespydus.app.core.AndroidAlertNotifier
 import com.librespydus.app.core.AppState
+import com.librespydus.app.core.BiometricPrompter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -22,10 +23,15 @@ class LibreSpydusApplication : Application(), SingletonImageLoader.Factory {
     lateinit var appState: AppState
         private set
 
+    /** Shows the fingerprint check (§5.14) on MainActivity, which attaches itself. */
+    lateinit var biometricPrompter: BiometricPrompter
+        private set
+
     override fun onCreate() {
         super.onCreate()
         AndroidAlertNotifier.createChannels(this)
-        appState = AppState.create(this, appScope)
+        biometricPrompter = BiometricPrompter(this)
+        appState = AppState.create(this, appScope, biometricPrompter)
         appState.start()
     }
 

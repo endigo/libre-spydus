@@ -54,6 +54,37 @@ enum RenewText {
     }
 }
 
+extension AppModel {
+    /// Renews `row` at the library after the reader confirmed (Your Books, or the book page's
+    /// "On loan" pill). The account is fetched again either way, and a renewed loan shows its new
+    /// date at once. Nil when there's nothing to renew (no link, signed out) or the library changed
+    /// meanwhile; throws what `renewLoan` throws.
+    func renew(_ row: LoanRow) async throws -> RenewResult? {
+        guard let href = row.renewHref, let session else { return nil }
+        let key = reloadKey
+        let backend = backend
+        let result = try await account.performChange {
+            try await backend.renewLoan(url: href, session: session)
+        } accepted: { _ in true }
+        guard reloadKey == key else { return nil }
+        if result.ok, let due = result.due.nonEmpty {
+            account.update { $0 = $0.renewingLoan(actionHref: href, due: due) }
+        }
+        return result
+    }
+}
+
+extension BorrowedViewModel.ToastMessage {
+    /// A renewal's result: "Renewed · Due 3 Nov", or the library's reason for not renewing.
+    init(renewal result: RenewResult) {
+        if result.ok {
+            self.init(message: RenewText.renewed(due: result.due), tone: .success)
+        } else {
+            self.init(message: RenewText.refused(result), tone: .error)
+        }
+    }
+}
+
 extension AccountSnapshot {
     /// With the loan whose actions include `href` due on `due` (just renewed; the date as the
     /// library writes it), until the next fetch.

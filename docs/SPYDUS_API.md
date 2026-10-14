@@ -5,7 +5,7 @@
 > App type: **.NET MAUI** (C#, AOT‑compiled), HTTP layer built on **Refit**.
 > This document is the complete API contract recovered from the app's own typed REST
 > client interfaces, DTOs and OAuth config — intended for building an interoperable
-> client (Flutter rebuild).
+> client (LibreSpydus).
 
 ---
 
@@ -237,10 +237,10 @@ EF Core + **encrypted SQLite** (`sqlite3mc`). Tables (from `Spydus.DAL`): `Accou
 
 - **AWS WAF** guards per‑library servers; a plain HTTP client gets a `Human Verification`
   challenge page. The app passes because requests originate from the same WebView/session
-  that solved the WAF challenge (AWS WAF token cookie). A Flutter client will likely need a
+  that solved the WAF challenge (AWS WAF token cookie). A rebuilt client will likely need a
   hidden WebView to acquire the `aws-waf-token` cookie and attach it to API calls.
 - **Certificate pinning**: SPKI SHA‑256 pins per library (defaults in app.config). Replicate
-  with Dio + a pinning interceptor, or accept the trade‑off for a clone.
+  with a pinning HTTP client, or accept the trade‑off for a clone.
 - Two token response casings differ (`access_token`/`refresh_token` vs `accessToken`/`refreshToken`).
 - Search & My Account are **WebView‑driven** against the classic OPAC, not pure JSON APIs.
 

@@ -272,23 +272,15 @@ class BorrowedModel(private val appState: AppState, private val today: () -> Loc
      */
     suspend fun renew(row: LoanRow) {
         _confirmingRenew.value = null
-        val href = row.renewHref ?: return
+        if (row.renewHref == null) return
         val key = mutationKey()
-        val session = key.session ?: return
-        val backend = key.backend ?: return
+        if (key.session == null || key.backend == null) return
         if (isRenewing(row) || loans()?.any { it.id == row.id } != true) return
         _renewing.value += row.id
         val progress = showToast(Copy.YourBooks.renewing, ToastTone.PROGRESS)
         try {
-            val result = backend.renewLoan(href, session)
-            if (mutationKey() != key) return
-            if (result.ok) {
-                showToast(RenewText.renewed(result.due, today()), ToastTone.SUCCESS)
-                result.due?.trim()?.takeIf { it.isNotEmpty() }?.let { appState.account.renewLoan(href, it) }
-            } else {
-                showToast(result.message?.trim()?.takeIf { it.isNotEmpty() } ?: Copy.YourBooks.renewFailed, ToastTone.ERROR)
-            }
-            appState.accountDidChange()
+            val result = appState.renew(row) ?: return
+            showToast(RenewText.message(result, today()), if (result.ok) ToastTone.SUCCESS else ToastTone.ERROR)
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {

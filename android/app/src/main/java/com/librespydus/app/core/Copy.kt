@@ -135,6 +135,44 @@ object Copy {
             "Sign in with your ${library} card."
     }
 
+    object Biometrics {
+        /** {method} (§5.14): iOS picks faceId / touchId / opticId from LAContext.biometryType; Android always says fingerprint. The only words that differ between the apps (§7.1). */
+        const val faceId = "Face ID"
+        const val touchId = "Touch ID"
+        const val opticId = "Optic ID"
+        const val fingerprint = "fingerprint"
+        /** "Sign in with {method}" */
+        /** Sign-in sheet's secondary button and Profile's switch title. */
+        fun signInWith(method: String): String =
+            "Sign in with ${method}"
+        /** "Sign in with {method} next time?" */
+        /** Alert after a typed sign-in; buttons use(method) / common.notNow. {library} = the library's name. */
+        fun offerTitle(method: String): String =
+            "Sign in with ${method} next time?"
+        /** "When {library} signs you out, sign back in with {method} instead of typing your PIN. Your card number and PIN stay on this phone, locked by {method}." */
+        fun offerMessage(library: String, method: String): String =
+            "When ${library} signs you out, sign back in with ${method} instead of typing your PIN. Your card number and PIN stay on this phone, locked by ${method}."
+        /** "Use {method}" */
+        fun use(method: String): String =
+            "Use ${method}"
+        /** "No PIN to type when {library} signs you out." */
+        /** Profile switch subtitle under signInWith. */
+        fun switchSubtitle(library: String): String =
+            "No PIN to type when ${library} signs you out."
+        /** "Sign in once more to turn on {method}." */
+        /** Above the sign-in fields when the sheet was opened by turning Profile's switch on. */
+        fun turnOnNote(method: String): String =
+            "Sign in once more to turn on ${method}."
+        /** "Sign in to {library}" */
+        /** iOS LAContext localizedReason (shown with Touch ID and after a failed Face ID); Android BiometricPrompt title. */
+        fun reason(library: String): String =
+            "Sign in to ${library}"
+        /** iOS localizedFallbackTitle; Android BiometricPrompt negative button. Both show the sign-in form. */
+        const val enterPin = "Enter PIN"
+        /** iOS Info.plist NSFaceIDUsageDescription, copied there by hand (gen_copy doesn't write the plist). Swift doesn't use the constant. */
+        const val faceIdUsage = "Signs you back in to your library without typing your PIN."
+    }
+
     object MyCard {
         const val button = "My card"
         const val buttonHint = "Shows your library card’s barcode"
@@ -314,7 +352,7 @@ object Copy {
         /** "Reserved, {place} in the queue" */
         fun reservedQueueTextLabel(place: String): String =
             "Reserved, ${place} in the queue"
-        /** The already-yours pill opens Your Books on the right list. */
+        /** The already-yours pill opens Your Books on the right list; a renewable loan's pill asks to renew it instead (hint yourBooks.renewHint). */
         const val heldHint = "Opens Your Books"
     }
 
@@ -409,13 +447,20 @@ object Copy {
         const val renewedNoDate = "Renewed"
         /** Error toast when renewLoan throws (not NotLoggedIn). When RenewResult.ok is false, show RenewResult.message (the library's reason or the core's) as the error toast instead. */
         const val renewFailed = "Couldn’t renew this loan"
-        /** Screen-reader hint on the Renew action. */
+        /** Screen-reader hint on the Renew action, and on the book page's On loan pill of a loan that can be renewed. */
         const val renewHint = "Asks the library for a later due date"
         const val noReservationsTitle = "No reservations"
         const val noReservationsMessage = "Tap Reserve on any book and follow it here until it’s ready to collect."
-        /** Section header and the ready card's status chip (§7.1; was 'Ready for pickup'). Pending cards show the library's own status, else 'Pending'. */
+        /** The ready card's status chip (§7.1; was 'Ready for pickup'). Pending cards show the library's own status, else 'Pending'. */
         const val readyToCollect = "Ready to collect"
         const val pending = "Pending"
+        /** "Ready to collect ({count})" */
+        /** Reservations section headers with how many are in each, as loansCount / reservationsCount write the segments: 'Ready to collect (2)', 'Pending (3)'. */
+        fun readyCount(count: Int): String =
+            "Ready to collect (${copyNumber(count)})"
+        /** "Pending ({count})" */
+        fun pendingCount(count: Int): String =
+            "Pending (${copyNumber(count)})"
         /** "Collect from {branch}" */
         /** Card meta line (§7.1; was 'Pick up at {branch}'). {branch} title-cased when the library shouts it. */
         fun collectFrom(branch: String): String =
@@ -700,13 +745,18 @@ object Copy {
     object Login {
         /** The sheet's title; its button is account.signIn (account.signingIn while it runs) and its close button common.close. */
         const val title = "Sign in"
-        const val cardLabel = "Library card number"
-        const val cardPlaceholder = "Card number"
+        /** Libraries accept either the patron's username or their library card number here. */
+        const val cardLabel = "Username / library card number"
+        const val cardPlaceholder = "Username or card number"
         const val pinLabel = "PIN / password"
         const val pinPlaceholder = "PIN or password"
         /** "LibreSpydus signs in directly with {library} and doesn’t store your PIN." */
         fun privacyNote(library: String): String =
             "LibreSpydus signs in directly with ${library} and doesn’t store your PIN."
+        /** "LibreSpydus signs in directly with {library}. It keeps your PIN on this phone only if you turn on {method}." */
+        /** Replaces privacyNote when the phone can use {method} (§5.14), since turning it on keeps the PIN. */
+        fun privacyNoteBiometrics(library: String, method: String): String =
+            "LibreSpydus signs in directly with ${library}. It keeps your PIN on this phone only if you turn on ${method}."
     }
 
     object Verification {

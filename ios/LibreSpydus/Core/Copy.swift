@@ -145,6 +145,51 @@ enum Copy {
         }
     }
 
+    enum Biometrics {
+        /// {method} (§5.14): iOS picks faceId / touchId / opticId from LAContext.biometryType; Android always says fingerprint. The only words that differ between the apps (§7.1).
+        static let faceId = "Face ID"
+        static let touchId = "Touch ID"
+        static let opticId = "Optic ID"
+        static let fingerprint = "fingerprint"
+        /// "Sign in with {method}"
+        /// Sign-in sheet's secondary button and Profile's switch title.
+        static func signInWith(method: String) -> String {
+            "Sign in with \(method)"
+        }
+        /// "Sign in with {method} next time?"
+        /// Alert after a typed sign-in; buttons use(method) / common.notNow. {library} = the library's name.
+        static func offerTitle(method: String) -> String {
+            "Sign in with \(method) next time?"
+        }
+        /// "When {library} signs you out, sign back in with {method} instead of typing your PIN. Your card number and PIN stay on this phone, locked by {method}."
+        static func offerMessage(library: String, method: String) -> String {
+            "When \(library) signs you out, sign back in with \(method) instead of typing your PIN. Your card number and PIN stay on this phone, locked by \(method)."
+        }
+        /// "Use {method}"
+        static func use(method: String) -> String {
+            "Use \(method)"
+        }
+        /// "No PIN to type when {library} signs you out."
+        /// Profile switch subtitle under signInWith.
+        static func switchSubtitle(library: String) -> String {
+            "No PIN to type when \(library) signs you out."
+        }
+        /// "Sign in once more to turn on {method}."
+        /// Above the sign-in fields when the sheet was opened by turning Profile's switch on.
+        static func turnOnNote(method: String) -> String {
+            "Sign in once more to turn on \(method)."
+        }
+        /// "Sign in to {library}"
+        /// iOS LAContext localizedReason (shown with Touch ID and after a failed Face ID); Android BiometricPrompt title.
+        static func reason(library: String) -> String {
+            "Sign in to \(library)"
+        }
+        /// iOS localizedFallbackTitle; Android BiometricPrompt negative button. Both show the sign-in form.
+        static let enterPin = "Enter PIN"
+        /// iOS Info.plist NSFaceIDUsageDescription, copied there by hand (gen_copy doesn't write the plist). Swift doesn't use the constant.
+        static let faceIdUsage = "Signs you back in to your library without typing your PIN."
+    }
+
     enum MyCard {
         static let button = "My card"
         static let buttonHint = "Shows your library card’s barcode"
@@ -349,7 +394,7 @@ enum Copy {
         static func reservedQueueTextLabel(place: String) -> String {
             "Reserved, \(place) in the queue"
         }
-        /// The already-yours pill opens Your Books on the right list.
+        /// The already-yours pill opens Your Books on the right list; a renewable loan's pill asks to renew it instead (hint yourBooks.renewHint).
         static let heldHint = "Opens Your Books"
     }
 
@@ -456,13 +501,22 @@ enum Copy {
         static let renewedNoDate = "Renewed"
         /// Error toast when renewLoan throws (not NotLoggedIn). When RenewResult.ok is false, show RenewResult.message (the library's reason or the core's) as the error toast instead.
         static let renewFailed = "Couldn’t renew this loan"
-        /// Screen-reader hint on the Renew action.
+        /// Screen-reader hint on the Renew action, and on the book page's On loan pill of a loan that can be renewed.
         static let renewHint = "Asks the library for a later due date"
         static let noReservationsTitle = "No reservations"
         static let noReservationsMessage = "Tap Reserve on any book and follow it here until it’s ready to collect."
-        /// Section header and the ready card's status chip (§7.1; was 'Ready for pickup'). Pending cards show the library's own status, else 'Pending'.
+        /// The ready card's status chip (§7.1; was 'Ready for pickup'). Pending cards show the library's own status, else 'Pending'.
         static let readyToCollect = "Ready to collect"
         static let pending = "Pending"
+        /// "Ready to collect ({count})"
+        /// Reservations section headers with how many are in each, as loansCount / reservationsCount write the segments: 'Ready to collect (2)', 'Pending (3)'.
+        static func readyCount(count: Int) -> String {
+            "Ready to collect (\(copyNumber(count)))"
+        }
+        /// "Pending ({count})"
+        static func pendingCount(count: Int) -> String {
+            "Pending (\(copyNumber(count)))"
+        }
         /// "Collect from {branch}"
         /// Card meta line (§7.1; was 'Pick up at {branch}'). {branch} title-cased when the library shouts it.
         static func collectFrom(branch: String) -> String {
@@ -785,13 +839,19 @@ enum Copy {
     enum Login {
         /// The sheet's title; its button is account.signIn (account.signingIn while it runs) and its close button common.close.
         static let title = "Sign in"
-        static let cardLabel = "Library card number"
-        static let cardPlaceholder = "Card number"
+        /// Libraries accept either the patron's username or their library card number here.
+        static let cardLabel = "Username / library card number"
+        static let cardPlaceholder = "Username or card number"
         static let pinLabel = "PIN / password"
         static let pinPlaceholder = "PIN or password"
         /// "LibreSpydus signs in directly with {library} and doesn’t store your PIN."
         static func privacyNote(library: String) -> String {
             "LibreSpydus signs in directly with \(library) and doesn’t store your PIN."
+        }
+        /// "LibreSpydus signs in directly with {library}. It keeps your PIN on this phone only if you turn on {method}."
+        /// Replaces privacyNote when the phone can use {method} (§5.14), since turning it on keeps the PIN.
+        static func privacyNoteBiometrics(library: String, method: String) -> String {
+            "LibreSpydus signs in directly with \(library). It keeps your PIN on this phone only if you turn on \(method)."
         }
     }
 

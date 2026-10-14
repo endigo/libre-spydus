@@ -17,5 +17,7 @@
 	<array>
 		<string>fetch</string>
 	</array>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Signs you back in to your library without typing your PIN.</string>
 </dict>
 </plist>

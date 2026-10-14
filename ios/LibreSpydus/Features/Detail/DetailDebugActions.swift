@@ -10,7 +10,9 @@ import Foundation
 /// only), `related` scrolls to the
 /// carousels, `bottom` to the end, `copies` to an edition-level item's "Copies" list once it has
 /// loaded, `open-related` opens the first related item, `reserve` opens the reserve sheet and
-/// `confirm` also confirms it (demo mode only).
+/// `confirm` also confirms it (demo mode only), `held` taps the "On loan" / "Reserved" pill (a
+/// renewable loan's asks to renew; nothing renews until Renew is tapped) and `renew` renews that
+/// loan without asking (demo mode only).
 struct DetailDebugActions: Equatable, Sendable {
     var formatCode: String?
     var favourite = false
@@ -20,6 +22,8 @@ struct DetailDebugActions: Equatable, Sendable {
     var openRelated = false
     var reserve = false
     var confirm = false
+    var tapHeld = false
+    var renew = false
 
     init?(arguments: [String]) {
         guard let index = arguments.firstIndex(of: "-LSDetailAction"), index + 1 < arguments.endIndex else { return nil }
@@ -33,6 +37,8 @@ struct DetailDebugActions: Equatable, Sendable {
             case "open-related": openRelated = true
             case "reserve": reserve = true
             case "confirm": reserve = true; confirm = true
+            case "held": tapHeld = true
+            case "renew": renew = true
             default: break
             }
         }

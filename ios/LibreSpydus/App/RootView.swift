@@ -72,10 +72,14 @@ struct RootView: View {
             // Signed in (launch, sign-in, library change, verification): which books are in My Picks.
             await model.picks.loadIfNeeded()
         }
-        .picksCopyOfferAlert()
+        .biometricOfferAlert(model)
+        .picksCopyOfferAlert(model)
         .onChange(of: scenePhase) { _, phase in
-            // Back in the app: refresh the account if it's more than a couple of minutes old.
-            if phase == .active { Task { await model.refreshAccount(force: false) } }
+            guard phase == .active else { return }
+            // Back in the app: a Face ID sign-in that waited for it starts (§5.14), and the account
+            // is refreshed if it's more than a couple of minutes old.
+            model.appBecameActive()
+            Task { await model.refreshAccount(force: false) }
         }
     }
 

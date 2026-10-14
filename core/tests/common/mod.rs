@@ -1,7 +1,7 @@
 //! Shared helpers for the golden tests (contract §9). Use with `mod common;`.
 //!
-//! Goldens are the TS parsers' output (`middleware/scripts/emit-golden.ts`); see
-//! `tests/golden/MANIFEST.md` for the exact fixture → function → args → golden rows.
+//! Goldens began as the removed TS middleware's parser output; see `tests/golden/MANIFEST.md`
+//! for the exact fixture → function → args → golden rows.
 #![allow(dead_code)]
 
 use serde::Serialize;

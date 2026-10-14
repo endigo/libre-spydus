@@ -162,28 +162,17 @@ final class BorrowedViewModel {
     /// so the card, Home's "Your loans" and the due-date reminders follow. A renewed loan shows its
     /// new date at once. Ignored while that loan is renewing or once it's gone.
     func renew(_ row: LoanRow, model: AppModel) async {
-        guard let href = row.renewHref, let session = model.session, !renewingRows.contains(row.id),
+        guard row.renewHref != nil, model.session != nil, !renewingRows.contains(row.id),
               lists(model)?.loans.contains(where: { $0.id == row.id }) == true else { return }
         let key = model.reloadKey
-        let backend = model.backend
         renewingRows.insert(row.id)
         if swipedRowID == row.id { swipedRowID = nil }
         let progress = ToastMessage(message: Copy.YourBooks.renewing, tone: .progress)
         toast = progress
         defer { renewingRows.remove(row.id) }
         do {
-            let result = try await model.account.performChange {
-                try await backend.renewLoan(url: href, session: session)
-            } accepted: { _ in true }
-            guard model.reloadKey == key else { return dismiss(progress) }
-            if result.ok {
-                if let due = result.due.nonEmpty {
-                    model.account.update { $0 = $0.renewingLoan(actionHref: href, due: due) }
-                }
-                toast = ToastMessage(message: RenewText.renewed(due: result.due), tone: .success)
-            } else {
-                toast = ToastMessage(message: RenewText.refused(result), tone: .error)
-            }
+            guard let result = try await model.renew(row) else { return dismiss(progress) }
+            toast = ToastMessage(renewal: result)
         } catch {
             guard model.reloadKey == key else { return dismiss(progress) }
             // A lost session signs out and asks to sign in again (§5.2): that says enough.

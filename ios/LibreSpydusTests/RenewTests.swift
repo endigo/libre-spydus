@@ -292,6 +292,31 @@ struct RenewViewModelTests {
         #expect(homeLoan.dueDate == renewed.due?.dueDate)
     }
 
+    @Test func theBookPagesOnLoanPillRenewsTheSameWay() async throws {
+        let (model, backend) = try makeModel()
+        let row = try await loadedRow(BorrowedViewModel(), model, irn: "18000001")
+        let snapshot = try #require(model.account.snapshot)
+        let bibIrn = try #require(row.item.bibIrn)
+        let holding = try #require(accountHolding(snapshot: snapshot, bibIrns: [bibIrn]))
+        let pill = HeldStatus(holding)
+        let loan = try #require(pill.renewableLoan)
+        #expect(pill.accessibilityHint == Copy.YourBooks.renewHint)
+
+        let renewal = try await model.renew(LoanRow(item: loan))
+        let result = try #require(renewal)
+
+        #expect(result.ok)
+        #expect(backend.renewCalls == 1)
+        #expect(BorrowedViewModel.ToastMessage(renewal: result).message == RenewText.renewed(due: result.due))
+        // The pill follows the saved account to the new due date at once, and the account is
+        // fetched again.
+        let after = try #require(model.account.snapshot)
+        let renewed = try #require(accountHolding(snapshot: after, bibIrns: [bibIrn]))
+        #expect(renewed.item.fields["Due"] == result.due)
+        #expect(HeldStatus(renewed).text != pill.text)
+        #expect(model.account.isRefreshing)
+    }
+
     @Test func aRefusedRenewalShowsTheLibrarysReasonAndRefreshes() async throws {
         let (model, backend) = try makeModel()
         let viewModel = BorrowedViewModel()

@@ -17,7 +17,8 @@ import java.util.Locale
 /**
  * The status pill that takes the place of "Reserve" when the patron already has the format on
  * screen (docs/native-apps.md §6 "Already yours"): "On loan · Due 14 Oct", "Ready to collect ·
- * Riverton Library", "Reserved · Riverton Library". Tapping it opens Your Books on [segment]. The
+ * Riverton Library", "Reserved · Riverton Library". Tapping it asks to renew a loan the library
+ * lets the patron renew ([renewableLoan], §5.12), and otherwise opens Your Books on [segment]. The
  * due date and pickup branch are read the way Your Books reads them (Gregorian dates). Pure, so
  * the wording is unit-tested (HeldStatusTest).
  */
@@ -27,11 +28,16 @@ data class HeldStatus(
     val accessibilityLabel: String,
     val tone: Tone,
     val segment: BorrowedSegment,
+    /** The loan, when it has a "Renew loan" link: tapping the pill asks to renew it. */
+    val renewableLoan: PatronItem? = null,
 ) {
     enum class Tone { LOAN, OVERDUE, READY, RESERVED }
 
+    /** What TalkBack reads after [accessibilityLabel]: what tapping the pill does. */
+    val hint: String get() = if (renewableLoan == null) HINT else Copy.YourBooks.renewHint
+
     companion object {
-        /** The pill's hint, read after [accessibilityLabel] ("On loan, due 14 October. Opens Your Books"). */
+        /** The pill's hint when it opens Your Books ("On loan, due 14 October. Opens Your Books"). */
         const val HINT = Copy.Detail.heldHint
 
         private val LONG_DATE: DateTimeFormatter = DateTimeFormatter.ofPattern("d MMMM", Locale.ENGLISH)
@@ -60,7 +66,7 @@ data class HeldStatus(
             val row = LoanRow.of(item, today)
             val due = row.due
             val raw = row.dueText
-            return when {
+            val status = when {
                 due != null && due.isOverdue -> HeldStatus(
                     Copy.Detail.onLoanOverdue,
                     Copy.Detail.onLoanOverdueLabel(longDate(due.dueDate, today)),
@@ -77,6 +83,7 @@ data class HeldStatus(
                 raw != null -> HeldStatus(Copy.Detail.onLoanDue(raw), Copy.Detail.onLoanDueLabel(raw), Tone.LOAN, BorrowedSegment.LOANS)
                 else -> HeldStatus(Copy.Detail.onLoan, Copy.Detail.onLoan, Tone.LOAN, BorrowedSegment.LOANS)
             }
+            return status.copy(renewableLoan = item.takeIf { row.renewHref != null })
         }
 
         private fun ready(item: PatronItem): HeldStatus {
