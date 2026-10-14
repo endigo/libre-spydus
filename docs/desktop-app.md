@@ -351,3 +351,29 @@ The glossary row for the reader's device says **computer** on desktop.
 - **Report** (`worker_done`): what you built, files changed, the commit hash on your branch, the
   exact build/test commands and their results, screenshot paths, deviations, open issues, and
   any new copy keys.
+
+## 10. Status (2026-10-14)
+- **Waves 1–2 merged into `desktop`** (Orca run `run_cdb00f38f9f2`, workers on mini-knit):
+  - D1 shell and app core `3791517`;
+  - D3 Home and Search `ed0a855`;
+  - D5 Your Books and My Picks `21b8bb7`;
+  - D2 picker, sign in, Profile and My card `03adf39`;
+  - D4 Book detail `c0da861`.
+- **Coordinator fixes on `desktop`:**
+  - dark menus and dropdowns (§7.1);
+  - one toast at a time, so a result replaces its progress toast;
+  - white dialogs without gpui-kit's invisible close button and without close-on-Return (`ui::sheet_dialog`);
+  - the iOS greeting rules.
+- **Checks:**
+  - `cargo test`: 112 pass, including the headless UI tests;
+  - clippy `-D warnings` clean;
+  - copy checks clean.
+  - Integration screenshots in demo mode are in `/tmp/librespydus-evidence/INT/` on mini-knit.
+- **Follow-ups, not blocking v1:**
+  - loading skeletons don't pulse;
+  - the library directory is cached only in memory (iOS also keeps a 7-day disk cache);
+  - a white library logo on its white tile is invisible (City of Fremantle);
+  - branch holdings show for every physical format, not only edition-level items;
+  - `detail/held.rs` and Your Books both carry renew-message helpers;
+  - the Edit dialog's date pickers have no UI test.
+- **Wave 3** still needs the user's OK: verification helper (`wry`), desktop notifications, Touch ID, a packaged `.app`, Windows and Linux.
