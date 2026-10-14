@@ -119,12 +119,19 @@ impl RenderOnce for SectionHeader {
 #[derive(IntoElement)]
 pub struct SearchField {
     state: Entity<InputState>,
+    id: Option<ElementId>,
 }
 
 impl SearchField {
     /// `state` from `cx.new(|cx| InputState::new(window, cx).placeholder(Copy::Search::placeholder))`.
     pub fn new(state: &Entity<InputState>) -> Self {
-        Self { state: state.clone() }
+        Self { state: state.clone(), id: None }
+    }
+
+    /// The input's element id (tests, accessibility).
+    pub fn id(mut self, id: impl Into<ElementId>) -> Self {
+        self.id = Some(id.into());
+        self
     }
 }
 
@@ -140,6 +147,7 @@ impl RenderOnce for SearchField {
             .bg(theme::color(colors::FIELD))
             .child(
                 Input::new(&self.state)
+                    .when_some(self.id, |input, id| input.id(id))
                     .appearance(false)
                     .cleanable(true)
                     .prefix(icon(Lucide::Search, px(16.), theme::color(colors::TEXT_MUTED)))
