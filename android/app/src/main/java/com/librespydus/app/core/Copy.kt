@@ -196,6 +196,10 @@ object Copy {
         /** {date} = cardExpires as the library writes it. */
         fun expires(date: String): String =
             "Expires ${date}"
+        /** Desktop My card dialog while signed out, over account.signIn. */
+        const val signInMessage = "Sign in to show your library card’s barcode."
+        /** Status line next to common.retry when the library's barcode type didn't load: no full stop. */
+        const val barcodeFailed = "Couldn’t load the barcode"
     }
 
     object Featured {
@@ -688,6 +692,10 @@ object Copy {
         /** "Version {version} ({build})" */
         fun version(version: String, build: String): String =
             "Version ${version} (${build})"
+        /** "Version {version}" */
+        /** Desktop: the app has a version but no separate build number. */
+        fun appVersion(version: String): String =
+            "Version ${version}"
         const val notAffiliated = "LibreSpydus is not affiliated with Civica or your library."
     }
 
@@ -771,6 +779,9 @@ object Copy {
         const val cardPlaceholder = "Username or card number"
         const val pinLabel = "PIN / password"
         const val pinPlaceholder = "PIN or password"
+        /** Desktop: screen-reader label of the PIN field's reveal toggle (hidePin while the PIN shows). */
+        const val showPin = "Show PIN"
+        const val hidePin = "Hide PIN"
         /** "LibreSpydus signs in directly with {library} and doesn’t store your PIN." */
         fun privacyNote(library: String): String =
             "LibreSpydus signs in directly with ${library} and doesn’t store your PIN."

@@ -156,7 +156,11 @@
     "barcode": "Barcode for card {number}",
     "cannotEncode": "This number can’t be shown as a barcode.",
     "expires": "Expires {date}",
+    "signInMessage": "Sign in to show your library card’s barcode.",
+    "barcodeFailed": "Couldn’t load the barcode",
     "_notes": {
+      "signInMessage": "Desktop My card dialog while signed out, over account.signIn.",
+      "barcodeFailed": "Status line next to common.retry when the library's barcode type didn't load: no full stop.",
       "libraryCard": "Caption under the library's name on the card (Android: the card's title when the library has no name).",
       "barcode": "The barcode is one screen-reader element (§5.9).",
       "expires": "{date} = cardExpires as the library writes it."
@@ -577,8 +581,10 @@
     "about": "About",
     "appName": "LibreSpydus",
     "version": "Version {version} ({build})",
+    "appVersion": "Version {version}",
     "notAffiliated": "LibreSpydus is not affiliated with Civica or your library.",
     "_notes": {
+      "appVersion": "Desktop: the app has a version but no separate build number.",
       "account": "Section header; the signed-in row says account.signedIn and its button account.signOut.",
       "accountFailed": "Inline status line next to common.retry, like detail.copiesFailed: no full stop.",
       "signOutTitle": "Confirmation; its destructive button is account.signOut, the other common.cancel.",
@@ -664,9 +670,12 @@
     "cardPlaceholder": "Username or card number",
     "pinLabel": "PIN / password",
     "pinPlaceholder": "PIN or password",
+    "showPin": "Show PIN",
+    "hidePin": "Hide PIN",
     "privacyNote": "LibreSpydus signs in directly with {library} and doesn’t store your PIN.",
     "privacyNoteBiometrics": "LibreSpydus signs in directly with {library}. It keeps your PIN on this phone only if you turn on {method}.",
     "_notes": {
+      "showPin": "Desktop: screen-reader label of the PIN field's reveal toggle (hidePin while the PIN shows).",
       "privacyNoteBiometrics": "Replaces privacyNote when the phone can use {method} (§5.14), since turning it on keeps the PIN.",
       "title": "The sheet's title; its button is account.signIn (account.signingIn while it runs) and its close button common.close.",
       "cardLabel": "Libraries accept either the patron's username or their library card number here."
