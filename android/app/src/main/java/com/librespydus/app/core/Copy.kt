@@ -450,6 +450,8 @@ object Copy {
         /** Screen-reader hint on the Renew action, and on the book page's On loan pill of a loan that can be renewed. */
         const val renewHint = "Asks the library for a later due date"
         const val noReservationsTitle = "No reservations"
+        /** iOS: "Tap Reserve on any book and follow it here until it’s ready to collect." */
+        /** Desktop: "Click Reserve on any book and follow it here until it’s ready to collect." */
         const val noReservationsMessage = "Tap Reserve on any book and follow it here until it’s ready to collect."
         /** The ready card's status chip (§7.1; was 'Ready for pickup'). Pending cards show the library's own status, else 'Pending'. */
         const val readyToCollect = "Ready to collect"
@@ -494,6 +496,9 @@ object Copy {
         const val swipeHint = "Swipe left on a reservation to edit or cancel it."
         /** The same footnote on iOS 17, where cards don't swipe (long-press menu only). */
         const val touchAndHoldHint = "Touch and hold a reservation to edit or cancel it."
+        /** Desktop: the footnote under the reservations, whose cards have a '…' menu button and the same right-click menu (docs/desktop-app.md §6). loanRightClickHint goes under the loans. */
+        const val rightClickHint = "Right-click a reservation to edit or cancel it."
+        const val loanRightClickHint = "Right-click a loan to renew it."
         /** Long-press menu item and screen-reader action (Edit / common.cancel are the swipe tiles). */
         const val editReservation = "Edit reservation"
         /** Menu item, screen-reader action and the confirmation's destructive button (iOS said 'Cancel Reservation'). */
@@ -580,6 +585,8 @@ object Copy {
         /** §7.1: the tab, the screen title (signed in and out), the bookmark and the toasts. Never Favourites. */
         const val title = "My Picks"
         const val subtitleAccount = "Saved on your library account"
+        /** iOS: "Saved on this phone" */
+        /** Desktop: "Saved on this computer" */
         /** Signed out (was '{n} saved for {library}' / 'Saved on this device for {library}'). */
         const val subtitlePhone = "Saved on this phone"
         /** Bookmark button's screen-reader label (book page and anywhere else a toggle appears), signed in or out (was 'Add to favourites'). */
@@ -592,7 +599,11 @@ object Copy {
         /** Error toast (§5.11 had a full stop; §7.1: never on toasts). */
         const val updateFailed = "Couldn’t update My Picks"
         const val emptyTitle = "No picks yet"
+        /** iOS: "Tap the bookmark on a book to save it to your library account." */
+        /** Desktop: "Click the bookmark on a book to save it to your library account." */
         const val emptyAccountMessage = "Tap the bookmark on a book to save it to your library account."
+        /** iOS: "Tap the bookmark on a book to save it on this phone." */
+        /** Desktop: "Click the bookmark on a book to save it on this computer." */
         /** Signed out (was 'Tap the bookmark on any book to save it here.'); its button is findABook. */
         const val emptyPhoneMessage = "Tap the bookmark on a book to save it on this phone."
         const val findABook = "Find a book"
@@ -609,12 +620,20 @@ object Copy {
             "Removed ${title} from My Picks"
         const val loadingMore = "Loading more picks"
         const val retryLoadingMoreHint = "Loads more picks"
+        /** iOS: "Couldn’t load My Picks from this phone." */
+        /** Desktop: "Couldn’t load My Picks from this computer." */
         /** iOS banner when the phone's list can't be read (was 'Couldn't read favourites: <system error>'). */
         const val loadFailed = "Couldn’t load My Picks from this phone."
+        /** iOS: "Couldn’t save My Picks on this phone." */
+        /** Desktop: "Couldn’t save My Picks on this computer." */
         const val saveFailed = "Couldn’t save My Picks on this phone."
+        /** iOS: "Add this phone’s picks to your library account?" */
+        /** Desktop: "Add this computer’s picks to your library account?" */
         /** §5.11 copy-once alert; buttons common.add / common.notNow. */
         const val offerTitle = "Add this phone’s picks to your library account?"
         /** One: "1 book saved on this phone can be added to My Picks on your library account." · other: "{count} books saved on this phone can be added to My Picks on your library account." */
+        /** iOS: One: "1 book saved on this phone can be added to My Picks on your library account." · other: "{count} books saved on this phone can be added to My Picks on your library account." */
+        /** Desktop: One: "1 book saved on this computer can be added to My Picks on your library account." · other: "{count} books saved on this computer can be added to My Picks on your library account." */
         fun offerMessage(count: Int): String =
             if (count == 1) "1 book saved on this phone can be added to My Picks on your library account." else "${copyNumber(count)} books saved on this phone can be added to My Picks on your library account."
         /** One: "Adding 1 book to My Picks…" · other: "Adding {count} books to My Picks…" */
@@ -652,6 +671,8 @@ object Copy {
         const val notSignedInTitle = "You’re not signed in"
         const val notSignedInMessage = "Sign in with your library card to see your loans and reservations."
         const val humanVerification = "Human verification"
+        /** iOS: "Verified on this phone" */
+        /** Desktop: "Verified on this computer" */
         const val verified = "Verified on this phone"
         /** "{library} asked you to confirm you’re human. The app sends the library’s verification cookie with its requests." */
         fun verifiedMessage(library: String): String =
@@ -777,6 +798,33 @@ object Copy {
         /** Android shows it with common.openWebsite and common.close when verification keeps failing (iOS shows errors.libraryUnavailable instead). */
         fun keepsAsking(library: String): String =
             "${library} keeps asking to confirm you’re human after the check. Its own website still works in your browser."
+    }
+
+    object Desktop {
+        /** Desktop only (docs/desktop-app.md §8.2): the app menu and its ⌘Q item. 'LibreSpydus' is the app's name (profile.appName). */
+        const val quit = "Quit LibreSpydus"
+        const val hide = "Hide LibreSpydus"
+        /** macOS app-menu items, in sentence case (§7.1), unlike AppKit's own 'Hide Others'. */
+        const val hideOthers = "Hide others"
+        const val showAll = "Show all"
+        /** The Window menu and its items. */
+        const val window = "Window"
+        const val minimize = "Minimize"
+        const val zoom = "Zoom"
+        const val file = "File"
+        const val closeWindow = "Close window"
+        /** The Go menu: the five sections (tabs.*, ⌘1–⌘5), common.back (⌘[) and search.title (⌘F). */
+        const val go = "Go"
+        /** ⌘R in the Go menu: fetches the account again (§5.5). */
+        const val refreshAccount = "Refresh account"
+        /** "Shows {section}" */
+        /** Screen-reader hint on a sidebar item; {section} = its label (tabs.*). */
+        fun sidebarHint(section: String): String =
+            "Shows ${section}"
+        /** "{library} logo" */
+        /** Screen-reader label of the library's logo in the sidebar header. */
+        fun libraryLogo(library: String): String =
+            "${library} logo"
     }
 }
 

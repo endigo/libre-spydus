@@ -1,5 +1,5 @@
 {
-  "_about": "Every word a reader sees or hears in LibreSpydus (iOS and Android), applying docs/native-apps.md §7.1. Edit here, then run design/scripts/gen_copy.py. A leaf is a string with {named} placeholders, {\"one\", \"other\"} for a plural on {count}, or {\"ios\", \"android\"} where the platform convention differs. {count} is an Int (shown with the locale's digit grouping); every other placeholder is a String. Keys starting with _ are notes, not copy.",
+  "_about": "Every word a reader sees or hears in LibreSpydus (iOS and Android), applying docs/native-apps.md §7.1. Edit here, then run design/scripts/gen_copy.py. A leaf is a string with {named} placeholders, {\"one\", \"other\"} for a plural on {count}, or {\"ios\", \"android\", \"desktop\"} where a platform can't say the others' words (docs/desktop-app.md §8.2: every platform listed, each value a string or a plural, all of the same kind with the same placeholders). {count} is an Int (shown with the locale's digit grouping); every other placeholder is a String. Keys starting with _ are notes, not copy.",
 
   "common": {
     "retry": "Retry",
@@ -357,7 +357,11 @@
     "renewFailed": "Couldn’t renew this loan",
     "renewHint": "Asks the library for a later due date",
     "noReservationsTitle": "No reservations",
-    "noReservationsMessage": "Tap Reserve on any book and follow it here until it’s ready to collect.",
+    "noReservationsMessage": {
+      "ios": "Tap Reserve on any book and follow it here until it’s ready to collect.",
+      "android": "Tap Reserve on any book and follow it here until it’s ready to collect.",
+      "desktop": "Click Reserve on any book and follow it here until it’s ready to collect."
+    },
     "readyToCollect": "Ready to collect",
     "pending": "Pending",
     "readyCount": "Ready to collect ({count})",
@@ -372,6 +376,8 @@
     "placed": "Placed {date}",
     "swipeHint": "Swipe left on a reservation to edit or cancel it.",
     "touchAndHoldHint": "Touch and hold a reservation to edit or cancel it.",
+    "rightClickHint": "Right-click a reservation to edit or cancel it.",
+    "loanRightClickHint": "Right-click a loan to renew it.",
     "editReservation": "Edit reservation",
     "cancelReservation": "Cancel reservation",
     "showActions": "Show reservation actions",
@@ -414,6 +420,7 @@
       "queuePlaceLabel": "The card's screen-reader label says the queue place this way (§7.1 glossary); queuePlaceTextLabel for a place written as text.",
       "swipeHint": "Footnote under the reservations where cards swipe (iOS 18+, Android). Hidden from screen readers: they get the actions on each card.",
       "touchAndHoldHint": "The same footnote on iOS 17, where cards don't swipe (long-press menu only).",
+      "rightClickHint": "Desktop: the footnote under the reservations, whose cards have a '…' menu button and the same right-click menu (docs/desktop-app.md §6). loanRightClickHint goes under the loans.",
       "editReservation": "Long-press menu item and screen-reader action (Edit / common.cancel are the swipe tiles).",
       "cancelReservation": "Menu item, screen-reader action and the confirmation's destructive button (iOS said 'Cancel Reservation').",
       "showActions": "Android onLongClickLabel of a reservation card.",
@@ -456,15 +463,27 @@
   "picks": {
     "title": "My Picks",
     "subtitleAccount": "Saved on your library account",
-    "subtitlePhone": "Saved on this phone",
+    "subtitlePhone": {
+      "ios": "Saved on this phone",
+      "android": "Saved on this phone",
+      "desktop": "Saved on this computer"
+    },
     "save": "Save to My Picks",
     "remove": "Remove from My Picks",
     "saved": "Saved to My Picks",
     "removed": "Removed from My Picks",
     "updateFailed": "Couldn’t update My Picks",
     "emptyTitle": "No picks yet",
-    "emptyAccountMessage": "Tap the bookmark on a book to save it to your library account.",
-    "emptyPhoneMessage": "Tap the bookmark on a book to save it on this phone.",
+    "emptyAccountMessage": {
+      "ios": "Tap the bookmark on a book to save it to your library account.",
+      "android": "Tap the bookmark on a book to save it to your library account.",
+      "desktop": "Click the bookmark on a book to save it to your library account."
+    },
+    "emptyPhoneMessage": {
+      "ios": "Tap the bookmark on a book to save it on this phone.",
+      "android": "Tap the bookmark on a book to save it on this phone.",
+      "desktop": "Click the bookmark on a book to save it on this computer."
+    },
     "findABook": "Find a book",
     "editHint": "Lets you remove books from My Picks",
     "doneEditingHint": "Finishes editing My Picks",
@@ -472,12 +491,34 @@
     "removedTitle": "Removed {title} from My Picks",
     "loadingMore": "Loading more picks",
     "retryLoadingMoreHint": "Loads more picks",
-    "loadFailed": "Couldn’t load My Picks from this phone.",
-    "saveFailed": "Couldn’t save My Picks on this phone.",
-    "offerTitle": "Add this phone’s picks to your library account?",
+    "loadFailed": {
+      "ios": "Couldn’t load My Picks from this phone.",
+      "android": "Couldn’t load My Picks from this phone.",
+      "desktop": "Couldn’t load My Picks from this computer."
+    },
+    "saveFailed": {
+      "ios": "Couldn’t save My Picks on this phone.",
+      "android": "Couldn’t save My Picks on this phone.",
+      "desktop": "Couldn’t save My Picks on this computer."
+    },
+    "offerTitle": {
+      "ios": "Add this phone’s picks to your library account?",
+      "android": "Add this phone’s picks to your library account?",
+      "desktop": "Add this computer’s picks to your library account?"
+    },
     "offerMessage": {
-      "one": "1 book saved on this phone can be added to My Picks on your library account.",
-      "other": "{count} books saved on this phone can be added to My Picks on your library account."
+      "ios": {
+        "one": "1 book saved on this phone can be added to My Picks on your library account.",
+        "other": "{count} books saved on this phone can be added to My Picks on your library account."
+      },
+      "android": {
+        "one": "1 book saved on this phone can be added to My Picks on your library account.",
+        "other": "{count} books saved on this phone can be added to My Picks on your library account."
+      },
+      "desktop": {
+        "one": "1 book saved on this computer can be added to My Picks on your library account.",
+        "other": "{count} books saved on this computer can be added to My Picks on your library account."
+      }
     },
     "adding": {
       "one": "Adding 1 book to My Picks…",
@@ -524,7 +565,11 @@
     "notSignedInTitle": "You’re not signed in",
     "notSignedInMessage": "Sign in with your library card to see your loans and reservations.",
     "humanVerification": "Human verification",
-    "verified": "Verified on this phone",
+    "verified": {
+      "ios": "Verified on this phone",
+      "android": "Verified on this phone",
+      "desktop": "Verified on this computer"
+    },
     "verifiedMessage": "{library} asked you to confirm you’re human. The app sends the library’s verification cookie with its requests.",
     "clearVerification": "Clear verification",
     "clearVerificationTitle": "Clear verification?",
@@ -639,6 +684,31 @@
     "_notes": {
       "message": "§6 verification sheet copy.",
       "keepsAsking": "Android shows it with common.openWebsite and common.close when verification keeps failing (iOS shows errors.libraryUnavailable instead)."
+    }
+  },
+
+  "desktop": {
+    "quit": "Quit LibreSpydus",
+    "hide": "Hide LibreSpydus",
+    "hideOthers": "Hide others",
+    "showAll": "Show all",
+    "window": "Window",
+    "minimize": "Minimize",
+    "zoom": "Zoom",
+    "file": "File",
+    "closeWindow": "Close window",
+    "go": "Go",
+    "refreshAccount": "Refresh account",
+    "sidebarHint": "Shows {section}",
+    "libraryLogo": "{library} logo",
+    "_notes": {
+      "quit": "Desktop only (docs/desktop-app.md §8.2): the app menu and its ⌘Q item. 'LibreSpydus' is the app's name (profile.appName).",
+      "hideOthers": "macOS app-menu items, in sentence case (§7.1), unlike AppKit's own 'Hide Others'.",
+      "window": "The Window menu and its items.",
+      "go": "The Go menu: the five sections (tabs.*, ⌘1–⌘5), common.back (⌘[) and search.title (⌘F).",
+      "refreshAccount": "⌘R in the Go menu: fetches the account again (§5.5).",
+      "sidebarHint": "Screen-reader hint on a sidebar item; {section} = its label (tabs.*).",
+      "libraryLogo": "Screen-reader label of the library's logo in the sidebar header."
     }
   }
 }
