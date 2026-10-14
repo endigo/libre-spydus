@@ -232,9 +232,10 @@ pub fn apply(cx: &mut App) {
         c.sidebar_accent_foreground = color(colors::TAB_ACTIVE);
         c.sidebar_primary = color(colors::TAB_ACTIVE);
         c.sidebar_primary_foreground = color(colors::TAB_BAR);
-        // Dialogs and popovers are white, like the phones' system dialogs.
-        c.popover = color(colors::SHEET);
-        c.popover_foreground = color(colors::ON_SHEET);
+        // Dialogs are white (ui::sheet_dialog), like the phones' system dialogs. Menus and
+        // dropdowns are dark popovers: gpui-kit draws their items in `foreground`.
+        c.popover = color(colors::SURFACE);
+        c.popover_foreground = color(colors::TEXT_PRIMARY);
         c.overlay = color_alpha(0x000000, 0.45);
         theme.radius = px(radius::FIELD);
         theme.radius_lg = px(radius::CARD);
