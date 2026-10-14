@@ -4,7 +4,8 @@ import LibreSpydusCore
 /// What the book page shows instead of "Reserve" when the patron already has the edition on screen
 /// (docs/native-apps.md §6 "Already yours"): "On loan · Due 14 Oct", "Ready to collect · Riverton
 /// Library", "Reserved · Riverton Library". The due date and pickup branch are read the way Your
-/// Books reads them (`DueStatus`, `ReservationRow`). Tapping it opens Your Books on `segment`.
+/// Books reads them (`DueStatus`, `ReservationRow`). Tapping it asks to renew a loan the library
+/// lets the patron renew (§5.12), and otherwise opens Your Books on `segment`.
 struct HeldStatus: Equatable, Sendable {
     enum Tone: Equatable, Sendable {
         case loan
@@ -20,11 +21,19 @@ struct HeldStatus: Equatable, Sendable {
     var tone: Tone
     var systemImage: String
     var segment: BorrowedViewModel.Segment
+    /// The loan, when it has a "Renew loan" link: tapping the pill asks to renew it.
+    var renewableLoan: PatronItem?
+
+    /// VoiceOver: what tapping the pill does.
+    var accessibilityHint: String {
+        renewableLoan == nil ? Copy.Detail.heldHint : Copy.YourBooks.renewHint
+    }
 
     init(_ holding: AccountHolding, today: Date = .now, calendar: Calendar = .libraryDates) {
         switch holding.kind {
         case .loan:
             self.init(loan: holding.item, today: today, calendar: calendar)
+            if holding.item.renewHref != nil { renewableLoan = holding.item }
         case .reservationReady:
             let pickup = ReservationRow(item: holding.item, kind: .ready).pickup
             self.init(text: pickup.map { Copy.Detail.readyToCollectAt(branch: $0) } ?? Copy.Detail.readyToCollect,

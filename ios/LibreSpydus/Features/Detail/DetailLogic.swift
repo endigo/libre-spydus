@@ -330,6 +330,16 @@ enum RelatedPanel: String, CaseIterable, Hashable, Sendable {
         }
     }
 
+    /// This panel's list in a page saved on the device (§5.13).
+    func list(in saved: SavedBook) -> RelatedList? {
+        switch self {
+        case .similar: saved.similar
+        case .author: saved.author
+        case .series: saved.series
+        case .versions: saved.versions
+        }
+    }
+
     /// Panels to draw, in order: the record links to them and they're loading or have items.
     /// Empty and failed panels are hidden.
     static func visible(in related: RecordRelated, states: [RelatedPanel: Loadable<[BookRef]>]) -> [RelatedPanel] {
@@ -351,6 +361,14 @@ enum RelatedPanel: String, CaseIterable, Hashable, Sendable {
             .filter { item in brn == nil || item.brn.nonEmpty != brn }
             .map(BookRef.init)
             .filter { seen.insert($0.id).inserted }
+    }
+}
+
+extension SavedBook {
+    /// A book page to save: its record and the lists its carousels loaded.
+    init(record: RecordDetail, lists: [RelatedPanel: RelatedList]) {
+        self.init(record: record, similar: lists[.similar], author: lists[.author], series: lists[.series],
+                  versions: lists[.versions])
     }
 }
 

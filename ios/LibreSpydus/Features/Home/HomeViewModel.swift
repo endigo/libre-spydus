@@ -78,6 +78,9 @@ final class HomeViewModel {
         if model.reloadKey == key, !arrivals.isLoading { loadedKey = key }
     }
 
+    /// The shelf's covers. Without `keepContent` (a new library, verification, sign-in/out), the
+    /// covers saved on the device show at once while fresh ones load (§5.13); with it (pull to
+    /// refresh) the covers on screen stay.
     private func loadArrivals(_ model: AppModel, keepContent: Bool) async {
         guard let shelf = arrivalsShelf else {
             arrivals = .loaded([])
@@ -85,25 +88,41 @@ final class HomeViewModel {
         }
         arrivalsGeneration += 1
         let generation = arrivalsGeneration
-        if !(keepContent && arrivals.value != nil) { arrivals = .loading }
+        let backend = model.backend
+        let showsSaved = !keepContent && showSavedArrivals(shelf, backend: backend)
+        if !showsSaved, !(keepContent && arrivals.value != nil) { arrivals = .loading }
         do {
-            let results = try await model.backend.searchSorted(query: shelf.query, sort: SearchSortOption(shelf.sort))
+            let results = try await backend.searchSorted(query: shelf.query, sort: SearchSortOption(shelf.sort))
             guard generation == arrivalsGeneration else { return }
             if results.records.isEmpty, !results.isNoResults {
-                arrivals = .failed(SearchResultsModel.unrecognisedPage)
+                if !showsSaved { arrivals = .failed(SearchResultsModel.unrecognisedPage) }
                 return
             }
-            // One cover per book: `ref.id` is the shelf's identity (records without a work IRN or
-            // URL fall back to their title).
-            var seen = Set<String>()
-            let items = SearchResultsModel.merge([], with: results.records).map(\.ref)
-                .filter { seen.insert($0.id).inserted }
-            arrivals = .loaded(Array(items.prefix(Self.shelfLimit)))
+            arrivals = .loaded(Self.items(results))
+            await backend.saveShelf(key: shelf.key, results: results)
         } catch {
             guard generation == arrivalsGeneration, let userError = model.report(error) else { return }
-            if keepContent, arrivals.value != nil { return }
+            if showsSaved || keepContent, arrivals.value != nil { return }
             arrivals = .failed(userError)
         }
+    }
+
+    /// Shows the shelf's covers saved on the device, if any that the shelf can show.
+    private func showSavedArrivals(_ shelf: Shelf, backend: any LibraryBackend) -> Bool {
+        guard let saved = backend.savedShelf(key: shelf.key), !saved.records.isEmpty || saved.isNoResults else {
+            return false
+        }
+        arrivals = .loaded(Self.items(saved))
+        return true
+    }
+
+    /// One cover per book, at most `shelfLimit`: `ref.id` is the shelf's identity (records without a
+    /// work IRN or URL fall back to their title).
+    private static func items(_ results: SearchResults) -> [BookRef] {
+        var seen = Set<String>()
+        let items = SearchResultsModel.merge([], with: results.records).map(\.ref)
+            .filter { seen.insert($0.id).inserted }
+        return Array(items.prefix(shelfLimit))
     }
 
     // MARK: Routes

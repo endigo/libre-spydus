@@ -18,8 +18,10 @@ import uniffi.librespydus_core.RenewResult
 import uniffi.librespydus_core.Reservations
 import uniffi.librespydus_core.ReserveOptions
 import uniffi.librespydus_core.ReserveResult
+import uniffi.librespydus_core.SavedBook
 import uniffi.librespydus_core.SearchResults
 import uniffi.librespydus_core.SpydusClient
+import java.io.File
 
 /**
  * Everything the screens may ask of a library (§5.1): the `SpydusClient` surface plus [origin].
@@ -98,6 +100,22 @@ interface LibraryBackend {
      * `NotLoggedIn`. Takes a few seconds: the core reads the loans list before and after.
      */
     suspend fun renewLoan(url: String, session: String): RenewResult = throw UnsupportedOperationException("renewLoan")
+
+    // Saved pages (§5.13): the device only, never the network. Test fakes save nothing.
+
+    /** The book page saved under [key] ([BookRef.savedPageKey]), or null. */
+    suspend fun savedBook(key: String): SavedBook? = null
+
+    /** Saves a book page after a fresh load, replacing what was saved. Never throws. */
+    suspend fun saveBook(key: String, book: SavedBook) {}
+
+    /** A Home shelf's first results page saved under its `Shelf.key`, or null. */
+    suspend fun savedShelf(key: String): SearchResults? = null
+    suspend fun saveShelf(key: String, results: SearchResults) {}
+
+    /** The [featured] links saved last (an empty list: the library has none), or null. */
+    suspend fun savedFeatured(): List<FeaturedLink>? = null
+    suspend fun saveFeatured(links: List<FeaturedLink>) {}
 }
 
 /**
@@ -149,12 +167,29 @@ class CoreBackend(private val client: SpydusClient) : LibraryBackend {
 
     override suspend fun renewLoan(url: String, session: String) = io { client.renewLoan(url, session) }
 
+    override suspend fun savedBook(key: String) = io { client.savedBook(key) }
+    override suspend fun saveBook(key: String, book: SavedBook) = io { client.saveBook(key, book) }
+    override suspend fun savedShelf(key: String) = io { client.savedShelf(key) }
+    override suspend fun saveShelf(key: String, results: SearchResults) = io { client.saveShelf(key, results) }
+    override suspend fun savedFeatured() = io { client.savedFeatured() }
+    override suspend fun saveFeatured(links: List<FeaturedLink>) = io { client.saveFeatured(links) }
+
     private suspend inline fun <T> io(crossinline block: suspend () -> T): T =
         withContext(Dispatchers.IO) { block() }
 
     companion object {
-        /** Builds the client off the main thread (it sets up the HTTP stack and TLS roots). */
-        suspend fun create(origin: String): CoreBackend =
-            withContext(Dispatchers.IO) { CoreBackend(SpydusClient(origin)) }
+        /** Under the app's cache dir: the core keeps one folder per library in it (§5.13). */
+        const val SAVED_PAGES_DIR = "saved-pages"
+
+        /**
+         * Builds the client off the main thread (it sets up the HTTP stack and TLS roots). With
+         * [savedPages], the core saves book pages and Home lists there; without, nothing is saved.
+         */
+        suspend fun create(origin: String, savedPages: File? = null): CoreBackend =
+            withContext(Dispatchers.IO) {
+                val client = SpydusClient(origin)
+                client.setSavedPagesDir(savedPages?.path)
+                CoreBackend(client)
+            }
     }
 }

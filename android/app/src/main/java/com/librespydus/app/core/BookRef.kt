@@ -54,6 +54,13 @@ data class BookRef(
     val bibIrn: String? = null,
 ) {
     /**
+     * What its book page is saved under on the device (§5.13): the [id] when it is an IRN or BRN
+     * (`work:`, `bib:`, `brn:`). Null for a `url:` or `title:` id: a URL carries a search's set
+     * id, so the same book would be saved again under every search.
+     */
+    val savedPageKey: String? get() = id.takeIf { key -> SAVED_PAGE_PREFIXES.any(key::startsWith) }
+
+    /**
      * Upgrades this ref with a loaded record: bookmark URL (stable), bib IRN key, cover, ISBN.
      * Keeps [formats] (records opened from a search carry them; a detail has none).
      */
@@ -67,6 +74,8 @@ data class BookRef(
 
     companion object {
         const val UNTITLED = Copy.Common.untitled
+
+        private val SAVED_PAGE_PREFIXES = listOf("work:", "bib:", "brn:")
 
         fun from(record: SearchRecord): BookRef = BookRef(
             id = stableId(bibIrn = null, brn = null, workIrn = record.workIrn, url = record.detailUrl)

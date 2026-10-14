@@ -230,6 +230,22 @@ struct HeldDetailTests {
         #expect(pending(["Status": "In transit"]).text == "Reserved")
     }
 
+    @Test func aRenewableLoansPillAsksToRenewIt() {
+        var renewable = HeldFixtures.item(bibIrn: "1", fields: ["Due": "14 Oct 2026"])
+        renewable.actions = [PatronAction(label: "Renew loan", href: "https://canning.spydus.com/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/1/0/N/3/LOANRENQ?SVL=18000001")]
+        let pill = HeldStatus(AccountHolding(kind: .loan, item: renewable))
+        #expect(pill.renewableLoan == renewable)
+        #expect(pill.accessibilityHint == "Asks the library for a later due date")
+
+        // No renew link (the library doesn't offer one), or a reservation: Your Books, as before.
+        let bare = HeldStatus(AccountHolding(kind: .loan, item: HeldFixtures.item(bibIrn: "1")))
+        #expect(bare.renewableLoan == nil)
+        #expect(bare.accessibilityHint == "Opens Your Books")
+        var reserved = HeldFixtures.item(bibIrn: "1")
+        reserved.actions = [PatronAction(label: "Renew loan", href: "https://canning.spydus.com/x")]
+        #expect(HeldStatus(AccountHolding(kind: .reservationPending, item: reserved)).renewableLoan == nil)
+    }
+
     @Test func thePillOpensYourBooksOnItsSegment() {
         let app = AppModel(dependencies: .testing())
         app.selectLibrary(.canning)

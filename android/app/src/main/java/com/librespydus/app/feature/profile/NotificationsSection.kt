@@ -134,8 +134,9 @@ internal fun NotificationsSection(appState: AppState) {
     }
 }
 
+/** A switch row: title, a line saying what it does, the whole row toggles. Also Profile's fingerprint-or-face switch. */
 @Composable
-private fun AlertSwitchRow(title: String, subtitle: String, checked: Boolean, onChange: (Boolean) -> Unit) {
+internal fun AlertSwitchRow(title: String, subtitle: String, checked: Boolean, onChange: (Boolean) -> Unit) {
     Row(
         Modifier
             .fillMaxWidth()

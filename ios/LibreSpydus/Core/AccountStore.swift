@@ -78,8 +78,10 @@ final class AccountStore {
 
     /// The current library and session (library change, launch, sign-in). Shows `origin`'s saved
     /// snapshot straight away; a library's saved data stays when another is selected. A nil
-    /// `origin` (no library chosen yet) forgets the account without touching saved files.
-    func use(origin: String?, session: String?, backend: any LibraryBackend) {
+    /// `origin` (no library chosen yet) forgets the account without touching saved files. A new
+    /// session at the same library starts afresh, unless `sameAccount` (signed back in to the account
+    /// on screen): its snapshot stays.
+    func use(origin: String?, session: String?, backend: any LibraryBackend, sameAccount: Bool = false) {
         guard let origin else {
             reset()
             account = nil
@@ -94,9 +96,13 @@ final class AccountStore {
             return
         }
         let newSession = account?.origin == origin
+        let kept = newSession && sameAccount ? snapshot : nil
         reset()
         account = Account(origin: origin, session: session, backend: backend)
-        if newSession {
+        if let kept {
+            // Signed back in to the same account (Face ID, §5.14): its data stays until the next fetch.
+            snapshot = kept
+        } else if newSession {
             // Signed in again at the same library, maybe with another card: the old data goes.
             cache?.remove(origin: origin)
         } else {

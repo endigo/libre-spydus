@@ -4,7 +4,9 @@ import android.content.Context
 import android.util.Log
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -62,6 +64,19 @@ class AppState(
     private val accountCardNumber: (AccountSnapshot) -> String? = ::accountCardNumberOf,
     /** Which libraries were offered the copy of local favourites into My Picks (§5.11). */
     picksOffers: PicksOfferStore = InMemoryPicksOfferStore(),
+    /** Where the core saves pages (§5.13), so `ls_reset` can delete them; null in tests. */
+    private val savedPagesDir: File? = null,
+    /** Each library's sign-in details behind the fingerprint check (§5.14). */
+    private val biometrics: BiometricVault = BiometricVault.Unavailable,
+    /** Demo mode's: kept in memory, the real check still runs. */
+    private val demoBiometrics: BiometricVault = biometrics,
+    /** The libraries whose fingerprint-or-face offer was answered Not now (§5.14). */
+    private val biometricOffers: BiometricOfferStore = InMemoryBiometricOfferStore(),
+    /**
+     * The app has the screen (MainActivity resumed, nothing over its window), so a fingerprint or
+     * face check started on its own (sign back in, the offer's save) can show without colliding.
+     */
+    private val foreground: StateFlow<Boolean> = MutableStateFlow(true),
 ) {
     private val ops = Mutex()
 
@@ -92,6 +107,19 @@ class AppState(
     private val _verificationGeneration = MutableStateFlow(0)
     private val _accountGeneration = MutableStateFlow(0)
     private val _savedCardNumber = MutableStateFlow<String?>(null)
+    private val _biometricAvailable = MutableStateFlow(false)
+    private val _biometricOn = MutableStateFlow(false)
+    private val _biometricOffer = MutableStateFlow<BiometricOffer?>(null)
+    private val _biometricTurnOn = MutableStateFlow(false)
+    private val _biometricSigningIn = MutableStateFlow(false)
+    private val _biometricSaving = MutableStateFlow(false)
+    private val _loginError = MutableStateFlow<UserFacingError?>(null)
+
+    /** False once a check ended without signing in: the sign-in sheet doesn't start another by itself. */
+    private var loginAutoCheck = true
+
+    /** The fingerprint sign-in running (or waiting for the foreground), if any. */
+    private var biometricJob: Job? = null
 
     /** Demo card numbers entered or edited on the card, by origin, in memory only (the demo account's own is in its snapshot). */
     private val demoCardNumbers = mutableMapOf<String, String?>()
@@ -169,6 +197,36 @@ class AppState(
     /** Sign-in requested (session expired, or a signed-out action); the root presents the login sheet. */
     val loginNeeded: StateFlow<Boolean> = _loginNeeded.asStateFlow()
 
+    /**
+     * The phone can run the fingerprint check (§5.14); none of it shows otherwise. Checked
+     * on library change, sign-in and each return to the foreground.
+     */
+    val biometricAvailable: StateFlow<Boolean> = _biometricAvailable.asStateFlow()
+
+    /** The selected library has sign-in details behind the check (Profile's switch is on). */
+    val biometricOn: StateFlow<Boolean> = _biometricOn.asStateFlow()
+
+    /** After a typed sign-in: "Sign in with fingerprint next time?" ([answerBiometricOffer]). */
+    val biometricOffer: StateFlow<BiometricOffer?> = _biometricOffer.asStateFlow()
+
+    /** The sign-in sheet was opened by Profile's switch: its next typed sign-in saves the details. */
+    val biometricTurnOn: StateFlow<Boolean> = _biometricTurnOn.asStateFlow()
+
+    /** A fingerprint sign-in is running (the check is up, or the library is answering). */
+    val biometricSigningIn: StateFlow<Boolean> = _biometricSigningIn.asStateFlow()
+
+    /** Why a fingerprint sign-in didn't sign in, for the sign-in form to show. */
+    val loginError: StateFlow<UserFacingError?> = _loginError.asStateFlow()
+
+    /**
+     * My Picks' copy offer (§5.11) once it may show: not over the sign-in sheet, and only after the
+     * fingerprint-or-face offer (§5.14) has been answered and its check has ended.
+     */
+    val picksOfferToShow: StateFlow<PicksOffer?> =
+        combine(picks.offer, _biometricOffer, _biometricSaving, _loginNeeded) { offer, biometric, saving, login ->
+            offer.takeIf { biometric == null && !saving && !login }
+        }.stateIn(scope, SharingStarted.Eagerly, null)
+
     /** The library picker over the tabs (Profile → Change library). */
     val libraryPickerVisible: StateFlow<Boolean> = _libraryPickerVisible.asStateFlow()
 
@@ -242,8 +300,11 @@ class AppState(
         val card = if (demo) demoCardNumber(origin) else withContext(io) { secrets.get(cardKey(origin)) }
         val key = cacheKey(backend)
         val saved = if (session != null && key != null) account.loadSaved(key) else null
+        val vault = vault(backend)
+        val (biometricAvailable, biometricOn) = withContext(io) { vault.isAvailable() to vault.hasDetails(backend.origin) }
 
         // From here on nothing suspends: the store and the screens switch library together.
+        cancelBiometricSignIn()
         account.bind(backend, session, key, saved)
         picks.bind(backend, session)
         _library.value = info
@@ -255,6 +316,12 @@ class AppState(
         _fallbackName.value = null
         _session.value = session
         _savedCardNumber.value = card
+        _biometricAvailable.value = biometricAvailable
+        _biometricOn.value = biometricOn
+        _biometricOffer.value = null
+        _biometricTurnOn.value = false
+        _loginError.value = null
+        loginAutoCheck = true
         _accountGeneration.update { it + 1 }
         _verificationGeneration.update { it + 1 }
         if (session != null) {
@@ -278,10 +345,19 @@ class AppState(
     // region Account
 
     /**
-     * Signs in to the selected library and stores the session (Keystore-encrypted, per origin;
-     * demo sessions stay in memory). Throws `SpydusException` — show it with [UserFacingError].
+     * Signs in to the selected library from the sign-in form and stores the session
+     * (Keystore-encrypted, per origin; demo sessions stay in memory). Throws `SpydusException` —
+     * show it with [UserFacingError]. Then offers the fingerprint check (§5.14) and the
+     * copy of this phone's favourites (§5.11).
      */
-    suspend fun signIn(username: String, password: String) {
+    suspend fun signIn(username: String, password: String) = signIn(username, password, typed = true)
+
+    /**
+     * [typed]: from the sign-in form. Otherwise the fingerprint check is signing the same
+     * reader back in (§5.14): the saved account stays on screen until the fresh one, and nothing is
+     * offered.
+     */
+    private suspend fun signIn(username: String, password: String, typed: Boolean) {
         val backend = _backend.value ?: throw IllegalStateException("No library selected")
         val token = try {
             backend.login(username.trim(), password)
@@ -293,21 +369,33 @@ class AppState(
         serial {
             if (backend !== _backend.value) return@serial // the library changed meanwhile
             if (!backend.isDemo) withContext(io) { secrets.put(sessionKey(backend.origin), token) }
-            // A new sign-in starts from nothing: the previous session's account stops (it can't
-            // save any more) and any copy saved for this library is deleted.
             val key = cacheKey(backend)
-            account.bind(null, null, null)
-            if (key != null) account.deleteSaved(key)
-            account.bind(backend, token, key)
+            if (typed) {
+                // Typed while a fingerprint sign-in waited for the foreground: that one is moot.
+                cancelBiometricSignIn()
+                // A new sign-in starts from nothing: the previous session's account stops (it can't
+                // save any more) and any copy saved for this library is deleted.
+                account.bind(null, null, null)
+                if (key != null) account.deleteSaved(key)
+                account.bind(backend, token, key)
+            } else {
+                account.bind(backend, token, key, saved = account.snapshot.value)
+            }
             picks.bind(backend, token)
             _fallbackName.value = null
             _session.value = token
             _loginNeeded.value = false
+            _loginError.value = null
+            loginAutoCheck = true
             _accountGeneration.update { it + 1 }
             account.refresh(force = true)
             picks.reload()
-            // An interactive sign-in: offer, once per library, to copy this phone's favourites.
-            picks.offerAfterSignIn(picksScope(backend), favourites.list(_library.value?.origin ?: backend.origin))
+            if (typed) {
+                afterTypedSignIn(backend, SignInDetails(username.trim(), password))
+                // An interactive sign-in: offer, once per library, to copy this phone's favourites
+                // (shown once the fingerprint-or-face offer is answered).
+                picks.offerAfterSignIn(picksScope(backend), favourites.list(_library.value?.origin ?: backend.origin))
+            }
             updateMorningCheck()
         }
     }
@@ -316,6 +404,12 @@ class AppState(
     suspend fun signOut() {
         val backend = _backend.value ?: return
         val origin = backend.origin
+        // Signing out forgets the fingerprint-or-face details and the Not now (§5.14).
+        cancelBiometricSignIn()
+        _biometricOn.value = false
+        _biometricOffer.value = null
+        biometricOffers.forget(biometricScope(backend))
+        withContext(io) { vault(backend).delete(origin) }
         _session.value = null
         _fallbackName.value = null
         _savedCardNumber.value = null
@@ -357,6 +451,8 @@ class AppState(
 
     /** The app came to the foreground (activity ON_START): refreshes the account if it is stale. */
     fun onForeground() {
+        // A fingerprint may have been enrolled (or removed) in Settings meanwhile.
+        _backend.value?.let { _biometricAvailable.value = vault(it).isAvailable() }
         account.refresh()
     }
 
@@ -364,8 +460,16 @@ class AppState(
         _loginNeeded.value = true
     }
 
+    /** The sign-in sheet closed: the next one starts from scratch (and may start the check again). */
     fun dismissLogin() {
         _loginNeeded.value = false
+        _biometricTurnOn.value = false
+        _loginError.value = null
+        loginAutoCheck = true
+    }
+
+    fun clearLoginError() {
+        _loginError.value = null
     }
 
     /**
@@ -386,6 +490,191 @@ class AppState(
     }
 
     private fun demoCardNumber(origin: String): String? = demoCardNumbers[origin]
+
+    // endregion
+    // region Fingerprint (§5.14)
+
+    /**
+     * After a typed sign-in: details kept for another username are deleted (the check must never
+     * sign in to the previous account); then, when the check is available and the library has no
+     * details, offer to keep them, unless the reader answered Not now for this library. When the
+     * sheet came from Profile's switch the offer doesn't ask ([BiometricOffer.asks]): the check runs.
+     */
+    private suspend fun afterTypedSignIn(backend: LibraryBackend, details: SignInDetails) {
+        val vault = vault(backend)
+        val origin = backend.origin
+        val turnOn = _biometricTurnOn.value
+        _biometricTurnOn.value = false
+        val kept = withContext(io) { vault.username(origin) }
+        if (kept != null && !SignInDetails.sameUsername(kept, details.username)) {
+            withContext(io) { vault.delete(origin) }
+        }
+        val available = vault.isAvailable()
+        val on = kept != null && SignInDetails.sameUsername(kept, details.username)
+        _biometricAvailable.value = available
+        _biometricOn.value = on
+        if (!available || on) return
+        val name = libraryName()
+        // Either way it waits for the sheet to go (BiometricOfferDialog): the check never shows
+        // over a closing sheet or the system's offer to save the password.
+        if (turnOn || !biometricOffers.wasDeclined(biometricScope(backend))) {
+            _biometricOffer.value = BiometricOffer(origin, biometricScope(backend), name, details, asks = !turnOn)
+        }
+    }
+
+    /**
+     * The reader answered the offer. [use]: the check runs and, once it passes, the details are kept
+     * (a cancelled or failed check keeps nothing and isn't remembered). Not now is remembered for
+     * this library until sign-out. Either way the PIN is dropped from memory.
+     */
+    fun answerBiometricOffer(use: Boolean): Job? {
+        val offer = _biometricOffer.value ?: return null
+        _biometricOffer.value = null
+        if (!use) {
+            biometricOffers.markDeclined(offer.scope)
+            return null
+        }
+        val backend = _backend.value?.takeIf { it.origin == offer.origin } ?: return null
+        _biometricSaving.value = true
+        return scope.launch {
+            try {
+                saveBiometricDetails(backend, offer.details)
+            } finally {
+                _biometricSaving.value = false
+            }
+        }
+    }
+
+    private suspend fun saveBiometricDetails(backend: LibraryBackend, details: SignInDetails) {
+        foreground.first { it }
+        if (backend !== _backend.value) return
+        val saved = vault(backend).save(backend.origin, details, libraryName())
+        if (saved && backend === _backend.value && _session.value != null) _biometricOn.value = true
+    }
+
+    /**
+     * Profile's switch. Off: the details are deleted at once. On: the sign-in sheet opens with
+     * `turnOnNote`, and its next typed sign-in saves the details (the check, no question).
+     */
+    suspend fun setBiometricSignIn(on: Boolean) {
+        val backend = _backend.value ?: return
+        if (on) {
+            _biometricTurnOn.value = true
+            _loginNeeded.value = true
+            return
+        }
+        cancelBiometricSignIn()
+        _biometricOn.value = false
+        withContext(io) { vault(backend).delete(backend.origin) }
+    }
+
+    /**
+     * The sign-in sheet opened: starts the check at once when the library has details, unless the
+     * sheet opened because a check was just cancelled or failed (or it came from Profile's switch).
+     */
+    fun autoBiometricSignIn(): Job? {
+        if (!loginAutoCheck || _biometricTurnOn.value || !_biometricOn.value || !_biometricAvailable.value) return null
+        return signInWithBiometrics()
+    }
+
+    /**
+     * The sign-in sheet's "Sign in with fingerprint": the check, then `login` with the kept
+     * details. Success closes the sheet like a typed sign-in; otherwise the form shows why
+     * ([loginError]) and the sheet won't start the check again by itself.
+     */
+    fun signInWithBiometrics(): Job? {
+        biometricJob?.takeIf { it.isActive }?.let { return it }
+        val backend = _backend.value ?: return null
+        return scope.launch {
+            val failure = biometricSignIn(backend) ?: return@launch
+            if (backend !== _backend.value) return@launch
+            _loginError.value = failure.error
+            loginAutoCheck = false
+        }.also { biometricJob = it }
+    }
+
+    /**
+     * `NotLoggedIn` while the library has details: signs back in with the check instead of asking
+     * for the PIN. The session and saved account stay on screen until it ends; in the background
+     * it waits for the foreground. When it doesn't sign in, the session ends as it would have and
+     * the sign-in form shows why.
+     */
+    private fun startBiometricSignIn(backend: LibraryBackend) {
+        biometricJob = scope.launch {
+            foreground.first { it }
+            if (backend !== _backend.value) return@launch
+            val failure = biometricSignIn(backend) ?: return@launch
+            if (backend !== _backend.value) return@launch
+            expireSession()
+            _loginError.value = failure.error
+            loginAutoCheck = false
+            _loginNeeded.value = true
+        }
+    }
+
+    /** Why a fingerprint sign-in didn't sign in; [error] for the form (null: nothing to say). */
+    private class BiometricFailure(val error: UserFacingError?)
+
+    /** The check, then `login` with the kept details; null once signed in. */
+    private suspend fun biometricSignIn(backend: LibraryBackend): BiometricFailure? {
+        val vault = vault(backend)
+        val origin = backend.origin
+        _biometricSigningIn.value = true
+        try {
+            val details = when (val read = vault.read(origin, libraryName())) {
+                is BiometricRead.Unlocked -> read.details
+                BiometricRead.Declined -> return BiometricFailure(null)
+                BiometricRead.Invalidated -> {
+                    if (backend === _backend.value) _biometricOn.value = false
+                    return BiometricFailure(null)
+                }
+            }
+            return try {
+                signIn(details.username, details.pin, typed = false)
+                null
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: SpydusException.CredentialsRejected) {
+                // The PIN changed: these details will never work again.
+                withContext(io) { vault.delete(origin) }
+                if (backend === _backend.value) _biometricOn.value = false
+                BiometricFailure(UserFacingError.from(e, _library.value?.name))
+            } catch (e: Exception) {
+                // signIn has routed it (verification opens its sheet, which says enough).
+                BiometricFailure(UserFacingError.from(e, _library.value?.name).takeUnless { it.kind == UserFacingError.Kind.VERIFICATION })
+            }
+        } finally {
+            _biometricSigningIn.value = false
+        }
+    }
+
+    private fun cancelBiometricSignIn() {
+        biometricJob?.cancel()
+        biometricJob = null
+        _biometricSigningIn.value = false
+    }
+
+    private fun vault(backend: LibraryBackend): BiometricVault = if (backend.isDemo) demoBiometrics else biometrics
+
+    /** The library the Not now is remembered under; demo under its own. */
+    private fun biometricScope(backend: LibraryBackend): String =
+        if (backend.isDemo) "demo:${backend.origin}" else backend.origin
+
+    private fun libraryName(): String = _library.value?.name ?: Copy.Common.yourLibrary
+
+    /**
+     * DEBUG Profile › Developer › Expire session (§5.14): an invalid session replaces the real one
+     * and the account is refreshed, so the library (or the demo backend) answers `NotLoggedIn`.
+     */
+    suspend fun expireSessionForDebug() = serial {
+        val backend = _backend.value ?: return@serial
+        if (_session.value == null) return@serial
+        if (!backend.isDemo) withContext(io) { secrets.put(sessionKey(backend.origin), EXPIRED_SESSION) }
+        account.bind(backend, EXPIRED_SESSION, cacheKey(backend), saved = account.snapshot.value)
+        picks.bind(backend, EXPIRED_SESSION)
+        _session.value = EXPIRED_SESSION
+        account.refresh(force = true)
+    }
 
     // endregion
     // region Alerts (§5.8)
@@ -492,22 +781,35 @@ class AppState(
             is SpydusException.HumanVerificationRequired -> _verificationNeeded.value = true
             is SpydusException.NotLoggedIn -> {
                 val backend = _backend.value
-                if (_session.value != null) {
-                    _session.value = null
-                    _fallbackName.value = null
-                    account.discard()
-                    picks.clear()
-                    _accountGeneration.update { it + 1 }
-                    updateMorningCheck()
-                    if (backend != null) {
-                        scope.launch(io) { secrets.put(sessionKey(backend.origin), null) }
-                        scope.launch { alerts.forget(alertScope(backend)) }
+                when {
+                    // A fingerprint sign-in is already on its way (§5.14).
+                    biometricJob?.isActive == true -> Unit
+                    backend != null && _session.value != null && _biometricOn.value && vault(backend).isAvailable() ->
+                        startBiometricSignIn(backend)
+                    else -> {
+                        expireSession()
+                        _loginNeeded.value = true
                     }
                 }
-                _loginNeeded.value = true
             }
         }
         return UserFacingError.from(error, _library.value?.name)
+    }
+
+    /** The session ended: forgets it and this library's saved account (§5.2a); the details stay. */
+    private fun expireSession() {
+        val backend = _backend.value
+        if (_session.value == null) return
+        _session.value = null
+        _fallbackName.value = null
+        account.discard()
+        picks.clear()
+        _accountGeneration.update { it + 1 }
+        updateMorningCheck()
+        if (backend != null) {
+            scope.launch(io) { secrets.put(sessionKey(backend.origin), null) }
+            scope.launch { alerts.forget(alertScope(backend)) }
+        }
     }
 
     /**
@@ -650,12 +952,21 @@ class AppState(
 
     private suspend fun reset() {
         libraryStore.set(null)
-        withContext(io) { secrets.clear() }
+        cancelBiometricSignIn()
+        withContext(io) {
+            secrets.clear()
+            biometrics.deleteAll()
+            demoBiometrics.deleteAll()
+        }
+        biometricOffers.clear()
+        _biometricOn.value = false
+        _biometricOffer.value = null
         favourites.clear()
         demoCardNumbers.clear()
         _savedCardNumber.value = null
         account.bind(null, null, null)
         account.deleteAllSaved()
+        savedPagesDir?.let { dir -> withContext(io) { dir.deleteRecursively() } }
         picks.clear()
         picks.forgetOffers()
         alerts.reset()
@@ -707,6 +1018,9 @@ class AppState(
         internal fun verifyKey(origin: String) = "verify:$origin"
         internal fun cardKey(origin: String) = "card.$origin"
 
+        /** DEBUG [expireSessionForDebug]: a session no library knows. */
+        internal const val EXPIRED_SESSION = "expired-session"
+
         /** The account's own card number (from its Personal details page), or null. */
         internal fun accountCardNumberOf(snapshot: AccountSnapshot): String? = snapshot.cardNumber?.trim()?.takeIf(String::isNotEmpty)
 
@@ -725,8 +1039,10 @@ class AppState(
         }
 
         /** Wires the production stores; demo data is read from `assets/demo/`. */
-        fun create(context: Context, scope: CoroutineScope): AppState {
+        fun create(context: Context, scope: CoroutineScope, prompter: BiometricPrompter): AppState {
             val app = context.applicationContext
+            // Public catalogue pages, in the cache dir: the system may empty it (§5.13).
+            val savedPages = File(app.cacheDir, CoreBackend.SAVED_PAGES_DIR)
             return AppState(
                 scope = scope,
                 libraryStore = DataStoreLibraryStore(app),
@@ -752,6 +1068,15 @@ class AppState(
                 picksOffers = SharedPreferencesPicksOfferStore(
                     app.getSharedPreferences(SharedPreferencesPicksOfferStore.PREFS_NAME, Context.MODE_PRIVATE),
                 ),
+                makeBackend = { origin -> CoreBackend.create(origin, savedPages) },
+                savedPagesDir = savedPages,
+                biometrics = KeystoreBiometricVault(app, prompter),
+                demoBiometrics = PromptedMemoryVault(prompter),
+                biometricOffers = SharedPreferencesBiometricOfferStore(
+                    app.getSharedPreferences(SharedPreferencesBiometricOfferStore.PREFS_NAME, Context.MODE_PRIVATE),
+                ),
+                foreground = combine(prompter.resumed, prompter.focused) { resumed, focused -> resumed && focused }
+                    .stateIn(scope, SharingStarted.Eagerly, false),
             )
         }
     }

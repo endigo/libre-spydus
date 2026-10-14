@@ -4,6 +4,7 @@ import com.librespydus.app.core.BookRef
 import com.librespydus.app.core.Copy
 import com.librespydus.app.core.Formatting
 import uniffi.librespydus_core.PatronItem
+import uniffi.librespydus_core.RenewResult
 import uniffi.librespydus_core.Reservations
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -279,6 +280,10 @@ object RenewText {
         val text = due.nonBlank() ?: return Copy.YourBooks.renewedNoDate
         return Copy.YourBooks.renewed(Formatting.parseDueDate(text)?.let { BorrowedDates.short(it, today) } ?: text)
     }
+
+    /** A renewal's toast: "Renewed · Due 4 Nov", or the library's reason (else "Couldn’t renew this loan"). */
+    fun message(result: RenewResult, today: LocalDate = LocalDate.now()): String =
+        if (result.ok) renewed(result.due, today) else result.message.nonBlank() ?: Copy.YourBooks.renewFailed
 }
 
 /** The text of the "Cancel this reservation?" confirmation. */

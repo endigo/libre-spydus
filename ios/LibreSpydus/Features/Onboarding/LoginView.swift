@@ -15,6 +15,9 @@ struct LoginView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: Theme.Spacing.l) {
                 libraryHeader
+                if model.biometrics.isTurningOn, let method = model.biometrics.method {
+                    Banner(message: Copy.Biometrics.turnOnNote(method: method), tone: .info)
+                }
                 VStack(alignment: .leading, spacing: Theme.Spacing.m) {
                     labelled(Copy.Login.cardLabel) {
                         TextField(text: $form.cardNumber) { placeholder(Copy.Login.cardPlaceholder) }
@@ -46,7 +49,13 @@ struct LoginView: View {
                     .disabled(!form.canSubmit && !form.isSigningIn)
                     .padding(.top, Theme.Spacing.xs)
 
-                Text(Copy.Login.privacyNote(library: model.libraryName))
+                if model.biometrics.isAvailable, let biometry = model.biometrics.biometry {
+                    SecondaryPillButton(title: Copy.Biometrics.signInWith(method: biometry.name),
+                                        systemImage: biometry.systemImage, fillsWidth: true, action: signInWithBiometrics)
+                        .disabled(form.isSigningIn)
+                }
+
+                Text(privacyNote)
                     .themeFont(.caption)
                     .foregroundStyle(Theme.Colors.textMuted)
                     .fixedSize(horizontal: false, vertical: true)
@@ -69,6 +78,16 @@ struct LoginView: View {
         .presentationDragIndicator(.visible)
         .interactiveDismissDisabled(form.isSigningIn)
         .task {
+            form.appear(model)
+            // Face ID kept for this library: ask for it at once, unless a check was just
+            // cancelled or failed (§5.14).
+            if model.biometrics.takeAutomaticCheck() {
+                // Let the sheet finish coming up first.
+                try? await Task.sleep(for: .milliseconds(400))
+                guard !Task.isCancelled else { return }
+                focus = nil
+                await form.signInWithBiometrics(model)
+            }
             #if DEBUG
             await applyDebugHooks()
             #endif
@@ -135,6 +154,12 @@ struct LoginView: View {
         }
     }
 
+    /// "…doesn’t store your PIN", unless the phone can keep it for Face ID (§5.14).
+    private var privacyNote: String {
+        guard let method = model.biometrics.method else { return Copy.Login.privacyNote(library: model.libraryName) }
+        return Copy.Login.privacyNoteBiometrics(library: model.libraryName, method: method)
+    }
+
     private func placeholder(_ text: String) -> Text {
         Text(text).foregroundStyle(Theme.Colors.textMuted)
     }
@@ -143,6 +168,11 @@ struct LoginView: View {
         guard form.canSubmit else { return }
         focus = nil
         Task { await form.submit(to: model) }
+    }
+
+    private func signInWithBiometrics() {
+        focus = nil
+        Task { await form.signInWithBiometrics(model) }
     }
 
     #if DEBUG

@@ -159,6 +159,32 @@ actor DemoBackend: LibraryBackend {
         try await publicBackend.holdings(url: url)
     }
 
+    // MARK: Saved pages → real backend (public pages, saved as outside demo mode)
+
+    nonisolated func savedBook(key: String) -> SavedBook? {
+        publicBackend.savedBook(key: key)
+    }
+
+    func saveBook(key: String, book: SavedBook) async {
+        await publicBackend.saveBook(key: key, book: book)
+    }
+
+    nonisolated func savedShelf(key: String) -> SearchResults? {
+        publicBackend.savedShelf(key: key)
+    }
+
+    func saveShelf(key: String, results: SearchResults) async {
+        await publicBackend.saveShelf(key: key, results: results)
+    }
+
+    nonisolated func savedFeatured() -> [FeaturedLink]? {
+        publicBackend.savedFeatured()
+    }
+
+    func saveFeatured(links: [FeaturedLink]) async {
+        await publicBackend.saveFeatured(links: links)
+    }
+
     // MARK: Account → fixtures
 
     func login(username: String, password: String) async throws -> String {

@@ -52,6 +52,19 @@ final class BookDetailModel {
     @ObservationIgnored private var copiesURL: String?
     /// The related links whose panels were requested (a record upgrade brings new ones).
     @ObservationIgnored private var relatedRequestedFor: RecordRelated?
+    /// The page saved on the device is on screen and its fresh record hasn't come back (§5.13).
+    /// Its related links are from an older search set, so the carousels wait for the fresh ones.
+    @ObservationIgnored private var showsSavedRecord = false
+    /// The saved page was looked for (once, before the first request).
+    @ObservationIgnored private var savedPageRead = false
+    /// A fresh record is loading behind the saved one.
+    @ObservationIgnored private var refreshingRecord = false
+    /// The carousels came into view while the saved record was on screen.
+    @ObservationIgnored private var relatedWanted = false
+    /// Carousels still showing saved (or an earlier record's) items until their fresh list arrives.
+    @ObservationIgnored private var staleRelated: Set<RelatedPanel> = []
+    /// The newest list each carousel loaded (fresh, else saved), unfiltered: what a save stores.
+    @ObservationIgnored private var relatedLists: [RelatedPanel: RelatedList] = [:]
     /// A format was picked on screen: the patron's edition is no longer selected for them.
     @ObservationIgnored private var formatPickedOnScreen = false
     /// Picking the patron's edition among the formats (`selectHeldFormat`).
@@ -194,12 +207,27 @@ final class BookDetailModel {
 
     /// Loads what's missing: the record, then (for a ref without formats) its formats, then for a
     /// loan or reservation the format that is the patron's edition. Safe to call again after a
-    /// failure or verification.
+    /// failure or verification. The page saved on the device shows first (§5.13): its record is
+    /// then fetched again while the formats are found from it.
     func load(backend: any LibraryBackend, report: Reporter) async {
-        if record.isLoading { return }
+        if record.isLoading || refreshingRecord { return }
+        showSavedPage(backend: backend)
+        if showsSavedRecord {
+            refreshingRecord = true
+            async let refreshed: Void = loadRecord(backend: backend, report: report)
+            await loadFormats(backend: backend, report: report)
+            await refreshed
+            refreshingRecord = false
+            return
+        }
         if record.value == nil {
             await loadRecord(backend: backend, report: report)
         }
+        await loadFormats(backend: backend, report: report)
+    }
+
+    /// With the record on screen: re-finds a ref's missing formats, then picks the patron's edition.
+    private func loadFormats(backend: any LibraryBackend, report: Reporter) async {
         switch formatLookup {
         case .pending, .failed: await refindFormats(backend: backend, report: report)
         default: break
@@ -210,10 +238,10 @@ final class BookDetailModel {
     func loadRecord(backend: any LibraryBackend, report: Reporter) async {
         let urls = DetailRecordSource.candidateURLs(refURL: opened.url, bibIrn: opened.bibIrn, format: selectedFormat)
         guard !urls.isEmpty else {
-            record = .failed(UserFacingError(kind: .unexpected, message: Copy.Detail.noRecordLink))
+            if !showsSavedRecord { record = .failed(UserFacingError(kind: .unexpected, message: Copy.Detail.noRecordLink)) }
             return
         }
-        record = .loading
+        if !showsSavedRecord { record = .loading }
         var failure: (any Error)?
         for url in urls {
             do {
@@ -223,7 +251,7 @@ final class BookDetailModel {
                     failure = SpydusError.Upstream(message: "empty record from \(url)")
                     continue
                 }
-                apply(detail)
+                await applyFresh(detail, backend: backend)
                 return
             } catch {
                 failure = error
@@ -232,6 +260,11 @@ final class BookDetailModel {
                 if let spydus = error as? SpydusError, case .Network = spydus { break }
                 if error is CancellationError { break }
             }
+        }
+        if showsSavedRecord {
+            // The saved page stays on screen, without an error; verification still asks.
+            if let failure { _ = report(failure) }
+            return
         }
         if let failure, let shown = report(failure) {
             record = .failed(shown)
@@ -334,8 +367,13 @@ final class BookDetailModel {
     /// The library's limit for one page's concurrent requests (docs/native-apps.md §2).
     static let maxConcurrentAvailability = 6
 
-    /// Starts loading the related panels once per record, when the carousels scroll into view.
+    /// Starts loading the related panels once per record, when the carousels scroll into view. The
+    /// saved record's links are from an older search set: those wait for the fresh record.
     func startRelated(backend: any LibraryBackend) {
+        guard !showsSavedRecord else {
+            relatedWanted = true
+            return
+        }
         guard let links = record.value?.related, relatedRequestedFor != links else { return }
         relatedRequestedFor = links
         Task { await loadRelated(backend: backend) }
@@ -348,34 +386,45 @@ final class BookDetailModel {
     }
 
     /// Every related panel the record links to, concurrently (at most four GETs). A failed or
-    /// empty panel is hidden, never reported.
+    /// empty panel is hidden, never reported; one showing saved items keeps them when it fails.
+    /// The page is saved again once fresh lists came back.
     func loadRelated(backend: any LibraryBackend) async {
         guard let detail = record.value else { return }
         let pending = RelatedPanel.allCases.compactMap { panel -> (RelatedPanel, String)? in
             guard let url = panel.url(in: detail.related) else { return nil }
             switch related[panel] {
-            case .loaded, .loading: return nil
+            case .loading: return nil
+            case .loaded where !staleRelated.contains(panel): return nil
             default: return (panel, url)
             }
         }
         guard !pending.isEmpty else { return }
-        for (panel, _) in pending { related[panel] = .loading }
+        for (panel, _) in pending where !staleRelated.contains(panel) { related[panel] = .loading }
         let brn = detail.brn
-        await withTaskGroup(of: (RelatedPanel, Loadable<[BookRef]>).self) { group in
+        var loadedAny = false
+        await withTaskGroup(of: (RelatedPanel, Result<RelatedList, any Error>).self) { group in
             for (panel, url) in pending {
                 group.addTask {
                     do {
-                        let list = try await backend.related(url: url)
-                        return (panel, .loaded(RelatedPanel.items(list, excludingBrn: brn)))
+                        return (panel, .success(try await backend.related(url: url)))
                     } catch {
-                        return (panel, .failed(UserFacingError(error, libraryName: "")))
+                        return (panel, .failure(error))
                     }
                 }
             }
-            for await (panel, state) in group where record.value?.related == detail.related {
-                related[panel] = state
+            for await (panel, result) in group where record.value?.related == detail.related {
+                switch result {
+                case .success(let list):
+                    staleRelated.remove(panel)
+                    relatedLists[panel] = list
+                    related[panel] = .loaded(RelatedPanel.items(list, excludingBrn: brn))
+                    loadedAny = true
+                case .failure(let error):
+                    if !staleRelated.contains(panel) { related[panel] = .failed(UserFacingError(error, libraryName: "")) }
+                }
             }
         }
+        if loadedAny { await savePage(backend: backend) }
     }
 
     // MARK: Private
@@ -388,7 +437,47 @@ final class BookDetailModel {
               DetailRecordSource.isWorkLevel(current.bookmarkUrl) || DetailRecordSource.isWorkLevel(opened.url),
               let url = selectedFormat?.availabilityUrl.nonEmpty,
               let detail = try? await backend.record(url: url), !detail.isEmptyRecord else { return }
-        apply(detail)
+        await applyFresh(detail, backend: backend)
+    }
+
+    /// Shows the page saved on the device for this book (§5.13), once, before the first request:
+    /// its record, and its lists as the carousels' items until fresh ones arrive.
+    private func showSavedPage(backend: any LibraryBackend) {
+        guard !savedPageRead else { return }
+        savedPageRead = true
+        guard record.value == nil, let key = opened.savedPageKey,
+              let saved = backend.savedBook(key: key), !saved.record.isEmptyRecord else { return }
+        apply(saved.record)
+        showsSavedRecord = true
+        for panel in RelatedPanel.allCases {
+            guard let list = panel.list(in: saved) else { continue }
+            relatedLists[panel] = list
+            related[panel] = .loaded(RelatedPanel.items(list, excludingBrn: saved.record.brn))
+            staleRelated.insert(panel)
+        }
+    }
+
+    /// A record just fetched: shown and saved. A work-level record (no subjects or related titles)
+    /// never replaces a bib record on screen, saved or loaded by the upgrade path while the saved
+    /// page's record was refreshing.
+    private func applyFresh(_ detail: RecordDetail, backend: any LibraryBackend) async {
+        showsSavedRecord = false
+        let keepsBib = DetailRecordSource.isWorkLevel(detail.bookmarkUrl)
+            && record.value.map { !DetailRecordSource.isWorkLevel($0.bookmarkUrl) } == true
+        if !keepsBib { apply(detail) }
+        if relatedWanted {
+            relatedWanted = false
+            startRelated(backend: backend)
+        }
+        if !keepsBib { await savePage(backend: backend) }
+    }
+
+    /// Saves the page on the device (§5.13) after something fresh came back: the record on screen
+    /// and, for each carousel it links to, the newest list that loaded.
+    private func savePage(backend: any LibraryBackend) async {
+        guard let key = opened.savedPageKey, let detail = record.value else { return }
+        let lists = relatedLists.filter { panel, _ in panel.url(in: detail.related) != nil }
+        await backend.saveBook(key: key, book: SavedBook(record: detail, lists: lists))
     }
 
     /// Not loaded or loading yet (each format's availability is fetched once; again after a failure).
@@ -407,7 +496,12 @@ final class BookDetailModel {
     }
 
     private func apply(_ detail: RecordDetail) {
-        if let current = record.value, current.related != detail.related { related = [:] }
+        if let current = record.value, current.related != detail.related {
+            // New links (a fresh record's carry a new search set): carousels with items keep them
+            // until their new lists arrive; the others load again.
+            staleRelated = Set(related.compactMap { panel, state in state.value != nil ? panel : nil })
+            related = related.filter { staleRelated.contains($0.key) }
+        }
         record = .loaded(detail)
         var updated = ref.updated(with: detail)
         if updated.title == Copy.Common.untitled, let title = detail.title.nonEmpty { updated.title = title }

@@ -16,7 +16,7 @@ struct LibreSpydusApp: App {
         let options = LaunchOptions.current
         let dependencies = AppModel.Dependencies.live(demo: options.demo, persistDemoAccount: options.persistDemoAccount,
                                                       demoRefreshFails: options.demoRefreshFails,
-                                                      demoNewReady: options.demoNewReady,
+                                                      demoNewReady: options.demoNewReady, demoKeychain: options.demoKeychain,
                                                       alertTime: options.alertTime ?? AlertContent.alertTime)
         if options.reset {
             dependencies.resetPersistentState()

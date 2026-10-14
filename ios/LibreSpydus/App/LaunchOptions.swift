@@ -23,6 +23,8 @@ import Foundation
 ///   instead of 07:45, to see a reminder arrive.
 /// - `-LSDemoAlert ready|due|due-several` (with `-LSDemo`): a few seconds after launch, show one
 ///   alert from the demo account, to tap it (`AppModel.postDemoAlert`).
+/// - `-LSDemoKeychain YES` (with `-LSDemo`): Face ID's details (§5.14) go to the Keychain, under a
+///   service of their own, instead of memory, so demo mode runs the real store.
 struct LaunchOptions: Equatable, Sendable {
     /// `-LSDemoAlert`: which demo alert to show.
     enum DemoAlert: String, Equatable, Sendable {
@@ -88,6 +90,8 @@ struct LaunchOptions: Equatable, Sendable {
     var demoRefreshFails = false
     var morningCheckNow = false
     var demoNewReady = false
+    /// `-LSDemoKeychain YES`: demo mode keeps Face ID's details in the Keychain like a real account.
+    var demoKeychain = false
     /// `-LSAlertTime HH:mm` as hour and minute; nil: 07:45.
     var alertTime: DateComponents?
     var demoAlert: DemoAlert?
@@ -124,6 +128,7 @@ struct LaunchOptions: Equatable, Sendable {
             case "-LSDemoRefreshFails": options.demoRefreshFails = isYes(value)
             case "-LSMorningCheckNow": options.morningCheckNow = isYes(value)
             case "-LSDemoNewReady": options.demoNewReady = isYes(value)
+            case "-LSDemoKeychain": options.demoKeychain = isYes(value)
             case "-LSAlertTime": options.alertTime = time(value)
             case "-LSDemoAlert": options.demoAlert = DemoAlert(rawValue: value.lowercased())
             default:

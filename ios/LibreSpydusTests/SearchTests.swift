@@ -16,6 +16,8 @@ final class PagingFakeBackend: LibraryBackend, @unchecked Sendable {
     private var _pageCalls: [String] = []
     var pageDelay: Duration = .zero
     var loansResult: Result<PatronList, SpydusError> = .success(PatronList(total: 0, items: []))
+    /// Saved pages (§5.13), in memory.
+    let saved = SavedPagesFake()
 
     init(first: Result<SearchResults, SpydusError>, pages: [String: Result<SearchResults, SpydusError>] = [:]) {
         _first = first

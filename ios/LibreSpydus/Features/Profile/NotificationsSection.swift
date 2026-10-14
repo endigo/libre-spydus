@@ -14,13 +14,13 @@ struct NotificationsSection: View {
         VStack(alignment: .leading, spacing: Theme.Spacing.m) {
             ProfileSectionHeader(title: Copy.Notifications.section)
             ProfileCard {
-                AlertSwitchRow(title: Copy.Notifications.readyTitle, subtitle: Copy.Notifications.readySubtitle,
+                ProfileSwitchRow(title: Copy.Notifications.readyTitle, subtitle: Copy.Notifications.readySubtitle,
                                systemImage: "tray.and.arrow.down",
                                isOn: switchBinding(alerts.readyEnabled || alerts.asking == .ready) { on in
                                    await model.setReadyAlerts(on)
                                })
                 ProfileDivider()
-                AlertSwitchRow(title: Copy.Notifications.dueTitle, subtitle: Copy.Notifications.dueSubtitle,
+                ProfileSwitchRow(title: Copy.Notifications.dueTitle, subtitle: Copy.Notifications.dueSubtitle,
                                systemImage: "calendar.badge.clock",
                                isOn: switchBinding(alerts.dueEnabled || alerts.asking == .due) { on in
                                    await model.setDueAlerts(on)
@@ -59,8 +59,8 @@ struct NotificationsSection: View {
     }
 }
 
-/// One switch: icon, title and a line saying what it does.
-private struct AlertSwitchRow: View {
+/// One switch on Profile: icon, title and a line saying what it does.
+struct ProfileSwitchRow: View {
     let title: String
     let subtitle: String
     let systemImage: String

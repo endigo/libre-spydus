@@ -40,8 +40,8 @@ import kotlinx.coroutines.delay
 @Composable
 fun PicksOverlays(appState: AppState) {
     val notice by appState.picks.notice.collectAsStateWithLifecycle()
-    val offer by appState.picks.offer.collectAsStateWithLifecycle()
-    val loginNeeded by appState.loginNeeded.collectAsStateWithLifecycle()
+    // Not over the sign-in sheet, and after the fingerprint-or-face offer (§5.14).
+    val offer by appState.picksOfferToShow.collectAsStateWithLifecycle()
 
     var shown by remember { mutableStateOf<PicksNotice?>(null) }
     LaunchedEffect(notice) { notice?.let { shown = it } }
@@ -72,11 +72,11 @@ fun PicksOverlays(appState: AppState) {
         }
     }
 
-    // After the sign-in sheet has gone, so the alert doesn't sit on a closing sheet.
+    // A moment after the sign-in sheet has gone, so the alert doesn't sit on a closing sheet.
     var offerVisible by remember { mutableStateOf(false) }
-    LaunchedEffect(offer, loginNeeded) {
+    LaunchedEffect(offer) {
         offerVisible = false
-        if (offer != null && !loginNeeded) {
+        if (offer != null) {
             delay(OFFER_DELAY_MILLIS)
             offerVisible = true
         }

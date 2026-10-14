@@ -42,6 +42,7 @@ import com.librespydus.app.feature.favourites.FavouritesScreen
 import com.librespydus.app.feature.favourites.PicksOverlays
 import com.librespydus.app.feature.featured.CollectionScreen
 import com.librespydus.app.feature.home.HomeScreen
+import com.librespydus.app.feature.onboarding.BiometricOfferDialog
 import com.librespydus.app.feature.onboarding.LibraryPickerScreen
 import com.librespydus.app.feature.onboarding.LoginSheet
 import com.librespydus.app.feature.onboarding.VerificationScreen
@@ -86,6 +87,8 @@ fun LibreSpydusRoot(appState: AppState) {
             }
             // My Picks (§5.11): save/remove confirmations and the copy offer, over the tabs.
             if (ready && library != null) PicksOverlays(appState)
+            // After a typed sign-in: the fingerprint-or-face offer (§5.14), before the copy offer.
+            if (ready && library != null) BiometricOfferDialog(appState)
 
             AnimatedVisibility(
                 visible = ready && library != null && pickerVisible,

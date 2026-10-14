@@ -17,6 +17,7 @@ import uniffi.librespydus_core.AccountSnapshot
 import uniffi.librespydus_core.EditOptions
 import uniffi.librespydus_core.EditOverrides
 import uniffi.librespydus_core.ExpiryChoice
+import uniffi.librespydus_core.FeaturedLink
 import uniffi.librespydus_core.PatronAction
 import uniffi.librespydus_core.PatronItem
 import uniffi.librespydus_core.PatronList
@@ -25,6 +26,7 @@ import uniffi.librespydus_core.RenewResult
 import uniffi.librespydus_core.Reservations
 import uniffi.librespydus_core.ReserveOptions
 import uniffi.librespydus_core.ReserveResult
+import uniffi.librespydus_core.SavedBook
 import uniffi.librespydus_core.SearchRecord
 import uniffi.librespydus_core.SearchResults
 import uniffi.librespydus_core.SpydusException
@@ -102,6 +104,14 @@ class DemoBackend(
     override suspend fun featured() = public.featured()
     override suspend fun collection(url: String) = public.collection(url)
     override suspend fun holdings(url: String) = public.holdings(url)
+
+    // Saved pages: public pages, saved as outside demo mode (§5.13).
+    override suspend fun savedBook(key: String) = public.savedBook(key)
+    override suspend fun saveBook(key: String, book: SavedBook) = public.saveBook(key, book)
+    override suspend fun savedShelf(key: String) = public.savedShelf(key)
+    override suspend fun saveShelf(key: String, results: SearchResults) = public.saveShelf(key, results)
+    override suspend fun savedFeatured() = public.savedFeatured()
+    override suspend fun saveFeatured(links: List<FeaturedLink>) = public.saveFeatured(links)
 
     override suspend fun login(username: String, password: String): String {
         delay(mutationDelay)

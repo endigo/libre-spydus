@@ -43,6 +43,19 @@ protocol LibraryBackend: Sendable {
     /// Every copy of a record: an `Availability.holdingsUrl`.
     func holdings(url: String) async throws -> [Holding]
 
+    // MARK: Saved pages (§5.13: the device only, never the network)
+
+    /// The book page saved under `key` (`BookRef.savedPageKey`), or nil.
+    func savedBook(key: String) -> SavedBook?
+    /// Saves a book page after a fresh load, replacing what was saved. Never throws.
+    func saveBook(key: String, book: SavedBook) async
+    /// A Home shelf's first results page saved under its `Shelf.key`, or nil.
+    func savedShelf(key: String) -> SearchResults?
+    func saveShelf(key: String, results: SearchResults) async
+    /// The `featured()` links saved last (an empty list: the library has none), or nil.
+    func savedFeatured() -> [FeaturedLink]?
+    func saveFeatured(links: [FeaturedLink]) async
+
     // MARK: Account (needs a session from `login`)
 
     func login(username: String, password: String) async throws -> String
@@ -82,6 +95,14 @@ extension LibraryBackend {
     func featured() async throws -> [FeaturedLink] { [] }
     func collection(url: String) async throws -> FeaturedCollection { FeaturedCollection(title: nil, sections: []) }
     func holdings(url: String) async throws -> [Holding] { [] }
+
+    /// Nothing saved and nothing kept, for a backend that doesn't save pages (test fakes).
+    func savedBook(key: String) -> SavedBook? { nil }
+    func saveBook(key: String, book: SavedBook) async {}
+    func savedShelf(key: String) -> SearchResults? { nil }
+    func saveShelf(key: String, results: SearchResults) async {}
+    func savedFeatured() -> [FeaturedLink]? { nil }
+    func saveFeatured(links: [FeaturedLink]) async {}
 
     /// An empty Pick list that never changes, for a backend without one (test fakes).
     func picks(session: String, url: String?) async throws -> SearchResults {

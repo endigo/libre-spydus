@@ -51,10 +51,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import com.librespydus.app.BuildConfig
 import com.librespydus.app.core.AppState
+import com.librespydus.app.core.BiometricText
 import com.librespydus.app.core.Copy
 import com.librespydus.app.core.UserFacingError
 import com.librespydus.app.ui.components.CircleIconButton
 import com.librespydus.app.ui.components.PrimaryPillButton
+import com.librespydus.app.ui.components.SecondaryPillButton
 import com.librespydus.app.ui.theme.LsColors
 import com.librespydus.app.ui.theme.LsIcons
 import com.librespydus.app.ui.theme.LsRadius
@@ -101,6 +103,11 @@ class LoginFormState {
         }
     }
 
+    /** A fingerprint sign-in didn't sign in: why, under the fields (§5.14). */
+    fun show(error: UserFacingError) {
+        this.error = error
+    }
+
     fun clearError() {
         error = null
     }
@@ -108,12 +115,19 @@ class LoginFormState {
 
 /**
  * Sign-in sheet content (docs/native-apps.md §6 "Login"): library card number + PIN →
- * `AppState.signIn`. Closes on success (`signIn` clears `loginNeeded`); errors show inline.
+ * `AppState.signIn`. Closes on success (`signIn` clears `loginNeeded`); errors show inline. With
+ * the fingerprint check on for the library (§5.14), "Sign in with fingerprint"
+ * under Sign in, started at once when the sheet opens (unless a check just ended without signing in).
  */
 @Composable
 fun LoginSheet(appState: AppState, onDismiss: () -> Unit, modifier: Modifier = Modifier) {
     val library by appState.library.collectAsStateWithLifecycle()
     val demo by appState.isDemo.collectAsStateWithLifecycle()
+    val biometricOn by appState.biometricOn.collectAsStateWithLifecycle()
+    val biometricAvailable by appState.biometricAvailable.collectAsStateWithLifecycle()
+    val turningOn by appState.biometricTurnOn.collectAsStateWithLifecycle()
+    val biometricSigningIn by appState.biometricSigningIn.collectAsStateWithLifecycle()
+    val biometricError by appState.loginError.collectAsStateWithLifecycle()
     val activity = LocalActivity.current
     val form = remember { LoginFormState() }
     // Signing in (and the account refresh after it) must outlive the sheet, which closes as soon
@@ -125,10 +139,18 @@ fun LoginSheet(appState: AppState, onDismiss: () -> Unit, modifier: Modifier = M
     val libraryName = library?.name ?: Copy.Common.yourLibrary
 
     fun submit() {
-        if (!form.canSubmit) return
+        if (!form.canSubmit || biometricSigningIn) return
         focus.clearFocus()
         scope.launch { if (form.submit(appState)) onDismiss() }
     }
+
+    fun clearErrors() {
+        form.clearError()
+        appState.clearLoginError()
+    }
+
+    LaunchedEffect(Unit) { appState.autoBiometricSignIn() }
+    LaunchedEffect(biometricError) { biometricError?.let(form::show) }
 
     LaunchedEffect(Unit) {
         // DEBUG screenshot hooks, demo mode only (never against a real library).
@@ -170,12 +192,14 @@ fun LoginSheet(appState: AppState, onDismiss: () -> Unit, modifier: Modifier = M
                 }
             }
 
+            if (turningOn) AccountBanner(Copy.Biometrics.turnOnNote(BiometricText.METHOD), tone = AccountBannerTone.INFO)
+
             LoginField(
                 label = Copy.Login.cardLabel,
                 value = form.cardNumber,
                 onValueChange = {
                     form.cardNumber = it
-                    form.clearError()
+                    clearErrors()
                 },
                 placeholder = Copy.Login.cardPlaceholder,
                 contentType = ContentType.Username,
@@ -186,14 +210,14 @@ fun LoginSheet(appState: AppState, onDismiss: () -> Unit, modifier: Modifier = M
                     imeAction = ImeAction.Next,
                 ),
                 keyboardActions = KeyboardActions(onNext = { pinFocus.requestFocus() }),
-                enabled = !form.isSigningIn,
+                enabled = !form.isSigningIn && !biometricSigningIn,
             )
             LoginField(
                 label = Copy.Login.pinLabel,
                 value = form.pin,
                 onValueChange = {
                     form.pin = it
-                    form.clearError()
+                    clearErrors()
                 },
                 placeholder = Copy.Login.pinPlaceholder,
                 contentType = ContentType.Password,
@@ -204,7 +228,7 @@ fun LoginSheet(appState: AppState, onDismiss: () -> Unit, modifier: Modifier = M
                 ),
                 keyboardActions = KeyboardActions(onGo = { submit() }),
                 visualTransformation = PasswordVisualTransformation(),
-                enabled = !form.isSigningIn,
+                enabled = !form.isSigningIn && !biometricSigningIn,
                 modifier = Modifier.focusRequester(pinFocus),
             )
 
@@ -216,14 +240,28 @@ fun LoginSheet(appState: AppState, onDismiss: () -> Unit, modifier: Modifier = M
                 text = if (form.isSigningIn) Copy.Account.signingIn else Copy.Account.signIn,
                 onClick = ::submit,
                 loading = form.isSigningIn,
-                enabled = form.canSubmit || form.isSigningIn,
+                enabled = (form.canSubmit && !biometricSigningIn) || form.isSigningIn,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = LsSpacing.xs),
             )
 
+            if (biometricOn && biometricAvailable && !turningOn) {
+                SecondaryPillButton(
+                    Copy.Biometrics.signInWith(BiometricText.METHOD),
+                    onClick = {
+                        focus.clearFocus()
+                        clearErrors()
+                        appState.signInWithBiometrics()
+                    },
+                    enabled = !form.isSigningIn && !biometricSigningIn,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+
             Text(
-                Copy.Login.privacyNote(libraryName),
+                // Once the check can keep the PIN, the plain note ("doesn’t store your PIN") isn't true (§5.14).
+                if (biometricAvailable) Copy.Login.privacyNoteBiometrics(libraryName, BiometricText.METHOD) else Copy.Login.privacyNote(libraryName),
                 style = LsType.caption,
                 color = LsColors.textMuted,
             )

@@ -8,9 +8,16 @@ final class CoreBackend: LibraryBackend {
     let origin: String
     var isDemo: Bool { false }
 
-    /// `origin` is a `LibraryInfo.origin`; nil means Canning.
-    init(origin: String?) {
+    /// Where the core keeps saved pages (§5.13), one folder per library under it. The system may
+    /// empty it; the pages then load from the library as before.
+    nonisolated static var savedPagesDirectory: URL {
+        URL.cachesDirectory.appending(path: "SavedPages", directoryHint: .isDirectory)
+    }
+
+    /// `origin` is a `LibraryInfo.origin`; nil means Canning. `savedPages` nil: nothing is saved.
+    init(origin: String?, savedPages: URL? = CoreBackend.savedPagesDirectory) {
         client = SpydusClient(origin: origin)
+        client.setSavedPagesDir(dir: savedPages?.path(percentEncoded: false))
         self.origin = client.origin()
     }
 
@@ -56,6 +63,30 @@ final class CoreBackend: LibraryBackend {
 
     func holdings(url: String) async throws -> [Holding] {
         try await timed("holdings") { try await client.holdings(url: url) }
+    }
+
+    func savedBook(key: String) -> SavedBook? {
+        client.savedBook(key: key)
+    }
+
+    func saveBook(key: String, book: SavedBook) async {
+        await client.saveBook(key: key, book: book)
+    }
+
+    func savedShelf(key: String) -> SearchResults? {
+        client.savedShelf(key: key)
+    }
+
+    func saveShelf(key: String, results: SearchResults) async {
+        await client.saveShelf(key: key, results: results)
+    }
+
+    func savedFeatured() -> [FeaturedLink]? {
+        client.savedFeatured()
+    }
+
+    func saveFeatured(links: [FeaturedLink]) async {
+        await client.saveFeatured(links: links)
     }
 
     func login(username: String, password: String) async throws -> String {

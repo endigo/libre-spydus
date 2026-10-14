@@ -121,6 +121,36 @@ struct PrimaryPillButton: View {
     }
 }
 
+/// The quieter pill beside a `PrimaryPillButton` ("Sign in with Face ID" under Sign in).
+struct SecondaryPillButton: View {
+    let title: String
+    var systemImage: String?
+    var fillsWidth = false
+    let action: () -> Void
+
+    @Environment(\.isEnabled) private var isEnabled
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: Theme.Spacing.s) {
+                if let systemImage {
+                    Image(systemName: systemImage)
+                }
+                Text(title).themeFont(.bodyStrong)
+            }
+            .foregroundStyle(Theme.Colors.textPrimary)
+            .padding(.horizontal, Theme.Spacing.xl + Theme.Spacing.s)
+            .frame(minHeight: 50)
+            .frame(maxWidth: fillsWidth ? .infinity : nil)
+            .background(Capsule().fill(Theme.Colors.surfaceElevated))
+            .opacity(isEnabled ? 1 : 0.5)
+            .contentShape(Capsule())
+        }
+        .buttonStyle(PressScaleStyle())
+        .accessibilityLabel(title)
+    }
+}
+
 /// The blue circular icon button (bookmark / favourite toggle).
 struct CircleIconButton: View {
     let systemImage: String

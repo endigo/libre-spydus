@@ -21,6 +21,8 @@ final class FeaturedFakeBackend: LibraryBackend, @unchecked Sendable {
     private var _inFlight = 0
     private var _peakInFlight = 0
     var pageDelay: Duration = .zero
+    /// Saved pages (§5.13), in memory.
+    let saved = SavedPagesFake()
 
     init(origin: String = SearchFixtures.origin, featured: Result<[FeaturedLink], SpydusError> = .success([]),
          collections: [String: Result<FeaturedCollection, SpydusError>] = [:],
