@@ -57,6 +57,8 @@ impl RootView {
         let last_notice = state.read(cx).notice().map_or(0, |notice| notice.id);
         let focus = cx.focus_handle();
         window.focus(&focus, cx);
+        // My Picks' copy-once offer shows after a sign-in, wherever the reader is (§5.11).
+        crate::features::my_picks::watch_picks_copy_offer(window, cx);
         Self {
             state,
             focus,
