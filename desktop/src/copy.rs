@@ -216,6 +216,10 @@ pub mod Copy {
         pub fn expires(date: &str) -> String {
             format!("Expires {}", date)
         }
+        /// Desktop My card dialog while signed out, over account.signIn.
+        pub const signInMessage: &str = "Sign in to show your library card’s barcode.";
+        /// Status line next to common.retry when the library's barcode type didn't load: no full stop.
+        pub const barcodeFailed: &str = "Couldn’t load the barcode";
     }
 
     pub mod Featured {
@@ -808,6 +812,11 @@ pub mod Copy {
         pub fn version(version: &str, build: &str) -> String {
             format!("Version {} ({})", version, build)
         }
+        /// "Version {version}"
+        /// Desktop: the app has a version but no separate build number.
+        pub fn appVersion(version: &str) -> String {
+            format!("Version {}", version)
+        }
         pub const notAffiliated: &str = "LibreSpydus is not affiliated with Civica or your library.";
     }
 
@@ -905,6 +914,9 @@ pub mod Copy {
         pub const cardPlaceholder: &str = "Username or card number";
         pub const pinLabel: &str = "PIN / password";
         pub const pinPlaceholder: &str = "PIN or password";
+        /// Desktop: screen-reader label of the PIN field's reveal toggle (hidePin while the PIN shows).
+        pub const showPin: &str = "Show PIN";
+        pub const hidePin: &str = "Hide PIN";
         /// "LibreSpydus signs in directly with {library} and doesn’t store your PIN."
         pub fn privacyNote(library: &str) -> String {
             format!("LibreSpydus signs in directly with {} and doesn’t store your PIN.", library)

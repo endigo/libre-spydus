@@ -216,6 +216,10 @@ enum Copy {
         static func expires(date: String) -> String {
             "Expires \(date)"
         }
+        /// Desktop My card dialog while signed out, over account.signIn.
+        static let signInMessage = "Sign in to show your library card’s barcode."
+        /// Status line next to common.retry when the library's barcode type didn't load: no full stop.
+        static let barcodeFailed = "Couldn’t load the barcode"
     }
 
     enum Featured {
@@ -776,6 +780,11 @@ enum Copy {
         static func version(version: String, build: String) -> String {
             "Version \(version) (\(build))"
         }
+        /// "Version {version}"
+        /// Desktop: the app has a version but no separate build number.
+        static func appVersion(version: String) -> String {
+            "Version \(version)"
+        }
         static let notAffiliated = "LibreSpydus is not affiliated with Civica or your library."
     }
 
@@ -865,6 +874,9 @@ enum Copy {
         static let cardPlaceholder = "Username or card number"
         static let pinLabel = "PIN / password"
         static let pinPlaceholder = "PIN or password"
+        /// Desktop: screen-reader label of the PIN field's reveal toggle (hidePin while the PIN shows).
+        static let showPin = "Show PIN"
+        static let hidePin = "Hide PIN"
         /// "LibreSpydus signs in directly with {library} and doesn’t store your PIN."
         static func privacyNote(library: String) -> String {
             "LibreSpydus signs in directly with \(library) and doesn’t store your PIN."
