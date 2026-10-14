@@ -18,12 +18,20 @@ use crate::ui::style::FontExt;
 
 /// The app's look for a gpui-kit dialog: white, `onSheet` text. Use it on every dialog a feature
 /// opens (`window.open_dialog(cx, |dialog, _, _| sheet_dialog(dialog).title(…))`).
+///
+/// It also turns off two gpui-kit defaults that don't suit a white dialog with its own buttons:
+/// the close button (drawn for a dark dialog, it's invisible on white; every dialog here has its
+/// own Close / Cancel / Not now, and Escape still closes it), and closing on Return (Return in a
+/// text field also fires the dialog's Confirm). A dialog whose Return should confirm sets its own
+/// `on_ok` after this, as `ConfirmDialog` does.
 pub fn sheet_dialog(dialog: Dialog) -> Dialog {
     dialog
         .bg(theme::color(colors::SHEET))
         .text_color(theme::color(colors::ON_SHEET))
         .rounded(px(radius::CARD))
         .border_color(theme::color(colors::CHIP_ON_SHEET))
+        .close_button(false)
+        .on_ok(|_, _, _| false)
 }
 
 /// A dialog's title in the app's type.
