@@ -83,6 +83,7 @@ fn a_pushed_page_starts_there_too_and_back_lines_up_with_it(cx: &mut TestAppCont
     let back = bounds(cx, window, "toolbar-back");
     // The button's padding (8) is outside the column, so its chevron starts at the title's edge.
     assert_eq!(f32::from(back.origin.x) + 8., f32::from(title.origin.x), "Back lines up with the title");
+    assert!(f32::from(back.size.width) < 120., "Back is as wide as its label ({:?})", back.size.width);
 
     // The book page's panel starts at the same edge.
     state.update(cx, |state, cx| state.push(Route::Detail(BookRef::from_url(&format!("{ORIGIN}/x"), "A book")), cx));

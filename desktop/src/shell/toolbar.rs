@@ -32,7 +32,7 @@ impl RenderOnce for Toolbar {
             .bg(theme::color(colors::BACKGROUND))
             // Back lines up with the page's left edge (`content_column`): its chevron, past the
             // button's own padding, sits where the page's title starts.
-            .child(content_column().when(can_go_back, |column| {
+            .child(content_column().flex().flex_row().items_center().when(can_go_back, |column| {
                 column.child(
                     div()
                         .id("toolbar-back")
