@@ -296,6 +296,8 @@ impl AppState {
     ) -> Task<Result<(), UserFacingError>> {
         let generation = self.backend_generation;
         let backend = self.backend.clone();
+        // Kept only until the sign-in settles, for Touch ID (`features::biometrics::did_sign_in`).
+        let details = (username.clone(), password.clone());
         let login = backend.login(username, password);
         cx.spawn(async move |this, cx| {
             let result = login.await;
@@ -315,6 +317,7 @@ impl AppState {
                     this.account.use_account(Some(&origin), Some(&token), backend.clone(), false);
                     this.picks.use_account(Some(&origin), Some(&token), backend.clone());
                     this.offer_picks_copy();
+                    crate::features::biometrics::did_sign_in(this, &details.0, &details.1, cx);
                     this.load_picks_if_needed(cx).detach();
                     cx.notify();
                     Ok(this.refresh_account(true, cx))
@@ -329,6 +332,8 @@ impl AppState {
     /// it).
     pub fn sign_out(&mut self, cx: &mut Context<Self>) {
         let origin = self.backend.origin();
+        crate::features::biometrics::did_sign_out(self, &origin, cx);
+        crate::features::alerts::did_sign_out(self, &origin, cx);
         self.deps.card_numbers.set_value(&origin, None);
         self.saved_card_number = None;
         self.clear_session(cx);
@@ -349,15 +354,16 @@ impl AppState {
     // ---- Errors ----
 
     /// Routes a failed call (docs/native-apps.md §5.7) and returns what to show. `NotLoggedIn`
-    /// clears the session and asks for sign-in. `HumanVerificationRequired` is "library
-    /// unavailable": desktop v1 has no web view for the check (docs/desktop-app.md §5.3).
+    /// clears the session and asks for sign-in, unless Touch ID signs back in instead
+    /// (`features::biometrics`). `HumanVerificationRequired` goes to `features::verification`.
     pub fn report(&mut self, error: &SpydusError, cx: &mut Context<Self>) -> UserFacingError {
         let name = self.library_name();
         match error {
-            SpydusError::HumanVerificationRequired => {
-                UserFacingError::verification_unavailable(&name, Some(error.to_string()))
-            }
+            SpydusError::HumanVerificationRequired => crate::features::verification::on_required(self, error, cx),
             SpydusError::NotLoggedIn => {
+                if crate::features::biometrics::sign_back_in(self, cx) {
+                    return UserFacingError::from_core(error, &name);
+                }
                 self.clear_session(cx);
                 self.request_sign_in(cx);
                 UserFacingError::from_core(error, &name)

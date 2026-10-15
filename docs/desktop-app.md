@@ -377,3 +377,104 @@ The glossary row for the reader's device says **computer** on desktop.
   - `detail/held.rs` and Your Books both carry renew-message helpers;
   - the Edit dialog's date pickers have no UI test.
 - **Wave 3** still needs the user's OK: verification helper (`wry`), desktop notifications, Touch ID, a packaged `.app`, Windows and Linux.
+
+## 11. Wave 3 (2026-10-15)
+
+The user asked to continue building the desktop app. Five workers run in parallel on mini-knit,
+each in its own worktree from `desktop`. Windows and Linux builds stay out: neither machine can
+build or run them.
+
+| Task | Builds | Owns |
+|---|---|---|
+| **E1** polish | the §10 follow-ups, plus the synopsis that sometimes clips mid-word | `src/ui/states.rs` (skeleton), `src/features/onboarding/{directory,store,logo}.rs`, `src/features/detail/{logic,held,view}.rs`, the renew-message helpers in `src/features/your_books/**`, a new shared `src/state/renew.rs` |
+| **E2** verification | "Confirm you're human" (native-apps.md §6 "Verification") through a helper window | `src/features/verification/**` |
+| **E3** alerts | ready-to-collect alerts and due-date reminders as macOS notifications (§5.8) | `src/features/alerts/**` |
+| **E4** Touch ID | sign back in with Touch ID (§5.14, desktop version) | `src/features/biometrics/**`, `src/features/onboarding/sign_in.rs` |
+| **E5** packaging | `LibreSpydus.app`: icon, Info.plist, ad-hoc signature, optional `.dmg` | `desktop/packaging/**`, `desktop/scripts/bundle.sh`, `[profile.release]` in `desktop/Cargo.toml` |
+
+Everyone may also add `desktop/tests/<feature>_*.rs`, copy keys in their own groups (§8.3), and a
+section of `desktop/README.md`.
+
+### 11.1 Hooks (already on `desktop`, with placeholder bodies)
+The shared files call these, so wave 3 never edits `AppState`, the shell or Profile. Keep each
+signature exactly as it is and fill in the body.
+- `features::verification`:
+  - `on_required(state, error, cx) -> UserFacingError`, called from `AppState::report` on `HumanVerificationRequired`;
+  - `watch(window, cx)`, called once by the shell;
+  - `run_helper_if_requested() -> bool`, called first in `main`.
+- `features::alerts`:
+  - `account_refreshed(state, cx)`, called after a fresh snapshot;
+  - `did_sign_out(state, origin, cx)`;
+  - `profile_section(window, cx) -> Option<AnyElement>`, Profile's Notifications;
+  - `start(window, cx)`, called once by the shell.
+- `features::biometrics`:
+  - `sign_back_in(state, cx) -> bool`, called from `report` on `NotLoggedIn`; `true` keeps the session on screen;
+  - `did_sign_in(state, username, pin, cx)`, called after every successful `AppState::sign_in`, including E4's own;
+  - `did_sign_out(state, origin, cx)`;
+  - `profile_section(window, cx)`, the switch under the Account card;
+  - `watch(window, cx)`;
+  - `reset(secrets_in_memory)`, called from `--reset`.
+- **State:** keep a feature's state in its own GPUI global entity, or in its own file under the
+  data dir (`state::paths`). Don't add fields to `AppState` or `Settings`.
+- **Debug toggles:** use env vars read in your own module under `cfg(debug_assertions)`, not
+  new launch flags. Examples: `LS_ALERTS_CHECK_NOW=1`, `LS_DEMO_NEW_READY=1`, `LS_DEMO_KEYCHAIN=1`.
+- **Dependencies:** already added, macOS only: `wry 0.57`, `tao 0.37`, `objc2 0.6`,
+  `objc2-foundation`, `objc2-local-authentication`, `block2`, `security-framework 3.7`. Ask before
+  adding any other.
+
+### 11.2 Verification (E2)
+- **The helper is the same binary,** `librespydus --verify-helper <origin> <user-agent>`, started
+  as a child process. It has its own tao event loop and a wry web view on the library's origin,
+  with the core's `user_agent()`.
+  - It watches the web view's cookies for `aws-waf-token` on the library host
+    (`cookies_for_url`).
+  - When the cookie appears, it prints `aws-waf-token=<value>` on one stdout line and exits 0.
+  - If the reader closes the window, it exits 1.
+  - It never injects scripts into the page or interacts with the check.
+- **In the app:** on `HumanVerificationRequired`, a white dialog appears. It says
+  `verification.message`, with the desktop variant "Complete the check in the window that opens.",
+  and offers Open check / Cancel. Then:
+  - the app runs the helper and calls `AppState::complete_verification(cookie)`;
+  - the screen that failed retries, through `reload_key`;
+  - after two completed checks that still fail, the error is `verificationUnavailable`, as on iOS.
+- **Safety:** a worker may open the helper on a UK library only to see that it renders, then
+  close it. Nobody solves or automates the check (native-apps.md §2.3).
+
+### 11.3 Alerts (E3)
+- **When it checks:** at start, after every fresh account snapshot, and at 07:45 local time each
+  day while the app runs. It uses the core's `ready_alerts` / `due_reminders`, with
+  `patron_item_key` (§5.8).
+- **Delivery:** macOS notifications. Clicking one opens the book page, or Your Books (§5.8 "Tap").
+- **Profile Notifications section:** Ready to collect and Due-date reminders switches, with
+  subtitles, and the blocked state.
+- **State:** `alerts.json` in the data dir: per-origin alerted keys, the switches, and the last
+  reminder date. Sign-out clears that library's entry.
+- An unbundled binary may be unable to post system notifications. Test with a bundle (E5's
+  script, or a throwaway one under /tmp), and fall back to an in-app toast when posting fails.
+
+### 11.4 Touch ID (E4)
+- **Behaviour:** as §5.14, with `{method}` = `biometrics.touchId`. The offer appears after a
+  typed sign-in. Profile has a switch. `NotLoggedIn` triggers the sign-back-in. The sign-in dialog
+  gets a "Sign in with Touch ID" button and `login.privacyNoteBiometrics`. Desktop variants say
+  "computer" where the phones say "phone".
+- **Storage:** biometry-protected Keychain items, with `.biometryCurrentSet` in the
+  data-protection keychain, need an app signed with a team and an entitlement. A dev or ad-hoc
+  build doesn't have one. So v1 does this:
+  - keeps `{username, pin}` per origin in the login keychain through `keyring`, service
+    `com.librespydus.desktop.signin`, the same protection as the session token;
+  - gates every use with `LAContext evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics)`;
+  - stores the username in plain text beside it, under `com.librespydus.desktop.signin.username`.
+  - The code is structured so that a signed build can switch to the data-protection keychain
+    later. Say so in the README.
+- **Testing:** mini-knit has no Touch ID, so the check is "unavailable" there. Cover the flows with
+  a fake vault and a fake check. The user tests Touch ID itself on the MacBook.
+
+### 11.5 Packaging (E5)
+- **Command:** `desktop/scripts/bundle.sh [--dmg]` makes a release build into
+  `desktop/target/LibreSpydus.app`.
+- **Info.plist** (from `desktop/packaging/Info.plist`): `CFBundleIdentifier`
+  `com.librespydus.desktop`, the name and version from Cargo.toml, `LSMinimumSystemVersion` 13.0,
+  and `NSHighResolutionCapable`.
+- **Icon:** `AppIcon.icns`, built from `ios/LibreSpydus/Resources/Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png` with `sips` + `iconutil`.
+- **Signature:** ad-hoc, `codesign --force --deep -s -`, then `codesign --verify`.
+- **README:** an Install section.

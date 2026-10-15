@@ -59,6 +59,10 @@ impl RootView {
         window.focus(&focus, cx);
         // My Picks' copy-once offer shows after a sign-in, wherever the reader is (§5.11).
         crate::features::my_picks::watch_picks_copy_offer(window, cx);
+        // Wave 3 (docs/desktop-app.md §11): the human check, notifications, Touch ID.
+        crate::features::verification::watch(window, cx);
+        crate::features::alerts::start(window, cx);
+        crate::features::biometrics::watch(window, cx);
         Self {
             state,
             focus,

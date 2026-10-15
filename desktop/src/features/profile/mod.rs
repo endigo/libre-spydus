@@ -480,7 +480,10 @@ impl ProfileScreen {
 }
 
 impl Render for ProfileScreen {
-    fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+    fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        // Wave 3 (docs/desktop-app.md §11): Touch ID and Notifications, each owned by its feature.
+        let biometrics = crate::features::biometrics::profile_section(window, cx);
+        let alerts = crate::features::alerts::profile_section(window, cx);
         let state = AppState::global(cx).read(cx);
         let library = state.library().cloned();
         let library_name = state.library_name();
@@ -514,8 +517,10 @@ impl Render for ProfileScreen {
                             .flex_col()
                             .gap(px(spacing::M))
                             .child(section_header(Copy::Profile::account))
-                            .child(self.account_card(cx)),
+                            .child(self.account_card(cx))
+                            .children(biometrics),
                     )
+                    .children(alerts)
                     .when(verified, |body| {
                         body.child(
                             div()

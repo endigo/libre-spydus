@@ -313,6 +313,7 @@ impl AppState {
                 }
                 store.snapshot = Some(snapshot);
                 store.last_refresh_error = None;
+                crate::features::alerts::account_refreshed(self, cx);
             }
             Err(error) => {
                 let shown = self.report(&error, cx);

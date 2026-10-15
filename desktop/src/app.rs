@@ -116,6 +116,7 @@ fn reset(options: &LaunchOptions) {
             }
         }
     }
+    crate::features::biometrics::reset(options.secrets_in_memory());
     paths.delete_all();
 }
 

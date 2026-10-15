@@ -39,3 +39,15 @@ image = { version = "0.25", default-features = false, features = ["png"], option
 [dev-dependencies]
 gpui-kit = { version = "=0.7.3", features = ["test-support"] }
 tempfile = "3"
+
+# macOS-only (docs/desktop-app.md §11, wave 3). wry + tao: the "confirm you're human" helper
+# window (a separate process, so its event loop never meets GPUI's). LocalAuthentication +
+# Security: Touch ID sign-back-in with a biometry-protected Keychain item.
+[target.'cfg(target_os = "macos")'.dependencies]
+wry = "0.57"
+tao = "0.37"
+objc2 = "0.6"
+objc2-foundation = "0.3"
+objc2-local-authentication = "0.3"
+block2 = "0.6"
+security-framework = "3.7"
