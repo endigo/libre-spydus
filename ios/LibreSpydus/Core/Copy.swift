@@ -162,6 +162,8 @@ enum Copy {
             "Sign in with \(method) next time?"
         }
         /// "When {library} signs you out, sign back in with {method} instead of typing your PIN. Your card number and PIN stay on this phone, locked by {method}."
+        /// Android: "When {library} signs you out, sign back in with {method} instead of typing your PIN. Your card number and PIN stay on this phone, locked by {method}."
+        /// Desktop: "When {library} signs you out, sign back in with {method} instead of typing your PIN. Your card number and PIN stay on this computer, locked by {method}."
         static func offerMessage(library: String, method: String) -> String {
             "When \(library) signs you out, sign back in with \(method) instead of typing your PIN. Your card number and PIN stay on this phone, locked by \(method)."
         }
@@ -882,6 +884,8 @@ enum Copy {
             "LibreSpydus signs in directly with \(library) and doesn’t store your PIN."
         }
         /// "LibreSpydus signs in directly with {library}. It keeps your PIN on this phone only if you turn on {method}."
+        /// Android: "LibreSpydus signs in directly with {library}. It keeps your PIN on this phone only if you turn on {method}."
+        /// Desktop: "LibreSpydus signs in directly with {library}. It keeps your PIN on this computer only if you turn on {method}."
         /// Replaces privacyNote when the phone can use {method} (§5.14), since turning it on keeps the PIN.
         static func privacyNoteBiometrics(library: String, method: String) -> String {
             "LibreSpydus signs in directly with \(library). It keeps your PIN on this phone only if you turn on \(method)."

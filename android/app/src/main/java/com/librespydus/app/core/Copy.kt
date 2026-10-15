@@ -150,6 +150,8 @@ object Copy {
         fun offerTitle(method: String): String =
             "Sign in with ${method} next time?"
         /** "When {library} signs you out, sign back in with {method} instead of typing your PIN. Your card number and PIN stay on this phone, locked by {method}." */
+        /** iOS: "When {library} signs you out, sign back in with {method} instead of typing your PIN. Your card number and PIN stay on this phone, locked by {method}." */
+        /** Desktop: "When {library} signs you out, sign back in with {method} instead of typing your PIN. Your card number and PIN stay on this computer, locked by {method}." */
         fun offerMessage(library: String, method: String): String =
             "When ${library} signs you out, sign back in with ${method} instead of typing your PIN. Your card number and PIN stay on this phone, locked by ${method}."
         /** "Use {method}" */
@@ -786,6 +788,8 @@ object Copy {
         fun privacyNote(library: String): String =
             "LibreSpydus signs in directly with ${library} and doesn’t store your PIN."
         /** "LibreSpydus signs in directly with {library}. It keeps your PIN on this phone only if you turn on {method}." */
+        /** iOS: "LibreSpydus signs in directly with {library}. It keeps your PIN on this phone only if you turn on {method}." */
+        /** Desktop: "LibreSpydus signs in directly with {library}. It keeps your PIN on this computer only if you turn on {method}." */
         /** Replaces privacyNote when the phone can use {method} (§5.14), since turning it on keeps the PIN. */
         fun privacyNoteBiometrics(library: String, method: String): String =
             "LibreSpydus signs in directly with ${library}. It keeps your PIN on this phone only if you turn on ${method}."
