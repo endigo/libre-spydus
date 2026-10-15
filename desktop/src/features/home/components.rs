@@ -3,8 +3,8 @@
 //! horizontal cover shelf.
 
 use gpui_kit::{
-    AnyElement, App, ElementId, Hsla, InteractiveElement, IntoElement, ParentElement, Pixels, RenderOnce, Role,
-    SharedString, StatefulInteractiveElement, Styled, TestSupportExt, Window, div, prelude::FluentBuilder, px,
+    AnyElement, App, ElementId, Hsla, InteractiveElement, IntoElement, ParentElement, RenderOnce, Role, SharedString,
+    StatefulInteractiveElement, Styled, TestSupportExt, Window, div, prelude::FluentBuilder, px,
 };
 
 use crate::copy::Copy;
@@ -12,43 +12,8 @@ use crate::state::{AppState, BookRef, Route, UserFacingError};
 use crate::theme::{self, Font, colors, cover, radius, spacing};
 use crate::ui::{FontExt, Lucide, OnClick, PrimaryPillButton, ShelfCover, icon, on_click};
 
-/// A placeholder block while content loads.
-#[derive(IntoElement)]
-pub struct SkeletonBlock {
-    width: Option<Pixels>,
-    height: Pixels,
-    radius: f32,
-}
-
-impl SkeletonBlock {
-    pub fn new(width: Pixels, height: Pixels) -> Self {
-        Self { width: Some(width), height, radius: 6. }
-    }
-
-    /// As wide as its container.
-    pub fn fill(height: Pixels) -> Self {
-        Self { width: None, height, radius: 6. }
-    }
-
-    pub fn radius(mut self, radius: f32) -> Self {
-        self.radius = radius;
-        self
-    }
-}
-
-impl RenderOnce for SkeletonBlock {
-    fn render(self, _: &mut Window, _: &mut App) -> impl IntoElement {
-        div()
-            .flex_none()
-            .map(|block| match self.width {
-                Some(width) => block.w(width),
-                None => block.w_full(),
-            })
-            .h(self.height)
-            .rounded(px(self.radius))
-            .bg(theme::color(colors::SURFACE_ELEVATED))
-    }
-}
+/// The pulsing placeholder block (shared, `ui::states`).
+pub use crate::ui::SkeletonBlock;
 
 /// A shelf of cover-shaped skeletons.
 pub fn shelf_skeleton(id: impl Into<ElementId>) -> impl IntoElement {

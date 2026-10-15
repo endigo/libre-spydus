@@ -122,11 +122,12 @@ impl DetailScreen {
                                         .typography(Font::Title)
                                         .text_color(theme::color(colors::TEXT_PRIMARY))
                                         .line_clamp(6)
+                                        .text_ellipsis()
                                         .child(display_title(&book.title)),
                                 )
                             })
                             .when(!title_known && matches!(self.record, Loadable::Idle | Loadable::Loading), |column| {
-                                column.child(
+                                column.child(crate::ui::pulse(
                                     div()
                                         .w_full()
                                         .flex()
@@ -135,7 +136,7 @@ impl DetailScreen {
                                         .child(skeleton_bar(0.9, 20.))
                                         .child(skeleton_bar(0.6, 20.))
                                         .child(skeleton_bar(0.4, 12.)),
-                                )
+                                ))
                             })
                             .children(byline(book.author.as_deref()).map(|line| {
                                 div()
@@ -145,6 +146,7 @@ impl DetailScreen {
                                     .typography(Font::Body)
                                     .text_color(theme::color(colors::TEXT_SECONDARY))
                                     .line_clamp(2)
+                                    .text_ellipsis()
                                     .child(line)
                             }))
                             .children(non_empty(book.year.as_deref()).map(|year| {
@@ -684,6 +686,7 @@ fn facts_list(facts: &[DetailFact]) -> impl IntoElement {
                         .typography(Font::Body)
                         .text_color(theme::color(colors::ON_SHEET))
                         .line_clamp(5)
+                        .text_ellipsis()
                         .children(fact.value.lines().map(|line| div().child(line.to_owned()))),
                 )
                 .into_any_element()
@@ -737,11 +740,42 @@ fn holding_row(index: usize, row: &HoldingRow) -> impl IntoElement {
         }))
 }
 
-/// `text` cut at the last word break before `limit` characters, with an ellipsis.
+/// Screenshots of the Copies list (cargo feature `evidence` only): with
+/// `LIBRESPYDUS_EVIDENCE=polish:edition-level`, a ref opened from `--route detail:<url>` gets one
+/// edition-level format (no code, no label) whose availability is that URL, as a Featured list's
+/// card has. Any other ref, or without the variable, is left as it is.
+#[cfg(feature = "evidence")]
+pub(super) fn evidence_edition_level(mut book: crate::state::BookRef) -> crate::state::BookRef {
+    let wanted = std::env::var("LIBRESPYDUS_EVIDENCE").is_ok_and(|value| value == "polish:edition-level");
+    if wanted && book.formats.is_empty() {
+        book.formats = vec![crate::state::FormatRef {
+            code: String::new(),
+            label: None,
+            reserve_url: None,
+            availability_url: book.url.clone(),
+        }];
+    }
+    book
+}
+
+/// `text` cut to whole words within `limit` characters, with an ellipsis: never mid-word (unless
+/// the first word alone is longer), never a dangling comma, dash or full stop before the "…", and
+/// the whole text when it fits.
 fn clipped(text: &str, limit: usize) -> String {
-    let cut: String = text.chars().take(limit).collect();
-    let cut = cut.rfind(char::is_whitespace).map_or(cut.as_str(), |at| &cut[..at]);
-    format!("{}…", cut.trim_end_matches(|c: char| c.is_whitespace() || ",;:".contains(c))) // copy-exempt: the ellipsis after a clipped synopsis
+    let text = text.trim();
+    if text.chars().count() <= limit {
+        return text.to_owned();
+    }
+    let end = text.char_indices().nth(limit).map_or(text.len(), |(at, _)| at);
+    let (cut, rest) = text.split_at(end);
+    // A cut that lands just before a break keeps its last word; otherwise drop the partial one.
+    let cut = if rest.starts_with(char::is_whitespace) {
+        cut
+    } else {
+        cut.rfind(char::is_whitespace).map_or(cut, |at| &cut[..at])
+    };
+    let cut = cut.trim_end_matches(|c: char| c.is_whitespace() || ",;:.-–—([{/".contains(c));
+    format!("{cut}…") // copy-exempt: the ellipsis after a clipped synopsis
 }
 
 /// Rows with a hairline between them.
@@ -754,4 +788,42 @@ fn divided(rows: impl Iterator<Item = AnyElement>) -> impl IntoElement {
         column = column.child(row);
     }
     column
+}
+
+#[cfg(test)]
+mod tests {
+    use super::clipped;
+
+    const LOVE_LIBRARY: &str = "After a series of dating disasters, Tess Hardy wonders if she'll ever find the man of \
+        her dreams - or if he only exists on the pages of her favourite novels. So when she's invited to visit The \
+        Love Library, a 200-hundred-year-old institution which promises dates with her favourite romantic heroes in \
+        real life, Tess can't resist! But handsome head librarian Gabe Sharma seems grumpily determined to keep the \
+        library under lock and key. And as soon as Tess steps into the beautiful building crammed full of books, she \
+        realises why - it's not just dust in the air - it's magic!";
+
+    #[test]
+    fn the_love_library_ends_on_a_whole_word_and_an_ellipsis() {
+        let shown = clipped(LOVE_LIBRARY, super::SYNOPSIS_CLAMP_CHARS);
+        assert!(shown.ends_with("keep the library…"), "{shown}");
+        assert!(shown.chars().count() <= super::SYNOPSIS_CLAMP_CHARS + 1);
+        assert!(LOVE_LIBRARY.starts_with(shown.trim_end_matches('…')));
+    }
+
+    #[test]
+    fn cuts_at_word_breaks() {
+        // The limit falls inside "jumps": drop it.
+        assert_eq!(clipped("The quick brown fox jumps over", 22), "The quick brown fox…");
+        // The limit falls just before a space: keep "fox".
+        assert_eq!(clipped("The quick brown fox jumps over", 19), "The quick brown fox…");
+        // No dangling punctuation or dash before the ellipsis.
+        assert_eq!(clipped("One, two, three. Four five", 17), "One, two, three…");
+        assert_eq!(clipped("Pages, and more pages", 7), "Pages…");
+        assert_eq!(clipped("Here she is - magic", 13), "Here she is…");
+        // Multi-byte text is cut on characters, not bytes.
+        assert_eq!(clipped("Ōtaki ō ō ō Library", 10), "Ōtaki ō ō…");
+        // One long word: cut inside it, still with the ellipsis.
+        assert_eq!(clipped("Supercalifragilistic", 5), "Super…");
+        // Short enough: untouched.
+        assert_eq!(clipped("  Short.  ", 20), "Short.");
+    }
 }

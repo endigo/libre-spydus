@@ -30,6 +30,7 @@ use librespydus_core::ReserveResult;
 
 use crate::copy::Copy;
 use crate::state::formatting::{non_empty, today, updated};
+use crate::state::renew;
 use crate::state::{AppState, NoticeTone, ReloadKey, Route, Section, YourBooksSegment};
 use crate::theme::{self, Font, colors, radius, spacing};
 use crate::ui::{
@@ -37,7 +38,7 @@ use crate::ui::{
     Lucide, SectionHeader, card_menu_button, content_column, icon, on_click, with_context_menu,
 };
 
-use self::rows::{LoanRow, ReservationRow, ReservationSections, renew_text};
+use self::rows::{LoanRow, ReservationRow, ReservationSections};
 
 /// Tall enough that a state view sits in the middle of the window.
 const STATE_HEIGHT: f32 = 380.;
@@ -176,7 +177,7 @@ impl YourBooksScreen {
             return;
         }
         let view = cx.entity().downgrade();
-        let message = renew_text::confirm_message(&row);
+        let message = renew::confirm_message(&row.item, today());
         ConfirmDialog::new(
             Copy::YourBooks::renewTitle,
             Copy::YourBooks::renew,
@@ -205,10 +206,10 @@ impl YourBooksScreen {
             let _ = this.update(cx, |this, cx| {
                 this.renewing_rows.remove(&row.id);
                 let (message, tone) = match &result {
-                    Ok(result) if result.ok => {
-                        (renew_text::renewed(result.due.as_deref(), today()), NoticeTone::Success)
-                    }
-                    Ok(result) => (renew_text::refused(result), NoticeTone::Error),
+                    Ok(result) => (
+                        renew::result_text(result, today()),
+                        if result.ok { NoticeTone::Success } else { NoticeTone::Error },
+                    ),
                     Err(_) => (Copy::YourBooks::renewFailed.to_owned(), NoticeTone::Error),
                 };
                 this.state.update(cx, |state, cx| state.show_notice(&message, tone, cx));

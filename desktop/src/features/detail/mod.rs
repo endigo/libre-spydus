@@ -118,6 +118,8 @@ pub struct DetailScreen {
 
 impl DetailScreen {
     pub fn new(book: BookRef, window: &mut Window, cx: &mut Context<Self>) -> Self {
+        #[cfg(feature = "evidence")]
+        let book = view::evidence_edition_level(book);
         let state = AppState::global(cx);
         let observe = cx.observe_in(&state, window, |this, _, window, cx| this.state_changed(window, cx));
         let formats = book.formats.clone();
@@ -346,10 +348,10 @@ impl DetailScreen {
             .is_some_and(|record| RelatedPanel::ALL.into_iter().any(|panel| panel.url(&record.related).is_some()))
     }
 
-    /// Where the selected format's copies are listed, once its availability has come back.
-    /// Digital formats have no branch copies (the library lists its e-lending service instead).
+    /// Where an edition-level item's copies are listed, once its availability has come back
+    /// (`None` before, and for any other book: iOS `copiesSource`).
     fn holdings_source(&self) -> Option<String> {
-        let format = self.selected_format().filter(|format| !format.is_digital())?;
+        let format = self.selected_format().filter(|_| logic::shows_copies(&self.formats))?;
         let url = non_empty(format.availability_url.as_deref())?;
         self.availability.get(&url)?.value()?.holdings_url.clone()
     }

@@ -1,9 +1,12 @@
-//! Loading, empty and error states for a screen or section (iOS `StateViews.swift`), and the
-//! wave-1 placeholder screen.
+//! Loading, empty and error states for a screen or section (iOS `StateViews.swift`), the pulsing
+//! skeleton blocks (iOS `SkeletonBlock`), and the wave-1 placeholder screen.
+
+use std::time::Duration;
 
 use gpui_kit::{
-    App, CursorStyle, ElementId, InteractiveElement, IntoElement, ParentElement, RenderOnce, Role, SharedString,
-    StatefulInteractiveElement, Styled, TestSupportExt, Window, div, prelude::FluentBuilder, px,
+    Animation, AnimationExt, AnyElement, App, CursorStyle, Div, ElementId, InteractiveElement, IntoElement,
+    ParentElement, Pixels, RenderOnce, Role, SharedString, StatefulInteractiveElement, Styled, TestSupportExt, Window,
+    div, ease_in_out, prelude::FluentBuilder, px,
 };
 
 use crate::copy::Copy;
@@ -16,6 +19,94 @@ use crate::ui::style::FontExt;
 fn centred() -> gpui_kit::Div {
     div().size_full().flex().flex_col().items_center().justify_center().gap(px(spacing::M)).p(px(spacing::XL))
 }
+
+// ---- Skeletons ----
+
+/// One pulse, dim and back: iOS fades a skeleton to 45 % over 0.9 s and back, forever.
+pub const PULSE_PERIOD: Duration = Duration::from_millis(1800);
+/// How far a skeleton dims at the middle of a pulse.
+pub const PULSE_DIMMED_OPACITY: f32 = 0.45;
+
+/// A skeleton's opacity `progress` (0…1) through a pulse: 1 → 0.45 → 1, eased in and out.
+pub fn pulse_opacity(progress: f32) -> f32 {
+    let there_and_back = if progress <= 0.5 { progress * 2. } else { (1. - progress) * 2. };
+    1. - (1. - PULSE_DIMMED_OPACITY) * ease_in_out(there_and_back.clamp(0., 1.))
+}
+
+/// `element` pulsing gently while content loads. Every skeleton pulses in step (one clock for the
+/// app). Still when the reader asked macOS to reduce motion (Accessibility › Display), or GPUI's
+/// own `reduce_motion` is set.
+pub fn pulse(element: Div) -> AnyElement {
+    if system_reduces_motion() {
+        return element.into_any_element();
+    }
+    element
+        .with_animation("skeleton-pulse", Animation::new(PULSE_PERIOD).repeat_synced(), |element, progress| {
+            element.opacity(pulse_opacity(progress))
+        })
+        .into_any_element()
+}
+
+/// macOS's "Reduce motion" (`NSWorkspace.accessibilityDisplayShouldReduceMotion`).
+#[cfg(target_os = "macos")]
+pub fn system_reduces_motion() -> bool {
+    use objc2::msg_send;
+    use objc2::runtime::{AnyClass, AnyObject};
+    let Some(class) = AnyClass::get(c"NSWorkspace") else { return false };
+    // SAFETY: `+[NSWorkspace sharedWorkspace]` returns the shared instance (never released by
+    // us), and `accessibilityDisplayShouldReduceMotion` is a BOOL property (macOS 10.12+).
+    unsafe {
+        let workspace: *mut AnyObject = msg_send![class, sharedWorkspace];
+        !workspace.is_null() && msg_send![workspace, accessibilityDisplayShouldReduceMotion]
+    }
+}
+
+#[cfg(not(target_os = "macos"))]
+pub fn system_reduces_motion() -> bool {
+    false
+}
+
+/// A pulsing placeholder block while content loads (Home shelves, search rows, collections).
+#[derive(IntoElement)]
+pub struct SkeletonBlock {
+    width: Option<Pixels>,
+    height: Pixels,
+    radius: f32,
+}
+
+impl SkeletonBlock {
+    pub fn new(width: Pixels, height: Pixels) -> Self {
+        Self { width: Some(width), height, radius: 6. }
+    }
+
+    /// As wide as its container.
+    pub fn fill(height: Pixels) -> Self {
+        Self { width: None, height, radius: 6. }
+    }
+
+    pub fn radius(mut self, radius: f32) -> Self {
+        self.radius = radius;
+        self
+    }
+}
+
+impl RenderOnce for SkeletonBlock {
+    fn render(self, _: &mut Window, _: &mut App) -> impl IntoElement {
+        pulse(
+            div()
+                .flex_none()
+                .map(|block| match self.width {
+                    Some(width) => block.w(width),
+                    None => block.w_full(),
+                })
+                .h(self.height)
+                .rounded(px(self.radius))
+                .bg(theme::color(colors::SURFACE_ELEVATED)),
+        )
+    }
+}
+
+// ---- Loading, empty, error ----
 
 /// A spinner, with an optional line under it.
 #[derive(IntoElement)]
@@ -263,5 +354,23 @@ impl RenderOnce for PlaceholderScreen {
                         .child(detail),
                 )
             })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn a_pulse_dims_to_45_percent_and_back() {
+        assert_eq!(pulse_opacity(0.), 1.);
+        assert!((pulse_opacity(0.5) - PULSE_DIMMED_OPACITY).abs() < 1e-6);
+        assert_eq!(pulse_opacity(1.), 1.);
+        // Eased: symmetric, and always between the two ends.
+        assert!((pulse_opacity(0.2) - pulse_opacity(0.8)).abs() < 1e-6);
+        for step in 0..=20 {
+            let opacity = pulse_opacity(step as f32 / 20.);
+            assert!((PULSE_DIMMED_OPACITY..=1.).contains(&opacity), "{opacity}");
+        }
     }
 }

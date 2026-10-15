@@ -2,15 +2,15 @@
 //! (docs/native-apps.md §6 "Already yours"; iOS `HeldStatus.swift`): "On loan · Due 14 Oct", "Ready
 //! to collect · Riverton Library", "Reserved · Riverton Library". Clicking it asks to renew a loan
 //! the library lets the patron renew (§5.12), and otherwise opens Your Books on `segment`. Also the
-//! renewal's words (iOS `LoanRenewal.swift`).
+//! renewal's words, from `state::renew`.
 
 use chrono::NaiveDate;
+use librespydus_core::PatronItem;
 use librespydus_core::app::{AccountHolding, HoldingKind};
-use librespydus_core::{PatronItem, RenewResult};
 
 use crate::copy::Copy;
 use crate::state::YourBooksSegment;
-use crate::state::formatting::{DueStatus, due_date, non_empty, short_date};
+use crate::state::formatting::{DueStatus, non_empty, short_date};
 use crate::state::patron::PatronItemExt;
 use crate::ui::Lucide;
 
@@ -174,35 +174,8 @@ fn status_pickup(status: &str) -> Option<String> {
 
 // ---- Renewing (§5.12) ----
 
-/// The confirmation's message: "“Whistler” is due 15 Oct. Renewing asks the library for a later due
-/// date.", or without the date when the loan has none.
-pub fn renew_message(item: &PatronItem, today: NaiveDate) -> String {
-    let title = non_empty(item.title.as_deref()).unwrap_or_else(|| Copy::Common::untitled.to_owned());
-    // copy-exempt: the loans list's field name (a key)
-    let due = non_empty(item.fields.get("Due").map(String::as_str));
-    match due {
-        Some(text) => {
-            let date = due_date::parse(&text).map_or(text, |date| short_date(date, today));
-            Copy::YourBooks::renewMessage(&title, &date)
-        }
-        None => Copy::YourBooks::renewMessageNoDate(&title),
-    }
-}
-
-/// The result toast: "Renewed · Due 3 Nov" from `RenewResult.due`, else "Renewed"; when the library
-/// didn't renew, its reason (or the core's), else `renewFailed`.
-pub fn renew_result_text(result: &RenewResult, today: NaiveDate) -> String {
-    if !result.ok {
-        return non_empty(result.message.as_deref()).unwrap_or_else(|| Copy::YourBooks::renewFailed.to_owned());
-    }
-    match non_empty(result.due.as_deref()) {
-        Some(due) => {
-            let date = due_date::parse(&due).map_or(due, |date| short_date(date, today));
-            Copy::YourBooks::renewed(&date)
-        }
-        None => Copy::YourBooks::renewedNoDate.to_owned(),
-    }
-}
+/// The renewal's words, shared with Your Books (`state::renew`).
+pub use crate::state::renew::{confirm_message as renew_message, result_text as renew_result_text};
 
 #[cfg(test)]
 mod tests {
@@ -280,24 +253,5 @@ mod tests {
         assert_eq!(pending(&[("Rank", "4")]).text, "Reserved · #4 in queue");
         assert_eq!(pending(&[("Rank", "1 of 3")]).text, "Reserved · 1 of 3 in queue");
         assert_eq!(pending(&[("Status", "In transit")]).text, "Reserved");
-    }
-
-    #[test]
-    fn renewal_words() {
-        let today = day(2026, 10, 14);
-        assert_eq!(
-            renew_message(&item(&[("Due", "16 Oct 2026")], true), today),
-            "“Whistler” is due 16 Oct. Renewing asks the library for a later due date."
-        );
-        assert_eq!(
-            renew_message(&item(&[], true), today),
-            "Renewing “Whistler” asks the library for a later due date."
-        );
-        let renewed = RenewResult { ok: true, message: None, due: Some("6 Nov 2026".into()) };
-        assert_eq!(renew_result_text(&renewed, today), "Renewed · Due 6 Nov");
-        assert_eq!(renew_result_text(&RenewResult { ok: true, message: None, due: None }, today), "Renewed");
-        let refused = RenewResult { ok: false, message: Some("Reserved by another borrower.".into()), due: None };
-        assert_eq!(renew_result_text(&refused, today), "Reserved by another borrower.");
-        assert_eq!(renew_result_text(&RenewResult::default(), today), "Couldn’t renew this loan");
     }
 }
