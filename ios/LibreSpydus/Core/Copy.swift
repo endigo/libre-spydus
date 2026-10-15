@@ -796,7 +796,9 @@ enum Copy {
         static let dueTitle = "Due-date reminders"
         static let dueSubtitle = "2 days before books are due, at 7:45"
         static let blocked = "Notifications are turned off for LibreSpydus."
-        /// 'Settings' is the system app's name, so it keeps its capital.
+        /// Android: "Open Settings"
+        /// Desktop: "Open System Settings"
+        /// 'Settings' is the system app's name, so it keeps its capital. Desktop: macOS calls it System Settings.
         static let openSettings = "Open Settings"
     }
 

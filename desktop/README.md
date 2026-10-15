@@ -88,3 +88,17 @@ It builds with `--features evidence` and runs `--evidence --screenshot …`. Sig
   (`support::signed_out_app`), `#[gpui_kit::test]`, `gpui_kit::test::TestWindowExt`
   (`window.click("id", cx)`, `find("id").label()`). Elements are found only with `.id(..)` then
   `.test_support()`.
+
+## Alerts (E3, `src/features/alerts/`)
+
+Ready-to-collect alerts and due-date reminders (docs/native-apps.md §5.8, docs/desktop-app.md
+§11.3). Checks run after every fresh account snapshot, at start, and at 07:45 local time while the
+app runs (a one-minute wall-clock check catches a Mac that slept through it). State lives in
+`<data>/LibreSpydus/alerts.json` (demo mode under its own `demo` key).
+
+- macOS notifications need the app to run from a bundle in a trusted place (e.g. `/Applications`);
+  from `/tmp` or `cargo run` macOS refuses, and the alerts show as in-app toasts instead.
+- Debug env vars: `LS_ALERTS_CHECK_NOW=1` (morning check at start), `LS_DEMO_NEW_READY=1` (with
+  `--demo`: one more ready reservation on the next refresh), `LS_ALERTS_PERMISSION=denied|allowed|ask`
+  (fake the system's answer). Demo data raises alerts only with one of the first two.
+- Screenshots: `LIBRESPYDUS_EVIDENCE=alerts:on|ask-ready|post|tap` (see `alerts/evidence.rs`).

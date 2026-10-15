@@ -599,10 +599,10 @@
     "dueTitle": "Due-date reminders",
     "dueSubtitle": "2 days before books are due, at 7:45",
     "blocked": "Notifications are turned off for LibreSpydus.",
-    "openSettings": "Open Settings",
+    "openSettings": {"ios": "Open Settings", "android": "Open Settings", "desktop": "Open System Settings"},
     "_notes": {
       "section": "Profile section while signed in (§5.8).",
-      "openSettings": "'Settings' is the system app's name, so it keeps its capital."
+      "openSettings": "'Settings' is the system app's name, so it keeps its capital. Desktop: macOS calls it System Settings."
     }
   },
 
