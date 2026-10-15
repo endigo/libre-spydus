@@ -930,11 +930,19 @@ pub mod Copy {
 
     pub mod Verification {
         pub const title: &str = "Confirm you’re human";
-        /// "{library} asks you to confirm you’re human. Complete the check below."
-        /// §6 verification sheet copy.
+        /// "{library} asks you to confirm you’re human. Complete the check in the window that opens."
+        /// iOS: "{library} asks you to confirm you’re human. Complete the check below."
+        /// Android: "{library} asks you to confirm you’re human. Complete the check below."
+        /// §6 verification sheet copy. Desktop: the dialog before the helper window opens (docs/desktop-app.md §11.2).
         pub fn message(library: &str) -> String {
-            format!("{} asks you to confirm you’re human. Complete the check below.", library)
+            format!("{} asks you to confirm you’re human. Complete the check in the window that opens.", library)
         }
+        /// Desktop only: the verification dialog's confirming button, which opens the helper window.
+        pub const openCheck: &str = "Open check";
+        /// Desktop only: a note in the verification dialog after the reader closed the helper window.
+        pub const windowClosed: &str = "The check window closed before the check was finished.";
+        /// Desktop only: a note in the verification dialog when the helper window couldn't start.
+        pub const helperFailed: &str = "The check window couldn’t open.";
         pub const closesByItself: &str = "This closes by itself once the library lets you in.";
         /// "Opening {library}…"
         pub fn opening(library: &str) -> String {
