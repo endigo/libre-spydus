@@ -173,12 +173,12 @@ fn an_empty_carousel_is_hidden(cx: &mut TestAppContext) {
     let _state = signed_out_app(cx, backend.clone());
     let (window, _) = open_detail(cx, BookRef::from_url(&url, ""));
 
-    assert!(exists(cx, window, "detail-carousel-similar"));
+    assert!(exists(cx, window, "detail-related-similar"));
     assert_eq!(label(cx, window, "detail-similar-0").as_deref(), Some("Similar one"));
     assert!(!exists(cx, window, "detail-similar-1"), "the book itself is left out");
-    assert!(!exists(cx, window, "detail-carousel-author"));
-    assert!(!exists(cx, window, "detail-carousel-series"));
-    assert!(!exists(cx, window, "detail-carousel-versions"));
+    assert!(!exists(cx, window, "detail-related-author"));
+    assert!(!exists(cx, window, "detail-related-series"));
+    assert!(!exists(cx, window, "detail-related-versions"));
 }
 
 #[gpui_kit::test]

@@ -24,7 +24,11 @@ use super::{DetailScreen, HeaderAvailability, HeldStatus, HeldTone, HoldingRow};
 /// Narrower windows put the sheet under the panel (docs/desktop-app.md §6).
 pub const WIDE_LAYOUT_MIN_WIDTH: f32 = 1100.;
 /// The panel's width beside the sheet.
-const PANEL_WIDTH: f32 = 400.;
+const LEFT_WIDTH: f32 = 440.;
+/// A related book's cover is at least this wide in its grid.
+const RELATED_MIN_COVER: f32 = 104.;
+/// The most covers in a row of related books.
+const RELATED_MAX_COLUMNS: u16 = 6;
 /// The page's widest extent.
 const PAGE_MAX_WIDTH: f32 = 1160.;
 /// A synopsis longer than this is clamped, with More / Less.
@@ -32,9 +36,11 @@ const SYNOPSIS_CLAMP_CHARS: usize = 420;
 
 impl Render for DetailScreen {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        let wide = window.viewport_size().width >= px(WIDE_LAYOUT_MIN_WIDTH);
+        let viewport = f32::from(window.viewport_size().width);
+        let wide = viewport >= WIDE_LAYOUT_MIN_WIDTH;
+        // The width beside the sidebar.
+        let beside = (viewport - crate::shell::sidebar::WIDTH).max(0.);
         let panel = self.panel(cx).into_any_element();
-        let sheet = self.sheet(wide, cx).into_any_element();
         let root = div()
             .id("detail-screen")
             .test_support()
@@ -42,11 +48,16 @@ impl Render for DetailScreen {
             .aria_label(SharedString::from(self.shown.title.clone()))
             .size_full()
             .bg(theme::color(colors::BACKGROUND));
-        // Each scroll area keeps to its own axis (`restrict_scroll_to_axis`): otherwise GPUI turns a
-        // vertical wheel over a carousel into horizontal scrolling, and a sideways swipe into page
-        // scrolling. `detail-scroll` is the area that scrolls the sheet in either layout.
+        // Each scroll area keeps to its own axis (`restrict_scroll_to_axis`). `detail-scroll` is
+        // the area with the panel and the sheet in either layout.
         if wide {
-            // Side by side: the panel (cover, Reserve) stays put while the sheet scrolls.
+            // Side by side: the panel and the book's details on the left, the other books (similar,
+            // by the author, in the series, other editions) on the right; each side scrolls on its own.
+            let page = beside.min(PAGE_MAX_WIDTH) - 2. * spacing::XL;
+            let right_width = page - LEFT_WIDTH - spacing::XL;
+            let sheet = self.sheet(true, None, cx).into_any_element();
+            let related = self.related(related_grid(right_width), false);
+            let has_right = !related.is_empty();
             root.child(
                 div()
                     .size_full()
@@ -58,32 +69,45 @@ impl Render for DetailScreen {
                     .gap(px(spacing::XL))
                     .child(
                         div()
-                            .id("detail-panel-scroll")
-                            .test_support()
-                            .w(px(PANEL_WIDTH))
-                            .flex_none()
-                            .h_full()
-                            .overflow_y_scroll()
-                            .restrict_scroll_to_axis()
-                            .pt(px(spacing::S))
-                            .pb(px(spacing::XXL))
-                            .child(panel),
-                    )
-                    .child(
-                        div()
                             .id("detail-scroll")
                             .test_support()
-                            .flex_1()
-                            .min_w_0()
+                            // Without other books, the details take the whole page.
+                            .when(has_right, |column| column.w(px(LEFT_WIDTH)).flex_none())
+                            .when(!has_right, |column| column.flex_1().min_w_0())
                             .h_full()
                             .overflow_y_scroll()
                             .restrict_scroll_to_axis()
                             .pt(px(spacing::S))
                             .pb(px(spacing::XXL))
+                            .flex()
+                            .flex_col()
+                            .gap(px(spacing::XL))
+                            .child(panel)
                             .child(sheet),
-                    ),
+                    )
+                    .when(has_right, |row| {
+                        row.child(
+                            div()
+                                .id("detail-related-scroll")
+                                .test_support()
+                                .flex_1()
+                                .min_w_0()
+                                .h_full()
+                                .overflow_y_scroll()
+                                .restrict_scroll_to_axis()
+                                .pt(px(spacing::S))
+                                .pb(px(spacing::XXL))
+                                .flex()
+                                .flex_col()
+                                .gap(px(spacing::XL))
+                                .children(related),
+                        )
+                    }),
             )
         } else {
+            // Stacked: the panel, then the sheet with the details and, below them, the other books.
+            let inner = beside.min(theme::CONTENT_MAX_WIDTH) - 2. * spacing::XL;
+            let sheet = self.sheet(false, Some(inner), cx).into_any_element();
             root.child(
                 div()
                     .id("detail-scroll")
@@ -115,8 +139,6 @@ impl Render for DetailScreen {
 }
 
 impl DetailScreen {
-    // ---- The navy panel ----
-
     fn panel(&mut self, cx: &mut Context<Self>) -> impl IntoElement {
         let book = self.shown.clone();
         let title_known = !book.title.trim().is_empty();
@@ -398,7 +420,9 @@ impl DetailScreen {
 
     // ---- The white sheet ----
 
-    fn sheet(&mut self, wide: bool, cx: &mut Context<Self>) -> impl IntoElement {
+    /// The white sheet: synopsis, subjects, copies and details; stacked (`related_width`), the
+    /// other books below them.
+    fn sheet(&mut self, wide: bool, related_width: Option<f32>, cx: &mut Context<Self>) -> impl IntoElement {
         let content: Vec<AnyElement> = match self.record.clone() {
             Loadable::Idle | Loadable::Loading => vec![
                 SheetLoading::new("detail-loading", Copy::Detail::loadingDetails).into_any_element(),
@@ -413,7 +437,7 @@ impl DetailScreen {
                     }))
                     .into_any_element(),
             ],
-            Loadable::Loaded(record) => self.loaded(&record, cx),
+            Loadable::Loaded(record) => self.loaded(&record, related_width, cx),
         };
         div()
             .id("detail-sheet")
@@ -435,7 +459,7 @@ impl DetailScreen {
             )
     }
 
-    fn loaded(&mut self, record: &RecordDetail, cx: &mut Context<Self>) -> Vec<AnyElement> {
+    fn loaded(&mut self, record: &RecordDetail, related_width: Option<f32>, cx: &mut Context<Self>) -> Vec<AnyElement> {
         let mut sections: Vec<AnyElement> = Vec::new();
         let summary = non_empty(record.summary.as_deref());
         let subjects = self.subjects();
@@ -454,13 +478,14 @@ impl DetailScreen {
         if !facts.is_empty() {
             sections.push(facts_list(&facts).into_any_element());
         }
-        let has_panels = self.has_related_panels();
-        if has_panels {
-            for panel in self.visible_panels() {
-                sections.push(self.carousel(panel).into_any_element());
-            }
+        let has_details = !sections.is_empty();
+        let mut has_related = false;
+        if let Some(width) = related_width {
+            let related = self.related(related_grid(width), true);
+            has_related = !related.is_empty();
+            sections.extend(related);
         }
-        if summary.is_none() && subjects.is_empty() && !shows_holdings && facts.is_empty() && !has_panels {
+        if !has_details && !has_related {
             sections.push(
                 div()
                     .id("detail-no-more")
@@ -572,11 +597,21 @@ impl DetailScreen {
             .child(body)
     }
 
-    fn carousel(&self, panel: RelatedPanel) -> impl IntoElement {
+    /// The other books: a section per related list that's loading or has books (`visible_panels`),
+    /// each a grid of covers. Empty when the book has none (or isn't loaded yet).
+    fn related(&self, grid: (u16, f32), on_sheet: bool) -> Vec<AnyElement> {
+        if !self.has_related_panels() {
+            return Vec::new();
+        }
+        self.visible_panels().into_iter().map(|panel| self.related_section(panel, grid, on_sheet)).collect()
+    }
+
+    fn related_section(&self, panel: RelatedPanel, (columns, cover_width): (u16, f32), on_sheet: bool) -> AnyElement {
         let state = self.related.get(&panel);
         let loading = !matches!(state, Some(Loadable::Loaded(_)));
         let label =
             if loading { Copy::Detail::loadingPanel(&panel.title().to_lowercase()) } else { panel.title().to_owned() };
+        let caption_color = theme::color(if on_sheet { colors::ON_SHEET_SECONDARY } else { colors::TEXT_SECONDARY });
         let items: Vec<AnyElement> = match state {
             Some(Loadable::Loaded(books)) => books
                 .iter()
@@ -587,28 +622,27 @@ impl DetailScreen {
                     let caption = author_name(book.author.as_deref()).or_else(|| non_empty(book.year.as_deref()));
                     let target = book.clone();
                     let card = ShelfCover::new(SharedString::from(format!("detail-{}-{index}", panel.key())), &shown)
-                        .on_sheet(true)
+                        .on_sheet(on_sheet)
                         .shows_title(true)
-                        .width(cover::SHELF_WIDTH)
+                        .width(cover_width)
                         .on_click(on_click(move |_, cx| {
                             let route = Route::Detail(target.clone());
                             AppState::global(cx).update(cx, |state, cx| state.push(route, cx));
                         }));
                     match caption {
-                        Some(caption) => card.caption(caption, Some(theme::color(colors::ON_SHEET_SECONDARY))),
+                        Some(caption) => card.caption(caption, Some(caption_color)),
                         None => card,
                     }
                     .into_any_element()
                 })
                 .collect(),
-            _ => (0..5)
+            _ => (0..columns)
                 .map(|_| {
                     div()
-                        .flex_none()
-                        .w(px(cover::SHELF_WIDTH))
-                        .h(px(cover::height(cover::SHELF_WIDTH)))
+                        .w(px(cover_width))
+                        .h(px(cover::height(cover_width)))
                         .rounded(px(radius::COVER))
-                        .bg(theme::color(colors::CHIP_ON_SHEET))
+                        .bg(theme::color(if on_sheet { colors::CHIP_ON_SHEET } else { colors::SURFACE }))
                         .into_any_element()
                 })
                 .collect(),
@@ -619,25 +653,32 @@ impl DetailScreen {
             .gap(px(spacing::M))
             .child(
                 SectionHeader::new(SharedString::from(format!("detail-{}-header", panel.key())), panel.title())
-                    .on_sheet(true),
+                    .on_sheet(on_sheet),
             )
             .child(
                 div()
-                    .id(SharedString::from(format!("detail-carousel-{}", panel.key())))
+                    .id(SharedString::from(format!("detail-related-{}", panel.key())))
                     .test_support()
                     .role(Role::List)
                     .aria_label(SharedString::from(label))
                     .w_full()
-                    .overflow_x_scroll()
-                    .restrict_scroll_to_axis()
-                    .flex()
-                    .flex_row()
-                    .items_start()
+                    .grid()
+                    .grid_cols(columns)
                     .gap(px(spacing::L))
-                    .pb(px(spacing::S))
                     .children(items),
             )
+            .into_any_element()
     }
+}
+
+/// The related books' grid for an area `width` wide: how many columns, and each cover's width
+/// (filling the area, at least `RELATED_MIN_COVER`).
+fn related_grid(width: f32) -> (u16, f32) {
+    let gap = spacing::L;
+    let fits = ((width + gap) / (RELATED_MIN_COVER + gap)).floor().max(2.);
+    let columns = (fits as u16).min(RELATED_MAX_COLUMNS);
+    let cover = ((width - gap * (columns as f32 - 1.)) / columns as f32).max(RELATED_MIN_COVER);
+    (columns, cover)
 }
 
 /// "Reserves the book" / "Asks you to sign in, then reserves the book"; an edition-level item's

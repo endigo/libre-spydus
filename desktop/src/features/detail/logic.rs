@@ -408,7 +408,7 @@ impl RelatedPanel {
         }
     }
 
-    /// For element ids: `detail-carousel-similar`, ….
+    /// For element ids: `detail-related-similar`, ….
     pub fn key(self) -> &'static str {
         match self {
             Self::Similar => "similar",
