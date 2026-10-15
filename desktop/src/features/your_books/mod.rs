@@ -717,10 +717,11 @@ impl Render for YourBooksScreen {
             let lists = state.account().snapshot().map(|snapshot| rows::Lists::new(snapshot, today()));
             (state.is_signed_in(), state.account().is_refreshing(), lists)
         };
-        let mut column = content_column().py(px(spacing::XL)).flex().flex_col().gap(px(spacing::L));
-        column = column.child(self.header(signed_in, refreshing, cx));
-        if signed_in {
-            column = column
+        // The title, Loans | Reservations and the status line stay put; only the cards scroll.
+        let mut top = content_column().pt(px(spacing::XL)).pb(px(spacing::M)).flex().flex_col().gap(px(spacing::L));
+        top = top.child(self.header(signed_in, refreshing, cx));
+        let body = if signed_in {
+            top = top
                 .child(
                     div()
                         .flex()
@@ -730,22 +731,31 @@ impl Render for YourBooksScreen {
                         .children(self.status_line(cx)),
                 )
                 .children(self.notice_banner(cx));
-            let content = match (self.segment, &lists) {
+            match (self.segment, &lists) {
                 (YourBooksSegment::Loans, Some(lists)) => self.loans(&lists.loans, columns, cx),
                 (YourBooksSegment::Reservations, Some(lists)) => self.reservations(&lists.reservations, columns, cx),
                 (YourBooksSegment::Loans, None) => self.placeholder(Copy::YourBooks::loadingLoans, cx),
                 (YourBooksSegment::Reservations, None) => self.placeholder(Copy::YourBooks::loadingReservations, cx),
-            };
-            column = column.child(content);
+            }
         } else {
-            column = column.child(self.signed_out(cx));
-        }
+            self.signed_out(cx).into_any_element()
+        };
         div()
             .id("your-books-screen")
             .test_support()
             .size_full()
-            .overflow_y_scroll()
-            .restrict_scroll_to_axis()
-            .child(column)
+            .flex()
+            .flex_col()
+            .child(div().flex_none().child(top))
+            .child(
+                div()
+                    .id("your-books-scroll")
+                    .test_support()
+                    .flex_1()
+                    .min_h_0()
+                    .overflow_y_scroll()
+                    .restrict_scroll_to_axis()
+                    .child(content_column().pt(px(spacing::S)).pb(px(spacing::XXL)).child(body)),
+            )
     }
 }

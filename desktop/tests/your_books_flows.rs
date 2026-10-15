@@ -230,3 +230,42 @@ fn signed_out_asks_to_sign_in(cx: &mut TestAppContext) {
         window.click("your-books-sign-in", cx);
     });
 }
+
+#[gpui_kit::test]
+fn the_top_stays_put_while_the_cards_scroll(cx: &mut TestAppContext) {
+    let (state, window, _demo) = demo_app(cx);
+    // Enough loans to scroll: copies of the demo loans with their own IRNs.
+    state.update(cx, |state, cx| {
+        state.update_account_snapshot(
+            |snapshot| {
+                let originals = snapshot.loans.items.clone();
+                for round in 1..5 {
+                    for loan in &originals {
+                        let mut copy = loan.clone();
+                        copy.irn = loan.irn.as_ref().map(|irn| format!("{irn}{round}"));
+                        snapshot.loans.items.push(copy);
+                    }
+                }
+            },
+            cx,
+        )
+    });
+    let first = state.read_with(cx, |state, _| state.account().snapshot().unwrap().loans.items[0].irn.clone().unwrap());
+    let card = format!("loan-{first}-row");
+    let mut before = None;
+    ui(cx, window, |window, _| {
+        before = Some((window.find("your-books-refresh").bounds(), window.find(card.clone()).bounds()));
+    });
+    let (segments, card_before) = before.unwrap();
+    ui(cx, window, |window, cx| {
+        window.scroll(
+            "your-books-scroll",
+            gpui_kit::ScrollDelta::Pixels(gpui_kit::point(gpui_kit::px(0.), gpui_kit::px(-300.))),
+            cx,
+        )
+    });
+    ui(cx, window, |window, _| {
+        assert_eq!(window.find("your-books-refresh").bounds().origin, segments.origin, "the top stayed");
+        assert!(window.find(card.clone()).bounds().origin.y < card_before.origin.y, "the cards scrolled");
+    });
+}
