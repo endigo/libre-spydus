@@ -227,9 +227,13 @@ The shell creates screen entities and keeps one per stack entry, so going back d
 - **Search and results:** the field, sort (Relevance / Newest) and recent searches, then result
   rows with infinite scroll.
 - **Book detail:** a navy panel holds the cover, title, author, availability, format chips, the
-  Reserve pill or held-status pill, and the My Picks bookmark. Beside it (below it when narrow), a
-  white sheet holds the synopsis, subjects, details, branch holdings and the related carousels.
-- **Your Books:** a segmented control switches between Loans | Reservations. The reservation group
+  Reserve pill or held-status pill, and the My Picks bookmark. Below it, a white sheet holds the
+  synopsis, subjects, details and branch holdings. In a wide window those two form the left column
+  and the other books (similar, by the author, in the series, other editions) fill the right one as
+  cover grids; each side scrolls on its own, and while the book loads the right side shows
+  placeholder grids. Narrow, it's one column, with the other books at the end of the sheet.
+- **Your Books:** a segmented control beside the title switches between Loans | Reservations;
+  "Updated …" sits next to the refresh button at the row's right end. The reservation group
   headers show counts. Each card has a "…" menu button and the same actions on right-click: Renew,
   or Edit / Cancel. The footnote is `yourBooks.rightClickHint` / `loanRightClickHint`.
 - **My Picks:** a cover grid. Right-click or "…" removes a book.

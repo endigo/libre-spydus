@@ -56,7 +56,14 @@ impl Render for DetailScreen {
             let page = beside.min(PAGE_MAX_WIDTH) - 2. * spacing::XL;
             let right_width = page - LEFT_WIDTH - spacing::XL;
             let sheet = self.sheet(true, None, cx).into_any_element();
-            let related = self.related(related_grid(right_width), false);
+            let grid = related_grid(right_width);
+            // While the book loads, the right side holds placeholder grids, so the page opens in
+            // the two columns it most likely ends up with.
+            let related = if matches!(self.record, Loadable::Idle | Loadable::Loading) {
+                vec![related_placeholder(grid).into_any_element()]
+            } else {
+                self.related(grid, false)
+            };
             let has_right = !related.is_empty();
             root.child(
                 div()
@@ -636,16 +643,7 @@ impl DetailScreen {
                     .into_any_element()
                 })
                 .collect(),
-            _ => (0..columns)
-                .map(|_| {
-                    div()
-                        .w(px(cover_width))
-                        .h(px(cover::height(cover_width)))
-                        .rounded(px(radius::COVER))
-                        .bg(theme::color(if on_sheet { colors::CHIP_ON_SHEET } else { colors::SURFACE }))
-                        .into_any_element()
-                })
-                .collect(),
+            _ => cover_placeholders(columns, cover_width, on_sheet),
         };
         div()
             .flex()
@@ -679,6 +677,35 @@ fn related_grid(width: f32) -> (u16, f32) {
     let columns = (fits as u16).min(RELATED_MAX_COLUMNS);
     let cover = ((width - gap * (columns as f32 - 1.)) / columns as f32).max(RELATED_MIN_COVER);
     (columns, cover)
+}
+
+/// A row of blank covers, where a related list's books will be.
+fn cover_placeholders(columns: u16, cover_width: f32, on_sheet: bool) -> Vec<AnyElement> {
+    (0..columns)
+        .map(|_| {
+            div()
+                .w(px(cover_width))
+                .h(px(cover::height(cover_width)))
+                .rounded(px(radius::COVER))
+                .bg(theme::color(if on_sheet { colors::CHIP_ON_SHEET } else { colors::SURFACE }))
+                .into_any_element()
+        })
+        .collect()
+}
+
+/// The other books' column before the book has loaded: two untitled sections of blank covers.
+fn related_placeholder((columns, cover_width): (u16, f32)) -> impl IntoElement {
+    div().id("detail-related-placeholder").test_support().flex().flex_col().gap(px(spacing::XL)).children((0..2).map(
+        |_| {
+            div().flex().flex_col().gap(px(spacing::M)).child(div().w(px(160.)).child(skeleton_bar(1., 18.))).child(
+                div().w_full().grid().grid_cols(columns).gap(px(spacing::L)).children(cover_placeholders(
+                    columns,
+                    cover_width,
+                    false,
+                )),
+            )
+        },
+    ))
 }
 
 /// "Reserves the book" / "Asks you to sign in, then reserves the book"; an edition-level item's

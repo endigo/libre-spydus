@@ -269,3 +269,25 @@ fn the_top_stays_put_while_the_cards_scroll(cx: &mut TestAppContext) {
         assert!(window.find(card.clone()).bounds().origin.y < card_before.origin.y, "the cards scrolled");
     });
 }
+
+#[gpui_kit::test]
+fn the_tabs_sit_beside_the_title_and_the_update_time_beside_refresh(cx: &mut TestAppContext) {
+    let (_state, window, _demo) = demo_app(cx);
+    ui(cx, window, |window, _| {
+        let middle = |id: &str| {
+            let bounds = window.find(id.to_owned()).bounds();
+            f32::from(bounds.origin.y + bounds.size.height / 2.)
+        };
+        let title = window.find("your-books-title").bounds();
+        let segments = window.find("your-books-segments").bounds();
+        let status = window.find("your-books-status").bounds();
+        let refresh = window.find("your-books-refresh").bounds();
+        for id in ["your-books-segments", "your-books-status", "your-books-refresh"] {
+            assert!((middle(id) - middle("your-books-title")).abs() < 4., "{id} is on the title's row");
+        }
+        assert!(segments.origin.x > title.origin.x + title.size.width, "the tabs follow the title");
+        assert!(status.origin.x > segments.origin.x + segments.size.width, "the time is past the tabs");
+        let between = f32::from(refresh.origin.x - (status.origin.x + status.size.width));
+        assert!((0. ..=24.).contains(&between), "the time is next to refresh ({between})");
+    });
+}

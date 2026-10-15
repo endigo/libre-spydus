@@ -2,7 +2,7 @@
 //! iOS `BorrowedView.swift` / `BorrowedViewModel.swift`): Loans | Reservations.
 //!
 //! Both lists come from the saved account (`AppState::account`, §5.2a): shown at once with
-//! "Updated 12 min ago" under the segments, and fetched again in the background when it's out of
+//! "Updated 12 min ago" beside the refresh button, and fetched again in the background when it's out of
 //! date on opening the section, with ⌘R or the refresh button, and after a change. A failed
 //! refresh keeps the saved lists ("Couldn’t refresh · Showing the saved list").
 //!
@@ -295,52 +295,69 @@ impl YourBooksScreen {
 
     // ---- Rendering ----
 
-    fn header(&self, signed_in: bool, refreshing: bool, cx: &mut Context<Self>) -> impl IntoElement {
-        div()
+    /// One row: the title and Loans | Reservations on the left, "Updated …" and the refresh button
+    /// on the right (on a line of their own when the window is too narrow for all four).
+    fn header(
+        &self,
+        signed_in: bool,
+        refreshing: bool,
+        lists: Option<&rows::Lists>,
+        cx: &mut Context<Self>,
+    ) -> impl IntoElement {
+        let title = div()
+            .id("your-books-title")
+            .test_support()
+            .role(Role::Heading)
+            .aria_label(SharedString::from(Copy::YourBooks::title))
+            .typography(Font::Greeting)
+            .text_color(theme::color(colors::TEXT_PRIMARY))
+            .child(Copy::YourBooks::title);
+        let row = div()
             .flex()
             .flex_row()
+            .flex_wrap()
             .items_center()
-            .justify_between()
-            .child(
-                div()
-                    .id("your-books-title")
-                    .test_support()
-                    .role(Role::Heading)
-                    .aria_label(SharedString::from(Copy::YourBooks::title))
-                    .typography(Font::Greeting)
-                    .text_color(theme::color(colors::TEXT_PRIMARY))
-                    .child(Copy::YourBooks::title),
-            )
-            .when(signed_in, |row| {
-                row.child(
-                    div()
-                        .id("your-books-refresh")
-                        .test_support()
-                        .role(Role::Button)
-                        .aria_label(SharedString::from(Copy::Desktop::refreshAccount))
-                        .aria_description(SharedString::from(Copy::YourBooks::refreshHint))
-                        .aria_keyshortcuts("Meta+R")
-                        .cursor(CursorStyle::PointingHand)
-                        .size(px(36.))
-                        .flex()
-                        .items_center()
-                        .justify_center()
-                        .rounded(px(radius::PILL))
-                        .bg(theme::color(colors::SURFACE))
-                        .hover(|style| style.bg(theme::color(colors::SURFACE_ELEVATED)))
-                        .on_click(cx.listener(|this, _, _, cx| this.refresh(true, cx)))
-                        .map(|button| {
-                            if refreshing {
-                                button.child(
-                                    gpui_kit::component::spinner::Spinner::new()
-                                        .color(theme::color(colors::TEXT_SECONDARY)),
-                                )
-                            } else {
-                                button.child(icon(Lucide::RefreshCw, px(16.), theme::color(colors::TEXT_PRIMARY)))
-                            }
-                        }),
-                )
-            })
+            .gap_x(px(spacing::XL))
+            .gap_y(px(spacing::M))
+            .child(title);
+        if !signed_in {
+            return row;
+        }
+        let refresh = div()
+            .id("your-books-refresh")
+            .test_support()
+            .role(Role::Button)
+            .aria_label(SharedString::from(Copy::Desktop::refreshAccount))
+            .aria_description(SharedString::from(Copy::YourBooks::refreshHint))
+            .aria_keyshortcuts("Meta+R")
+            .cursor(CursorStyle::PointingHand)
+            .size(px(36.))
+            .flex_none()
+            .flex()
+            .items_center()
+            .justify_center()
+            .rounded(px(radius::PILL))
+            .bg(theme::color(colors::SURFACE))
+            .hover(|style| style.bg(theme::color(colors::SURFACE_ELEVATED)))
+            .on_click(cx.listener(|this, _, _, cx| this.refresh(true, cx)))
+            .map(|button| {
+                if refreshing {
+                    button
+                        .child(gpui_kit::component::spinner::Spinner::new().color(theme::color(colors::TEXT_SECONDARY)))
+                } else {
+                    button.child(icon(Lucide::RefreshCw, px(16.), theme::color(colors::TEXT_PRIMARY)))
+                }
+            });
+        row.child(self.segment_control(lists, cx)).child(
+            div()
+                .ml_auto()
+                .flex()
+                .flex_row()
+                .items_center()
+                .gap(px(spacing::M))
+                .children(self.status_line(cx))
+                .child(refresh),
+        )
     }
 
     fn segment_control(&self, lists: Option<&rows::Lists>, cx: &mut Context<Self>) -> impl IntoElement {
@@ -386,6 +403,7 @@ impl YourBooksScreen {
         );
         div()
             .id("your-books-segments")
+            .test_support()
             .role(Role::TabList)
             .aria_label(SharedString::from(Copy::YourBooks::show))
             .w(px(420.))
@@ -717,20 +735,12 @@ impl Render for YourBooksScreen {
             let lists = state.account().snapshot().map(|snapshot| rows::Lists::new(snapshot, today()));
             (state.is_signed_in(), state.account().is_refreshing(), lists)
         };
-        // The title, Loans | Reservations and the status line stay put; only the cards scroll.
+        // The title, Loans | Reservations, the status line and the refresh button stay put; only
+        // the cards scroll.
         let mut top = content_column().pt(px(spacing::XL)).pb(px(spacing::M)).flex().flex_col().gap(px(spacing::L));
-        top = top.child(self.header(signed_in, refreshing, cx));
+        top = top.child(self.header(signed_in, refreshing, lists.as_ref(), cx));
         let body = if signed_in {
-            top = top
-                .child(
-                    div()
-                        .flex()
-                        .flex_col()
-                        .gap(px(spacing::S))
-                        .child(self.segment_control(lists.as_ref(), cx))
-                        .children(self.status_line(cx)),
-                )
-                .children(self.notice_banner(cx));
+            top = top.children(self.notice_banner(cx));
             match (self.segment, &lists) {
                 (YourBooksSegment::Loans, Some(lists)) => self.loans(&lists.loans, columns, cx),
                 (YourBooksSegment::Reservations, Some(lists)) => self.reservations(&lists.reservations, columns, cx),

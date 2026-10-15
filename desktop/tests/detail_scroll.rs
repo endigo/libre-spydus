@@ -95,3 +95,27 @@ fn a_narrow_window_puts_the_other_books_below_the_details(cx: &mut TestAppContex
     assert!(synopsis_after.origin.y < synopsis.origin.y, "one column scrolls");
     assert!(similar.origin.y > synopsis_after.origin.y, "the other books come after the details");
 }
+
+#[gpui_kit::test]
+fn a_wide_window_opens_in_two_columns_while_the_book_loads(cx: &mut TestAppContext) {
+    let backend = ScriptedBackend::new();
+    let url = format!("{ORIGIN}/cgi-bin/spydus.exe/ENQ/OPAC/BIBENQ?SETLVL=&IRN=7");
+    let links = RecordRelated { similar: Some("https://x/similar".into()), ..Default::default() };
+    backend.record(&url, record("7", "77", "Loading", links));
+    let items = (0..6).map(|n| related_item(&format!("s{n}"), &format!("Book s{n}"))).collect();
+    backend.related("https://x/similar", RelatedList { items });
+    backend.hold_records(true);
+    let _state = signed_out_app(cx, backend.clone());
+    let (window, _) = open_detail(cx, BookRef::from_url(&url, "Loading"));
+
+    let details = bounds(cx, window, "detail-scroll");
+    let placeholder = bounds(cx, window, "detail-related-placeholder");
+    assert!(placeholder.origin.x > details.origin.x + details.size.width, "placeholders on the right");
+
+    // The book's other books take the placeholders' place, in the same column.
+    assert_eq!(backend.release_records(), 1);
+    let similar = bounds(cx, window, "detail-similar-0");
+    assert!(!exists(cx, window, "detail-related-placeholder"));
+    assert_eq!(bounds(cx, window, "detail-scroll").size.width, details.size.width, "the details kept their width");
+    assert!(similar.origin.x >= placeholder.origin.x);
+}
