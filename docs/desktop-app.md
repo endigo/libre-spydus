@@ -369,14 +369,7 @@ The glossary row for the reader's device says **computer** on desktop.
   - clippy `-D warnings` clean;
   - copy checks clean.
   - Integration screenshots in demo mode are in `/tmp/librespydus-evidence/INT/` on mini-knit.
-- **Follow-ups, not blocking v1:**
-  - loading skeletons don't pulse;
-  - the library directory is cached only in memory (iOS also keeps a 7-day disk cache);
-  - a white library logo on its white tile is invisible (City of Fremantle);
-  - branch holdings show for every physical format, not only edition-level items;
-  - `detail/held.rs` and Your Books both carry renew-message helpers;
-  - the Edit dialog's date pickers have no UI test.
-- **Wave 3** still needs the user's OK: verification helper (`wry`), desktop notifications, Touch ID, a packaged `.app`, Windows and Linux.
+- **Follow-ups:** all done in wave 3 (E1, §11).
 
 ## 11. Wave 3 (2026-10-15)
 
@@ -478,3 +471,21 @@ signature exactly as it is and fill in the body.
 - **Icon:** `AppIcon.icns`, built from `ios/LibreSpydus/Resources/Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png` with `sips` + `iconutil`.
 - **Signature:** ad-hoc, `codesign --force --deep -s -`, then `codesign --verify`.
 - **README:** an Install section.
+
+### 11.6 Wave 3 results (2026-10-15)
+- **Merged into `desktop`:** E5 packaging `6440eda`, E2 verification `c097c1b`, E4 Touch ID `a7c0e9e`, E3 alerts `2b114d1`, E1 polish `3396355`.
+- **Coordinator fixes:**
+  - Profile's verification message wraps;
+  - switches show a white thumb on a grey track when off;
+  - Touch ID's switch is green, like Notifications'.
+- **Checks:** `cargo test` 195 pass; clippy `-D warnings` clean with and without `evidence`; fmt and copy checks clean.
+- **Not verified yet** (needs the user, or a machine these workers can't drive):
+  - a real "confirm you're human" check, completed by hand;
+  - a real macOS notification banner (the system's permission prompt must be answered once, ideally for the `.app` in /Applications);
+  - real Touch ID on the MacBook;
+  - the Dock icon.
+- **Left open:**
+  - the icon is the iOS square, not a macOS-shaped icon;
+  - the `.app` is ad-hoc signed and not notarised;
+  - the Touch ID check doesn't wait for the window to be in front;
+  - Touch ID details live in the login keychain until there's a team-signed build (§11.4).
