@@ -891,10 +891,18 @@ enum Copy {
     enum Verification {
         static let title = "Confirm you’re human"
         /// "{library} asks you to confirm you’re human. Complete the check below."
-        /// §6 verification sheet copy.
+        /// Android: "{library} asks you to confirm you’re human. Complete the check below."
+        /// Desktop: "{library} asks you to confirm you’re human. Complete the check in the window that opens."
+        /// §6 verification sheet copy. Desktop: the dialog before the helper window opens (docs/desktop-app.md §11.2).
         static func message(library: String) -> String {
             "\(library) asks you to confirm you’re human. Complete the check below."
         }
+        /// Desktop only: the verification dialog's confirming button, which opens the helper window.
+        static let openCheck = "Open check"
+        /// Desktop only: a note in the verification dialog after the reader closed the helper window.
+        static let windowClosed = "The check window closed before the check was finished."
+        /// Desktop only: a note in the verification dialog when the helper window couldn't start.
+        static let helperFailed = "The check window couldn’t open."
         static let closesByItself = "This closes by itself once the library lets you in."
         /// "Opening {library}…"
         static func opening(library: String) -> String {

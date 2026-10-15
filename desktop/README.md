@@ -109,3 +109,17 @@ It builds with `--features evidence` and runs `--evidence --screenshot …`. Sig
   (`support::signed_out_app`), `#[gpui_kit::test]`, `gpui_kit::test::TestWindowExt`
   (`window.click("id", cx)`, `find("id").label()`). Elements are found only with `.id(..)` then
   `.test_support()`.
+
+## "Confirm you're human" (E2)
+
+UK libraries answer with an AWS WAF check. The app shows a white dialog (Open check / Cancel), then
+runs itself as a helper window, `librespydus --verify-helper <origin> <user-agent> [<library name>]`
+(tao + wry, private web view, the core's User-Agent). The helper prints `aws-waf-token=<value>`
+on stdout and exits 0 once the library sets the cookie, or exits 1 when the window is closed. It never
+injects scripts and never interacts with the page. After two checks that didn't help, the library
+shows as "unavailable", as on iOS. Code: `src/features/verification/`.
+
+Debug toggles: `LS_FAKE_VERIFICATION=1` makes the helper print a fake cookie after 2 s, without a
+window or a page. With `--features evidence`, `LIBRESPYDUS_EVIDENCE=verification:<dialog|checking|closed|open|unavailable>`
+sets up a state, and `LS_VERIFY_HELPER_SNAPSHOT=<png>` saves the helper's page 4 s after it loads, then
+closes the helper.
