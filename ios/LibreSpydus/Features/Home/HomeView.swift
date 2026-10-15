@@ -9,6 +9,7 @@ import SwiftUI
 /// out of date. Pull to refresh; reloads on library, verification and sign-in changes.
 struct HomeView: View {
     @Environment(AppModel.self) private var model
+    @Environment(\.appLayout) private var layout
     @State private var home = HomeViewModel()
     @State private var featured = FeaturedRowModel()
     /// A Featured `.web` link in the in-app browser.
@@ -38,6 +39,7 @@ struct HomeView: View {
                 }
                 .padding(.top, Theme.Spacing.s)
                 .padding(.bottom, Theme.Spacing.xxl)
+                .pageColumn()
             }
             .scrollIndicators(.hidden)
             #if DEBUG
@@ -98,12 +100,16 @@ struct HomeView: View {
 
     // MARK: Header
 
+    /// The logo over the greeting; beside it in the wide layout (§6.1), as on the desktop.
     private var header: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.l) {
+        let stack = layout == .wide
+            ? AnyLayout(HStackLayout(alignment: .center, spacing: Theme.Spacing.l))
+            : AnyLayout(VStackLayout(alignment: .leading, spacing: Theme.Spacing.l))
+        return stack {
             Button {
                 model.select(.profile)
             } label: {
-                LibraryLogo(name: model.libraryName, logoUrl: model.library?.logoUrl, size: 44)
+                LibraryLogo(name: model.libraryName, logoUrl: model.library?.logoUrl, size: layout == .wide ? 52 : 44)
             }
             .buttonStyle(PressScaleStyle())
             .accessibilityLabel(Copy.Home.profileButton(library: model.libraryName))

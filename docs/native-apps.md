@@ -678,6 +678,36 @@ Watch the web view's cookie store for `aws-waf-token` on the library host; when 
 `completeVerification("aws-waf-token=<value>")`, dismiss, and the failed screen retries.
 Never inject scripts into or interact with the challenge programmatically.
 
+### 6.1 iPad (the iOS app's wide layout)
+The iOS app runs on iPhone and iPad (`TARGETED_DEVICE_FAMILY = 1,2`; every iPad orientation). The
+layout follows the window, not the device (`AppLayout` in `ios/LibreSpydus/DesignSystem/Layout.swift`):
+a regular-width window is **wide**; an iPhone and a narrow iPad window (Slide Over, a narrow Split
+View) are **compact** and get the phone layout above, unchanged. The wide layout borrows the
+desktop app's (`docs/desktop-app.md` §6):
+- **Sidebar instead of the tab bar** (`LSSidebar`, 260 pt): the library and Change library at the
+  top; Home · Your Books · Search · My Picks · Profile in the tab bar's order and words; at the
+  bottom the account name (opens Profile) and Sign out (confirmed as in Profile), or Sign in. It is
+  navy, not the desktop's white, because the iPad's status bar sits over it.
+- **Page column.** Every page sits in a centred column at most 1040 pt wide (`pageColumn()`), with
+  the phone's 16 pt sides. Shelves scroll sideways inside it and never draw over the sidebar.
+- **Card grids** (`CardRows`): Your Books, search and results lists, and My Picks on the account
+  show book cards in as many 300 pt columns as fit (1–3); each row is as tall as its tallest card.
+  Your Books' Loans | Reservations sits beside the title when both fit. A grid card swipes open
+  like the phone's (it slides under its own edge); long-press offers the same actions. My Picks on
+  the device shows as many covers as fit (2–6, at least 120 pt).
+- **Search** gets the other sections' title size, and Relevance / Newest beside the field.
+- **Home** puts the logo beside the greeting.
+- **Book page**, when its page is at least 820 pt wide: the header, Reserve (or the held pill) and
+  the white sheet (now a card) in a 440 pt left column; the other books (similar, by the author, in
+  the series, other editions) as cover grids in the right column (`DetailRelatedColumn`). Each
+  side scrolls on its own. While the book loads the right column shows placeholder grids. A book
+  with no other books gives the left side the page. A narrower page (iPad portrait) keeps the
+  phone's one column.
+- **Sheets** (sign in, reserve, edit, My card, Change library) are the system's form sheets. The
+  first-launch library picker is a 760 pt column.
+- **Words.** An iPad says "iPad" where an iPhone says "phone" ("Saved on this iPad"): `"ipad"` forms
+  of those platform variants in `design/copy.json`, chosen at run time (`CopyDevice`, §7.1).
+
 ## 7. Design system
 
 Tokens: `design/tokens.json` (colours, radii, spacing, type, cover sizes, tab bar). The visual
@@ -726,7 +756,7 @@ the same rules. Debug-only screens (component galleries, demo hints) are exempt.
 | Account | **Sign in**, **Sign out**, **Signed in** | Log in, Log out, Login |
 | The library | "library" in sentences; its name as the directory gives it; **Change library** | branch (except for a branch) |
 | Changing a reservation | **Edit** ("Edit reservation", "to edit or cancel it") | change (as the action) |
-| The reader's device | **phone** ("Saved on this phone", "Verified on this phone"); on desktop **computer** ("Saved on this computer"), as platform variants (`docs/desktop-app.md` §8.2) | device |
+| The reader's device | **phone** ("Saved on this phone", "Verified on this phone"); on an iPad **iPad** ("Saved on this iPad", §6.1); on desktop **computer** ("Saved on this computer"), as platform variants (`docs/desktop-app.md` §8.2) | device |
 | The library's human check | "**confirm** you’re human" (title "Confirm you’re human"); the feature is "verification" | verify you’re human |
 | The library's web pages | the library’s **website** | site, web page |
 | Errors | button **Retry**; "Can’t reach {library}. Check your connection."; "Something went wrong" | Try again (as a button), Oops |
@@ -741,7 +771,7 @@ only when it isn't this year. Accessibility labels are the visible text or a sho
 hints start with a third-person verb ("Opens Profile", "Shows this collection"). The two apps may
 differ only where the gesture differs (iOS "Swipe left…", Android "Touch and hold…"): those
 strings are platform variants of one key in the JSON. The other difference is the name of the
-phone's face or fingerprint check (§5.14), filled in as `{method}`. The desktop app (`docs/desktop-app.md`) says "computer" and "Click" where the phones say "phone" and "Tap", as platform variants.
+phone's face or fingerprint check (§5.14), filled in as `{method}`. The desktop app (`docs/desktop-app.md`) says "computer" and "Click" where the phones say "phone" and "Tap", as platform variants. An iPad says "iPad" for "phone": a variant may add an `"ipad"` form, which the iOS app uses on an iPad (`CopyDevice.usesPadWords`; tests pin either device's words with `CopyDevice.$isPadOverride.withValue(…)`).
 
 ## 8. Build, run & evidence
 

@@ -5,9 +5,11 @@ import SwiftUI
 /// availability, format chips, "Reserve" and the My Picks bookmark; a white sheet with the
 /// synopsis, subject chips, details and related carousels. When the saved account has the edition
 /// on screen on loan or reserved, a status pill ("On loan · Due 14 Oct") takes Reserve's place and
-/// opens Your Books.
+/// opens Your Books. In the wide layout's two columns (§6.1) the header and the sheet are on the
+/// left and the other books on the right (`DetailRelatedColumn`), each scrolling on its own.
 struct BookDetailView: View {
     @Environment(AppModel.self) private var app
+    @Environment(\.appLayout) private var layout
     @State private var model: BookDetailModel
     @State private var reserveRequest: ReserveRequest?
     /// "Reserve" tapped while signed out: reserve this format once signed in.
@@ -32,19 +34,21 @@ struct BookDetailView: View {
 
     var body: some View {
         GeometryReader { proxy in
-            ScrollViewReader { scroller in
-                ScrollView {
-                    // At least a screen tall, so the white sheet reaches the tab bar (the proxy's
-                    // height already excludes the tab bar: TabStack applies `tabBarClearance()`).
-                    content
-                        .frame(minHeight: max(proxy.size.height, 0), alignment: .top)
+            let page = min(proxy.size.width, PageLayout.contentMaxWidth) - Theme.Spacing.l * 2
+            if layout == .wide, page >= PageLayout.detailTwoColumnMinWidth {
+                twoColumns(page: page)
+            } else {
+                ScrollViewReader { scroller in
+                    ScrollView {
+                        // At least a screen tall, so the white sheet reaches the tab bar (the proxy's
+                        // height already excludes the tab bar: TabStack applies `tabBarClearance()`).
+                        content
+                            .frame(minHeight: max(proxy.size.height, 0), alignment: .top)
+                    }
+                    #if DEBUG
+                    .task(id: model.record.value != nil) { await applyDebugActions(scroller) }
+                    #endif
                 }
-                #if DEBUG
-                .task(id: model.record.value != nil) {
-                    guard model.record.value != nil, let actions = DetailDebugActions.take() else { return }
-                    await apply(actions, scroller: scroller)
-                }
-                #endif
             }
         }
         .screenBackground()
@@ -91,10 +95,58 @@ struct BookDetailView: View {
         }
     }
 
+    /// The wide layout (§6.1): the header, Reserve and the sheet (a card) on the left, the other
+    /// books on the right; without other books, the left side takes the page.
+    private func twoColumns(page: CGFloat) -> some View {
+        let showsRight = DetailRelatedColumn.isShown(for: model)
+        let rightWidth = page - PageLayout.detailLeftWidth - Theme.Spacing.xl
+        return HStack(alignment: .top, spacing: Theme.Spacing.xl) {
+            ScrollViewReader { scroller in
+                ScrollView {
+                    VStack(spacing: Theme.Spacing.xl) {
+                        VStack(spacing: 0) {
+                            DetailHeader(model: model, backend: app.backend, report: app.report, inset: 0)
+                            actions(inset: 0)
+                        }
+                        DetailSheetContent(model: model, retry: reload, startRelated: startRelated,
+                                           retryCopies: retryCopies, showsRelated: false)
+                            .padding(.top, Theme.Spacing.xl)
+                            .frame(maxWidth: .infinity, alignment: .topLeading)
+                            .background(
+                                RoundedRectangle(cornerRadius: Theme.Radius.sheet, style: .continuous)
+                                    .fill(Theme.Colors.sheet)
+                            )
+                        Color.clear
+                            .frame(height: 1)
+                            .id(Self.bottomID)
+                    }
+                    .padding(.bottom, Theme.Spacing.xxl)
+                }
+                .scrollIndicators(.hidden)
+                #if DEBUG
+                .task(id: model.record.value != nil) { await applyDebugActions(scroller) }
+                #endif
+            }
+            .frame(width: showsRight ? PageLayout.detailLeftWidth : nil)
+            .frame(maxWidth: showsRight ? nil : .infinity)
+            if showsRight {
+                ScrollView {
+                    DetailRelatedColumn(model: model, width: rightWidth, startRelated: startRelated)
+                        .padding(.top, Theme.Spacing.s)
+                        .padding(.bottom, Theme.Spacing.xxl)
+                }
+                .scrollIndicators(.hidden)
+                .frame(width: rightWidth)
+            }
+        }
+        .padding(.horizontal, Theme.Spacing.l)
+        .pageColumn()
+    }
+
     private var content: some View {
         VStack(spacing: 0) {
             DetailHeader(model: model, backend: app.backend, report: app.report)
-            actions
+            actions(inset: Theme.Spacing.xl)
                 .zIndex(1)
                 .padding(.bottom, -actionsOverlap)
             DetailSheetContent(model: model, retry: reload, startRelated: startRelated, retryCopies: retryCopies)
@@ -128,7 +180,8 @@ struct BookDetailView: View {
         return !(snapshot.loans.items.isEmpty && reservations.ready.items.isEmpty && reservations.pending.items.isEmpty)
     }
 
-    private var actions: some View {
+    /// Reserve (or the held pill) and the bookmark, `inset` from the page's sides.
+    private func actions(inset: CGFloat) -> some View {
         HStack(spacing: Theme.Spacing.m) {
             if let held {
                 HeldStatusPill(status: held, isRenewing: isRenewing) { tapHeld(held) }
@@ -149,7 +202,7 @@ struct BookDetailView: View {
                 favouriteButton
             }
         }
-        .padding(.horizontal, Theme.Spacing.xl)
+        .padding(.horizontal, inset)
     }
 
     /// Signed out: My Picks on the phone (§5.3).
@@ -265,6 +318,12 @@ struct BookDetailView: View {
     }
 
     #if DEBUG
+    /// Runs the `-LSDetailAction` hooks once the record is in.
+    private func applyDebugActions(_ scroller: ScrollViewProxy) async {
+        guard model.record.value != nil, let actions = DetailDebugActions.take() else { return }
+        await apply(actions, scroller: scroller)
+    }
+
     /// `-LSDetailAction` screenshot hooks (DetailDebugActions).
     private func apply(_ actions: DetailDebugActions, scroller: ScrollViewProxy) async {
         func wait(while condition: () -> Bool) async {
@@ -328,6 +387,9 @@ private struct DetailHeader: View {
     let model: BookDetailModel
     let backend: any LibraryBackend
     let report: BookDetailModel.Reporter
+    /// From the page's sides: the phone's edge-to-edge page pads it; the wide layout's column
+    /// lines it up with the sheet's edge.
+    var inset: CGFloat = Theme.Spacing.xl
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.l) {
@@ -363,7 +425,7 @@ private struct DetailHeader: View {
                 formatChips
             }
         }
-        .padding(.horizontal, Theme.Spacing.xl)
+        .padding(.horizontal, inset)
         .padding(.top, Theme.Spacing.s)
         .padding(.bottom, Theme.Spacing.xl)
         .frame(maxWidth: .infinity, alignment: .leading)

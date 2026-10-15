@@ -9,6 +9,8 @@ struct LibreSpydusApp: App {
     private let notificationRouter: AlertNotificationRouter
 
     init() {
+        // "Saved on this iPad" where an iPhone says "phone" (docs/native-apps.md §6.1).
+        CopyDevice.isPad = UIDevice.current.userInterfaceIdiom == .pad
         Appearance.configure()
         TimingLog.install()
         // The morning check's handler (below) is registered later in the launch.

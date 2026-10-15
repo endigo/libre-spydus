@@ -30,7 +30,9 @@ struct CopyUsageTests {
         #expect(AppTab.favourites.title == Copy.Tabs.myPicks)
         #expect(Copy.Tabs.myPicks == Copy.Picks.title)
         #expect(Copy.Picks.title == "My Picks")
-        #expect(Copy.Picks.subtitlePhone == "Saved on this phone")
+        CopyDevice.$isPadOverride.withValue(false) {
+            #expect(Copy.Picks.subtitlePhone == "Saved on this phone")
+        }
         #expect(Copy.Picks.subtitleAccount == "Saved on your library account")
     }
 

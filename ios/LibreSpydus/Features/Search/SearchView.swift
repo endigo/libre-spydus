@@ -4,6 +4,7 @@ import SwiftUI
 /// infinite scroll, and recent searches while the field is empty. Searches run on Return only.
 struct SearchView: View {
     @Environment(AppModel.self) private var model
+    @Environment(\.appLayout) private var layout
     @State private var text = ""
     /// The query whose results are shown (set on Return).
     @State private var submitted: String?
@@ -43,27 +44,52 @@ struct SearchView: View {
         }
     }
 
+    /// The title, the field and (with results) Relevance / Newest; in the wide layout (§6.1) the
+    /// title in the other sections' size and the sort beside the field, as on the desktop.
     private var header: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.m) {
             Text(Copy.Search.title)
-                .themeFont(.title)
+                .themeFont(layout == .wide ? .greeting : .title)
                 .foregroundStyle(Theme.Colors.textPrimary)
                 .accessibilityAddTraits(.isHeader)
-            SearchField(text: $text, onSubmit: submit)
-                .focused($fieldFocused)
-            if showsResults {
-                Picker(Copy.Search.sort, selection: $sort) {
-                    ForEach(SearchSortOption.allCases) { option in
-                        Text(option.label).tag(option)
+                .padding(.top, layout == .wide ? Theme.Spacing.l - Theme.Spacing.s : 0)
+            if layout == .wide {
+                HStack(spacing: Theme.Spacing.m) {
+                    field
+                    if showsResults {
+                        sortPicker
+                            .frame(width: Self.wideSortWidth)
                     }
                 }
-                .pickerStyle(.segmented)
-                .accessibilityLabel(Copy.Search.sortResults)
+            } else {
+                field
+                if showsResults {
+                    sortPicker
+                }
             }
         }
         .padding(.horizontal, Theme.Spacing.l)
         .padding(.top, Theme.Spacing.s)
         .padding(.bottom, Theme.Spacing.m)
+        .pageColumn()
+    }
+
+    /// Relevance / Newest beside the field.
+    private static let wideSortWidth: CGFloat = 240
+
+    private var field: some View {
+        SearchField(text: $text, onSubmit: submit)
+            .focused($fieldFocused)
+    }
+
+    private var sortPicker: some View {
+        Picker(Copy.Search.sort, selection: $sort) {
+            ForEach(SearchSortOption.allCases) { option in
+                Text(option.label).tag(option)
+            }
+        }
+        .pickerStyle(.segmented)
+        .accessibilityLabel(Copy.Search.sortResults)
     }
 
     /// Results for the submitted query; recent searches once the field is cleared.
@@ -162,6 +188,7 @@ private struct RecentSearchesView: View {
                 .padding(.horizontal, Theme.Spacing.l)
                 .padding(.top, Theme.Spacing.s)
                 .padding(.bottom, Theme.Spacing.xxl)
+                .pageColumn()
             }
             .scrollDismissesKeyboard(.immediately)
         }

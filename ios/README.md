@@ -8,7 +8,7 @@ and cache on the device; the app is UI plus local storage. The build contract is
 | | |
 |---|---|
 | Bundle ID / name | `com.librespydus` / LibreSpydus |
-| Minimum | iOS 17.0, iPhone portrait (on iPad it runs as an iPhone app) |
+| Minimum | iOS 17.0: iPhone (portrait) and iPad (any orientation; a sidebar, card grids and a two-column book page in a regular-width window, `docs/native-apps.md` §6.1) |
 | Language | Swift 6 language mode (app, tests and the bindings package). The generated bindings compile cleanly in both Swift 5 and 6 modes. |
 | Toolchain | Xcode 27 (Swift 6.4), Rust 1.97, UniFFI 0.32.2 |
 
@@ -24,7 +24,7 @@ ios/
   LibreSpydus.xcodeproj           app + LibreSpydusTests, folder-synchronized groups, shared scheme
   Config/LibreSpydus-Info.plist   launch-screen colour (merged with the generated Info.plist)
   LibreSpydus/
-    App/            LibreSpydusApp, RootView (tab shell + root sheets), LaunchOptions (debug hooks)
+    App/            LibreSpydusApp, RootView (tab bar or iPad sidebar + root sheets), LaunchOptions (debug hooks)
     Core/           AppModel, LibraryBackend (+ CoreBackend, DemoBackend, DemoData), FavouritesStore,
                     SecretStore (Keychain), Route/AppTab, BookRef, UserFacingError + Loadable, Formatting
     DesignSystem/   Theme (tokens), Appearance, Components/, ComponentsGallery (DEBUG)

@@ -6,6 +6,7 @@ import SwiftUI
 struct LibraryPickerView: View {
     @Environment(AppModel.self) private var model
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.horizontalSizeClass) private var sizeClass
     @State private var picker = LibraryPickerModel()
     /// Whether this is first-launch onboarding, fixed when the picker appears so the header
     /// doesn't change while the cover animates away after a pick.
@@ -24,6 +25,9 @@ struct LibraryPickerView: View {
             content
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
+        // Full screen on an iPad: a readable column, as on the desktop (§6.1).
+        .frame(maxWidth: onboarding && sizeClass == .regular ? Self.wideOnboardingWidth : nil)
+        .frame(maxWidth: .infinity)
         .screenBackground()
         .presentationBackground(Theme.Colors.background)
         .onAppear {
@@ -34,6 +38,9 @@ struct LibraryPickerView: View {
         }
         .task { await picker.load() }
     }
+
+    /// The first-launch picker's widest on an iPad.
+    private static let wideOnboardingWidth: CGFloat = 760
 
     // MARK: Header
 
