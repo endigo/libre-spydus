@@ -347,6 +347,8 @@ impl ProfileScreen {
                     .child(
                         div()
                             .flex_1()
+                            // Lets the message wrap inside the card instead of running past it.
+                            .min_w(px(0.))
                             .flex()
                             .flex_col()
                             .gap(px(spacing::XS))
