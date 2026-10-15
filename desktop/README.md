@@ -18,6 +18,27 @@ cargo run --example public_search             # one public search with the ⏱ t
 
 `desktop/target` is 4–5 GB; delete it when you're done with a worktree.
 
+## Install (macOS)
+
+```sh
+desktop/scripts/bundle.sh          # release build → desktop/target/LibreSpydus.app
+desktop/scripts/bundle.sh --dmg    # …plus desktop/target/LibreSpydus-<version>.dmg
+```
+
+- The script runs `cargo build --release` (`[profile.release]`: thin LTO, one codegen unit,
+  stripped), assembles the bundle from `packaging/Info.plist` (version from `Cargo.toml`), makes
+  `AppIcon.icns` from the iOS 1024 px icon with `sips` + `iconutil` (not committed), signs it ad
+  hoc and checks the signature. It needs only the Command Line Tools.
+- **Install:** drag `LibreSpydus.app` to Applications (or open the `.dmg` and drag it onto the
+  Applications link).
+- **First launch:** the signature is ad hoc, with no Developer ID and no notarization. A copy
+  built on this Mac opens normally. A copy downloaded or copied from another Mac is quarantined:
+  Control-click → Open once, or `xattr -dr com.apple.quarantine /Applications/LibreSpydus.app`.
+- A release build ignores the debug launch flags and keeps its data in
+  `~/Library/Application Support/LibreSpydus` and the login keychain, as a reader's copy would.
+  To test it without touching those, launch it with another `HOME`:
+  `HOME=/tmp/ls-home desktop/target/LibreSpydus.app/Contents/MacOS/librespydus`.
+
 ## Debug launch flags (`src/launch.rs`, debug builds only)
 
 | Flag | |
