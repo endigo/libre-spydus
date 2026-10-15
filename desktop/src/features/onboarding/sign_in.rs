@@ -2,6 +2,12 @@
 //! library's logo and name, "Username / library card number" and a masked "PIN / password" with a
 //! reveal toggle → `AppState::sign_in`. Enter moves on from the first field and signs in from the
 //! second; errors (§5.7) show inline; success closes the dialog.
+//!
+//! Touch ID (docs/native-apps.md §5.14, `features::biometrics`): when this library has details
+//! kept and the check is available, "Sign in with Touch ID" under Sign in, and the dialog starts
+//! the check as it opens (unless one was just cancelled). The note under the buttons becomes
+//! `privacyNoteBiometrics` whenever the check is available, and turning Touch ID on from Profile
+//! shows `turnOnNote` above the fields.
 
 use gpui_kit::component::WindowExt;
 use gpui_kit::component::input::{InputEvent, InputState};
@@ -14,6 +20,7 @@ use gpui_kit::{
 use super::logo::LibraryLogo;
 use super::sheet::{self, SheetButton};
 use crate::copy::Copy;
+use crate::features::biometrics::{self, BiometricSignInResult};
 use crate::state::{AppState, UserFacingError};
 use crate::theme::{self, Font, colors, spacing};
 use crate::ui::{FontExt, Lucide, icon, on_click, sheet_dialog};
@@ -25,6 +32,10 @@ pub struct SignInForm {
     pin: Entity<InputState>,
     pin_masked: bool,
     signing_in: bool,
+    /// A sign-in with Touch ID is under way.
+    checking: bool,
+    /// From `biometrics::sign_in_opened`, for `sign_in_closed`.
+    touch_id_token: Option<u64>,
     /// Shown inline under the fields.
     error: Option<UserFacingError>,
     _subscriptions: Vec<Subscription>,
@@ -52,6 +63,15 @@ pub fn open(window: &mut Window, cx: &mut App) {
             .child(shown.clone())
     });
     form.update(cx, |form, cx| form.card.update(cx, |card, cx| card.focus(window, cx)));
+    // After a sign-in with Touch ID that didn't work: its error; otherwise maybe the check at once.
+    let opening = biometrics::sign_in_opened(cx);
+    form.update(cx, |form, cx| {
+        form.error = opening.error;
+        form.touch_id_token = Some(opening.token);
+        if opening.check_now {
+            form.sign_in_with_biometrics(window, cx);
+        }
+    });
     #[cfg(feature = "evidence")]
     evidence_fill(&form, window, cx);
 }
@@ -78,8 +98,23 @@ impl SignInForm {
                 _ => {}
             }),
             cx.observe(&AppState::global(cx), |_, _, cx| cx.notify()),
+            // Closing the dialog ends turning Touch ID on from Profile.
+            cx.on_release(|form, cx| {
+                if let Some(token) = form.touch_id_token {
+                    biometrics::sign_in_closed(token, cx);
+                }
+            }),
         ];
-        Self { card, pin, pin_masked: true, signing_in: false, error: None, _subscriptions: subscriptions }
+        Self {
+            card,
+            pin,
+            pin_masked: true,
+            signing_in: false,
+            checking: false,
+            touch_id_token: None,
+            error: None,
+            _subscriptions: subscriptions,
+        }
     }
 
     pub fn card(&self) -> &Entity<InputState> {
@@ -95,7 +130,7 @@ impl SignInForm {
     }
 
     pub fn is_signing_in(&self) -> bool {
-        self.signing_in
+        self.signing_in || self.checking
     }
 
     fn trimmed_card(&self, cx: &App) -> String {
@@ -103,7 +138,7 @@ impl SignInForm {
     }
 
     pub fn can_submit(&self, cx: &App) -> bool {
-        !self.trimmed_card(cx).is_empty() && !self.pin.read(cx).value().is_empty() && !self.signing_in
+        !self.trimmed_card(cx).is_empty() && !self.pin.read(cx).value().is_empty() && !self.signing_in && !self.checking
     }
 
     /// A field changed: the error goes, and the Sign in button follows the fields.
@@ -151,6 +186,38 @@ impl SignInForm {
         .detach();
     }
 
+    /// "Sign in with Touch ID" (and the check as the dialog opens): the check, then the kept
+    /// details. Success closes the dialog like a typed sign-in; a cancelled check leaves the form.
+    pub fn sign_in_with_biometrics(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        if self.signing_in || self.checking {
+            return;
+        }
+        self.checking = true;
+        self.error = None;
+        self.set_fields_disabled(true, cx);
+        cx.notify();
+        let task = AppState::global(cx).update(cx, |state, cx| state.sign_in_with_biometrics(cx));
+        cx.spawn_in(window, async move |this, cx| {
+            let result = task.await;
+            let _ = this.update_in(cx, |this, window, cx| {
+                this.checking = false;
+                this.set_fields_disabled(false, cx);
+                match result {
+                    BiometricSignInResult::SignedIn => window.close_dialog(cx),
+                    BiometricSignInResult::Failed(error) => {
+                        this.error = Some(error);
+                        this.card.update(cx, |card, cx| card.focus(window, cx));
+                    }
+                    BiometricSignInResult::Declined | BiometricSignInResult::Stale => {
+                        this.card.update(cx, |card, cx| card.focus(window, cx));
+                    }
+                }
+                cx.notify();
+            });
+        })
+        .detach();
+    }
+
     fn toggle_pin_mask(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         self.pin_masked = !self.pin_masked;
         let masked = self.pin_masked;
@@ -161,11 +228,19 @@ impl SignInForm {
 
 impl Render for SignInForm {
     fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        let touch_id = biometrics::status(cx);
         let state = AppState::global(cx).read(cx);
         let library_name = state.library_name();
         let library = state.library().cloned();
         let demo = state.is_demo();
         let can_submit = self.can_submit(cx);
+        let method = touch_id.method();
+        let privacy_note = match method {
+            Some(method) => Copy::Login::privacyNoteBiometrics(&library_name, method),
+            None => Copy::Login::privacyNote(&library_name),
+        };
+        let check_button = method.filter(|_| touch_id.is_available() && !touch_id.turning_on);
+        let busy = self.signing_in || self.checking;
         let reveal_label = if self.pin_masked { Copy::Login::showPin } else { Copy::Login::hidePin };
         let entity = cx.entity();
         let reveal = div()
@@ -227,6 +302,14 @@ impl Render for SignInForm {
                     )
                     .child(div().self_start().child(sheet::close_button("sign-in-close"))),
             )
+            .when_some(method.filter(|_| touch_id.turning_on), |column, method| {
+                column.child(
+                    div()
+                        .id("sign-in-turn-on-note")
+                        .test_support()
+                        .child(sheet::info_note(Copy::Biometrics::turnOnNote(method))),
+                )
+            })
             .child(sheet::labelled_field(
                 Copy::Login::cardLabel,
                 sheet::field_box()
@@ -250,14 +333,31 @@ impl Render for SignInForm {
                     if self.signing_in { Copy::Account::signingIn } else { Copy::Account::signIn },
                 )
                 .loading(self.signing_in)
-                .disabled(!can_submit && !self.signing_in)
-                .on_click(on_click(move |window, cx| entity.update(cx, |form, cx| form.submit(window, cx)))),
+                .disabled((!can_submit && !self.signing_in) || self.checking)
+                .on_click(on_click({
+                    let entity = entity.clone();
+                    move |window, cx| entity.update(cx, |form, cx| form.submit(window, cx))
+                })),
             )
+            .when_some(check_button, |column, method| {
+                column.child(
+                    SheetButton::new("sign-in-touch-id", Copy::Biometrics::signInWith(method))
+                        .filled(false)
+                        .loading(self.checking)
+                        .disabled(busy)
+                        .on_click(on_click(move |window, cx| {
+                            entity.update(cx, |form, cx| form.sign_in_with_biometrics(window, cx))
+                        })),
+                )
+            })
             .child(
                 div()
+                    .id("sign-in-privacy-note")
+                    .test_support()
+                    .aria_label(SharedString::from(privacy_note.clone()))
                     .typography(Font::Caption)
                     .text_color(theme::color(colors::ON_SHEET_SECONDARY))
-                    .child(Copy::Login::privacyNote(&library_name)),
+                    .child(privacy_note),
             )
             .when(cfg!(debug_assertions) && demo, |column| {
                 // Debug builds only (exempt from copy): how to sign in to the demo account.

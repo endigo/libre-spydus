@@ -123,7 +123,11 @@
     "fingerprint": "fingerprint",
     "signInWith": "Sign in with {method}",
     "offerTitle": "Sign in with {method} next time?",
-    "offerMessage": "When {library} signs you out, sign back in with {method} instead of typing your PIN. Your card number and PIN stay on this phone, locked by {method}.",
+    "offerMessage": {
+      "ios": "When {library} signs you out, sign back in with {method} instead of typing your PIN. Your card number and PIN stay on this phone, locked by {method}.",
+      "android": "When {library} signs you out, sign back in with {method} instead of typing your PIN. Your card number and PIN stay on this phone, locked by {method}.",
+      "desktop": "When {library} signs you out, sign back in with {method} instead of typing your PIN. Your card number and PIN stay on this computer, locked by {method}."
+    },
     "use": "Use {method}",
     "switchSubtitle": "No PIN to type when {library} signs you out.",
     "turnOnNote": "Sign in once more to turn on {method}.",
@@ -673,7 +677,11 @@
     "showPin": "Show PIN",
     "hidePin": "Hide PIN",
     "privacyNote": "LibreSpydus signs in directly with {library} and doesn’t store your PIN.",
-    "privacyNoteBiometrics": "LibreSpydus signs in directly with {library}. It keeps your PIN on this phone only if you turn on {method}.",
+    "privacyNoteBiometrics": {
+      "ios": "LibreSpydus signs in directly with {library}. It keeps your PIN on this phone only if you turn on {method}.",
+      "android": "LibreSpydus signs in directly with {library}. It keeps your PIN on this phone only if you turn on {method}.",
+      "desktop": "LibreSpydus signs in directly with {library}. It keeps your PIN on this computer only if you turn on {method}."
+    },
     "_notes": {
       "showPin": "Desktop: screen-reader label of the PIN field's reveal toggle (hidePin while the PIN shows).",
       "privacyNoteBiometrics": "Replaces privacyNote when the phone can use {method} (§5.14), since turning it on keeps the PIN.",

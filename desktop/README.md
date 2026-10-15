@@ -88,3 +88,28 @@ It builds with `--features evidence` and runs `--evidence --screenshot …`. Sig
   (`support::signed_out_app`), `#[gpui_kit::test]`, `gpui_kit::test::TestWindowExt`
   (`window.click("id", cx)`, `find("id").label()`). Elements are found only with `.id(..)` then
   `.test_support()`.
+
+## Touch ID sign-back-in (`src/features/biometrics/`, E4)
+
+As native-apps.md §5.14 with `{method}` = Touch ID: the offer after a typed sign-in, Profile's
+switch, signing back in on `NotLoggedIn`, and the sign-in dialog's "Sign in with Touch ID".
+
+- **Storage:** `{username, pin}` as JSON in the **login keychain** through `keyring`, service
+  `com.librespydus.desktop.signin`, account = origin, and the plain username under
+  `com.librespydus.desktop.signin.username`. Every read (and save) is gated by `LAContext
+  evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics)` (`check.rs`). Demo mode, `--data-dir`
+  and tests keep the details in memory; the Not now answers are in `<data>/Biometrics.json`.
+- **Why not a data-protection keychain item:** iOS uses an item with
+  `SecAccessControl(.biometryCurrentSet)`, which the Keychain itself refuses to read without the
+  check. On macOS that item lives in the data-protection keychain, which needs an app signed with
+  a team and a `keychain-access-groups` entitlement; a dev or ad-hoc build has neither
+  (`errSecMissingEntitlement`). So v1 has the same protection as the session token, with the
+  check in front. The flows only see the `BiometricVault` trait, so a signed build can add a
+  data-protection vault (passing the passed `LAContext` as `kSecUseAuthenticationContext`) without
+  touching them.
+- **Debug:** `LS_FAKE_TOUCH_ID=available|match|nomatch` replaces the check (available and never
+  answering, passing, or failing) for machines without Touch ID. `LS_DEMO_KEYCHAIN=1` with `--demo`
+  keeps the details in the keychain under `com.librespydus.desktop.signin.demo`. Profile ›
+  Developer › Expire session triggers the sign-back-in. Screenshots:
+  `LIBRESPYDUS_EVIDENCE=biometrics:<step>` (`offer`, `details`, `turn-on`, `sign-in-button`,
+  `sign-in-checking`, `expired`; see `evidence.rs`).

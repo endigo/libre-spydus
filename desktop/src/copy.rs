@@ -161,9 +161,11 @@ pub mod Copy {
         pub fn offerTitle(method: &str) -> String {
             format!("Sign in with {} next time?", method)
         }
-        /// "When {library} signs you out, sign back in with {method} instead of typing your PIN. Your card number and PIN stay on this phone, locked by {method}."
+        /// "When {library} signs you out, sign back in with {method} instead of typing your PIN. Your card number and PIN stay on this computer, locked by {method}."
+        /// iOS: "When {library} signs you out, sign back in with {method} instead of typing your PIN. Your card number and PIN stay on this phone, locked by {method}."
+        /// Android: "When {library} signs you out, sign back in with {method} instead of typing your PIN. Your card number and PIN stay on this phone, locked by {method}."
         pub fn offerMessage(library: &str, method: &str) -> String {
-            format!("When {} signs you out, sign back in with {} instead of typing your PIN. Your card number and PIN stay on this phone, locked by {}.", library, method, method)
+            format!("When {} signs you out, sign back in with {} instead of typing your PIN. Your card number and PIN stay on this computer, locked by {}.", library, method, method)
         }
         /// "Use {method}"
         pub fn r#use(method: &str) -> String {
@@ -921,10 +923,12 @@ pub mod Copy {
         pub fn privacyNote(library: &str) -> String {
             format!("LibreSpydus signs in directly with {} and doesn’t store your PIN.", library)
         }
-        /// "LibreSpydus signs in directly with {library}. It keeps your PIN on this phone only if you turn on {method}."
+        /// "LibreSpydus signs in directly with {library}. It keeps your PIN on this computer only if you turn on {method}."
+        /// iOS: "LibreSpydus signs in directly with {library}. It keeps your PIN on this phone only if you turn on {method}."
+        /// Android: "LibreSpydus signs in directly with {library}. It keeps your PIN on this phone only if you turn on {method}."
         /// Replaces privacyNote when the phone can use {method} (§5.14), since turning it on keeps the PIN.
         pub fn privacyNoteBiometrics(library: &str, method: &str) -> String {
-            format!("LibreSpydus signs in directly with {}. It keeps your PIN on this phone only if you turn on {}.", library, method)
+            format!("LibreSpydus signs in directly with {}. It keeps your PIN on this computer only if you turn on {}.", library, method)
         }
     }
 
