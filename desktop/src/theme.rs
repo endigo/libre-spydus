@@ -236,6 +236,10 @@ pub fn apply(cx: &mut App) {
         // dropdowns are dark popovers: gpui-kit draws their items in `foreground`.
         c.popover = color(colors::SURFACE);
         c.popover_foreground = color(colors::TEXT_PRIMARY);
+        // Switches as on iOS: a white thumb on a grey track when off (a switch's own colour when on),
+        // visible on the dark cards and on white dialogs alike.
+        c.switch = color_alpha(colors::TEXT_MUTED, 0.6);
+        c.switch_thumb = color(colors::TEXT_PRIMARY);
         c.overlay = color_alpha(0x000000, 0.45);
         theme.radius = px(radius::FIELD);
         theme.radius_lg = px(radius::CARD);

@@ -165,7 +165,8 @@ pub fn profile_section(_window: &mut Window, cx: &mut App) -> Option<AnyElement>
             .child(
                 Switch::new("profile-touch-id-switch")
                     .checked(status.is_switched_on())
-                    .color(theme::color(colors::ACCENT))
+                    // The same green as Profile's Notifications switches (iOS ProfileSwitchRow).
+                    .color(theme::color(colors::SUCCESS))
                     .accessibility_label(title)
                     .on_click(|checked: &bool, _, cx| {
                         let on = *checked;
