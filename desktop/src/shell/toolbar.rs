@@ -8,7 +8,7 @@ use gpui_kit::{
 use crate::copy::Copy;
 use crate::state::AppState;
 use crate::theme::{self, Font, colors, radius, spacing};
-use crate::ui::{FontExt, Lucide, icon};
+use crate::ui::{FontExt, Lucide, content_column, icon};
 
 pub const HEIGHT: f32 = 52.;
 
@@ -29,10 +29,11 @@ impl RenderOnce for Toolbar {
             .flex()
             .flex_row()
             .items_center()
-            .px(px(spacing::L))
             .bg(theme::color(colors::BACKGROUND))
-            .when(can_go_back, |bar| {
-                bar.child(
+            // Back lines up with the page's left edge (`content_column`): its chevron, past the
+            // button's own padding, sits where the page's title starts.
+            .child(content_column().when(can_go_back, |column| {
+                column.child(
                     div()
                         .id("toolbar-back")
                         .test_support()
@@ -44,6 +45,7 @@ impl RenderOnce for Toolbar {
                         .flex_row()
                         .items_center()
                         .gap(px(spacing::XS))
+                        .ml(px(-spacing::S))
                         .pl(px(spacing::S))
                         .pr(px(spacing::M))
                         .h(px(32.))
@@ -54,6 +56,6 @@ impl RenderOnce for Toolbar {
                         .child(icon(Lucide::ChevronLeft, px(18.), theme::color(colors::TEXT_PRIMARY)))
                         .child(div().typography(Font::BodyStrong).child(Copy::Common::back)),
                 )
-            })
+            }))
     }
 }

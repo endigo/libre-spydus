@@ -20,8 +20,8 @@ use crate::state::results::{SearchResultItem, merge, unrecognised_page};
 use crate::state::{AppState, Route, UserFacingError};
 use crate::theme::{self, Font, colors, cover, radius, spacing};
 use crate::ui::{
-    BookRowCard, Chip, EmptyStateView, ErrorStateView, FontExt, Lucide, card_columns, card_grid, content_column, icon,
-    on_click,
+    BookRowCard, Chip, EmptyStateView, ErrorStateView, FontExt, Lucide, card_columns, card_grid, icon, on_click,
+    page_body,
 };
 
 /// How many format chips a row shows before "+N".
@@ -372,7 +372,7 @@ pub fn skeleton_rows(rows: usize, columns: u16) -> impl IntoElement {
         .aria_label(SharedString::from(Copy::Search::loadingResults))
         .size_full()
         .overflow_hidden()
-        .child(content_column().pt(px(spacing::S)).child(card_grid(columns).children((0..rows).map(|_| {
+        .child(page_body().child(card_grid(columns).children((0..rows).map(|_| {
             div()
                 .flex()
                 .flex_row()
@@ -423,8 +423,7 @@ impl Render for ResultsList {
                 .restrict_scroll_to_axis()
                 .track_scroll(&self.scroll)
                 .child(
-                    content_column()
-                        .pb(px(spacing::XXL))
+                    page_body()
                         .flex()
                         .flex_col()
                         .gap(px(spacing::M))

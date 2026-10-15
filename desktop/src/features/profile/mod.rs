@@ -15,7 +15,10 @@ use crate::features::onboarding::LibraryLogo;
 use crate::features::onboarding::directory::{self, Region};
 use crate::state::AppState;
 use crate::theme::{self, Font, colors, radius, spacing};
-use crate::ui::{Chip, ConfirmDialog, EmptyStateView, FontExt, Lucide, OnClick, PrimaryPillButton, icon, on_click};
+use crate::ui::{
+    Chip, ConfirmDialog, EmptyStateView, FontExt, Lucide, OnClick, PrimaryPillButton, icon, on_click, page_column,
+    page_title,
+};
 
 pub struct ProfileScreen {
     _observe: Subscription,
@@ -490,26 +493,8 @@ impl Render for ProfileScreen {
         let library = state.library().cloned();
         let library_name = state.library_name();
         let verified = state.is_verified();
-        let body = div()
-            .w_full()
-            .max_w(px(720.))
-            .mx_auto()
-            .px(px(spacing::XL))
-            .pt(px(spacing::L))
-            .pb(px(spacing::XXL))
-            .flex()
-            .flex_col()
-            .gap(px(spacing::XL))
-            .child(
-                div()
-                    .id("profile-title")
-                    .test_support()
-                    .role(Role::Heading)
-                    .aria_label(SharedString::from(Copy::Profile::title))
-                    .typography(Font::Greeting)
-                    .text_color(theme::color(colors::TEXT_PRIMARY))
-                    .child(Copy::Profile::title),
-            )
+        let body = page_column()
+            .child(page_title("profile-title", Copy::Profile::title))
             .map(|body| match &library {
                 Some(library) => body
                     .child(self.library_card(library))

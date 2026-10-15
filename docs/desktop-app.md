@@ -218,6 +218,16 @@ The shell creates screen entities and keeps one per stack entry, so going back d
 ## 6. Screens (native-apps.md §6, desktop layout)
 - **Content width:** each screen's column is centred, at most ~1040 pt wide. Shelves scroll
   horizontally. Lists use cards.
+- **Page frame** (`ui/style.rs`): every page, the book page included, uses that column, so edges
+  and titles line up from page to page.
+  - A page starts `PAGE_TOP` (8 pt) under the toolbar and ends `PAGE_BOTTOM` (32 pt) under its
+    last line.
+  - `PAGE_GAP` (24 pt) separates the header (title row) from what follows, and Home's sections
+    from each other. A page whose header stays put while the rest scrolls splits the gap: half
+    under the header, half over the scrolling part.
+  - Section titles (Your Books, Search, My Picks, Profile) use `page_title` in the greeting
+    size; pushed pages (results, collections) title in the smaller title size.
+  - The toolbar's Back lines up with the column: its chevron starts at the title's edge.
 - **Home:** the header has the logo, greeting and My card. Then:
   - the search field, which opens Search;
   - New arrivals;

@@ -37,11 +37,16 @@ pub fn signed_out_app(cx: &mut TestAppContext, fake: &Arc<FakeBackend>) -> (Enti
 }
 
 pub fn open_root(cx: &mut TestAppContext) -> WindowHandle<Root> {
+    open_root_sized(cx, 1280., 820.)
+}
+
+/// The root window at `width` × `height`.
+pub fn open_root_sized(cx: &mut TestAppContext, width: f32, height: f32) -> WindowHandle<Root> {
     cx.update(|cx| {
         let options = WindowOptions {
             window_bounds: Some(WindowBounds::Windowed(Bounds {
                 origin: point(px(0.), px(0.)),
-                size: size(px(1280.), px(820.)),
+                size: size(px(width), px(height)),
             })),
             ..Default::default()
         };

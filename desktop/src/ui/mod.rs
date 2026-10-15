@@ -25,4 +25,7 @@ pub use cover::{CoverImage, CoverPlaceholder};
 pub use dialog::{ConfirmDialog, DialogButton, dialog_title, sheet_dialog};
 pub use icons::{AppAssets, Lucide, icon};
 pub use states::{EmptyStateView, ErrorStateView, LoadingView, PlaceholderScreen, SkeletonBlock, pulse};
-pub use style::{FontExt, card_columns, card_grid, content_column};
+pub use style::{
+    FontExt, PAGE_BOTTOM, PAGE_GAP, PAGE_TOP, card_columns, card_grid, content_column, page_body, page_column,
+    page_header, page_title,
+};

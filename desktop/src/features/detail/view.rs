@@ -13,8 +13,8 @@ use crate::state::formatting::{author_name, byline, non_empty};
 use crate::state::{AppState, Loadable, Route};
 use crate::theme::{self, Font, colors, cover, radius, spacing};
 use crate::ui::{
-    Chip, ChipTone, CircleIconButton, CoverImage, FontExt, Lucide, PrimaryPillButton, SectionHeader, ShelfCover, icon,
-    on_click,
+    Chip, ChipTone, CircleIconButton, CoverImage, FontExt, Lucide, PAGE_BOTTOM, PAGE_TOP, PrimaryPillButton,
+    SectionHeader, ShelfCover, content_column, icon, on_click,
 };
 
 use super::logic::{self, AvailabilityTone, DetailFact, RelatedPanel, SubjectChip, display_title};
@@ -29,8 +29,6 @@ const LEFT_WIDTH: f32 = 440.;
 const RELATED_MIN_COVER: f32 = 104.;
 /// The most covers in a row of related books.
 const RELATED_MAX_COLUMNS: u16 = 6;
-/// The page's widest extent.
-const PAGE_MAX_WIDTH: f32 = 1160.;
 /// A synopsis longer than this is clamped, with More / Less.
 const SYNOPSIS_CLAMP_CHARS: usize = 420;
 
@@ -53,7 +51,7 @@ impl Render for DetailScreen {
         if wide {
             // Side by side: the panel and the book's details on the left, the other books (similar,
             // by the author, in the series, other editions) on the right; each side scrolls on its own.
-            let page = beside.min(PAGE_MAX_WIDTH) - 2. * spacing::XL;
+            let page = beside.min(theme::CONTENT_MAX_WIDTH) - 2. * spacing::XL;
             let right_width = page - LEFT_WIDTH - spacing::XL;
             let sheet = self.sheet(true, None, cx).into_any_element();
             let grid = related_grid(right_width);
@@ -68,7 +66,7 @@ impl Render for DetailScreen {
             root.child(
                 div()
                     .size_full()
-                    .max_w(px(PAGE_MAX_WIDTH))
+                    .max_w(px(theme::CONTENT_MAX_WIDTH))
                     .mx_auto()
                     .px(px(spacing::XL))
                     .flex()
@@ -84,8 +82,8 @@ impl Render for DetailScreen {
                             .h_full()
                             .overflow_y_scroll()
                             .restrict_scroll_to_axis()
-                            .pt(px(spacing::S))
-                            .pb(px(spacing::XXL))
+                            .pt(px(PAGE_TOP))
+                            .pb(px(PAGE_BOTTOM))
                             .flex()
                             .flex_col()
                             .gap(px(spacing::XL))
@@ -102,8 +100,8 @@ impl Render for DetailScreen {
                                 .h_full()
                                 .overflow_y_scroll()
                                 .restrict_scroll_to_axis()
-                                .pt(px(spacing::S))
-                                .pb(px(spacing::XXL))
+                                .pt(px(PAGE_TOP))
+                                .pb(px(PAGE_BOTTOM))
                                 .flex()
                                 .flex_col()
                                 .gap(px(spacing::XL))
@@ -128,16 +126,7 @@ impl Render for DetailScreen {
                             .min_h_full()
                             .flex()
                             .flex_col()
-                            .child(
-                                div()
-                                    .w_full()
-                                    .max_w(px(theme::CONTENT_MAX_WIDTH))
-                                    .mx_auto()
-                                    .px(px(spacing::XL))
-                                    .pt(px(spacing::S))
-                                    .pb(px(spacing::XL))
-                                    .child(panel),
-                            )
+                            .child(content_column().pt(px(PAGE_TOP)).pb(px(spacing::XL)).child(panel))
                             .child(div().w_full().flex_1().flex().flex_col().child(sheet)),
                     ),
             )

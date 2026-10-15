@@ -35,8 +35,8 @@ use crate::state::{AppState, NoticeTone, ReloadKey, Route, Section, YourBooksSeg
 use crate::theme::{self, Font, colors, radius, spacing};
 use crate::ui::{
     BookRowCard, CardAction, Chip, ChipTone, ConfirmDialog, EmptyStateView, ErrorStateView, FontExt, LoadingView,
-    Lucide, SectionHeader, card_columns, card_grid, card_menu_button, content_column, icon, on_click,
-    with_context_menu,
+    Lucide, SectionHeader, card_columns, card_grid, card_menu_button, icon, on_click, page_body, page_header,
+    page_title, with_context_menu,
 };
 
 use self::rows::{LoanRow, ReservationRow, ReservationSections};
@@ -304,14 +304,6 @@ impl YourBooksScreen {
         lists: Option<&rows::Lists>,
         cx: &mut Context<Self>,
     ) -> impl IntoElement {
-        let title = div()
-            .id("your-books-title")
-            .test_support()
-            .role(Role::Heading)
-            .aria_label(SharedString::from(Copy::YourBooks::title))
-            .typography(Font::Greeting)
-            .text_color(theme::color(colors::TEXT_PRIMARY))
-            .child(Copy::YourBooks::title);
         let row = div()
             .flex()
             .flex_row()
@@ -319,7 +311,7 @@ impl YourBooksScreen {
             .items_center()
             .gap_x(px(spacing::XL))
             .gap_y(px(spacing::M))
-            .child(title);
+            .child(page_title("your-books-title", Copy::YourBooks::title));
         if !signed_in {
             return row;
         }
@@ -737,7 +729,7 @@ impl Render for YourBooksScreen {
         };
         // The title, Loans | Reservations, the status line and the refresh button stay put; only
         // the cards scroll.
-        let mut top = content_column().pt(px(spacing::XL)).pb(px(spacing::M)).flex().flex_col().gap(px(spacing::L));
+        let mut top = page_header().flex().flex_col().gap(px(spacing::L));
         top = top.child(self.header(signed_in, refreshing, lists.as_ref(), cx));
         let body = if signed_in {
             top = top.children(self.notice_banner(cx));
@@ -750,22 +742,15 @@ impl Render for YourBooksScreen {
         } else {
             self.signed_out(cx).into_any_element()
         };
-        div()
-            .id("your-books-screen")
-            .test_support()
-            .size_full()
-            .flex()
-            .flex_col()
-            .child(div().flex_none().child(top))
-            .child(
-                div()
-                    .id("your-books-scroll")
-                    .test_support()
-                    .flex_1()
-                    .min_h_0()
-                    .overflow_y_scroll()
-                    .restrict_scroll_to_axis()
-                    .child(content_column().pt(px(spacing::S)).pb(px(spacing::XXL)).child(body)),
-            )
+        div().id("your-books-screen").test_support().size_full().flex().flex_col().child(top).child(
+            div()
+                .id("your-books-scroll")
+                .test_support()
+                .flex_1()
+                .min_h_0()
+                .overflow_y_scroll()
+                .restrict_scroll_to_axis()
+                .child(page_body().child(body)),
+        )
     }
 }

@@ -27,7 +27,7 @@ use crate::state::results::{merge, unrecognised_page};
 use crate::state::{AppState, BookRef, Loadable, Route, Section};
 use crate::theme::{self, Font, colors, radius, spacing};
 use crate::ui::{
-    FontExt, GenreTile, Lucide, SearchFieldButton, SecondaryPillButton, SectionHeader, content_column, icon, on_click,
+    FontExt, GenreTile, Lucide, SearchFieldButton, SecondaryPillButton, SectionHeader, icon, on_click, page_column,
 };
 
 use self::components::{SectionErrorCard, ShelfEntry, cover_shelf, section_message_card, shelf_skeleton, sign_in_card};
@@ -231,6 +231,8 @@ impl HomeScreen {
         let signed_in = state.is_signed_in();
         let title = greeting(state.account_name().as_deref());
         div()
+            .id("home-header")
+            .test_support()
             .flex()
             .flex_row()
             .items_center()
@@ -550,12 +552,7 @@ impl Render for HomeScreen {
             .restrict_scroll_to_axis()
             .track_scroll(&self.scroll)
             .child(
-                content_column()
-                    .pt(px(spacing::S))
-                    .pb(px(spacing::XXL))
-                    .flex()
-                    .flex_col()
-                    .gap(px(spacing::XL))
+                page_column()
                     .child(self.header(cx))
                     .child(SearchFieldButton::new(
                         "home-search",

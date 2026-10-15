@@ -16,7 +16,9 @@ use crate::features::search::sentinel::sentinel;
 use crate::state::results::{merge, unrecognised_page};
 use crate::state::{AppState, BookRef, Route, Section, UserFacingError};
 use crate::theme::{self, Font, colors, radius, spacing};
-use crate::ui::{EmptyStateView, ErrorStateView, FontExt, Lucide, SectionHeader, content_column, icon, on_click};
+use crate::ui::{
+    EmptyStateView, ErrorStateView, FontExt, Lucide, PAGE_GAP, SectionHeader, icon, on_click, page_body, page_header,
+};
 
 // ---- Icons ----
 
@@ -505,16 +507,14 @@ fn collection_skeleton() -> impl IntoElement {
         .aria_label(SharedString::from(Copy::Common::loading))
         .size_full()
         .overflow_hidden()
-        .child(content_column().pt(px(spacing::L)).flex().flex_col().gap(px(spacing::XL)).children((0..3).map(
-            |index| {
-                div()
-                    .flex()
-                    .flex_col()
-                    .gap(px(spacing::M))
-                    .child(SkeletonBlock::new(px(160.), px(16.)))
-                    .child(shelf_skeleton(SharedString::from(format!("collection-skeleton-{index}"))))
-            },
-        )))
+        .child(page_body().flex().flex_col().gap(px(PAGE_GAP)).children((0..3).map(|index| {
+            div()
+                .flex()
+                .flex_col()
+                .gap(px(spacing::M))
+                .child(SkeletonBlock::new(px(160.), px(16.)))
+                .child(shelf_skeleton(SharedString::from(format!("collection-skeleton-{index}"))))
+        })))
 }
 
 impl Render for CollectionScreen {
@@ -560,15 +560,7 @@ impl Render for CollectionScreen {
                     .overflow_y_scroll()
                     .restrict_scroll_to_axis()
                     .track_scroll(&self.scroll)
-                    .child(
-                        content_column()
-                            .pt(px(spacing::S))
-                            .pb(px(spacing::XXL))
-                            .flex()
-                            .flex_col()
-                            .gap(px(spacing::XL))
-                            .children(rows),
-                    )
+                    .child(page_body().flex().flex_col().gap(px(PAGE_GAP)).children(rows))
                     .into_any_element()
             }
         };
@@ -579,7 +571,7 @@ impl Render for CollectionScreen {
             .flex()
             .flex_col()
             .child(
-                content_column().flex_none().pt(px(spacing::S)).pb(px(spacing::M)).child(
+                page_header().child(
                     div()
                         .id("collection-title")
                         .test_support()

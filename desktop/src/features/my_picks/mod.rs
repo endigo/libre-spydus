@@ -25,7 +25,7 @@ use crate::state::{AppState, BookRef, ReloadKey, Route, Section};
 use crate::theme::{self, Font, colors, spacing};
 use crate::ui::{
     Banner, BannerTone, CardAction, EmptyStateView, ErrorStateView, FontExt, LoadingView, Lucide, ShelfCover,
-    card_menu_button, content_column, on_click, with_context_menu,
+    card_menu_button, on_click, page_column, page_title, with_context_menu,
 };
 
 /// A grid cell's cover width.
@@ -134,29 +134,15 @@ impl MyPicksScreen {
     }
 
     fn header(&self, content: PicksContent) -> impl IntoElement {
-        div()
-            .flex()
-            .flex_col()
-            .gap(px(spacing::XS))
-            .child(
-                div()
-                    .id("my-picks-title")
-                    .test_support()
-                    .role(Role::Heading)
-                    .aria_label(SharedString::from(Copy::Picks::title))
-                    .typography(Font::Greeting)
-                    .text_color(theme::color(colors::TEXT_PRIMARY))
-                    .child(Copy::Picks::title),
-            )
-            .child(
-                div()
-                    .id("my-picks-subtitle")
-                    .test_support()
-                    .aria_label(SharedString::from(content.subtitle()))
-                    .typography(Font::Caption)
-                    .text_color(theme::color(colors::TEXT_SECONDARY))
-                    .child(content.subtitle()),
-            )
+        div().flex().flex_col().gap(px(spacing::XS)).child(page_title("my-picks-title", Copy::Picks::title)).child(
+            div()
+                .id("my-picks-subtitle")
+                .test_support()
+                .aria_label(SharedString::from(content.subtitle()))
+                .typography(Font::Caption)
+                .text_color(theme::color(colors::TEXT_SECONDARY))
+                .child(content.subtitle()),
+        )
     }
 
     fn cell(&self, pick: Pick, cx: &mut Context<Self>) -> AnyElement {
@@ -351,14 +337,12 @@ impl Render for MyPicksScreen {
             PicksContent::Account => self.account(cx),
             PicksContent::Local => self.local(cx),
         };
-        div().id("my-picks-screen").test_support().size_full().overflow_y_scroll().restrict_scroll_to_axis().child(
-            content_column()
-                .py(px(spacing::XL))
-                .flex()
-                .flex_col()
-                .gap(px(spacing::L))
-                .child(self.header(content))
-                .child(body),
-        )
+        div()
+            .id("my-picks-screen")
+            .test_support()
+            .size_full()
+            .overflow_y_scroll()
+            .restrict_scroll_to_axis()
+            .child(page_column().child(self.header(content)).child(body))
     }
 }

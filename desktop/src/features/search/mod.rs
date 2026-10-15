@@ -23,8 +23,8 @@ use crate::state::route::sort_label;
 use crate::state::{AppState, ResultsSource};
 use crate::theme::{self, Font, colors, radius, spacing};
 use crate::ui::{
-    CardAction, EmptyStateView, FontExt, Lucide, SearchField, SectionHeader, content_column, icon, on_click,
-    with_context_menu,
+    CardAction, EmptyStateView, FontExt, Lucide, PAGE_GAP, SearchField, SectionHeader, icon, on_click, page_body,
+    page_header, page_title, with_context_menu,
 };
 
 use self::results::{ResultsList, ResultsQuery, ResultsRequest};
@@ -240,9 +240,7 @@ impl SearchScreen {
             .overflow_y_scroll()
             .restrict_scroll_to_axis()
             .child(
-                content_column()
-                    .pt(px(spacing::S))
-                    .pb(px(spacing::XXL))
+                page_body()
                     .flex()
                     .flex_col()
                     .child(div().pb(px(spacing::S)).child(
@@ -307,23 +305,11 @@ impl Render for SearchScreen {
     fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let entity = cx.entity();
         let showing_results = self.submitted.is_some();
-        let header = content_column()
-            .flex_none()
-            .pt(px(spacing::S))
-            .pb(px(spacing::M))
+        let header = page_header()
             .flex()
             .flex_col()
-            .gap(px(spacing::M))
-            .child(
-                div()
-                    .id("search-title")
-                    .test_support()
-                    .role(Role::Heading)
-                    .aria_label(SharedString::from(Copy::Search::title))
-                    .typography(Font::Title)
-                    .text_color(theme::color(colors::TEXT_PRIMARY))
-                    .child(Copy::Search::title),
-            )
+            .gap(px(PAGE_GAP))
+            .child(page_title("search-title", Copy::Search::title))
             .child(
                 div()
                     .flex()
@@ -407,10 +393,9 @@ impl Render for ResultsScreen {
             .flex()
             .flex_col()
             .child(
-                content_column()
-                    .flex_none()
-                    .pt(px(spacing::S))
-                    .pb(px(spacing::M))
+                page_header()
+                    .id("results-header")
+                    .test_support()
                     .flex()
                     .flex_row()
                     .items_center()
