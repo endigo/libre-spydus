@@ -145,6 +145,13 @@ impl From<Availability> for FormatAvailability {
 
 // ---- Branch holdings ----
 
+/// Whether the page lists the copies (`holdings(availability.holdings_url)`): only for an
+/// edition-level item (a Featured list's card, docs/native-apps.md §5.10; iOS `copiesSource`).
+/// A book with format chips shows its counts and no copies, physical or digital.
+pub fn shows_copies(formats: &[FormatRef]) -> bool {
+    crate::state::book_ref::is_edition_level(formats)
+}
+
 /// One copy at one branch: where it is, its status (green when it's on the shelf), the library's
 /// note on it and its call number.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -911,6 +918,21 @@ mod tests {
         assert_eq!(matching_record(&work, None, &twins).and_then(|hit| hit.work_irn.as_deref()), Some("12"));
         assert_eq!(normalized_isbns(&["1-78689-272-3".into()]), vec!["9781786892720"]);
         assert_eq!(query_item("IRN", Some("https://x/WRKENQ?a=1&IRN=77&b")).as_deref(), Some("77"));
+    }
+
+    #[test]
+    fn copies_only_for_edition_level_items() {
+        let format = |code: &str, label: Option<&str>| FormatRef {
+            code: code.into(),
+            label: label.map(str::to_owned),
+            reserve_url: None,
+            availability_url: Some("https://x/availability".into()),
+        };
+        assert!(shows_copies(&[format("", None)]));
+        assert!(!shows_copies(&[format("BK", Some("Book"))]));
+        assert!(!shows_copies(&[format("BK", Some("Book")), format("LP", Some("Large Print"))]));
+        assert!(!shows_copies(&[format("EBK", Some("eBook"))]));
+        assert!(!shows_copies(&[]));
     }
 
     #[test]

@@ -15,6 +15,7 @@ pub mod local_picks;
 pub mod paths;
 pub mod patron;
 pub mod picks;
+pub mod renew;
 pub mod results;
 pub mod route;
 pub mod running;

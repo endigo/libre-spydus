@@ -46,11 +46,11 @@ impl RenderOnce for SheetLoading {
     }
 }
 
-/// Grey bars where text will be, while the record loads.
+/// Grey bars where text will be, pulsing while the record loads.
 pub fn skeleton_lines(widths: &[f32]) -> impl IntoElement {
-    div().w_full().flex().flex_col().gap(px(spacing::S)).children(widths.iter().map(|width| {
+    crate::ui::pulse(div().w_full().flex().flex_col().gap(px(spacing::S)).children(widths.iter().map(|width| {
         div().h(px(12.)).w(gpui_kit::relative(*width)).rounded(px(radius::PILL)).bg(theme::color(colors::CHIP_ON_SHEET))
-    }))
+    })))
 }
 
 /// What went wrong, Retry, and the detail behind Details, in sheet colours.

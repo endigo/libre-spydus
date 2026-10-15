@@ -5,12 +5,13 @@
 use std::collections::HashSet;
 
 use chrono::NaiveDate;
-use librespydus_core::{AccountSnapshot, PatronItem, PatronList, RenewResult, Reservations};
+use librespydus_core::{AccountSnapshot, PatronItem, PatronList, Reservations};
 
 use crate::copy::Copy;
 use crate::state::BookRef;
 use crate::state::formatting::{DueStatus, due_date, non_empty, short_date};
 use crate::state::patron::PatronItemExt;
+use crate::state::renew::{self, says_due};
 
 // copy-exempt: the loans list's field name (a key)
 const DUE: &str = "Due";
@@ -57,10 +58,7 @@ impl LoanRow {
     /// The due date as `Copy::Loans::dueOn` writes it ("27 Oct"), or as the library wrote it when
     /// the core can't read it (unless that already says "due").
     pub fn due_date_text(&self) -> Option<String> {
-        if let Some(due) = &self.due {
-            return Some(short_date(due.due_date, self.today));
-        }
-        self.due_text.clone().filter(|text| !says_due(text))
+        renew::due_date_text(&self.item, self.today)
     }
 
     /// The meta line; an unreadable date is shown as the library wrote it.
@@ -110,10 +108,6 @@ impl LoanRow {
     }
 }
 
-fn says_due(text: &str) -> bool {
-    text.to_lowercase().contains("due") // copy-exempt: matches the library's own wording
-}
-
 /// "Due 27 Oct · 3 days left", "Due tomorrow · 13 Oct", "Due today · 12 Oct", "Due 10 Oct · 2 days
 /// overdue".
 pub fn due_line(due: &DueStatus, today: NaiveDate) -> String {
@@ -123,31 +117,6 @@ pub fn due_line(due: &DueStatus, today: NaiveDate) -> String {
         0 => Copy::Loans::lineToday(&date),
         1 => Copy::Loans::lineTomorrow(&date),
         days => Copy::Loans::lineDays(&date, &Copy::Loans::daysLeft(days)),
-    }
-}
-
-/// Renewal wording (iOS `RenewText`).
-pub mod renew_text {
-    use super::*;
-
-    /// "“Whistler” is due 15 Oct. Renewing asks the library for a later due date."
-    pub fn confirm_message(row: &LoanRow) -> String {
-        match row.due_date_text() {
-            Some(date) => Copy::YourBooks::renewMessage(&row.book.title, &date),
-            None => Copy::YourBooks::renewMessageNoDate(&row.book.title),
-        }
-    }
-
-    /// "Renewed · Due 3 Nov" from `RenewResult.due` as the library writes it, else "Renewed".
-    pub fn renewed(due: Option<&str>, today: NaiveDate) -> String {
-        let Some(due) = non_empty(due) else { return Copy::YourBooks::renewedNoDate.to_owned() };
-        let date = due_date::parse(&due).map_or(due, |date| short_date(date, today));
-        Copy::YourBooks::renewed(&date)
-    }
-
-    /// The library's reason for not renewing, else `renewFailed`.
-    pub fn refused(result: &RenewResult) -> String {
-        non_empty(result.message.as_deref()).unwrap_or_else(|| Copy::YourBooks::renewFailed.to_owned())
     }
 }
 
@@ -508,16 +477,17 @@ mod tests {
         assert_eq!(rows[5].meta().as_deref(), Some("Due weird"));
         assert_eq!(rows[5].id, "1#2");
         assert!(rows[0].can_renew() && !rows[2].can_renew());
+        // The renewal's words come from `state::renew`, for the book page too.
         assert_eq!(
-            renew_text::confirm_message(&rows[3]),
+            renew::confirm_message(&rows[3].item, today),
             "“Later” is due 27 Oct. Renewing asks the library for a later due date."
         );
-        assert_eq!(renew_text::confirm_message(&rows[4]), "Renewing “No date” asks the library for a later due date.");
-        assert_eq!(renew_text::renewed(Some("3 Nov 2026"), today), "Renewed · Due 3 Nov");
-        assert_eq!(renew_text::renewed(None, today), "Renewed");
-        let refused = RenewResult { ok: false, message: Some("Reserved by another borrower.".into()), due: None };
-        assert_eq!(renew_text::refused(&refused), "Reserved by another borrower.");
-        assert_eq!(renew_text::refused(&RenewResult::default()), "Couldn’t renew this loan");
+        assert_eq!(
+            renew::confirm_message(&rows[4].item, today),
+            "Renewing “No date” asks the library for a later due date."
+        );
+        assert_eq!(rows[3].due_date_text().as_deref(), Some("27 Oct"));
+        assert_eq!(rows[5].due_date_text().as_deref(), Some("weird"));
     }
 
     #[test]
