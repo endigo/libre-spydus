@@ -41,42 +41,74 @@ impl Render for DetailScreen {
             .role(Role::Main)
             .aria_label(SharedString::from(self.shown.title.clone()))
             .size_full()
-            .overflow_y_scroll()
             .bg(theme::color(colors::BACKGROUND));
+        // Each scroll area keeps to its own axis (`restrict_scroll_to_axis`): otherwise GPUI turns a
+        // vertical wheel over a carousel into horizontal scrolling, and a sideways swipe into page
+        // scrolling. `detail-scroll` is the area that scrolls the sheet in either layout.
         if wide {
+            // Side by side: the panel (cover, Reserve) stays put while the sheet scrolls.
             root.child(
                 div()
-                    .w_full()
+                    .size_full()
                     .max_w(px(PAGE_MAX_WIDTH))
                     .mx_auto()
                     .px(px(spacing::XL))
-                    .pt(px(spacing::S))
-                    .pb(px(spacing::XXL))
                     .flex()
                     .flex_row()
-                    .items_start()
                     .gap(px(spacing::XL))
-                    .child(div().w(px(PANEL_WIDTH)).flex_none().child(panel))
-                    .child(div().flex_1().min_w_0().child(sheet)),
+                    .child(
+                        div()
+                            .id("detail-panel-scroll")
+                            .test_support()
+                            .w(px(PANEL_WIDTH))
+                            .flex_none()
+                            .h_full()
+                            .overflow_y_scroll()
+                            .restrict_scroll_to_axis()
+                            .pt(px(spacing::S))
+                            .pb(px(spacing::XXL))
+                            .child(panel),
+                    )
+                    .child(
+                        div()
+                            .id("detail-scroll")
+                            .test_support()
+                            .flex_1()
+                            .min_w_0()
+                            .h_full()
+                            .overflow_y_scroll()
+                            .restrict_scroll_to_axis()
+                            .pt(px(spacing::S))
+                            .pb(px(spacing::XXL))
+                            .child(sheet),
+                    ),
             )
         } else {
             root.child(
                 div()
-                    .w_full()
-                    .min_h_full()
-                    .flex()
-                    .flex_col()
+                    .id("detail-scroll")
+                    .test_support()
+                    .size_full()
+                    .overflow_y_scroll()
+                    .restrict_scroll_to_axis()
                     .child(
                         div()
                             .w_full()
-                            .max_w(px(theme::CONTENT_MAX_WIDTH))
-                            .mx_auto()
-                            .px(px(spacing::XL))
-                            .pt(px(spacing::S))
-                            .pb(px(spacing::XL))
-                            .child(panel),
-                    )
-                    .child(div().w_full().flex_1().flex().flex_col().child(sheet)),
+                            .min_h_full()
+                            .flex()
+                            .flex_col()
+                            .child(
+                                div()
+                                    .w_full()
+                                    .max_w(px(theme::CONTENT_MAX_WIDTH))
+                                    .mx_auto()
+                                    .px(px(spacing::XL))
+                                    .pt(px(spacing::S))
+                                    .pb(px(spacing::XL))
+                                    .child(panel),
+                            )
+                            .child(div().w_full().flex_1().flex().flex_col().child(sheet)),
+                    ),
             )
         }
     }
@@ -597,6 +629,7 @@ impl DetailScreen {
                     .aria_label(SharedString::from(label))
                     .w_full()
                     .overflow_x_scroll()
+                    .restrict_scroll_to_axis()
                     .flex()
                     .flex_row()
                     .items_start()

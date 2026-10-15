@@ -550,7 +550,7 @@ impl Render for ProfileScreen {
                     .child(self.about_card()),
             )
             .children(self.developer_section(cx));
-        div().id("profile-screen").test_support().size_full().overflow_y_scroll().child(body)
+        div().id("profile-screen").test_support().size_full().overflow_y_scroll().restrict_scroll_to_axis().child(body)
     }
 }
 

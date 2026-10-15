@@ -738,6 +738,12 @@ impl Render for YourBooksScreen {
         } else {
             column = column.child(self.signed_out(cx));
         }
-        div().id("your-books-screen").test_support().size_full().overflow_y_scroll().child(column)
+        div()
+            .id("your-books-screen")
+            .test_support()
+            .size_full()
+            .overflow_y_scroll()
+            .restrict_scroll_to_axis()
+            .child(column)
     }
 }

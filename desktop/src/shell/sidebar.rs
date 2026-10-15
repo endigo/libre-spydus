@@ -83,6 +83,7 @@ impl RenderOnce for Sidebar {
                             .typography(Font::BodyStrong)
                             .text_color(navy)
                             .line_clamp(2)
+                            .text_ellipsis()
                             .child(library_name.clone()),
                     ),
             )

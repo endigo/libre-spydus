@@ -238,6 +238,7 @@ impl SearchScreen {
             .test_support()
             .size_full()
             .overflow_y_scroll()
+            .restrict_scroll_to_axis()
             .child(
                 content_column()
                     .pt(px(spacing::S))
@@ -285,6 +286,7 @@ impl SearchScreen {
                                     .typography(Font::Body)
                                     .text_color(theme::color(colors::TEXT_PRIMARY))
                                     .line_clamp(2)
+                                    .text_ellipsis()
                                     .child(query),
                             )
                             .child(icon(Lucide::ChevronRight, px(14.), theme::color(colors::TEXT_MUTED)));

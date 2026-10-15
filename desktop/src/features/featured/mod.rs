@@ -156,6 +156,7 @@ fn featured_tile(index: usize, link: &FeaturedLink) -> impl IntoElement {
                 .font_weight(gpui_kit::FontWeight::SEMIBOLD)
                 .text_color(theme::color(colors::TEXT_PRIMARY))
                 .line_clamp(2)
+                .text_ellipsis()
                 .child(link.title.clone()),
         )
 }
@@ -553,6 +554,7 @@ impl Render for CollectionScreen {
                     .test_support()
                     .size_full()
                     .overflow_y_scroll()
+                    .restrict_scroll_to_axis()
                     .track_scroll(&self.scroll)
                     .child(
                         content_column()

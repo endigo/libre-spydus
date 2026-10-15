@@ -197,6 +197,7 @@ impl ReserveDialog {
                             .typography(Font::BodyStrong)
                             .text_color(theme::color(colors::ON_SHEET))
                             .line_clamp(3)
+                            .text_ellipsis()
                             .child(display_title(&self.book.title)),
                     )
                     .children(byline(self.book.author.as_deref()).map(|line| {

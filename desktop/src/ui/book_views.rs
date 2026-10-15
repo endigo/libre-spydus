@@ -103,6 +103,7 @@ impl RenderOnce for ShelfCover {
                         .typography(Font::BodyStrong)
                         .text_color(title_color)
                         .line_clamp(2)
+                        .text_ellipsis()
                         .child(self.book.title.clone()),
                 )
             })
@@ -214,6 +215,7 @@ impl RenderOnce for BookRowCard {
                             .typography(Font::BodyStrong)
                             .text_color(theme::color(colors::TEXT_PRIMARY))
                             .line_clamp(2)
+                            .text_ellipsis()
                             .child(self.book.title.clone()),
                     )
                     .children(byline(self.book.author.as_deref()).map(|line| {
@@ -241,6 +243,7 @@ impl RenderOnce for BookRowCard {
                                 .typography(Font::Caption)
                                 .text_color(self.meta_color)
                                 .line_clamp(2)
+                                .text_ellipsis()
                                 .child(meta),
                         )
                     }),

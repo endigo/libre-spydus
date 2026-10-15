@@ -344,6 +344,7 @@ impl EditReservationDialog {
                             .typography(Font::BodyStrong)
                             .text_color(theme::color(colors::ON_SHEET))
                             .line_clamp(2)
+                            .text_ellipsis()
                             .child(row.book.title.clone()),
                     )
                     .children(crate::state::formatting::byline(row.book.author.as_deref()).map(|line| {
@@ -384,6 +385,7 @@ impl EditReservationDialog {
             .flex_col()
             .max_h(px(220.))
             .overflow_y_scroll()
+            .restrict_scroll_to_axis()
             .rounded(px(radius::FIELD))
             .bg(theme::color(colors::CHIP_ON_SHEET))
             .children(choices.iter().map(|choice| {

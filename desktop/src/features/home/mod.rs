@@ -542,22 +542,29 @@ impl Render for HomeScreen {
         #[cfg(not(debug_assertions))]
         let _ = window;
         let featured = (!self.featured.is_empty()).then(|| featured_row(&self.featured));
-        div().id("home-screen").test_support().size_full().overflow_y_scroll().track_scroll(&self.scroll).child(
-            content_column()
-                .pt(px(spacing::S))
-                .pb(px(spacing::XXL))
-                .flex()
-                .flex_col()
-                .gap(px(spacing::XL))
-                .child(self.header(cx))
-                .child(SearchFieldButton::new(
-                    "home-search",
-                    on_click(|_, cx| AppState::global(cx).update(cx, |state, cx| state.open_search(None, cx))),
-                ))
-                .child(self.arrivals_section(cx))
-                .child(self.genres_section())
-                .children(featured)
-                .child(self.loans_section(cx)),
-        )
+        div()
+            .id("home-screen")
+            .test_support()
+            .size_full()
+            .overflow_y_scroll()
+            .restrict_scroll_to_axis()
+            .track_scroll(&self.scroll)
+            .child(
+                content_column()
+                    .pt(px(spacing::S))
+                    .pb(px(spacing::XXL))
+                    .flex()
+                    .flex_col()
+                    .gap(px(spacing::XL))
+                    .child(self.header(cx))
+                    .child(SearchFieldButton::new(
+                        "home-search",
+                        on_click(|_, cx| AppState::global(cx).update(cx, |state, cx| state.open_search(None, cx))),
+                    ))
+                    .child(self.arrivals_section(cx))
+                    .child(self.genres_section())
+                    .children(featured)
+                    .child(self.loans_section(cx)),
+            )
     }
 }

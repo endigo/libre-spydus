@@ -351,7 +351,7 @@ impl Render for MyPicksScreen {
             PicksContent::Account => self.account(cx),
             PicksContent::Local => self.local(cx),
         };
-        div().id("my-picks-screen").test_support().size_full().overflow_y_scroll().child(
+        div().id("my-picks-screen").test_support().size_full().overflow_y_scroll().restrict_scroll_to_axis().child(
             content_column()
                 .py(px(spacing::XL))
                 .flex()

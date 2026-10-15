@@ -127,6 +127,7 @@ impl RenderOnce for CoverPlaceholder {
                             .line_height(px(title_size * 1.15))
                             .text_color(theme::color(0xFFFFFF))
                             .line_clamp(5)
+                            .text_ellipsis()
                             .child(self.title.clone()),
                     )
                     .children(author_name(self.author.as_deref()).map(|name| {
@@ -135,6 +136,7 @@ impl RenderOnce for CoverPlaceholder {
                             .font_weight(gpui_kit::FontWeight::SEMIBOLD)
                             .text_color(theme::color_alpha(0xFFFFFF, 0.85))
                             .line_clamp(2)
+                            .text_ellipsis()
                             .child(name.to_uppercase())
                     })),
             )

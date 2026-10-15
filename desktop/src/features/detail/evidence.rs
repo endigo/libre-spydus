@@ -184,7 +184,7 @@ async fn run(this: &WeakEntity<DetailScreen>, cx: &mut AsyncWindowContext, step:
             let pixels: f32 = argument.and_then(|value| value.parse().ok()).unwrap_or(400.);
             let _ = cx.update(|window, cx| {
                 window.render_frame(cx);
-                window.scroll("detail-screen", ScrollDelta::Pixels(point(px(0.), px(-pixels))), cx);
+                window.scroll("detail-scroll", ScrollDelta::Pixels(point(px(0.), px(-pixels))), cx);
             });
         }
         "wait" => pause(cx, argument.and_then(|value| value.parse().ok()).unwrap_or(1000)).await,
