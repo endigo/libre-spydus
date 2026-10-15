@@ -51,3 +51,9 @@ objc2-foundation = "0.3"
 objc2-local-authentication = "0.3"
 block2 = "0.6"
 security-framework = "3.7"
+
+# The packaged app (scripts/bundle.sh, docs/desktop-app.md §11.5): one optimised, stripped binary.
+[profile.release]
+lto = "thin"
+codegen-units = 1
+strip = true
