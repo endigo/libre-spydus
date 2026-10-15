@@ -709,7 +709,9 @@ object Copy {
         const val dueTitle = "Due-date reminders"
         const val dueSubtitle = "2 days before books are due, at 7:45"
         const val blocked = "Notifications are turned off for LibreSpydus."
-        /** 'Settings' is the system app's name, so it keeps its capital. */
+        /** iOS: "Open Settings" */
+        /** Desktop: "Open System Settings" */
+        /** 'Settings' is the system app's name, so it keeps its capital. Desktop: macOS calls it System Settings. */
         const val openSettings = "Open Settings"
     }
 

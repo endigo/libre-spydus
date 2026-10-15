@@ -830,8 +830,10 @@ pub mod Copy {
         pub const dueTitle: &str = "Due-date reminders";
         pub const dueSubtitle: &str = "2 days before books are due, at 7:45";
         pub const blocked: &str = "Notifications are turned off for LibreSpydus.";
-        /// 'Settings' is the system app's name, so it keeps its capital.
-        pub const openSettings: &str = "Open Settings";
+        /// iOS: "Open Settings"
+        /// Android: "Open Settings"
+        /// 'Settings' is the system app's name, so it keeps its capital. Desktop: macOS calls it System Settings.
+        pub const openSettings: &str = "Open System Settings";
     }
 
     pub mod Alerts {
