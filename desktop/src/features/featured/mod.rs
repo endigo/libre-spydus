@@ -97,15 +97,19 @@ pub fn featured_row(links: &[FeaturedLink]) -> impl IntoElement {
         .gap(px(spacing::M))
         .child(SectionHeader::new("home-featured-header", Copy::Featured::title))
         .child(
-            div().id("home-featured-row").w_full().overflow_x_scroll().restrict_scroll_to_axis().child(
-                div()
-                    .flex()
-                    .flex_row()
-                    .items_start()
-                    .gap(px(spacing::M))
-                    .pb(px(spacing::S))
-                    .children(links.iter().enumerate().map(|(index, link)| featured_tile(index, link))),
-            ),
+            // The tiles lay out on the scroller itself, so it has content to scroll (as `cover_shelf`).
+            div()
+                .id("home-featured-row")
+                .test_support()
+                .w_full()
+                .overflow_x_scroll()
+                .restrict_scroll_to_axis()
+                .flex()
+                .flex_row()
+                .items_start()
+                .gap(px(spacing::M))
+                .pb(px(spacing::S))
+                .children(links.iter().enumerate().map(|(index, link)| featured_tile(index, link))),
         )
 }
 

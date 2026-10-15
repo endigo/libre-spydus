@@ -172,21 +172,26 @@ pub fn cover_shelf(prefix: &str, entries: Vec<ShelfEntry>) -> impl IntoElement {
         .id(SharedString::from(prefix.to_owned()))
         .test_support()
         .w_full()
+        // The covers lay out on the scroller itself: wrapped in an inner row, that row is only as
+        // wide as the scroller, the covers spill past it, and GPUI finds nothing to scroll.
         .overflow_x_scroll()
         .restrict_scroll_to_axis()
-        .child(div().flex().flex_row().items_start().gap(px(spacing::M)).pb(px(spacing::S)).children(
-            entries.into_iter().enumerate().map(|(index, entry)| -> AnyElement {
-                let book = entry.book.clone();
-                let cover = ShelfCover::new(SharedString::from(format!("{prefix}-{index}")), &entry.book).on_click(
-                    on_click(move |_, cx| {
-                        let route = Route::Detail(book.clone());
-                        AppState::global(cx).update(cx, |state, cx| state.push(route, cx));
-                    }),
-                );
-                match entry.caption {
-                    Some(caption) => cover.caption(caption, entry.caption_color).into_any_element(),
-                    None => cover.into_any_element(),
-                }
-            }),
-        ))
+        .flex()
+        .flex_row()
+        .items_start()
+        .gap(px(spacing::M))
+        .pb(px(spacing::S))
+        .children(entries.into_iter().enumerate().map(|(index, entry)| -> AnyElement {
+            let book = entry.book.clone();
+            let cover = ShelfCover::new(SharedString::from(format!("{prefix}-{index}")), &entry.book).on_click(
+                on_click(move |_, cx| {
+                    let route = Route::Detail(book.clone());
+                    AppState::global(cx).update(cx, |state, cx| state.push(route, cx));
+                }),
+            );
+            match entry.caption {
+                Some(caption) => cover.caption(caption, entry.caption_color).into_any_element(),
+                None => cover.into_any_element(),
+            }
+        }))
 }

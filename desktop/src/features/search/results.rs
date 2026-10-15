@@ -19,7 +19,10 @@ use crate::state::formatting::{non_empty, result_count};
 use crate::state::results::{SearchResultItem, merge, unrecognised_page};
 use crate::state::{AppState, Route, UserFacingError};
 use crate::theme::{self, Font, colors, cover, radius, spacing};
-use crate::ui::{BookRowCard, Chip, EmptyStateView, ErrorStateView, FontExt, Lucide, content_column, icon, on_click};
+use crate::ui::{
+    BookRowCard, Chip, EmptyStateView, ErrorStateView, FontExt, Lucide, card_columns, card_grid, content_column, icon,
+    on_click,
+};
 
 /// How many format chips a row shows before "+N".
 pub const MAX_CHIPS: usize = 4;
@@ -360,7 +363,7 @@ impl ResultsList {
 }
 
 /// Placeholder rows while the first page loads.
-pub fn skeleton_rows(rows: usize) -> impl IntoElement {
+pub fn skeleton_rows(rows: usize, columns: u16) -> impl IntoElement {
     let cover_height = cover::height(cover::SMALL_WIDTH);
     div()
         .id("results-loading")
@@ -369,37 +372,36 @@ pub fn skeleton_rows(rows: usize) -> impl IntoElement {
         .aria_label(SharedString::from(Copy::Search::loadingResults))
         .size_full()
         .overflow_hidden()
-        .child(content_column().pt(px(spacing::S)).flex().flex_col().gap(px(spacing::M)).children((0..rows).map(
-            |_| {
-                div()
-                    .flex()
-                    .flex_row()
-                    .items_start()
-                    .gap(px(spacing::L))
-                    .p(px(spacing::L))
-                    .rounded(px(radius::CARD))
-                    .bg(theme::color(colors::SURFACE))
-                    .child(SkeletonBlock::new(px(cover::SMALL_WIDTH), px(cover_height)).radius(radius::COVER))
-                    .child(
-                        div()
-                            .flex_1()
-                            .flex()
-                            .flex_col()
-                            .gap(px(spacing::S))
-                            .child(SkeletonBlock::fill(px(14.)))
-                            .child(SkeletonBlock::new(px(140.), px(12.)))
-                            .child(div().pt(px(spacing::XS)).child(SkeletonBlock::new(px(90.), px(18.)).radius(9.))),
-                    )
-            },
-        )))
+        .child(content_column().pt(px(spacing::S)).child(card_grid(columns).children((0..rows).map(|_| {
+            div()
+                .flex()
+                .flex_row()
+                .items_start()
+                .gap(px(spacing::L))
+                .p(px(spacing::L))
+                .rounded(px(radius::CARD))
+                .bg(theme::color(colors::SURFACE))
+                .child(SkeletonBlock::new(px(cover::SMALL_WIDTH), px(cover_height)).radius(radius::COVER))
+                .child(
+                    div()
+                        .flex_1()
+                        .flex()
+                        .flex_col()
+                        .gap(px(spacing::S))
+                        .child(SkeletonBlock::fill(px(14.)))
+                        .child(SkeletonBlock::new(px(140.), px(12.)))
+                        .child(div().pt(px(spacing::XS)).child(SkeletonBlock::new(px(90.), px(18.)).radius(9.))),
+                )
+        }))))
 }
 
 impl Render for ResultsList {
-    fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+    fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        let columns = card_columns(window);
         #[cfg(debug_assertions)]
         self.apply_debug_hooks();
         match &self.phase {
-            Phase::Idle | Phase::Loading => skeleton_rows(5).into_any_element(),
+            Phase::Idle | Phase::Loading => skeleton_rows(6, columns).into_any_element(),
             Phase::NoResults => self.no_results().into_any_element(),
             Phase::Failed(error) => {
                 let entity = cx.entity();
@@ -436,7 +438,10 @@ impl Render for ResultsList {
                                 .text_color(theme::color(colors::TEXT_SECONDARY))
                                 .child(count)
                         }))
-                        .children(self.items.iter().enumerate().map(|(index, item)| self.row(index, item)))
+                        .child(
+                            card_grid(columns)
+                                .children(self.items.iter().enumerate().map(|(index, item)| self.row(index, item))),
+                        )
                         .child(self.footer(cx)),
                 )
                 .into_any_element(),

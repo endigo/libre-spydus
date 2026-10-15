@@ -181,6 +181,8 @@ impl RenderOnce for BookRowCard {
             .role(Role::Group)
             .aria_label(SharedString::from(self.book.title.clone()))
             .w_full()
+            // Fills its grid cell, so the cards in a row line up.
+            .h_full()
             .flex()
             .flex_row()
             .items_start()

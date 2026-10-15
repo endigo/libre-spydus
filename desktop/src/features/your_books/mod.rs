@@ -35,7 +35,8 @@ use crate::state::{AppState, NoticeTone, ReloadKey, Route, Section, YourBooksSeg
 use crate::theme::{self, Font, colors, radius, spacing};
 use crate::ui::{
     BookRowCard, CardAction, Chip, ChipTone, ConfirmDialog, EmptyStateView, ErrorStateView, FontExt, LoadingView,
-    Lucide, SectionHeader, card_menu_button, content_column, icon, on_click, with_context_menu,
+    Lucide, SectionHeader, card_columns, card_grid, card_menu_button, content_column, icon, on_click,
+    with_context_menu,
 };
 
 use self::rows::{LoanRow, ReservationRow, ReservationSections};
@@ -500,7 +501,7 @@ impl YourBooksScreen {
             .child(text)
     }
 
-    fn loans(&self, loans: &[LoanRow], cx: &mut Context<Self>) -> AnyElement {
+    fn loans(&self, loans: &[LoanRow], columns: u16, cx: &mut Context<Self>) -> AnyElement {
         if loans.is_empty() {
             let library = self.state.read(cx).library_name();
             return div()
@@ -519,7 +520,7 @@ impl YourBooksScreen {
             .flex()
             .flex_col()
             .gap(px(spacing::M))
-            .children(loans.iter().map(|row| self.loan_card(row, cx)))
+            .child(card_grid(columns).children(loans.iter().map(|row| self.loan_card(row, cx))))
             .when(loans.iter().any(LoanRow::can_renew), |list| {
                 list.child(Self::footnote(Copy::YourBooks::loanRightClickHint))
             })
@@ -594,7 +595,7 @@ impl YourBooksScreen {
             .into_any_element()
     }
 
-    fn reservations(&self, sections: &ReservationSections, cx: &mut Context<Self>) -> AnyElement {
+    fn reservations(&self, sections: &ReservationSections, columns: u16, cx: &mut Context<Self>) -> AnyElement {
         if sections.is_empty() {
             return div()
                 .id("reservations-empty")
@@ -617,14 +618,14 @@ impl YourBooksScreen {
                     "reservations-ready",
                     Copy::YourBooks::readyCount(sections.ready.len() as i64),
                 )))
-                .children(sections.ready.iter().map(|row| self.reservation_card(row, cx)))
+                .child(card_grid(columns).children(sections.ready.iter().map(|row| self.reservation_card(row, cx))))
             })
             .when(!sections.pending.is_empty(), |list| {
                 list.child(div().pt(px(spacing::XS)).child(SectionHeader::new(
                     "reservations-pending",
                     Copy::YourBooks::pendingCount(sections.pending.len() as i64),
                 )))
-                .children(sections.pending.iter().map(|row| self.reservation_card(row, cx)))
+                .child(card_grid(columns).children(sections.pending.iter().map(|row| self.reservation_card(row, cx))))
             })
             .when(sections.has_actions(), |list| list.child(Self::footnote(Copy::YourBooks::rightClickHint)))
             .into_any_element()
@@ -709,7 +710,8 @@ impl YourBooksScreen {
 }
 
 impl Render for YourBooksScreen {
-    fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+    fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        let columns = card_columns(window);
         let (signed_in, refreshing, lists) = {
             let state = self.state.read(cx);
             let lists = state.account().snapshot().map(|snapshot| rows::Lists::new(snapshot, today()));
@@ -729,8 +731,8 @@ impl Render for YourBooksScreen {
                 )
                 .children(self.notice_banner(cx));
             let content = match (self.segment, &lists) {
-                (YourBooksSegment::Loans, Some(lists)) => self.loans(&lists.loans, cx),
-                (YourBooksSegment::Reservations, Some(lists)) => self.reservations(&lists.reservations, cx),
+                (YourBooksSegment::Loans, Some(lists)) => self.loans(&lists.loans, columns, cx),
+                (YourBooksSegment::Reservations, Some(lists)) => self.reservations(&lists.reservations, columns, cx),
                 (YourBooksSegment::Loans, None) => self.placeholder(Copy::YourBooks::loadingLoans, cx),
                 (YourBooksSegment::Reservations, None) => self.placeholder(Copy::YourBooks::loadingReservations, cx),
             };
