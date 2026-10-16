@@ -705,6 +705,10 @@ desktop app's (`docs/desktop-app.md` §6):
   phone's one column.
 - **Sheets** (sign in, reserve, edit, My card, Change library) are the system's form sheets. The
   first-launch library picker is a 760 pt column.
+- **Window controls.** A window that doesn't fill the screen has close, minimise and resize at its
+  top leading corner. What sits in that corner starts below them (`measuringWindowControls`): the
+  compact layout's tab screens, which hide the navigation bar, and the wide layout's sidebar.
+  Pushed screens have navigation bars, which already avoid them.
 - **Words.** An iPad says "iPad" where an iPhone says "phone" ("Saved on this iPad"): `"ipad"` forms
   of those platform variants in `design/copy.json`, chosen at run time (`CopyDevice`, §7.1).
 

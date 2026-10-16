@@ -124,4 +124,16 @@ extension View {
     func measuringWidth(_ width: Binding<CGFloat>) -> some View {
         onGeometryChange(for: CGFloat.self) { $0.size.width } action: { width.wrappedValue = $0 }
     }
+
+    /// Keeps `height` at how far the window's controls (an iPad window that doesn't fill the
+    /// screen has close, minimise and resize at its top leading corner) reach down into this view;
+    /// 0 without them (§6.1).
+    func measuringWindowControls(_ height: Binding<CGFloat>) -> some View {
+        onGeometryChange(for: CGFloat.self) { proxy in
+            if #available(iOS 26, *) {
+                return proxy.containerCornerInsets.topLeading.height
+            }
+            return 0
+        } action: { height.wrappedValue = $0 }
+    }
 }

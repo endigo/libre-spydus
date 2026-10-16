@@ -9,6 +9,10 @@ struct RootView: View {
     @Environment(\.horizontalSizeClass) private var sizeClass
     /// Tabs are built on first visit and then kept alive, so each keeps its stack and state.
     @State private var visitedTabs: Set<AppTab> = []
+    /// How far the window's controls reach into the app, in a window that doesn't fill the iPad's
+    /// screen (§6.1): what's in that corner (a tab screen's title, the sidebar's library) starts
+    /// below them.
+    @State private var windowControlsHeight: CGFloat = 0
 
     var body: some View {
         @Bindable var model = model
@@ -16,19 +20,21 @@ struct RootView: View {
         Group {
             switch layout {
             case .compact:
-                tabs
+                tabs(topClearance: windowControlsHeight)
                     .safeAreaInset(edge: .bottom, spacing: 0) {
                         LSTabBar(selection: model.selectedTab) { model.select($0) }
                     }
             case .wide:
                 HStack(spacing: 0) {
                     LSSidebar(selection: model.selectedTab) { model.select($0) }
+                        .safeAreaPadding(.top, windowControlsHeight)
                     // Shelves draw past their scroll views' edges, but never over the sidebar (the
                     // mask reaches under the status bar, so its backdrop stays).
-                    tabs.mask { Rectangle().ignoresSafeArea() }
+                    tabs(topClearance: 0).mask { Rectangle().ignoresSafeArea() }
                 }
             }
         }
+        .measuringWindowControls($windowControlsHeight)
         .environment(\.appLayout, layout)
         .ignoresSafeArea(.keyboard, edges: .bottom)
         .onChange(of: model.selectedTab, initial: true) { _, tab in
@@ -73,14 +79,15 @@ struct RootView: View {
         }
     }
 
-    /// The tab stacks, with the status bar's backdrop and My Picks' confirmations over them.
-    private var tabs: some View {
+    /// The tab stacks, with the status bar's backdrop and My Picks' confirmations over them. The
+    /// tab screens start `topClearance` lower (below the window's controls).
+    private func tabs(topClearance: CGFloat) -> some View {
         ZStack {
             Theme.Colors.background.ignoresSafeArea()
             ForEach(AppTab.allCases) { tab in
                 if visitedTabs.contains(tab) || tab == model.selectedTab {
                     let isSelected = tab == model.selectedTab
-                    TabStack(tab: tab)
+                    TabStack(tab: tab, topClearance: topClearance)
                         .opacity(isSelected ? 1 : 0)
                         .allowsHitTesting(isSelected)
                         .accessibilityHidden(!isSelected)
@@ -122,12 +129,24 @@ struct RootView: View {
 /// One tab's `NavigationStack`, handling the shared routes.
 private struct TabStack: View {
     let tab: AppTab
+    /// The window's controls' height, when they sit over this stack's top leading corner.
+    let topClearance: CGFloat
     @Environment(AppModel.self) private var model
 
     var body: some View {
         NavigationStack(path: path) {
             root
                 .tabBarClearance()
+                // The tab screens hide the navigation bar, so they start below the window's
+                // controls themselves (the screens pushed on them have bars, which already do),
+                // and what scrolls up passes under navy there.
+                .safeAreaPadding(.top, topClearance)
+                .overlay(alignment: .top) {
+                    Theme.Colors.background
+                        .frame(height: topClearance)
+                        .allowsHitTesting(false)
+                        .accessibilityHidden(true)
+                }
                 .navigationDestination(for: Route.self) { route in
                     Group {
                         switch route {

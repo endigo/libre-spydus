@@ -15,23 +15,27 @@ struct SearchResultsList: View {
     var noResultsTitle: String?
 
     var body: some View {
-        switch results.phase {
-        case .idle, .loading:
-            SearchSkeletonList()
-                .pageColumn()
-        case .noResults:
-            if let noResultsTitle {
-                EmptyStateView(systemImage: "tray", title: noResultsTitle, message: Copy.Search.listEmptyMessage)
-            } else {
-                EmptyStateView(systemImage: "text.magnifyingglass", title: Copy.Search.noResultsTitle(query: query),
-                               message: Copy.Search.noResultsMessage)
+        Group {
+            switch results.phase {
+            case .idle, .loading:
+                SearchSkeletonList()
+                    .pageColumn()
+            case .noResults:
+                if let noResultsTitle {
+                    EmptyStateView(systemImage: "tray", title: noResultsTitle, message: Copy.Search.listEmptyMessage)
+                } else {
+                    EmptyStateView(systemImage: "text.magnifyingglass", title: Copy.Search.noResultsTitle(query: query),
+                                   message: Copy.Search.noResultsMessage)
+                }
+            case .failed(let error):
+                // ErrorStateView hides Retry for errors that retrying can't fix.
+                ErrorStateView(error: error, retry: retry)
+            case .loaded:
+                loadedList
             }
-        case .failed(let error):
-            // ErrorStateView hides Retry for errors that retrying can't fix.
-            ErrorStateView(error: error, retry: retry)
-        case .loaded:
-            loadedList
         }
+        // Measured out here, while the skeleton shows, so the results open in their columns.
+        .measuringWidth($width)
     }
 
     private var loadedList: some View {
@@ -62,7 +66,6 @@ struct SearchResultsList: View {
                         .id(Self.footerID)
                 }
                 .padding(.bottom, Theme.Spacing.xxl)
-                .measuringWidth($width)
                 .pageColumn()
             }
             .scrollDismissesKeyboard(.immediately)
@@ -79,9 +82,10 @@ struct SearchResultsList: View {
 
     private static var footerID: String { "results.footer" }
 
-    /// One card a row on a phone; as many as fit in the wide layout (§6.1).
+    /// One card a row on a phone; as many as fit in the wide layout's page column (§6.1).
     private var columns: Int {
-        layout == .wide ? PageLayout.cardColumns(width: width - Theme.Spacing.l * 2) : 1
+        let column = min(width, PageLayout.contentMaxWidth)
+        return layout == .wide ? PageLayout.cardColumns(width: column - Theme.Spacing.l * 2) : 1
     }
 
     /// Prefetch a few rows before the end.
@@ -186,7 +190,8 @@ struct SearchSkeletonList: View {
         ScrollView {
             LazyVGrid(columns: PageLayout.gridItems(columns, spacing: PageLayout.cardSpacing),
                       spacing: Theme.Spacing.m) {
-                ForEach(0..<(rows * columns), id: \.self) { _ in
+                // The wide layout's grid waits for its width, so it opens in its columns.
+                ForEach(0..<(layout == .wide && width == 0 ? 0 : rows * columns), id: \.self) { _ in
                     HStack(alignment: .top, spacing: Theme.Spacing.l) {
                         SkeletonBlock(width: Theme.Cover.smallWidth,
                                       height: Theme.Cover.height(forWidth: Theme.Cover.smallWidth),
@@ -205,9 +210,9 @@ struct SearchSkeletonList: View {
             }
             .padding(.horizontal, Theme.Spacing.l)
             .padding(.top, Theme.Spacing.s)
-            .measuringWidth($width)
         }
         .scrollDisabled(true)
+        .measuringWidth($width)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Copy.Search.loadingResults)
     }
