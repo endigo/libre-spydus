@@ -113,8 +113,9 @@ adb -s emulator-5580 shell am task resize <TASK_ID> 200 150 1200 1500   # 500 x 
 
 The layout follows the window (`AppLayout.of(width, height)` in `ui/theme/Layout.kt`: wide from
 600 × 480 dp); the words follow the device (`CopyDevice.isTablet`, set in
-`LibreSpydusApplication.onCreate` from `smallestScreenWidthDp >= 600`), so a tablet says "tablet"
-where a phone says "phone" even in a narrow window. `LayoutTest`, `DetailRelatedColumnTest` and
+`LibreSpydusApplication.onCreate` from `smallestScreenWidthDp >= 600` and no hinge sensor), so a
+tablet says "tablet" where a phone says "phone" even in a narrow window, and a foldable says
+"phone" even opened. `LayoutTest`, `DetailRelatedColumnTest` and
 `TabletWordsTest` cover the arithmetic and the words; the screens themselves are checked by eye
 on the tablet AVD, portrait and landscape.
 

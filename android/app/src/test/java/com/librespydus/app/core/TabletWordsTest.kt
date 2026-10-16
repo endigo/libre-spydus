@@ -1,5 +1,6 @@
 package com.librespydus.app.core
 
+import com.librespydus.app.isTabletDevice
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -83,5 +84,15 @@ class TabletWordsTest {
             assertEquals("Saved on your library account", Copy.Picks.subtitleAccount)
             assertEquals("fingerprint", Copy.Biometrics.fingerprint)
         }
+    }
+
+    @Test
+    fun aFoldableIsAPhoneOnEitherScreen() {
+        // Pixel Tablet, Pixel 9.
+        assertTrue(isTabletDevice(smallestWidthDp = 800, hasHinge = false))
+        assertFalse(isTabletDevice(smallestWidthDp = 411, hasHinge = false))
+        // A Galaxy Z Fold 8 opened (inner screen) and closed (cover screen).
+        assertFalse(isTabletDevice(smallestWidthDp = 704, hasHinge = true))
+        assertFalse(isTabletDevice(smallestWidthDp = 475, hasHinge = true))
     }
 }

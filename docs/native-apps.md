@@ -729,9 +729,10 @@ instead of pt, the same component names in Kotlin form (`LsSidebar`, `Modifier.p
   insets the root already applies for the status bar). Pushed screens' top bars avoid it too.
 - **Words.** An Android tablet says "tablet" where a phone says "phone" ("Saved on this tablet"):
   `"tablet"` forms of the same variants, chosen at run time in Kotlin (`CopyDevice.usesTabletWords`)
-  from the *device* (`smallestScreenWidthDp >= 600` at launch), not the window, as the iPad's
-  words follow the device. A phone keeps "phone" in a wide window and a tablet keeps "tablet" in a
-  narrow one.
+  from the *device* (`smallestScreenWidthDp >= 600` at launch and no hinge), not the window, as
+  the iPad's words follow the device. A phone keeps "phone" in a wide window and a tablet keeps
+  "tablet" in a narrow one. A foldable (a hinge sensor, `FEATURE_SENSOR_HINGE_ANGLE`) is a phone
+  whichever screen it opens on, though opened its inner screen gets the wide layout.
 - **Long-press and right-click.** A grid card's swipe actions are also on long-press, as on phones.
   A mouse's right-click opens the same menu.
 - **Change library.** Android's picker is a full screen over the tabs, not a form sheet, so in the
