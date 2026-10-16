@@ -678,7 +678,7 @@ Watch the web view's cookie store for `aws-waf-token` on the library host; when 
 `completeVerification("aws-waf-token=<value>")`, dismiss, and the failed screen retries.
 Never inject scripts into or interact with the challenge programmatically.
 
-### 6.1 iPad (the iOS app's wide layout)
+### 6.1 Tablets: iPad and Android (the wide layout)
 The iOS app runs on iPhone and iPad (`TARGETED_DEVICE_FAMILY = 1,2`; every iPad orientation). The
 layout follows the window, not the device (`AppLayout` in `ios/LibreSpydus/DesignSystem/Layout.swift`):
 a regular-width window is **wide**; an iPhone and a narrow iPad window (Slide Over, a narrow Split
@@ -711,6 +711,29 @@ desktop app's (`docs/desktop-app.md` §6):
   Pushed screens have navigation bars, which already avoid them.
 - **Words.** An iPad says "iPad" where an iPhone says "phone" ("Saved on this iPad"): `"ipad"` forms
   of those platform variants in `design/copy.json`, chosen at run time (`CopyDevice`, §7.1).
+
+**Android tablets** (the Compose app) get the same wide layout, with every measurement above in dp
+instead of pt, the same component names in Kotlin form (`LsSidebar`, `Modifier.pageColumn()`,
+`CardRows`, `DetailRelatedColumn`) and the same behaviour bullet for bullet. What differs:
+- **When it's wide.** The window, not the device, decides (`AppLayout` in
+  `android/app/src/main/java/com/librespydus/app/ui/theme/Layout.kt`): **wide** when the window is
+  at least 600 dp wide *and* at least 480 dp tall (Material's medium width and height classes),
+  measured at the root from the window's size. Anything else is **compact** and gets the phone layout,
+  unchanged: a phone either way up, a narrow split screen, a small freeform window. A Pixel Tablet
+  is wide both ways up (800 × 1280 dp portrait). No new dependency for this.
+- **Sidebar and status bar.** The app draws edge to edge; the sidebar's navy runs under the status
+  bar and its contents start below it, as the tab bar's stacks do now.
+- **Window caption.** In a freeform or desktop window the system's caption bar (its close and
+  maximise buttons) overlaps the window's top. Like the iPad's window controls, the compact layout's
+  tab screens and the wide layout's sidebar start below it (`WindowInsets.captionBar` is part of the
+  insets the root already applies for the status bar). Pushed screens' top bars avoid it too.
+- **Words.** An Android tablet says "tablet" where a phone says "phone" ("Saved on this tablet"):
+  `"tablet"` forms of the same variants, chosen at run time in Kotlin (`CopyDevice.usesTabletWords`)
+  from the *device* (`smallestScreenWidthDp >= 600` at launch), not the window, as the iPad's
+  words follow the device. A phone keeps "phone" in a wide window and a tablet keeps "tablet" in a
+  narrow one.
+- **Long-press and right-click.** A grid card's swipe actions are also on long-press, as on phones.
+  A mouse's right-click opens the same menu.
 
 ## 7. Design system
 
@@ -760,7 +783,7 @@ the same rules. Debug-only screens (component galleries, demo hints) are exempt.
 | Account | **Sign in**, **Sign out**, **Signed in** | Log in, Log out, Login |
 | The library | "library" in sentences; its name as the directory gives it; **Change library** | branch (except for a branch) |
 | Changing a reservation | **Edit** ("Edit reservation", "to edit or cancel it") | change (as the action) |
-| The reader's device | **phone** ("Saved on this phone", "Verified on this phone"); on an iPad **iPad** ("Saved on this iPad", §6.1); on desktop **computer** ("Saved on this computer"), as platform variants (`docs/desktop-app.md` §8.2) | device |
+| The reader's device | **phone** ("Saved on this phone", "Verified on this phone"); on an iPad **iPad** ("Saved on this iPad", §6.1); on an Android tablet **tablet** ("Saved on this tablet", §6.1); on desktop **computer** ("Saved on this computer"), as platform variants (`docs/desktop-app.md` §8.2) | device |
 | The library's human check | "**confirm** you’re human" (title "Confirm you’re human"); the feature is "verification" | verify you’re human |
 | The library's web pages | the library’s **website** | site, web page |
 | Errors | button **Retry**; "Can’t reach {library}. Check your connection."; "Something went wrong" | Try again (as a button), Oops |
