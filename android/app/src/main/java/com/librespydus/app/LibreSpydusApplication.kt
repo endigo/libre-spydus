@@ -8,6 +8,7 @@ import coil3.request.crossfade
 import com.librespydus.app.core.AndroidAlertNotifier
 import com.librespydus.app.core.AppState
 import com.librespydus.app.core.BiometricPrompter
+import com.librespydus.app.core.CopyDevice
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -29,6 +30,9 @@ class LibreSpydusApplication : Application(), SingletonImageLoader.Factory {
 
     override fun onCreate() {
         super.onCreate()
+        // The device's words (docs/native-apps.md §6.1): "tablet" where a phone says "phone", from
+        // the device itself, before anything reads the copy.
+        CopyDevice.isTablet = resources.configuration.smallestScreenWidthDp >= TABLET_SMALLEST_WIDTH_DP
         AndroidAlertNotifier.createChannels(this)
         biometricPrompter = BiometricPrompter(this)
         appState = AppState.create(this, appScope, biometricPrompter)
@@ -38,3 +42,6 @@ class LibreSpydusApplication : Application(), SingletonImageLoader.Factory {
     override fun newImageLoader(context: PlatformContext): ImageLoader =
         ImageLoader.Builder(context).crossfade(true).build()
 }
+
+/** A tablet's smallest width (the Android `sw600dp` qualifier). */
+private const val TABLET_SMALLEST_WIDTH_DP = 600

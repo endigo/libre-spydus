@@ -72,6 +72,8 @@ fun DetailSheetContent(
     onOpenSubject: (SubjectChip) -> Unit,
     onRetryCopies: () -> Unit,
     modifier: Modifier = Modifier,
+    /** False when the wide layout's related column shows the other books instead (§6.1). */
+    showsRelated: Boolean = true,
 ) {
     Column(
         modifier.padding(bottom = BrowseBottomClearance),
@@ -85,7 +87,7 @@ fun DetailSheetContent(
                 onSheet = true,
                 modifier = Modifier.padding(horizontal = LsSpacing.xl),
             )
-            is BrowseLoadable.Loaded -> LoadedSheet(record.value, state, onStartRelated, onOpenBook, onOpenSubject, onRetryCopies)
+            is BrowseLoadable.Loaded -> LoadedSheet(record.value, state, showsRelated, onStartRelated, onOpenBook, onOpenSubject, onRetryCopies)
         }
     }
 }
@@ -94,6 +96,7 @@ fun DetailSheetContent(
 private fun LoadedSheet(
     record: RecordDetail,
     state: DetailState,
+    showsRelated: Boolean,
     onStartRelated: () -> Unit,
     onOpenBook: (BookRef) -> Unit,
     onOpenSubject: (SubjectChip) -> Unit,
@@ -103,7 +106,7 @@ private fun LoadedSheet(
     val subjects = state.subjects
     val copies = state.copiesSection
     val facts = state.facts
-    val hasRelated = state.hasRelatedPanels
+    val hasRelated = showsRelated && state.hasRelatedPanels
     val gutter = Modifier.padding(horizontal = LsSpacing.xl)
     if (summary != null) {
         Column(gutter, verticalArrangement = Arrangement.spacedBy(LsSpacing.s)) {

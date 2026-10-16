@@ -32,7 +32,8 @@ class CopyWordingTest {
         assertEquals(Copy.Picks.subtitleAccount, signedIn.subtitle)
         assertEquals("Saved on your library account", signedIn.subtitle)
         assertEquals(Copy.Picks.subtitlePhone, signedOut.subtitle)
-        assertEquals("Saved on this phone", signedOut.subtitle)
+        // A phone's words (a tablet says "tablet": TabletWordsTest).
+        CopyDevice.withTabletWords(false) { assertEquals("Saved on this phone", signedOut.subtitle) }
         assertEquals(Copy.Picks.emptyPhoneMessage, signedOut.emptyMessage)
         assertEquals(Copy.Picks.emptyAccountMessage, signedIn.emptyMessage)
     }

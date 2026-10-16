@@ -1,6 +1,7 @@
 package com.librespydus.app.picks
 
 import com.librespydus.app.core.BookRef
+import com.librespydus.app.core.CopyDevice
 import com.librespydus.app.core.InMemoryPicksOfferStore
 import com.librespydus.app.core.PicksList
 import com.librespydus.app.core.PicksStore
@@ -313,7 +314,9 @@ class PicksStoreTest {
         val favourites = listOf(ref("work:1", 2), ref("bib:2", 1))
         f.store.offerAfterSignIn("lib", favourites)
         val offer = f.store.offer.value!!
-        assertEquals("2 books saved on this phone can be added to My Picks on your library account.", offer.message)
+        CopyDevice.withTabletWords(false) {
+            assertEquals("2 books saved on this phone can be added to My Picks on your library account.", offer.message)
+        }
 
         assertNull(f.store.answerOffer(add = false))
         assertNull(f.store.offer.value)
@@ -366,7 +369,9 @@ class PicksStoreTest {
 
     @Test
     fun oneBookIsSingular() {
-        assertEquals("1 book saved on this phone can be added to My Picks on your library account.", Copy.Picks.offerMessage(1))
+        CopyDevice.withTabletWords(false) {
+            assertEquals("1 book saved on this phone can be added to My Picks on your library account.", Copy.Picks.offerMessage(1))
+        }
         assertEquals("Adding 1 book to My Picks…", Copy.Picks.adding(1))
         assertEquals("Added 1 book to My Picks", PicksText.copied(1, 0))
         assertEquals("Added 2 books to My Picks · 1 couldn’t be added", PicksText.copied(2, 1))

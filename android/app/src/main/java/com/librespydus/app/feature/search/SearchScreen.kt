@@ -54,10 +54,13 @@ import com.librespydus.app.ui.components.SearchField
 import com.librespydus.app.ui.components.SectionHeader
 import com.librespydus.app.ui.components.SegmentedToggle
 import com.librespydus.app.ui.nav.AppNavigator
+import com.librespydus.app.ui.theme.LocalAppLayout
 import com.librespydus.app.ui.theme.LsColors
 import com.librespydus.app.ui.theme.LsIcons
 import com.librespydus.app.ui.theme.LsSpacing
 import com.librespydus.app.ui.theme.LsType
+import com.librespydus.app.ui.theme.PageLayout
+import com.librespydus.app.ui.theme.pageColumn
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -141,44 +144,57 @@ fun SearchScreen(appState: AppState, navigator: AppNavigator, modifier: Modifier
         if (listState.isScrollInProgress) keyboard?.hide()
     }
 
+    val wide = LocalAppLayout.current.isWide
     Column(
         modifier
             .fillMaxSize()
             .background(LsColors.background)
-            .statusBarsPadding(),
+            .statusBarsPadding()
+            .pageColumn(),
     ) {
+        // The title, the field and (with results) Relevance / Newest; in the wide layout (§6.1) the
+        // title in the other sections' size and the sort beside the field, as on the desktop.
         Column(
             Modifier.padding(start = LsSpacing.l, end = LsSpacing.l, top = LsSpacing.s, bottom = LsSpacing.m),
             verticalArrangement = Arrangement.spacedBy(LsSpacing.m),
         ) {
             Text(
                 Copy.Search.title,
-                style = LsType.title,
+                style = if (wide) LsType.greeting else LsType.title,
                 color = LsColors.textPrimary,
                 modifier = Modifier
                     .padding(top = LsSpacing.l)
                     .semantics { heading() },
             )
-            SearchField(
-                value = text,
-                onValueChange = {
-                    text = it
-                    // Clearing the field ends the search: recent searches show until the next search.
-                    if (it.isBlank()) submitted = null
-                },
-                onSearch = { submit() },
-                focusRequester = focusRequester,
-                modifier = Modifier.onFocusChanged { fieldFocused = it.isFocused },
-            )
-            if (submitted != null) {
+            val field: @Composable (Modifier) -> Unit = { fieldModifier ->
+                SearchField(
+                    value = text,
+                    onValueChange = {
+                        text = it
+                        // Clearing the field ends the search: recent searches show until the next search.
+                        if (it.isBlank()) submitted = null
+                    },
+                    onSearch = { submit() },
+                    focusRequester = focusRequester,
+                    modifier = fieldModifier.onFocusChanged { fieldFocused = it.isFocused },
+                )
+            }
+            val sortToggle: @Composable (Modifier) -> Unit = { toggleModifier ->
                 SegmentedToggle(
                     options = ResultsSort.entries.map { it.label },
                     selectedIndex = sort.ordinal,
                     onSelect = { sort = ResultsSort.entries[it] },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .semantics { contentDescription = Copy.Search.sortResults },
+                    modifier = toggleModifier.semantics { contentDescription = Copy.Search.sortResults },
                 )
+            }
+            if (wide) {
+                Row(horizontalArrangement = Arrangement.spacedBy(LsSpacing.m), verticalAlignment = Alignment.CenterVertically) {
+                    field(Modifier.weight(1f))
+                    if (submitted != null) sortToggle(Modifier.width(PageLayout.searchSortWidth))
+                }
+            } else {
+                field(Modifier)
+                if (submitted != null) sortToggle(Modifier.fillMaxWidth())
             }
         }
         val query = submitted

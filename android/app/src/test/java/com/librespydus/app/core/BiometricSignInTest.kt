@@ -144,11 +144,13 @@ class BiometricSignInTest {
         val offer = f.state.biometricOffer.value!!
         assertEquals(canning.origin, offer.origin)
         assertEquals("Sign in with fingerprint next time?", offer.title)
-        assertEquals(
-            "When City of Canning signs you out, sign back in with fingerprint instead of typing your PIN. " +
-                "Your card number and PIN stay on this phone, locked by fingerprint.",
-            offer.message,
-        )
+        CopyDevice.withTabletWords(false) {
+            assertEquals(
+                "When City of Canning signs you out, sign back in with fingerprint instead of typing your PIN. " +
+                    "Your card number and PIN stay on this phone, locked by fingerprint.",
+                offer.message,
+            )
+        }
 
         f.state.answerBiometricOffer(use = true)
         advanceUntilIdle()

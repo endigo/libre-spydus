@@ -2,6 +2,7 @@ package com.librespydus.app.picks
 
 import com.librespydus.app.core.AppState
 import com.librespydus.app.core.BookRef
+import com.librespydus.app.core.CopyDevice
 import com.librespydus.app.core.DemoBackend
 import com.librespydus.app.core.DemoData
 import com.librespydus.app.core.FavouritesStore
@@ -102,7 +103,9 @@ class PicksAppStateTest {
         advanceUntilIdle()
         val offer = f.state.picks.offer.value!!
         assertEquals(canning.origin, offer.scope)
-        assertEquals("2 books saved on this phone can be added to My Picks on your library account.", offer.message)
+        CopyDevice.withTabletWords(false) {
+            assertEquals("2 books saved on this phone can be added to My Picks on your library account.", offer.message)
+        }
         assertEquals(setOf("1", "2", "3"), f.state.picks.irns.value)
 
         f.state.picks.answerOffer(add = true)

@@ -257,7 +257,8 @@ fun <A : SwipeAction> ReservationSwipeBox(
                 }
             }
         }
-        Box(Modifier.offset { IntOffset(offset.roundToInt(), 0) }) { content() }
+        // Fills the height a grid row gives it (§6.1); in a list, the card's own height.
+        Box(Modifier.fillMaxHeight().offset { IntOffset(offset.roundToInt(), 0) }) { content() }
     }
 }
 

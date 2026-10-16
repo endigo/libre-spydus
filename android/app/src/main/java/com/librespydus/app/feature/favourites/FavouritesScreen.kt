@@ -65,12 +65,15 @@ import com.librespydus.app.feature.onboarding.AccountIcons
 import com.librespydus.app.ui.components.EmptyStateView
 import com.librespydus.app.ui.components.ShelfCover
 import com.librespydus.app.ui.nav.AppNavigator
+import com.librespydus.app.ui.theme.LocalAppLayout
 import com.librespydus.app.ui.theme.LsColors
 import com.librespydus.app.ui.theme.LsIcons
 import com.librespydus.app.ui.theme.LsRadius
 import com.librespydus.app.ui.theme.LsSpacing
 import com.librespydus.app.ui.theme.LsTabBar
 import com.librespydus.app.ui.theme.LsType
+import com.librespydus.app.ui.theme.PageLayout
+import com.librespydus.app.ui.theme.pageColumn
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -130,11 +133,14 @@ private fun LocalFavouritesScreen(appState: AppState, navigator: AppNavigator, m
         modifier
             .fillMaxSize()
             .background(LsColors.background)
-            .statusBarsPadding(),
+            .statusBarsPadding()
+            .pageColumn(),
     ) {
-        val columnWidth = FavouritesLayout.columnWidth(maxWidth)
+        // The wide layout (§6.1): as many columns as keep covers 120 dp wide, up to six.
+        val coverGrid = if (LocalAppLayout.current.isWide) PageLayout.coverGrid(maxWidth - LsSpacing.l * 2) else null
+        val columnWidth = coverGrid?.coverWidth ?: FavouritesLayout.columnWidth(maxWidth)
         LazyVerticalGrid(
-            columns = GridCells.Fixed(2),
+            columns = GridCells.Fixed(coverGrid?.columns ?: 2),
             state = gridState,
             contentPadding = PaddingValues(
                 start = LsSpacing.l,

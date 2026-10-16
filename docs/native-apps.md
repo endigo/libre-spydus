@@ -734,6 +734,8 @@ instead of pt, the same component names in Kotlin form (`LsSidebar`, `Modifier.p
   narrow one.
 - **Long-press and right-click.** A grid card's swipe actions are also on long-press, as on phones.
   A mouse's right-click opens the same menu.
+- **Change library.** Android's picker is a full screen over the tabs, not a form sheet, so in the
+  wide layout it is the first launch's 760 dp column too.
 
 ## 7. Design system
 

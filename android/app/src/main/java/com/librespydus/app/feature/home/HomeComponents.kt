@@ -43,6 +43,7 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
@@ -212,12 +213,12 @@ private fun HomeCard(modifier: Modifier = Modifier, content: @Composable RowScop
 
 /** The library's logo on a white rounded square (its initial until the image loads, or without one). */
 @Composable
-fun HomeLibraryLogo(name: String, logoUrl: String?, onClick: () -> Unit, modifier: Modifier = Modifier) {
+fun HomeLibraryLogo(name: String, logoUrl: String?, onClick: () -> Unit, modifier: Modifier = Modifier, size: Dp = 48.dp) {
     val shape = RoundedCornerShape(12.dp)
     var loaded by remember(logoUrl) { mutableStateOf(false) }
     Box(
         modifier
-            .size(48.dp)
+            .size(size)
             .shadow(6.dp, shape)
             .clip(shape)
             .background(Color.White)
