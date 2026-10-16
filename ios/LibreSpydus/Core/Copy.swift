@@ -162,6 +162,8 @@ enum Copy {
             "Sign in with \(method) next time?"
         }
         /// "When {library} signs you out, sign back in with {method} instead of typing your PIN. Your card number and PIN stay on this phone, locked by {method}."
+        /// Android: "When {library} signs you out, sign back in with {method} instead of typing your PIN. Your card number and PIN stay on this phone, locked by {method}."
+        /// Desktop: "When {library} signs you out, sign back in with {method} instead of typing your PIN. Your card number and PIN stay on this computer, locked by {method}."
         static func offerMessage(library: String, method: String) -> String {
             "When \(library) signs you out, sign back in with \(method) instead of typing your PIN. Your card number and PIN stay on this phone, locked by \(method)."
         }
@@ -216,6 +218,10 @@ enum Copy {
         static func expires(date: String) -> String {
             "Expires \(date)"
         }
+        /// Desktop My card dialog while signed out, over account.signIn.
+        static let signInMessage = "Sign in to show your library card’s barcode."
+        /// Status line next to common.retry when the library's barcode type didn't load: no full stop.
+        static let barcodeFailed = "Couldn’t load the barcode"
     }
 
     enum Featured {
@@ -504,6 +510,8 @@ enum Copy {
         /// Screen-reader hint on the Renew action, and on the book page's On loan pill of a loan that can be renewed.
         static let renewHint = "Asks the library for a later due date"
         static let noReservationsTitle = "No reservations"
+        /// Android: "Tap Reserve on any book and follow it here until it’s ready to collect."
+        /// Desktop: "Click Reserve on any book and follow it here until it’s ready to collect."
         static let noReservationsMessage = "Tap Reserve on any book and follow it here until it’s ready to collect."
         /// The ready card's status chip (§7.1; was 'Ready for pickup'). Pending cards show the library's own status, else 'Pending'.
         static let readyToCollect = "Ready to collect"
@@ -558,6 +566,9 @@ enum Copy {
         static let swipeHint = "Swipe left on a reservation to edit or cancel it."
         /// The same footnote on iOS 17, where cards don't swipe (long-press menu only).
         static let touchAndHoldHint = "Touch and hold a reservation to edit or cancel it."
+        /// Desktop: the footnote under the reservations, whose cards have a '…' menu button and the same right-click menu (docs/desktop-app.md §6). loanRightClickHint goes under the loans.
+        static let rightClickHint = "Right-click a reservation to edit or cancel it."
+        static let loanRightClickHint = "Right-click a loan to renew it."
         /// Long-press menu item and screen-reader action (Edit / common.cancel are the swipe tiles).
         static let editReservation = "Edit reservation"
         /// Menu item, screen-reader action and the confirmation's destructive button (iOS said 'Cancel Reservation').
@@ -657,6 +668,8 @@ enum Copy {
         /// §7.1: the tab, the screen title (signed in and out), the bookmark and the toasts. Never Favourites.
         static let title = "My Picks"
         static let subtitleAccount = "Saved on your library account"
+        /// Android: "Saved on this phone"
+        /// Desktop: "Saved on this computer"
         /// Signed out (was '{n} saved for {library}' / 'Saved on this device for {library}').
         static let subtitlePhone = "Saved on this phone"
         /// Bookmark button's screen-reader label (book page and anywhere else a toggle appears), signed in or out (was 'Add to favourites').
@@ -669,7 +682,11 @@ enum Copy {
         /// Error toast (§5.11 had a full stop; §7.1: never on toasts).
         static let updateFailed = "Couldn’t update My Picks"
         static let emptyTitle = "No picks yet"
+        /// Android: "Tap the bookmark on a book to save it to your library account."
+        /// Desktop: "Click the bookmark on a book to save it to your library account."
         static let emptyAccountMessage = "Tap the bookmark on a book to save it to your library account."
+        /// Android: "Tap the bookmark on a book to save it on this phone."
+        /// Desktop: "Click the bookmark on a book to save it on this computer."
         /// Signed out (was 'Tap the bookmark on any book to save it here.'); its button is findABook.
         static let emptyPhoneMessage = "Tap the bookmark on a book to save it on this phone."
         static let findABook = "Find a book"
@@ -688,12 +705,20 @@ enum Copy {
         }
         static let loadingMore = "Loading more picks"
         static let retryLoadingMoreHint = "Loads more picks"
+        /// Android: "Couldn’t load My Picks from this phone."
+        /// Desktop: "Couldn’t load My Picks from this computer."
         /// iOS banner when the phone's list can't be read (was 'Couldn't read favourites: <system error>').
         static let loadFailed = "Couldn’t load My Picks from this phone."
+        /// Android: "Couldn’t save My Picks on this phone."
+        /// Desktop: "Couldn’t save My Picks on this computer."
         static let saveFailed = "Couldn’t save My Picks on this phone."
+        /// Android: "Add this phone’s picks to your library account?"
+        /// Desktop: "Add this computer’s picks to your library account?"
         /// §5.11 copy-once alert; buttons common.add / common.notNow.
         static let offerTitle = "Add this phone’s picks to your library account?"
         /// One: "1 book saved on this phone can be added to My Picks on your library account." · other: "{count} books saved on this phone can be added to My Picks on your library account."
+        /// Android: One: "1 book saved on this phone can be added to My Picks on your library account." · other: "{count} books saved on this phone can be added to My Picks on your library account."
+        /// Desktop: One: "1 book saved on this computer can be added to My Picks on your library account." · other: "{count} books saved on this computer can be added to My Picks on your library account."
         static func offerMessage(count: Int) -> String {
             count == 1 ? "1 book saved on this phone can be added to My Picks on your library account." : "\(copyNumber(count)) books saved on this phone can be added to My Picks on your library account."
         }
@@ -737,6 +762,8 @@ enum Copy {
         static let notSignedInTitle = "You’re not signed in"
         static let notSignedInMessage = "Sign in with your library card to see your loans and reservations."
         static let humanVerification = "Human verification"
+        /// Android: "Verified on this phone"
+        /// Desktop: "Verified on this computer"
         static let verified = "Verified on this phone"
         /// "{library} asked you to confirm you’re human. The app sends the library’s verification cookie with its requests."
         static func verifiedMessage(library: String) -> String {
@@ -755,6 +782,11 @@ enum Copy {
         static func version(version: String, build: String) -> String {
             "Version \(version) (\(build))"
         }
+        /// "Version {version}"
+        /// Desktop: the app has a version but no separate build number.
+        static func appVersion(version: String) -> String {
+            "Version \(version)"
+        }
         static let notAffiliated = "LibreSpydus is not affiliated with Civica or your library."
     }
 
@@ -766,7 +798,9 @@ enum Copy {
         static let dueTitle = "Due-date reminders"
         static let dueSubtitle = "2 days before books are due, at 7:45"
         static let blocked = "Notifications are turned off for LibreSpydus."
-        /// 'Settings' is the system app's name, so it keeps its capital.
+        /// Android: "Open Settings"
+        /// Desktop: "Open System Settings"
+        /// 'Settings' is the system app's name, so it keeps its capital. Desktop: macOS calls it System Settings.
         static let openSettings = "Open Settings"
     }
 
@@ -844,11 +878,16 @@ enum Copy {
         static let cardPlaceholder = "Username or card number"
         static let pinLabel = "PIN / password"
         static let pinPlaceholder = "PIN or password"
+        /// Desktop: screen-reader label of the PIN field's reveal toggle (hidePin while the PIN shows).
+        static let showPin = "Show PIN"
+        static let hidePin = "Hide PIN"
         /// "LibreSpydus signs in directly with {library} and doesn’t store your PIN."
         static func privacyNote(library: String) -> String {
             "LibreSpydus signs in directly with \(library) and doesn’t store your PIN."
         }
         /// "LibreSpydus signs in directly with {library}. It keeps your PIN on this phone only if you turn on {method}."
+        /// Android: "LibreSpydus signs in directly with {library}. It keeps your PIN on this phone only if you turn on {method}."
+        /// Desktop: "LibreSpydus signs in directly with {library}. It keeps your PIN on this computer only if you turn on {method}."
         /// Replaces privacyNote when the phone can use {method} (§5.14), since turning it on keeps the PIN.
         static func privacyNoteBiometrics(library: String, method: String) -> String {
             "LibreSpydus signs in directly with \(library). It keeps your PIN on this phone only if you turn on \(method)."
@@ -858,10 +897,18 @@ enum Copy {
     enum Verification {
         static let title = "Confirm you’re human"
         /// "{library} asks you to confirm you’re human. Complete the check below."
-        /// §6 verification sheet copy.
+        /// Android: "{library} asks you to confirm you’re human. Complete the check below."
+        /// Desktop: "{library} asks you to confirm you’re human. Complete the check in the window that opens."
+        /// §6 verification sheet copy. Desktop: the dialog before the helper window opens (docs/desktop-app.md §11.2).
         static func message(library: String) -> String {
             "\(library) asks you to confirm you’re human. Complete the check below."
         }
+        /// Desktop only: the verification dialog's confirming button, which opens the helper window.
+        static let openCheck = "Open check"
+        /// Desktop only: a note in the verification dialog after the reader closed the helper window.
+        static let windowClosed = "The check window closed before the check was finished."
+        /// Desktop only: a note in the verification dialog when the helper window couldn't start.
+        static let helperFailed = "The check window couldn’t open."
         static let closesByItself = "This closes by itself once the library lets you in."
         /// "Opening {library}…"
         static func opening(library: String) -> String {
@@ -876,6 +923,35 @@ enum Copy {
         /// Android shows it with common.openWebsite and common.close when verification keeps failing (iOS shows errors.libraryUnavailable instead).
         static func keepsAsking(library: String) -> String {
             "\(library) keeps asking to confirm you’re human after the check. Its own website still works in your browser."
+        }
+    }
+
+    enum Desktop {
+        /// Desktop only (docs/desktop-app.md §8.2): the app menu and its ⌘Q item. 'LibreSpydus' is the app's name (profile.appName).
+        static let quit = "Quit LibreSpydus"
+        static let hide = "Hide LibreSpydus"
+        /// macOS app-menu items, in sentence case (§7.1), unlike AppKit's own 'Hide Others'.
+        static let hideOthers = "Hide others"
+        static let showAll = "Show all"
+        /// The Window menu and its items.
+        static let window = "Window"
+        static let minimize = "Minimize"
+        static let zoom = "Zoom"
+        static let file = "File"
+        static let closeWindow = "Close window"
+        /// The Go menu: the five sections (tabs.*, ⌘1–⌘5), common.back (⌘[) and search.title (⌘F).
+        static let go = "Go"
+        /// ⌘R in the Go menu: fetches the account again (§5.5).
+        static let refreshAccount = "Refresh account"
+        /// "Shows {section}"
+        /// Screen-reader hint on a sidebar item; {section} = its label (tabs.*).
+        static func sidebarHint(section: String) -> String {
+            "Shows \(section)"
+        }
+        /// "{library} logo"
+        /// Screen-reader label of the library's logo in the sidebar header.
+        static func libraryLogo(library: String) -> String {
+            "\(library) logo"
         }
     }
 }

@@ -1,0 +1,59 @@
+[package]
+name = "librespydus-desktop"
+version = "0.1.0"
+edition = "2024"
+description = "LibreSpydus for the desktop: GPUI + gpui-kit on the shared Rust core (docs/desktop-app.md)"
+publish = false
+
+[lib]
+name = "librespydus_desktop"
+path = "src/lib.rs"
+
+[[bin]]
+name = "librespydus"
+path = "src/main.rs"
+
+[features]
+default = []
+# Self-rendered screenshots (`--screenshot`, docs/desktop-app.md §5.7): GPUI's `render_to_image`
+# needs its test support, and the PNG encoder.
+evidence = ["gpui-kit/test-support", "dep:image"]
+
+[dependencies]
+gpui-kit = "=0.7.3"
+librespydus-core = { path = "../core" }
+tokio = { version = "1", features = ["rt-multi-thread", "time", "sync"] }
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "gzip"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+keyring = { version = "3", features = ["apple-native"] }
+dirs = "6"
+sha2 = "0.10"
+futures = "0.3"
+chrono = { version = "0.4", default-features = false, features = ["clock", "std", "serde"] }
+anyhow = "1"
+log = "0.4"
+env_logger = { version = "0.11", default-features = false, features = ["auto-color", "humantime"] }
+image = { version = "0.25", default-features = false, features = ["png"], optional = true }
+
+[dev-dependencies]
+gpui-kit = { version = "=0.7.3", features = ["test-support"] }
+tempfile = "3"
+
+# macOS-only (docs/desktop-app.md §11, wave 3). wry + tao: the "confirm you're human" helper
+# window (a separate process, so its event loop never meets GPUI's). LocalAuthentication +
+# Security: Touch ID sign-back-in with a biometry-protected Keychain item.
+[target.'cfg(target_os = "macos")'.dependencies]
+wry = "0.57"
+tao = "0.37"
+objc2 = "0.6"
+objc2-foundation = "0.3"
+objc2-local-authentication = "0.3"
+block2 = "0.6"
+security-framework = "3.7"
+
+# The packaged app (scripts/bundle.sh, docs/desktop-app.md §11.5): one optimised, stripped binary.
+[profile.release]
+lto = "thin"
+codegen-units = 1
+strip = true

@@ -1,22 +1,30 @@
 #!/usr/bin/env python3
 """Generate the apps' Copy files from design/copy.json (docs/native-apps.md §7.1).
 
-    design/scripts/gen_copy.py           write both files
-    design/scripts/gen_copy.py --check   exit 1 when either file is out of date (writes nothing)
+    design/scripts/gen_copy.py           write the three files
+    design/scripts/gen_copy.py --check   exit 1 when any file is out of date (writes nothing)
 
-Writes ios/LibreSpydus/Core/Copy.swift (`enum Copy { enum Picks { static let title = … } }`) and
+Writes ios/LibreSpydus/Core/Copy.swift (`enum Copy { enum Picks { static let title = … } }`),
 android/app/src/main/java/com/librespydus/app/core/Copy.kt (`object Copy { object Picks { const
-val title = … } }`), with the same names on both platforms:
+val title = … } }`) and desktop/src/copy.rs (`pub mod Copy { pub mod Picks { pub const title:
+&str = …; } }`, docs/desktop-app.md §8.1), with the same names on every platform:
 
 - each JSON object becomes a nested enum / object (`yourBooks` → `YourBooks`), each leaf a member
   with the leaf's camelCase key;
 - a string without placeholders is a constant; one with {named} placeholders is a function whose
   labelled parameters follow the order of first appearance (`count: Int`, every other one
-  `String`); {count} is shown with the locale's digit grouping ("1,234 results");
+  `String`; Rust `count: i64` and `&str`); {count} is shown with the locale's digit grouping
+  ("1,234 results"; Rust always groups with commas);
 - {"one": …, "other": …} is a function of `count: Int` (first) plus the other placeholders,
   choosing "one" when count == 1;
-- {"ios": …, "android": …} resolves to that platform's text (both must use the same placeholders);
+- {"ios": …, "android": …, "desktop": …} (a platform variant, docs/desktop-app.md §8.2) resolves to
+  that platform's value. It lists every platform; each value is a string or a {"one", "other"}
+  plural, and all of them have the same kind and the same placeholders. The other platforms'
+  words become doc comments;
+- identifiers that are keywords are escaped (Swift `use`, Kotlin `when`, Rust `r#use`);
 - keys starting with "_" are notes: "_notes" entries become doc comments, the rest are skipped.
+
+Python 3.9+ (the Mac mini's /usr/bin/python3): no `match`, no `X | Y` outside annotations.
 
 Python 3 standard library only; no network.
 """
@@ -33,6 +41,10 @@ ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "design" / "copy.json"
 SWIFT_OUT = ROOT / "ios" / "LibreSpydus" / "Core" / "Copy.swift"
 KOTLIN_OUT = ROOT / "android" / "app" / "src" / "main" / "java" / "com" / "librespydus" / "app" / "core" / "Copy.kt"
+RUST_OUT = ROOT / "desktop" / "src" / "copy.rs"
+
+PLATFORMS = ("ios", "android", "desktop")
+PLATFORM_NAMES = {"ios": "iOS", "android": "Android", "desktop": "Desktop"}
 
 HEADER = "GENERATED from design/copy.json by design/scripts/gen_copy.py — do not edit"
 
@@ -54,6 +66,17 @@ KOTLIN_KEYWORDS = {
 }
 
 
+RUST_KEYWORDS = {
+    "as", "break", "const", "continue", "crate", "else", "enum", "extern", "false", "fn", "for", "if",
+    "impl", "in", "let", "loop", "match", "mod", "move", "mut", "pub", "ref", "return", "self", "Self",
+    "static", "struct", "super", "trait", "true", "type", "unsafe", "use", "where", "while", "async",
+    "await", "dyn", "abstract", "become", "box", "do", "final", "macro", "override", "priv", "typeof",
+    "unsized", "virtual", "yield", "try", "gen",
+}
+# Keywords a raw identifier can't spell (`r#self` is an error): suffixed with "_" instead.
+RUST_NOT_RAW = {"self", "Self", "super", "crate"}
+
+
 class CopyError(Exception):
     pass
 
@@ -61,7 +84,11 @@ class CopyError(Exception):
 # ---- model ------------------------------------------------------------------------------------
 
 class Leaf:
-    """One string: plain, plural or per platform, resolved for one platform."""
+    """One string: plain, plural or a platform variant, with its value on each platform.
+
+    `forms[platform]` is {"text": …} or {"one": …, "other": …}; `plural` says which (the same on
+    every platform).
+    """
 
     def __init__(self, path: list[str], value, note: str | None):
         self.path = path
@@ -69,42 +96,76 @@ class Leaf:
         self.note = note
         self.raw = value
         where = ".".join(path)
-        if isinstance(value, str):
-            self.kind = "text"
-            self.texts = {"ios": {"text": value}, "android": {"text": value}}
-        elif isinstance(value, dict) and set(value) == {"one", "other"}:
-            self.kind = "plural"
-            forms = {"one": value["one"], "other": value["other"]}
-            if not all(isinstance(text, str) for text in forms.values()):
-                raise CopyError(f"{where}: plural forms must be strings")
-            if "count" not in placeholders(forms["other"]):
-                raise CopyError(f"{where}: a plural's \"other\" form must use {{count}}")
-            self.texts = {"ios": forms, "android": forms}
-        elif isinstance(value, dict) and set(value) == {"ios", "android"}:
-            self.kind = "platform"
-            if not all(isinstance(text, str) for text in value.values()):
-                raise CopyError(f"{where}: platform variants must be strings")
-            if placeholders(value["ios"]) != placeholders(value["android"]):
-                raise CopyError(f"{where}: the ios and android texts must use the same placeholders")
-            self.texts = {"ios": {"text": value["ios"]}, "android": {"text": value["android"]}}
+        if isinstance(value, dict) and set(value) == set(PLATFORMS):
+            self.kind = "variant"
+            forms = {platform: _forms(f"{where}.{platform}", value[platform]) for platform in PLATFORMS}
+            kinds = {platform: "one" in form for platform, form in forms.items()}
+            if len(set(kinds.values())) != 1:
+                raise CopyError(f"{where}: every platform's value must be a string, or every one a plural")
+            names = {platform: _placeholder_set(form) for platform, form in forms.items()}
+            if len({frozenset(n) for n in names.values()}) != 1:
+                raise CopyError(f"{where}: every platform's value must use the same placeholders")
+            self.plural = kinds["ios"]
+            self.forms = forms
+        elif isinstance(value, dict) and (set(value) & set(PLATFORMS)) and set(value) <= set(PLATFORMS):
+            missing = ", ".join(p for p in PLATFORMS if p not in value)
+            raise CopyError(f"{where}: a platform variant lists every platform (missing {missing})")
+        elif isinstance(value, str) or (isinstance(value, dict) and set(value) == {"one", "other"}):
+            form = _forms(where, value)
+            self.kind = "plural" if "one" in form else "text"
+            self.plural = self.kind == "plural"
+            self.forms = {platform: form for platform in PLATFORMS}
         else:
-            raise CopyError(f"{where}: a leaf is a string, {{\"one\", \"other\"}} or {{\"ios\", \"android\"}}")
-        for forms in self.texts.values():
+            raise CopyError(f"{where}: a leaf is a string, {{\"one\", \"other\"}} or "
+                            f"{{\"ios\", \"android\", \"desktop\"}}")
+        for forms in self.forms.values():
             for text in forms.values():
                 if not text.strip():
                     raise CopyError(f"{where}: empty text")
                 if any(brace in PLACEHOLDER.sub("", text) for brace in "{}"):
                     raise CopyError(f"{where}: stray brace in {text!r}")
 
+    # The Swift and Kotlin emitters predate variants and read `texts`.
+    @property
+    def texts(self) -> dict:
+        return self.forms
+
     def params(self, platform: str) -> list[str]:
         """Placeholders in order of first appearance; a plural's count first."""
-        forms = self.texts[platform]
-        names: list[str] = ["count"] if self.kind == "plural" else []
-        for key in ("other", "one") if self.kind == "plural" else ("text",):
+        forms = self.forms[platform]
+        names: list[str] = ["count"] if self.plural else []
+        for key in ("other", "one") if self.plural else ("text",):
             for name in placeholders(forms[key]):
                 if name not in names:
                     names.append(name)
         return names
+
+    def describe(self, platform: str) -> str:
+        """This platform's value for a doc comment: `"…"`, or `One: "…" · other: "…"`."""
+        forms = self.forms[platform]
+        if self.plural:
+            return f'One: "{forms["one"]}" · other: "{forms["other"]}"'
+        return f'"{forms["text"]}"'
+
+
+def _forms(where: str, value) -> dict:
+    if isinstance(value, str):
+        return {"text": value}
+    if isinstance(value, dict) and set(value) == {"one", "other"}:
+        forms = {"one": value["one"], "other": value["other"]}
+        if not all(isinstance(text, str) for text in forms.values()):
+            raise CopyError(f"{where}: plural forms must be strings")
+        if "count" not in placeholders(forms["other"]):
+            raise CopyError(f"{where}: a plural's \"other\" form must use {{count}}")
+        return forms
+    raise CopyError(f"{where}: a value is a string or {{\"one\", \"other\"}}")
+
+
+def _placeholder_set(forms: dict) -> set:
+    names = set()
+    for text in forms.values():
+        names.update(placeholders(text))
+    return names
 
 
 class Group:
@@ -142,7 +203,8 @@ class Group:
 
 
 def _is_leaf_dict(value: dict) -> bool:
-    return set(value) in ({"one", "other"}, {"ios", "android"})
+    keys = set(value)
+    return keys == {"one", "other"} or bool(keys & set(PLATFORMS)) and keys <= set(PLATFORMS)
 
 
 def placeholders(text: str) -> list[str]:
@@ -195,13 +257,11 @@ def _swift_escape(text: str) -> str:
 
 def swift_doc(leaf: Leaf, indent: str, platform: str = "ios") -> list[str]:
     lines = []
-    forms = leaf.texts[platform]
-    if leaf.kind == "plural":
-        lines.append(f'{indent}/// One: "{forms["one"]}" · other: "{forms["other"]}"')
-    elif leaf.params(platform):
-        lines.append(f'{indent}/// "{forms["text"]}"')
-    if leaf.kind == "platform":
-        lines.append(f'{indent}/// Android: "{leaf.texts["android"]["text"]}"')
+    if leaf.plural or leaf.params(platform):
+        lines.append(f"{indent}/// {leaf.describe(platform)}")
+    if leaf.kind == "variant":
+        for other in ("android", "desktop"):
+            lines.append(f"{indent}/// {PLATFORM_NAMES[other]}: {leaf.describe(other)}")
     if leaf.note:
         lines.append(f"{indent}/// {leaf.note}")
     return lines
@@ -216,7 +276,7 @@ def swift_member(leaf: Leaf, indent: str) -> list[str]:
         lines.append(f"{indent}static let {name} = {swift_literal(forms['text'], params)}")
         return lines
     signature = ", ".join(f"{swift_ident(p)}: {'Int' if p == 'count' else 'String'}" for p in params)
-    if leaf.kind == "plural":
+    if leaf.plural:
         body = (f"count == 1 ? {swift_literal(forms['one'], params)} : "
                 f"{swift_literal(forms['other'], params)}")
     else:
@@ -292,13 +352,11 @@ def _kotlin_escape(text: str) -> str:
 
 def kotlin_doc(leaf: Leaf, indent: str) -> list[str]:
     parts = []
-    forms = leaf.texts["android"]
-    if leaf.kind == "plural":
-        parts.append(f'One: "{forms["one"]}" · other: "{forms["other"]}"')
-    elif leaf.params("android"):
-        parts.append(f'"{forms["text"]}"')
-    if leaf.kind == "platform":
-        parts.append(f'iOS: "{leaf.texts["ios"]["text"]}"')
+    if leaf.plural or leaf.params("android"):
+        parts.append(leaf.describe("android"))
+    if leaf.kind == "variant":
+        for other in ("ios", "desktop"):
+            parts.append(f"{PLATFORM_NAMES[other]}: {leaf.describe(other)}")
     if leaf.note:
         parts.append(leaf.note)
     # Kotlin comments nest: keep "/*" and "*/" out of them.
@@ -314,7 +372,7 @@ def kotlin_member(leaf: Leaf, indent: str) -> list[str]:
         lines.append(f"{indent}const val {name} = {kotlin_literal(forms['text'])}")
         return lines
     signature = ", ".join(f"{kotlin_ident(p)}: {'Int' if p == 'count' else 'String'}" for p in params)
-    if leaf.kind == "plural":
+    if leaf.plural:
         body = f"if (count == 1) {kotlin_literal(forms['one'])} else {kotlin_literal(forms['other'])}"
     else:
         body = kotlin_literal(forms["text"])
@@ -362,16 +420,140 @@ def render_kotlin(root: Group) -> str:
     return "\n".join(lines)
 
 
+# ---- Rust -------------------------------------------------------------------------------------
+
+def rust_ident(name: str) -> str:
+    if name in RUST_NOT_RAW:
+        return name + "_"
+    return f"r#{name}" if name in RUST_KEYWORDS else name
+
+
+def _rust_escape(text: str) -> str:
+    return (text.replace("\\", "\\\\").replace('"', '\\"').replace("\n", "\\n")
+            .replace("\r", "\\r").replace("\t", "\\t"))
+
+
+def rust_param(name: str, consts: set) -> str:
+    """A parameter's identifier: one named like a constant of its module would be read as a
+    pattern matching that constant, so it gets a trailing "_"."""
+    return name + "_" if name in consts else rust_ident(name)
+
+
+def rust_expr(text: str, number: str, consts: set = frozenset()) -> str:
+    """A `String` expression for `text`: `"…".to_owned()`, or a `format!` with one positional
+    argument per placeholder (counts through `number`, the path to `copy_number`)."""
+    pieces = []
+    args = []
+    pos = 0
+    for match in PLACEHOLDER.finditer(text):
+        pieces.append(_rust_escape(text[pos:match.start()]).replace("{", "{{").replace("}", "}}"))
+        pieces.append("{}")
+        name = match.group(1)
+        args.append(f"{number}({rust_param(name, consts)})" if name == "count" else rust_param(name, consts))
+        pos = match.end()
+    pieces.append(_rust_escape(text[pos:]).replace("{", "{{").replace("}", "}}"))
+    if not args:
+        return f'"{_rust_escape(text)}".to_owned()'
+    return f'format!("{"".join(pieces)}", {", ".join(args)})'
+
+
+def rust_doc(leaf: Leaf, indent: str) -> list[str]:
+    lines = []
+    if leaf.plural or leaf.params("desktop"):
+        lines.append(f"{indent}/// {leaf.describe('desktop')}")
+    if leaf.kind == "variant":
+        for other in ("ios", "android"):
+            lines.append(f"{indent}/// {PLATFORM_NAMES[other]}: {leaf.describe(other)}")
+    if leaf.note:
+        lines.append(f"{indent}/// {leaf.note}")
+    return lines
+
+
+def rust_member(leaf: Leaf, indent: str, depth: int, consts: set) -> list[str]:
+    params = leaf.params("desktop")
+    forms = leaf.forms["desktop"]
+    lines = rust_doc(leaf, indent)
+    name = rust_ident(leaf.name)
+    if not params:
+        lines.append(f'{indent}pub const {name}: &str = "{_rust_escape(forms["text"])}";')
+        return lines
+    number = "super::" * depth + "copy_number"
+    signature = ", ".join(f"{rust_param(p, consts)}: {'i64' if p == 'count' else '&str'}" for p in params)
+    lines.append(f"{indent}pub fn {name}({signature}) -> String {{")
+    if leaf.plural:
+        lines.append(f"{indent}    if {rust_param('count', consts)} == 1 {{")
+        lines.append(f"{indent}        {rust_expr(forms['one'], number, consts)}")
+        lines.append(f"{indent}    }} else {{")
+        lines.append(f"{indent}        {rust_expr(forms['other'], number, consts)}")
+        lines.append(f"{indent}    }}")
+    else:
+        lines.append(f"{indent}    {rust_expr(forms['text'], number, consts)}")
+    lines.append(f"{indent}}}")
+    return lines
+
+
+def rust_group(group: Group, indent: str, depth: int) -> list[str]:
+    lines = []
+    consts = {child.name for child in group.children if isinstance(child, Leaf) and not child.params("desktop")}
+    for index, child in enumerate(group.children):
+        if index:
+            if isinstance(child, Group) or isinstance(group.children[index - 1], Group):
+                lines.append("")
+        if isinstance(child, Group):
+            lines.append(f"{indent}pub mod {type_name(child.name)} {{")
+            lines.extend(rust_group(child, indent + "    ", depth + 1))
+            lines.append(f"{indent}}}")
+        else:
+            lines.extend(rust_member(child, indent, depth, consts))
+    return lines
+
+
+def render_rust(root: Group) -> str:
+    lines = [
+        f"// {HEADER}.",
+        "// Every word a reader sees or hears (docs/native-apps.md §7.1, docs/desktop-app.md §8). Change",
+        "// the JSON, then run the script; design/scripts/check_copy.py keeps literals out of the app.",
+        "",
+        "#![allow(non_snake_case, non_upper_case_globals, dead_code, clippy::all)]",
+        "",
+        "/// `Copy::Common::retry`, `Copy::Search::results(count)`: one module per group, a `const` per",
+        "/// plain string and a function per string with placeholders or plural forms.",
+        "pub mod Copy {",
+    ]
+    lines.extend(rust_group(root, "    ", 1))
+    lines += [
+        "}",
+        "",
+        "/// A count with digit grouping (\"1,234\").",
+        "fn copy_number(value: i64) -> String {",
+        "    let digits = value.unsigned_abs().to_string();",
+        "    let mut grouped = String::with_capacity(digits.len() + digits.len() / 3 + 1);",
+        "    if value < 0 {",
+        "        grouped.push('-');",
+        "    }",
+        "    for (index, digit) in digits.chars().enumerate() {",
+        "        if index > 0 && (digits.len() - index) % 3 == 0 {",
+        "            grouped.push(',');",
+        "        }",
+        "        grouped.push(digit);",
+        "    }",
+        "    grouped",
+        "}",
+        "",
+    ]
+    return "\n".join(lines)
+
+
 # ---- main -------------------------------------------------------------------------------------
 
 def outputs(root: Group) -> dict[Path, str]:
-    return {SWIFT_OUT: render_swift(root), KOTLIN_OUT: render_kotlin(root)}
+    return {SWIFT_OUT: render_swift(root), KOTLIN_OUT: render_kotlin(root), RUST_OUT: render_rust(root)}
 
 
 def stats(root: Group) -> str:
     leaves = list(root.leaves())
-    plurals = sum(leaf.kind == "plural" for leaf in leaves)
-    variants = sum(leaf.kind == "platform" for leaf in leaves)
+    plurals = sum(leaf.plural for leaf in leaves)
+    variants = sum(leaf.kind == "variant" for leaf in leaves)
     functions = sum(bool(leaf.params("ios")) for leaf in leaves)
     return (f"{len(leaves)} strings ({plurals} plurals, {variants} platform variants, "
             f"{functions} with placeholders) in {sum(1 for _ in _groups(root))} groups")

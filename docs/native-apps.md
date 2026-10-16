@@ -726,7 +726,7 @@ the same rules. Debug-only screens (component galleries, demo hints) are exempt.
 | Account | **Sign in**, **Sign out**, **Signed in** | Log in, Log out, Login |
 | The library | "library" in sentences; its name as the directory gives it; **Change library** | branch (except for a branch) |
 | Changing a reservation | **Edit** ("Edit reservation", "to edit or cancel it") | change (as the action) |
-| The reader's device | **phone** ("Saved on this phone", "Verified on this phone") | device |
+| The reader's device | **phone** ("Saved on this phone", "Verified on this phone"); on desktop **computer** ("Saved on this computer"), as platform variants (`docs/desktop-app.md` §8.2) | device |
 | The library's human check | "**confirm** you’re human" (title "Confirm you’re human"); the feature is "verification" | verify you’re human |
 | The library's web pages | the library’s **website** | site, web page |
 | Errors | button **Retry**; "Can’t reach {library}. Check your connection."; "Something went wrong" | Try again (as a button), Oops |
@@ -741,7 +741,7 @@ only when it isn't this year. Accessibility labels are the visible text or a sho
 hints start with a third-person verb ("Opens Profile", "Shows this collection"). The two apps may
 differ only where the gesture differs (iOS "Swipe left…", Android "Touch and hold…"): those
 strings are platform variants of one key in the JSON. The other difference is the name of the
-phone's face or fingerprint check (§5.14), filled in as `{method}`.
+phone's face or fingerprint check (§5.14), filled in as `{method}`. The desktop app (`docs/desktop-app.md`) says "computer" and "Click" where the phones say "phone" and "Tap", as platform variants.
 
 ## 8. Build, run & evidence
 

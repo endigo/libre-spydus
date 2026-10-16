@@ -261,3 +261,24 @@ available summary on the Reserve sheet are the library's own words.
    website)? This needs the user's call because §7.1 doesn't decide it.
 6. **Error banners keep their full stop** ("The library didn’t cancel this reservation.") as error
    sentences. Toasts don't ("Couldn’t update My Picks"). Is that the right reading of FS?
+
+## Desktop (docs/desktop-app.md §8)
+
+`gen_copy.py` writes a third file, `desktop/src/copy.rs` (`Copy::Group::key`: a `pub const` per
+plain string, a `pub fn` per string with placeholders or plural forms, `count: i64`). A
+**platform variant** lists every platform, `{"ios": …, "android": …, "desktop": …}`; each value is a
+string or a `{one, other}` plural, all of one kind with the same placeholders. The phones' files
+gain only doc comments for those keys, naming the other platforms' words.
+
+The desktop says **computer** where the phones say "phone", and **Click** where they say "Tap"
+(nine variants: `picks.subtitlePhone`, `emptyPhoneMessage`, `emptyAccountMessage`, `loadFailed`,
+`saveFailed`, `offerTitle`, `offerMessage`, `profile.verified`, `yourBooks.noReservationsMessage`).
+Following the touch-and-hold precedent, the desktop's own gestures are their own keys rather than
+variants: `yourBooks.rightClickHint` and `loanRightClickHint`. The `desktop` group holds words only
+the desktop shows (the app menu's "Quit LibreSpydus", the Go and Window menus, sidebar hints), in
+sentence case like everything else ("Hide others", not AppKit's "Hide Others").
+
+`check_copy.py` also scans `desktop/src/**/*.rs` (GPUI `.child(` / `.label(` / `.title(` /
+`.tooltip(` / `.placeholder(` / `Notification::…(` / `aria_label(` and this app's components),
+skipping `cfg(debug_assertions)` / `cfg(test)` code, debug-only files (timing log, launch flags,
+demo and fake backends, gallery) and lines marked `// copy-exempt: <reason>`.
