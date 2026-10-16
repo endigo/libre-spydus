@@ -105,7 +105,8 @@ struct BookRowCard: View {
             }
         }
         .padding(Theme.Spacing.l)
-        .frame(maxWidth: .infinity, alignment: .leading)
+        // As tall as its row in a card grid (`CardRows`); its own height in a list.
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .background(
             RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous)
                 .fill(highlighted ? Theme.Colors.surfaceElevated : Theme.Colors.surface)

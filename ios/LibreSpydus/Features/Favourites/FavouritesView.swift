@@ -43,6 +43,7 @@ struct FavouritesView: View {
 /// and per library, so switching library shows that library's list.
 struct LocalFavouritesView: View {
     @Environment(AppModel.self) private var model
+    @Environment(\.appLayout) private var layout
     /// `-LSFavouritesEditing YES` (DEBUG) opens in Edit mode, for screenshots.
     @State private var isEditing = Self.startsEditing
 
@@ -58,11 +59,13 @@ struct LocalFavouritesView: View {
                     if items.isEmpty {
                         empty
                     } else {
-                        grid(items, columnWidth: FavouritesView.columnWidth(for: proxy.size.width))
+                        let (columns, width) = gridShape(screenWidth: proxy.size.width)
+                        grid(items, columns: columns, columnWidth: width)
                     }
                 }
                 .padding(.horizontal, Theme.Spacing.l)
                 .padding(.bottom, Theme.Spacing.xxl)
+                .pageColumn()
                 .animation(.default, value: items)
                 .animation(.default, value: isEditing)
             }
@@ -103,8 +106,17 @@ struct LocalFavouritesView: View {
 
     // MARK: Grid
 
-    private func grid(_ items: [BookRef], columnWidth: CGFloat) -> some View {
-        let columns = Array(repeating: GridItem(.fixed(columnWidth), spacing: Theme.Spacing.l, alignment: .top), count: 2)
+    /// Two columns on a phone; as many covers as fit the page in the wide layout (§6.1).
+    private func gridShape(screenWidth: CGFloat) -> (columns: Int, coverWidth: CGFloat) {
+        guard layout == .wide else { return (2, FavouritesView.columnWidth(for: screenWidth)) }
+        let page = min(screenWidth, PageLayout.contentMaxWidth) - Theme.Spacing.l * 2
+        let grid = PageLayout.coverGrid(width: page)
+        return (grid.columns, grid.coverWidth)
+    }
+
+    private func grid(_ items: [BookRef], columns count: Int, columnWidth: CGFloat) -> some View {
+        let columns = Array(repeating: GridItem(.fixed(columnWidth), spacing: PageLayout.coverSpacing, alignment: .top),
+                            count: count)
         return LazyVGrid(columns: columns, alignment: .leading, spacing: Theme.Spacing.xl) {
             ForEach(items) { ref in
                 cell(ref, width: columnWidth)

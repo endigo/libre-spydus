@@ -483,9 +483,11 @@ struct PicksStoreTests {
     }
 
     @Test func copyWording() {
-        #expect(Copy.Picks.offerTitle == "Add this phone’s picks to your library account?")
-        #expect(Copy.Picks.offerMessage(count: 3) == "3 books saved on this phone can be added to My Picks on your library account.")
-        #expect(Copy.Picks.offerMessage(count: 1) == "1 book saved on this phone can be added to My Picks on your library account.")
+        CopyDevice.$isPadOverride.withValue(false) {
+            #expect(Copy.Picks.offerTitle == "Add this phone’s picks to your library account?")
+            #expect(Copy.Picks.offerMessage(count: 3) == "3 books saved on this phone can be added to My Picks on your library account.")
+            #expect(Copy.Picks.offerMessage(count: 1) == "1 book saved on this phone can be added to My Picks on your library account.")
+        }
         #expect(PicksText.copied(added: 4, failed: 0) == "Added 4 books to My Picks")
         #expect(PicksText.copied(added: 1, failed: 1) == "Added 1 book to My Picks · 1 couldn’t be added")
         #expect(Copy.Picks.save == "Save to My Picks")

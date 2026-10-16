@@ -27,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -47,9 +48,11 @@ import com.librespydus.app.ui.components.LoadingView
 import com.librespydus.app.ui.components.SearchField
 import com.librespydus.app.ui.components.SectionHeader
 import com.librespydus.app.ui.nav.AppNavigator
+import com.librespydus.app.ui.theme.LocalAppLayout
 import com.librespydus.app.ui.theme.LsColors
 import com.librespydus.app.ui.theme.LsSpacing
 import com.librespydus.app.ui.theme.LsType
+import com.librespydus.app.ui.theme.pageColumn
 import kotlinx.coroutines.launch
 
 /**
@@ -123,18 +126,13 @@ fun HomeScreen(appState: AppState, navigator: AppNavigator, modifier: Modifier =
         Column(
             Modifier
                 .fillMaxSize()
+                .pageColumn()
                 .verticalScroll(rememberScrollState())
                 .padding(top = LsSpacing.s, bottom = BrowseBottomClearance),
             verticalArrangement = Arrangement.spacedBy(LsSpacing.xl),
         ) {
-            Column(Modifier.padding(horizontal = LsSpacing.l), verticalArrangement = Arrangement.spacedBy(LsSpacing.l)) {
-                HomeLibraryLogo(
-                    name = libraryName,
-                    logoUrl = library?.logoUrl,
-                    onClick = { navigator.switchTab(Tab.PROFILE) },
-                    modifier = Modifier.padding(top = LsSpacing.l),
-                )
-                Column(verticalArrangement = Arrangement.spacedBy(LsSpacing.xs)) {
+            val greeting: @Composable (Modifier) -> Unit = { greetingModifier ->
+                Column(greetingModifier, verticalArrangement = Arrangement.spacedBy(LsSpacing.xs)) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(LsSpacing.m)) {
                         Text(
                             HomeGreeting.title(accountName),
@@ -147,6 +145,32 @@ fun HomeScreen(appState: AppState, navigator: AppNavigator, modifier: Modifier =
                         if (signedIn) MyCardButton(onClick = { showingCard = true })
                     }
                     Text(libraryName, style = LsType.body, color = LsColors.textSecondary)
+                }
+            }
+            if (LocalAppLayout.current.isWide) {
+                // The logo beside the greeting (§6.1), as on the desktop.
+                Row(
+                    Modifier.padding(horizontal = LsSpacing.l).padding(top = LsSpacing.l),
+                    horizontalArrangement = Arrangement.spacedBy(LsSpacing.l),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    HomeLibraryLogo(
+                        name = libraryName,
+                        logoUrl = library?.logoUrl,
+                        onClick = { navigator.switchTab(Tab.PROFILE) },
+                        size = WIDE_LOGO_SIZE,
+                    )
+                    greeting(Modifier.weight(1f))
+                }
+            } else {
+                Column(Modifier.padding(horizontal = LsSpacing.l), verticalArrangement = Arrangement.spacedBy(LsSpacing.l)) {
+                    HomeLibraryLogo(
+                        name = libraryName,
+                        logoUrl = library?.logoUrl,
+                        onClick = { navigator.switchTab(Tab.PROFILE) },
+                        modifier = Modifier.padding(top = LsSpacing.l),
+                    )
+                    greeting(Modifier)
                 }
             }
             SearchField(
@@ -239,3 +263,6 @@ private fun LoanShelfItem.Tone.color() = when (this) {
     LoanShelfItem.Tone.SOON -> LsColors.warning
     LoanShelfItem.Tone.OVERDUE -> LsColors.danger
 }
+
+/** The library logo beside the greeting in the wide layout (§6.1). */
+private val WIDE_LOGO_SIZE = 52.dp

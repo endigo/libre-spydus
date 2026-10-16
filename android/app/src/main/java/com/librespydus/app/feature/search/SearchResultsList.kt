@@ -11,6 +11,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
@@ -58,6 +59,7 @@ import com.librespydus.app.ui.components.Chip
 import com.librespydus.app.ui.components.CoverImage
 import com.librespydus.app.ui.components.EmptyStateView
 import com.librespydus.app.ui.components.ErrorStateView
+import com.librespydus.app.ui.theme.LocalAppLayout
 import com.librespydus.app.ui.theme.LsColors
 import com.librespydus.app.ui.theme.LsCover
 import com.librespydus.app.ui.theme.LsIcons
@@ -65,6 +67,9 @@ import com.librespydus.app.ui.theme.LsRadius
 import com.librespydus.app.ui.theme.LsSpacing
 import com.librespydus.app.ui.theme.LsTabBar
 import com.librespydus.app.ui.theme.LsType
+import com.librespydus.app.ui.theme.PageLayout
+import com.librespydus.app.ui.theme.cardRows
+import com.librespydus.app.ui.theme.onRightClick
 
 /** Bottom padding under scrolling content on a tab, above the tab bar. */
 val BrowseBottomClearance: Dp = LsSpacing.xxl
@@ -72,7 +77,8 @@ val BrowseBottomClearance: Dp = LsSpacing.xxl
 /**
  * The results list both the Search tab and [SearchResultsScreen] show: count line, result rows
  * (tap → detail), infinite scroll with a footer spinner, and the loading / no-results / error
- * states.
+ * states. In the wide layout (§6.1) the rows become a grid of cards, measured outside the phase
+ * switch so the results open in the skeleton's columns.
  */
 @Composable
 fun SearchResultsList(
@@ -87,8 +93,31 @@ fun SearchResultsList(
     noResultsTitle: String = Copy.Search.noResultsTitle(query),
     noResultsMessage: String? = Copy.Search.noResultsMessage,
 ) {
+    if (LocalAppLayout.current.isWide) {
+        BoxWithConstraints(modifier) {
+            val columns = PageLayout.cardColumns(maxWidth - LsSpacing.l * 2)
+            ResultsPhases(state, onRetry, onLoadMore, onRetryLoadMore, onOpen, Modifier.fillMaxSize(), listState, noResultsTitle, noResultsMessage, columns)
+        }
+    } else {
+        ResultsPhases(state, onRetry, onLoadMore, onRetryLoadMore, onOpen, modifier, listState, noResultsTitle, noResultsMessage, columns = 1)
+    }
+}
+
+@Composable
+private fun ResultsPhases(
+    state: SearchResultsModel.State,
+    onRetry: () -> Unit,
+    onLoadMore: () -> Unit,
+    onRetryLoadMore: () -> Unit,
+    onOpen: (BookRef) -> Unit,
+    modifier: Modifier,
+    listState: LazyListState,
+    noResultsTitle: String,
+    noResultsMessage: String?,
+    columns: Int,
+) {
     when (val phase = state.phase) {
-        SearchResultsModel.Phase.Idle, SearchResultsModel.Phase.Loading -> SearchSkeletonList(modifier)
+        SearchResultsModel.Phase.Idle, SearchResultsModel.Phase.Loading -> SearchSkeletonList(modifier, columns = columns)
         SearchResultsModel.Phase.NoResults -> EmptyStateView(
             title = noResultsTitle,
             message = noResultsMessage,
@@ -118,10 +147,17 @@ fun SearchResultsList(
                     )
                 }
             }
-            itemsIndexed(state.items, key = { _, item -> item.id }) { index, item ->
-                // Prefetch a few rows before the end.
-                if (index >= state.items.size - 4) LaunchedEffect(state.items.size) { onLoadMore() }
-                SearchResultRow(item, onClick = { onOpen(item.ref) }, modifier = Modifier.padding(horizontal = LsSpacing.l))
+            if (columns == 1) {
+                itemsIndexed(state.items, key = { _, item -> item.id }) { index, item ->
+                    // Prefetch a few rows before the end.
+                    if (index >= state.items.size - 4) LaunchedEffect(state.items.size) { onLoadMore() }
+                    SearchResultRow(item, onClick = { onOpen(item.ref) }, modifier = Modifier.padding(horizontal = LsSpacing.l))
+                }
+            } else {
+                cardRows(state.items, columns, key = { it.id }, modifier = Modifier.padding(horizontal = LsSpacing.l)) { index, item, cell ->
+                    if (index >= state.items.size - 4) LaunchedEffect(state.items.size) { onLoadMore() }
+                    SearchResultRow(item, onClick = { onOpen(item.ref) }, modifier = cell)
+                }
             }
             item(key = "footer") {
                 ResultsFooter(state, onLoadMore, onRetryLoadMore)
@@ -219,7 +255,9 @@ fun SearchResultRow(
                 .padding(top = rise)
                 .clip(shape)
                 .background(LsColors.surface)
-                .combinedClickable(role = Role.Button, onLongClick = onLongClick, onClick = onClick),
+                .combinedClickable(role = Role.Button, onLongClick = onLongClick, onClick = onClick)
+                // A right-click opens the menu too (§6.1).
+                .then(if (onLongClick != null) Modifier.onRightClick(onLongClick) else Modifier),
         )
         Row(Modifier.padding(start = LsSpacing.l, end = LsSpacing.l, bottom = LsSpacing.l), verticalAlignment = Alignment.Top) {
             CoverImage(url = item.ref.coverUrl, title = item.ref.title, width = LsCover.smallWidth)
@@ -271,9 +309,9 @@ fun SkeletonBlock(modifier: Modifier = Modifier, radius: Dp = 6.dp, onSheet: Boo
     )
 }
 
-/** Placeholder rows while the first page loads. */
+/** Placeholder rows while the first page loads; [columns] of them across in the wide layout's grid (§6.1). */
 @Composable
-fun SearchSkeletonList(modifier: Modifier = Modifier, rows: Int = 5) {
+fun SearchSkeletonList(modifier: Modifier = Modifier, rows: Int = 5, columns: Int = 1) {
     Column(
         modifier
             .fillMaxSize()
@@ -283,21 +321,31 @@ fun SearchSkeletonList(modifier: Modifier = Modifier, rows: Int = 5) {
         verticalArrangement = Arrangement.spacedBy(LsSpacing.m),
     ) {
         repeat(rows) {
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(LsRadius.card))
-                    .background(LsColors.surface)
-                    .padding(LsSpacing.l),
-            ) {
-                SkeletonBlock(Modifier.width(LsCover.smallWidth).height(LsCover.height(LsCover.smallWidth)), radius = LsRadius.cover)
-                Spacer(Modifier.width(LsSpacing.l))
-                Column(verticalArrangement = Arrangement.spacedBy(LsSpacing.s)) {
-                    SkeletonBlock(Modifier.fillMaxWidth().height(14.dp))
-                    SkeletonBlock(Modifier.width(140.dp).height(12.dp))
-                    SkeletonBlock(Modifier.padding(top = LsSpacing.xs).width(90.dp).height(18.dp), radius = 9.dp)
+            if (columns == 1) {
+                SkeletonCard(Modifier.fillMaxWidth())
+            } else {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(PageLayout.cardSpacing)) {
+                    repeat(columns) { SkeletonCard(Modifier.weight(1f)) }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun SkeletonCard(modifier: Modifier) {
+    Row(
+        modifier
+            .clip(RoundedCornerShape(LsRadius.card))
+            .background(LsColors.surface)
+            .padding(LsSpacing.l),
+    ) {
+        SkeletonBlock(Modifier.width(LsCover.smallWidth).height(LsCover.height(LsCover.smallWidth)), radius = LsRadius.cover)
+        Spacer(Modifier.width(LsSpacing.l))
+        Column(verticalArrangement = Arrangement.spacedBy(LsSpacing.s)) {
+            SkeletonBlock(Modifier.fillMaxWidth().height(14.dp))
+            SkeletonBlock(Modifier.width(140.dp).height(12.dp))
+            SkeletonBlock(Modifier.padding(top = LsSpacing.xs).width(90.dp).height(18.dp), radius = 9.dp)
         }
     }
 }

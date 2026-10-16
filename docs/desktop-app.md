@@ -304,6 +304,8 @@ all three.
 A leaf may be a variant dict that lists **every** platform, `{"ios": …, "android": …,
 "desktop": …}`. Each value is a string or, for a plural, `{"one","other"}`, and all values have
 the same kind and placeholders. Use a variant only where a desktop can't say the phones' words.
+A variant may also add `"ipad"`: the iOS app's words on an iPad ("Saved on this iPad",
+`docs/native-apps.md` §6.1). The Swift output picks it at run time; Kotlin and Rust ignore it.
 D1 adds these:
 
 | Key | Desktop text |

@@ -4,10 +4,12 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -54,11 +56,15 @@ import com.librespydus.app.feature.search.SearchSkeletonList
 import com.librespydus.app.ui.components.EmptyStateView
 import com.librespydus.app.ui.components.ErrorStateView
 import com.librespydus.app.ui.nav.AppNavigator
+import com.librespydus.app.ui.theme.LocalAppLayout
 import com.librespydus.app.ui.theme.LsColors
 import com.librespydus.app.ui.theme.LsIcons
 import com.librespydus.app.ui.theme.LsRadius
 import com.librespydus.app.ui.theme.LsSpacing
 import com.librespydus.app.ui.theme.LsType
+import com.librespydus.app.ui.theme.PageLayout
+import com.librespydus.app.ui.theme.cardRows
+import com.librespydus.app.ui.theme.pageColumn
 
 /**
  * Favourites while signed in (§5.11): the reader's Pick list on the library account, "My Picks".
@@ -88,6 +94,9 @@ internal fun MyPicksScreen(appState: AppState, navigator: AppNavigator, modifier
             .background(LsColors.background)
             .statusBarsPadding(),
     ) {
+        BoxWithConstraints(Modifier.fillMaxSize().pageColumn()) {
+        // The wide layout (§6.1): the rows become a grid of cards.
+        val columns = if (LocalAppLayout.current.isWide) PageLayout.cardColumns(maxWidth - LsSpacing.l * 2) else 1
         LazyColumn(
             contentPadding = PaddingValues(bottom = LsSpacing.xxl),
             verticalArrangement = Arrangement.spacedBy(LsSpacing.m),
@@ -96,7 +105,7 @@ internal fun MyPicksScreen(appState: AppState, navigator: AppNavigator, modifier
             item(key = "header") { PicksHeader() }
             when (content) {
                 MyPicksContent.Loading -> item(key = "loading") {
-                    SearchSkeletonList(rows = 4, modifier = Modifier.heightIn(min = 200.dp))
+                    SearchSkeletonList(rows = 4, modifier = Modifier.heightIn(min = 200.dp), columns = columns)
                 }
                 is MyPicksContent.Failed -> item(key = "error") {
                     ErrorStateView(
@@ -114,22 +123,35 @@ internal fun MyPicksScreen(appState: AppState, navigator: AppNavigator, modifier
                     )
                 }
                 is MyPicksContent.Rows -> {
-                    items(content.rows, key = { it.item.id }) { row ->
-                        PickRowView(
-                            row = row,
-                            busy = row.irn != null && row.irn in pending,
-                            onOpen = { navigator.openBook(row.item.ref) },
-                            onRemove = { row.irn?.let(picks::remove) },
-                            modifier = Modifier
-                                .animateItem()
-                                .padding(horizontal = LsSpacing.l),
-                        )
+                    if (columns == 1) {
+                        items(content.rows, key = { it.item.id }) { row ->
+                            PickRowView(
+                                row = row,
+                                busy = row.irn != null && row.irn in pending,
+                                onOpen = { navigator.openBook(row.item.ref) },
+                                onRemove = { row.irn?.let(picks::remove) },
+                                modifier = Modifier
+                                    .animateItem()
+                                    .padding(horizontal = LsSpacing.l),
+                            )
+                        }
+                    } else {
+                        cardRows(content.rows, columns, key = { it.item.id }, modifier = Modifier.padding(horizontal = LsSpacing.l)) { _, row, cell ->
+                            PickRowView(
+                                row = row,
+                                busy = row.irn != null && row.irn in pending,
+                                onOpen = { navigator.openBook(row.item.ref) },
+                                onRemove = { row.irn?.let(picks::remove) },
+                                modifier = cell,
+                            )
+                        }
                     }
                     item(key = "footer") {
                         PicksFooter(content.footer, onLoadMore = { picks.loadMore() }, onRetry = { picks.retryLoadMore() })
                     }
                 }
             }
+        }
         }
     }
 }
@@ -156,6 +178,8 @@ private fun PickRowView(row: PickRow, busy: Boolean, onOpen: () -> Unit, onRemov
         SearchResultRow(
             item = row.item,
             onClick = onOpen,
+            // Fills a grid row's height (§6.1); in a list, its own.
+            modifier = Modifier.fillMaxHeight(),
             onLongClick = {
                 haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                 menu = true

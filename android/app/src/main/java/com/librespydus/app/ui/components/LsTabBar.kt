@@ -33,15 +33,22 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.librespydus.app.core.Tab
+import com.librespydus.app.ui.theme.LocalAppLayout
 import com.librespydus.app.ui.theme.LsColors
 import com.librespydus.app.ui.theme.LsIcons
 import com.librespydus.app.ui.theme.LsShadow
 import com.librespydus.app.ui.theme.LsTabBar
 import com.librespydus.app.ui.theme.LsType
 
-/** Height the tab bar occupies at the bottom of the screen (bar + navigation bar inset). */
+/**
+ * Height the tab bar occupies at the bottom of the screen (bar + navigation bar inset). In the wide
+ * layout (§6.1) the sidebar replaces the tab bar, so only the navigation bar inset is left.
+ */
 @Composable
-fun tabBarContentPadding(): Dp = LsTabBar.height + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+fun tabBarContentPadding(): Dp {
+    val bar = if (LocalAppLayout.current.isWide) 0.dp else LsTabBar.height
+    return bar + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+}
 
 /** The custom tab bar (§5.5, §7): a white bar with five equal items — Home · Your Books · Search · Favourites · Profile. */
 @Composable
@@ -94,8 +101,8 @@ private fun TabSlot(tab: Tab, selected: Boolean, onClick: () -> Unit, modifier: 
     }
 }
 
-
-private fun Tab.icon(selected: Boolean): ImageVector = when (this) {
+/** A tab's icon: filled while [selected] (Search has one glyph). The tab bar's and the sidebar's. */
+fun Tab.icon(selected: Boolean): ImageVector = when (this) {
     Tab.HOME -> if (selected) LsIcons.HomeFilled else LsIcons.Home
     Tab.BORROWED -> if (selected) LsIcons.BookFilled else LsIcons.Book
     Tab.SEARCH -> LsIcons.Search

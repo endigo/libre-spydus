@@ -10,8 +10,14 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.captionBar
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
@@ -27,6 +33,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -52,8 +59,11 @@ import com.librespydus.app.feature.search.SearchResultsScreen
 import com.librespydus.app.feature.search.SearchScreen
 import com.librespydus.app.ui.components.ComponentGallery
 import com.librespydus.app.ui.components.LoadingView
+import com.librespydus.app.ui.components.LsSidebar
 import com.librespydus.app.ui.components.LsTabBar
 import com.librespydus.app.ui.components.tabBarContentPadding
+import com.librespydus.app.ui.theme.AppLayout
+import com.librespydus.app.ui.theme.LocalAppLayout
 import com.librespydus.app.ui.theme.LsColors
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -64,9 +74,23 @@ import kotlinx.coroutines.launch
  * else the five tabs. Sheets and overlays are driven by [AppState] flags: library picker
  * ([AppState.libraryPickerVisible]), login ([AppState.loginNeeded]), verification
  * ([AppState.verificationNeeded]) and the DEBUG components gallery.
+ *
+ * The window's size here decides the layout (docs/native-apps.md §6.1): wide (a sidebar, grids, a
+ * two-column book page) when it is at least 600 × 480 dp, else the compact phone layout — so a
+ * narrow split screen or a small freeform window on a tablet is compact too.
  */
 @Composable
 fun LibreSpydusRoot(appState: AppState) {
+    BoxWithConstraints(Modifier.fillMaxSize()) {
+        val layout = AppLayout.of(maxWidth, maxHeight)
+        CompositionLocalProvider(LocalAppLayout provides layout) {
+            RootContent(appState)
+        }
+    }
+}
+
+@Composable
+private fun RootContent(appState: AppState) {
     val ready by appState.ready.collectAsStateWithLifecycle()
     val library by appState.library.collectAsStateWithLifecycle()
     val pickerVisible by appState.libraryPickerVisible.collectAsStateWithLifecycle()
@@ -125,24 +149,53 @@ private fun MainTabs(appState: AppState) {
     // has somewhere to pop to).
     BackHandler(enabled = selected != Tab.HOME) { appState.selectTab(Tab.HOME) }
 
-    Box(Modifier.fillMaxSize()) {
+    val onSelect: (Tab) -> Unit = { tab -> if (tab == selected) reselects.tryEmit(tab) else appState.selectTab(tab) }
+    val tabs: @Composable () -> Unit = {
+        // One NavHost per tab; switching tabs saves the hidden tab's stack and restores it.
+        key(selected) {
+            stateHolder.SaveableStateProvider(selected.name) {
+                TabNavHost(selected, appState, reselects)
+            }
+        }
+    }
+
+    // A freeform window's caption bar (§6.1): the tabs and the sidebar start below it.
+    if (LocalAppLayout.current.isWide) {
+        Row(
+            Modifier
+                .fillMaxSize()
+                .windowInsetsPadding(WindowInsets.captionBar),
+        ) {
+            LsSidebar(appState, selected = selected, onSelect = onSelect)
+            Box(
+                Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+                    .clipToBounds()
+                    .padding(bottom = tabBarContentPadding()),
+            ) {
+                tabs()
+            }
+        }
+    } else {
         Box(
             Modifier
                 .fillMaxSize()
-                .padding(bottom = tabBarContentPadding()),
+                .windowInsetsPadding(WindowInsets.captionBar),
         ) {
-            // One NavHost per tab; switching tabs saves the hidden tab's stack and restores it.
-            key(selected) {
-                stateHolder.SaveableStateProvider(selected.name) {
-                    TabNavHost(selected, appState, reselects)
-                }
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .padding(bottom = tabBarContentPadding()),
+            ) {
+                tabs()
             }
+            LsTabBar(
+                selected = selected,
+                onSelect = onSelect,
+                modifier = Modifier.align(Alignment.BottomCenter),
+            )
         }
-        LsTabBar(
-            selected = selected,
-            onSelect = { tab -> if (tab == selected) reselects.tryEmit(tab) else appState.selectTab(tab) },
-            modifier = Modifier.align(Alignment.BottomCenter),
-        )
     }
 }
 

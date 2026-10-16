@@ -65,6 +65,7 @@ import com.librespydus.app.ui.theme.LsRadius
 import com.librespydus.app.ui.theme.LsSpacing
 import com.librespydus.app.ui.theme.LsTabBar
 import com.librespydus.app.ui.theme.LsType
+import com.librespydus.app.ui.theme.pageColumn
 import kotlinx.coroutines.launch
 import uniffi.librespydus_core.LibraryInfo
 
@@ -140,6 +141,7 @@ fun ProfileScreen(appState: AppState, navigator: AppNavigator, modifier: Modifie
             .fillMaxSize()
             .background(LsColors.background)
             .statusBarsPadding()
+            .pageColumn()
             .verticalScroll(rememberScrollState())
             .padding(horizontal = LsSpacing.l)
             // Clear the raised Search button at max scroll.

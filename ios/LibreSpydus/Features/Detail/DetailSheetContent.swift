@@ -10,6 +10,9 @@ struct DetailSheetContent: View {
     let startRelated: () -> Void
     /// Loads an edition-level item's copies again after a failure.
     let retryCopies: () -> Void
+    /// The related carousels at the end; false where the wide layout shows them beside the sheet
+    /// (`DetailRelatedColumn`, §6.1).
+    var showsRelated = true
 
     /// Scroll target just above the carousels.
     static let relatedID = "detail-related"
@@ -54,7 +57,7 @@ struct DetailSheetContent: View {
         if !facts.isEmpty {
             DetailFactsList(facts: facts)
         }
-        if model.hasRelatedPanels {
+        if showsRelated, model.hasRelatedPanels {
             // Starts the related loads when the carousels come into view (again for an upgraded record).
             Color.clear
                 .frame(height: 0)
@@ -64,7 +67,7 @@ struct DetailSheetContent: View {
                 RelatedCarousel(panel: panel, state: model.related[panel] ?? .loading)
             }
         }
-        if summary == nil, subjects.isEmpty, !showsCopies, facts.isEmpty, !model.hasRelatedPanels {
+        if summary == nil, subjects.isEmpty, !showsCopies, facts.isEmpty, !(showsRelated && model.hasRelatedPanels) {
             Text(Copy.Detail.noMoreDetails)
                 .themeFont(.body)
                 .foregroundStyle(Theme.Colors.onSheetSecondary)

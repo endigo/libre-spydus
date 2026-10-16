@@ -20,7 +20,10 @@ val title = … } }`) and desktop/src/copy.rs (`pub mod Copy { pub mod Picks { p
 - {"ios": …, "android": …, "desktop": …} (a platform variant, docs/desktop-app.md §8.2) resolves to
   that platform's value. It lists every platform; each value is a string or a {"one", "other"}
   plural, and all of them have the same kind and the same placeholders. The other platforms'
-  words become doc comments;
+  words become doc comments. It may add "ipad" (docs/native-apps.md §6.1): the iOS app's words on
+  an iPad, chosen at run time (`CopyDevice.usesPadWords`) where an iPhone gets "ios"; and "tablet":
+  the Android app's words on a tablet, chosen at run time (`CopyDevice.usesTabletWords`) where a
+  phone gets "android";
 - identifiers that are keywords are escaped (Swift `use`, Kotlin `when`, Rust `r#use`);
 - keys starting with "_" are notes: "_notes" entries become doc comments, the rest are skipped.
 
@@ -45,6 +48,11 @@ RUST_OUT = ROOT / "desktop" / "src" / "copy.rs"
 
 PLATFORMS = ("ios", "android", "desktop")
 PLATFORM_NAMES = {"ios": "iOS", "android": "Android", "desktop": "Desktop"}
+# Optional in a platform variant: the iOS app's words on an iPad, the Android app's on a tablet.
+IPAD = "ipad"
+TABLET = "tablet"
+DEVICE_FORMS = (IPAD, TABLET)
+VARIANT_KEYS = set(PLATFORMS) | set(DEVICE_FORMS)
 
 HEADER = "GENERATED from design/copy.json by design/scripts/gen_copy.py — do not edit"
 
@@ -87,7 +95,8 @@ class Leaf:
     """One string: plain, plural or a platform variant, with its value on each platform.
 
     `forms[platform]` is {"text": …} or {"one": …, "other": …}; `plural` says which (the same on
-    every platform).
+    every platform). `ipad` is the iPad's form of a variant that has one, else None; `tablet` the
+    Android tablet's.
     """
 
     def __init__(self, path: list[str], value, note: str | None):
@@ -96,9 +105,12 @@ class Leaf:
         self.note = note
         self.raw = value
         where = ".".join(path)
-        if isinstance(value, dict) and set(value) == set(PLATFORMS):
+        self.ipad = None
+        self.tablet = None
+        if isinstance(value, dict) and set(PLATFORMS) <= set(value) <= VARIANT_KEYS:
             self.kind = "variant"
-            forms = {platform: _forms(f"{where}.{platform}", value[platform]) for platform in PLATFORMS}
+            keys = PLATFORMS + tuple(form for form in DEVICE_FORMS if form in value)
+            forms = {key: _forms(f"{where}.{key}", value[key]) for key in keys}
             kinds = {platform: "one" in form for platform, form in forms.items()}
             if len(set(kinds.values())) != 1:
                 raise CopyError(f"{where}: every platform's value must be a string, or every one a plural")
@@ -106,8 +118,10 @@ class Leaf:
             if len({frozenset(n) for n in names.values()}) != 1:
                 raise CopyError(f"{where}: every platform's value must use the same placeholders")
             self.plural = kinds["ios"]
+            self.ipad = forms.pop(IPAD, None)
+            self.tablet = forms.pop(TABLET, None)
             self.forms = forms
-        elif isinstance(value, dict) and (set(value) & set(PLATFORMS)) and set(value) <= set(PLATFORMS):
+        elif isinstance(value, dict) and (set(value) & set(PLATFORMS)) and set(value) <= VARIANT_KEYS:
             missing = ", ".join(p for p in PLATFORMS if p not in value)
             raise CopyError(f"{where}: a platform variant lists every platform (missing {missing})")
         elif isinstance(value, str) or (isinstance(value, dict) and set(value) == {"one", "other"}):
@@ -117,8 +131,8 @@ class Leaf:
             self.forms = {platform: form for platform in PLATFORMS}
         else:
             raise CopyError(f"{where}: a leaf is a string, {{\"one\", \"other\"}} or "
-                            f"{{\"ios\", \"android\", \"desktop\"}}")
-        for forms in self.forms.values():
+                            f"{{\"ios\", \"android\", \"desktop\"}} (+ \"ipad\", \"tablet\")")
+        for forms in list(self.forms.values()) + [form for form in (self.ipad, self.tablet) if form]:
             for text in forms.values():
                 if not text.strip():
                     raise CopyError(f"{where}: empty text")
@@ -146,6 +160,13 @@ class Leaf:
         if self.plural:
             return f'One: "{forms["one"]}" · other: "{forms["other"]}"'
         return f'"{forms["text"]}"'
+
+
+def _describe_forms(forms: dict, plural: bool) -> str:
+    """A device form for a doc comment: `"…"`, or `One: "…" · other: "…"`."""
+    if plural:
+        return f'One: "{forms["one"]}" · other: "{forms["other"]}"'
+    return f'"{forms["text"]}"'
 
 
 def _forms(where: str, value) -> dict:
@@ -204,7 +225,7 @@ class Group:
 
 def _is_leaf_dict(value: dict) -> bool:
     keys = set(value)
-    return keys == {"one", "other"} or bool(keys & set(PLATFORMS)) and keys <= set(PLATFORMS)
+    return keys == {"one", "other"} or bool(keys & set(PLATFORMS)) and keys <= VARIANT_KEYS
 
 
 def placeholders(text: str) -> list[str]:
@@ -272,19 +293,29 @@ def swift_member(leaf: Leaf, indent: str) -> list[str]:
     forms = leaf.texts["ios"]
     lines = swift_doc(leaf, indent)
     name = swift_ident(leaf.name)
-    if not params:
+    if not params and not leaf.ipad:
         lines.append(f"{indent}static let {name} = {swift_literal(forms['text'], params)}")
         return lines
-    signature = ", ".join(f"{swift_ident(p)}: {'Int' if p == 'count' else 'String'}" for p in params)
-    if leaf.plural:
-        body = (f"count == 1 ? {swift_literal(forms['one'], params)} : "
-                f"{swift_literal(forms['other'], params)}")
+    body = swift_body(forms, params, leaf.plural)
+    if leaf.ipad:
+        # An iPad's words where an iPhone's differ, chosen at run time.
+        body = f"CopyDevice.usesPadWords ? {swift_body(leaf.ipad, params, leaf.plural, nested=True)} : {swift_body(forms, params, leaf.plural, nested=True)}"
+    if not params:
+        lines.append(f"{indent}static var {name}: String {{")
     else:
-        body = swift_literal(forms["text"], params)
-    lines.append(f"{indent}static func {name}({signature}) -> String {{")
+        signature = ", ".join(f"{swift_ident(p)}: {'Int' if p == 'count' else 'String'}" for p in params)
+        lines.append(f"{indent}static func {name}({signature}) -> String {{")
     lines.append(f"{indent}    {body}")
     lines.append(f"{indent}}}")
     return lines
+
+
+def swift_body(forms: dict, params: list[str], plural: bool, nested: bool = False) -> str:
+    """A form's Swift expression; a plural's in parentheses when `nested` in another conditional."""
+    if not plural:
+        return swift_literal(forms["text"], params)
+    body = f"count == 1 ? {swift_literal(forms['one'], params)} : {swift_literal(forms['other'], params)}"
+    return f"({body})" if nested else body
 
 
 def swift_group(group: Group, indent: str) -> list[str]:
@@ -316,6 +347,17 @@ def render_swift(root: Group) -> str:
     ]
     lines.extend(swift_group(root, "    "))
     lines += [
+        "}",
+        "",
+        "/// Which device's words a platform variant with an iPad form uses (docs/native-apps.md §6.1).",
+        "enum CopyDevice {",
+        "    /// True on an iPad. The app sets it once at launch, before anything reads the copy.",
+        "    nonisolated(unsafe) static var isPad = false",
+        "    /// Replaces `isPad` inside `CopyDevice.$isPadOverride.withValue(…)`. It's per task, so tests",
+        "    /// running side by side can each check one device's words.",
+        "    @TaskLocal static var isPadOverride: Bool?",
+        "",
+        "    static var usesPadWords: Bool { isPadOverride ?? isPad }",
         "}",
         "",
         "/// A count as the reader's locale writes it (\"1,234\").",
@@ -357,6 +399,8 @@ def kotlin_doc(leaf: Leaf, indent: str) -> list[str]:
     if leaf.kind == "variant":
         for other in ("ios", "desktop"):
             parts.append(f"{PLATFORM_NAMES[other]}: {leaf.describe(other)}")
+        if leaf.tablet:
+            parts.append(f"Tablet: {_describe_forms(leaf.tablet, leaf.plural)}")
     if leaf.note:
         parts.append(leaf.note)
     # Kotlin comments nest: keep "/*" and "*/" out of them.
@@ -368,17 +412,28 @@ def kotlin_member(leaf: Leaf, indent: str) -> list[str]:
     forms = leaf.texts["android"]
     lines = kotlin_doc(leaf, indent)
     name = kotlin_ident(leaf.name)
-    if not params:
+    if not params and not leaf.tablet:
         lines.append(f"{indent}const val {name} = {kotlin_literal(forms['text'])}")
         return lines
-    signature = ", ".join(f"{kotlin_ident(p)}: {'Int' if p == 'count' else 'String'}" for p in params)
-    if leaf.plural:
-        body = f"if (count == 1) {kotlin_literal(forms['one'])} else {kotlin_literal(forms['other'])}"
+    body = kotlin_body(forms, leaf.plural)
+    if leaf.tablet:
+        # A tablet's words where a phone's differ, chosen at run time (docs/native-apps.md §6.1).
+        body = f"if (CopyDevice.usesTabletWords) {kotlin_body(leaf.tablet, leaf.plural, nested=True)} else {kotlin_body(forms, leaf.plural, nested=True)}"
+    if not params:
+        lines.append(f"{indent}val {name}: String get() =")
     else:
-        body = kotlin_literal(forms["text"])
-    lines.append(f"{indent}fun {name}({signature}): String =")
+        signature = ", ".join(f"{kotlin_ident(p)}: {'Int' if p == 'count' else 'String'}" for p in params)
+        lines.append(f"{indent}fun {name}({signature}): String =")
     lines.append(f"{indent}    {body}")
     return lines
+
+
+def kotlin_body(forms: dict, plural: bool, nested: bool = False) -> str:
+    """A form's Kotlin expression; a plural's in parentheses when `nested` in another conditional."""
+    if not plural:
+        return kotlin_literal(forms["text"])
+    body = f"if (count == 1) {kotlin_literal(forms['one'])} else {kotlin_literal(forms['other'])}"
+    return f"({body})" if nested else body
 
 
 def kotlin_group(group: Group, indent: str) -> list[str]:
@@ -411,6 +466,27 @@ def render_kotlin(root: Group) -> str:
     ]
     lines.extend(kotlin_group(root, "    "))
     lines += [
+        "}",
+        "",
+        "/** Which device's words a platform variant with a tablet form uses (docs/native-apps.md §6.1). */",
+        "object CopyDevice {",
+        "    /** True on a tablet (`smallestScreenWidthDp >= 600`). The app sets it once at launch, before anything reads the copy. */",
+        "    @Volatile var isTablet: Boolean = false",
+        "    /** Replaces [isTablet] while set: tests pin one device's words ([withTabletWords]). */",
+        "    @Volatile var isTabletOverride: Boolean? = null",
+        "",
+        "    val usesTabletWords: Boolean get() = isTabletOverride ?: isTablet",
+        "",
+        "    /** Runs [block] with a tablet's (or a phone's) words, then restores the override that was set before. */",
+        "    fun <T> withTabletWords(tablet: Boolean, block: () -> T): T {",
+        "        val previous = isTabletOverride",
+        "        isTabletOverride = tablet",
+        "        try {",
+        "            return block()",
+        "        } finally {",
+        "            isTabletOverride = previous",
+        "        }",
+        "    }",
         "}",
         "",
         "/** A count as the reader's locale writes it (\"1,234\"). */",
@@ -554,9 +630,11 @@ def stats(root: Group) -> str:
     leaves = list(root.leaves())
     plurals = sum(leaf.plural for leaf in leaves)
     variants = sum(leaf.kind == "variant" for leaf in leaves)
+    ipad = sum(leaf.ipad is not None for leaf in leaves)
+    tablet = sum(leaf.tablet is not None for leaf in leaves)
     functions = sum(bool(leaf.params("ios")) for leaf in leaves)
-    return (f"{len(leaves)} strings ({plurals} plurals, {variants} platform variants, "
-            f"{functions} with placeholders) in {sum(1 for _ in _groups(root))} groups")
+    return (f"{len(leaves)} strings ({plurals} plurals, {variants} platform variants ({ipad} with an iPad form, "
+            f"{tablet} with a tablet form), {functions} with placeholders) in {sum(1 for _ in _groups(root))} groups")
 
 
 def _groups(group: Group):

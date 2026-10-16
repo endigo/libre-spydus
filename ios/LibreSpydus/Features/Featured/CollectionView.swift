@@ -72,6 +72,7 @@ struct CollectionView: View {
             }
             .padding(.top, Theme.Spacing.l)
             .padding(.bottom, Theme.Spacing.xxl)
+            .pageColumn()
         }
         .scrollIndicators(.hidden)
     }
@@ -169,6 +170,7 @@ private struct CollectionSkeleton: View {
                 }
             }
             .padding(.top, Theme.Spacing.l)
+            .pageColumn()
         }
         .scrollDisabled(true)
         .accessibilityElement(children: .ignore)

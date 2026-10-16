@@ -7,18 +7,38 @@ import SwiftUI
 /// library refuses. Pull to refresh; pages past the first load as the list scrolls.
 struct MyPicksView: View {
     @Environment(AppModel.self) private var model
+    @Environment(\.appLayout) private var layout
+    /// The page's width, for the wide layout's card grid (§6.1).
+    @State private var width: CGFloat = 0
 
     var body: some View {
         let picks = model.picks
-        List {
-            header
-                .plainRow(EdgeInsets(top: Theme.Spacing.l, leading: Theme.Spacing.l, bottom: Theme.Spacing.m,
-                                     trailing: Theme.Spacing.l))
-            content(picks)
+        Group {
+            if layout == .wide {
+                // A card grid, as search results (§6.1): remove from the long-press menu.
+                ScrollView {
+                    VStack(alignment: .leading, spacing: Theme.Spacing.l) {
+                        header
+                            .padding(.top, Theme.Spacing.l)
+                        wideContent(picks)
+                    }
+                    .padding(.horizontal, Theme.Spacing.l)
+                    .padding(.bottom, Theme.Spacing.xxl)
+                    .measuringWidth($width)
+                    .pageColumn()
+                }
+            } else {
+                List {
+                    header
+                        .plainRow(EdgeInsets(top: Theme.Spacing.l, leading: Theme.Spacing.l, bottom: Theme.Spacing.m,
+                                             trailing: Theme.Spacing.l))
+                    content(picks)
+                }
+                .listStyle(.plain)
+                .scrollContentBackground(.hidden)
+                .environment(\.defaultMinListRowHeight, 0)
+            }
         }
-        .listStyle(.plain)
-        .scrollContentBackground(.hidden)
-        .environment(\.defaultMinListRowHeight, 0)
         .refreshable { await picks.refresh() }
         .animation(.default, value: picks.items.map(\.id))
         .screenBackground()
@@ -70,6 +90,31 @@ struct MyPicksView: View {
                 .plainRow(Self.rowInsets)
         case .loaded:
             ForEach(Array(picks.items.enumerated()), id: \.element.id) { index, item in
+                row(item)
+                    .onAppear {
+                        // Prefetch a few rows before the end.
+                        if index >= picks.items.count - 4 { Task { await picks.loadMore() } }
+                    }
+            }
+            footer(picks)
+        }
+    }
+
+    @ViewBuilder
+    private func wideContent(_ picks: PicksStore) -> some View {
+        switch picks.phase {
+        case .idle, .loading:
+            SearchSkeletonList()
+                .frame(height: 560, alignment: .top)
+                .padding(.horizontal, -Theme.Spacing.l)
+        case .empty:
+            EmptyStateView(systemImage: "bookmark", title: Copy.Picks.emptyTitle, message: Copy.Picks.emptyAccountMessage)
+                .frame(minHeight: 420)
+        case .failed(let error):
+            ErrorStateView(error: error) { Task { await picks.refresh() } }
+                .frame(minHeight: 420)
+        case .loaded:
+            CardRows(items: picks.items, columns: PageLayout.cardColumns(width: width - Theme.Spacing.l * 2)) { index, item in
                 row(item)
                     .onAppear {
                         // Prefetch a few rows before the end.

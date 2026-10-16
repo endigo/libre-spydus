@@ -61,11 +61,14 @@ import com.librespydus.app.ui.components.EmptyStateView
 import com.librespydus.app.ui.components.ErrorStateView
 import com.librespydus.app.ui.components.LoadingView
 import com.librespydus.app.ui.components.SearchField
+import com.librespydus.app.ui.theme.LocalAppLayout
 import com.librespydus.app.ui.theme.LsColors
 import com.librespydus.app.ui.theme.LsIcons
 import com.librespydus.app.ui.theme.LsRadius
 import com.librespydus.app.ui.theme.LsSpacing
 import com.librespydus.app.ui.theme.LsType
+import com.librespydus.app.ui.theme.PageLayout
+import com.librespydus.app.ui.theme.centredColumn
 import kotlinx.coroutines.launch
 import uniffi.librespydus_core.LibraryInfo
 import java.io.File
@@ -117,7 +120,9 @@ fun LibraryPickerScreen(appState: AppState, onDismiss: (() -> Unit)?, modifier: 
             .fillMaxSize()
             .background(LsColors.background)
             .statusBarsPadding()
-            .imePadding(),
+            .imePadding()
+            // The wide layout (§6.1): the picker in a centred column, first launch or Change library.
+            .then(if (LocalAppLayout.current.isWide) Modifier.centredColumn(PageLayout.pickerColumnWidth) else Modifier),
     ) {
         PickerHeader(onboarding = onboarding, onClose = onDismiss)
         SearchField(

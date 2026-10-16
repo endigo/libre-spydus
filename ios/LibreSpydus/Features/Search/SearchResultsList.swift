@@ -4,6 +4,9 @@ import SwiftUI
 /// (tap → detail), infinite scroll with a footer spinner, and the loading / no-results / error
 /// states.
 struct SearchResultsList: View {
+    @Environment(\.appLayout) private var layout
+    /// The list's width, for the wide layout's card grid (§6.1).
+    @State private var width: CGFloat = 0
     let results: SearchResultsModel
     let query: String
     /// Re-runs the first page (bumps the request's `attempt`).
@@ -12,22 +15,27 @@ struct SearchResultsList: View {
     var noResultsTitle: String?
 
     var body: some View {
-        switch results.phase {
-        case .idle, .loading:
-            SearchSkeletonList()
-        case .noResults:
-            if let noResultsTitle {
-                EmptyStateView(systemImage: "tray", title: noResultsTitle, message: Copy.Search.listEmptyMessage)
-            } else {
-                EmptyStateView(systemImage: "text.magnifyingglass", title: Copy.Search.noResultsTitle(query: query),
-                               message: Copy.Search.noResultsMessage)
+        Group {
+            switch results.phase {
+            case .idle, .loading:
+                SearchSkeletonList()
+                    .pageColumn()
+            case .noResults:
+                if let noResultsTitle {
+                    EmptyStateView(systemImage: "tray", title: noResultsTitle, message: Copy.Search.listEmptyMessage)
+                } else {
+                    EmptyStateView(systemImage: "text.magnifyingglass", title: Copy.Search.noResultsTitle(query: query),
+                                   message: Copy.Search.noResultsMessage)
+                }
+            case .failed(let error):
+                // ErrorStateView hides Retry for errors that retrying can't fix.
+                ErrorStateView(error: error, retry: retry)
+            case .loaded:
+                loadedList
             }
-        case .failed(let error):
-            // ErrorStateView hides Retry for errors that retrying can't fix.
-            ErrorStateView(error: error, retry: retry)
-        case .loaded:
-            loadedList
         }
+        // Measured out here, while the skeleton shows, so the results open in their columns.
+        .measuringWidth($width)
     }
 
     private var loadedList: some View {
@@ -41,20 +49,24 @@ struct SearchResultsList: View {
                             .padding(.horizontal, Theme.Spacing.l)
                             .accessibilityAddTraits(.isHeader)
                     }
-                    ForEach(Array(results.items.enumerated()), id: \.element.id) { index, item in
-                        SearchResultRow(item: item)
-                            .padding(.horizontal, Theme.Spacing.l)
-                            .onAppear {
-                                // Prefetch a few rows before the end.
-                                if index >= results.items.count - 4 {
-                                    Task { await results.loadMore() }
-                                }
-                            }
+                    if columns > 1 {
+                        CardRows(items: results.items, columns: columns) { index, item in
+                            SearchResultRow(item: item)
+                                .onAppear { prefetch(after: index) }
+                        }
+                        .padding(.horizontal, Theme.Spacing.l)
+                    } else {
+                        ForEach(Array(results.items.enumerated()), id: \.element.id) { index, item in
+                            SearchResultRow(item: item)
+                                .padding(.horizontal, Theme.Spacing.l)
+                                .onAppear { prefetch(after: index) }
+                        }
                     }
                     footer
                         .id(Self.footerID)
                 }
                 .padding(.bottom, Theme.Spacing.xxl)
+                .pageColumn()
             }
             .scrollDismissesKeyboard(.immediately)
             #if DEBUG
@@ -69,6 +81,19 @@ struct SearchResultsList: View {
     }
 
     private static var footerID: String { "results.footer" }
+
+    /// One card a row on a phone; as many as fit in the wide layout's page column (§6.1).
+    private var columns: Int {
+        let column = min(width, PageLayout.contentMaxWidth)
+        return layout == .wide ? PageLayout.cardColumns(width: column - Theme.Spacing.l * 2) : 1
+    }
+
+    /// Prefetch a few rows before the end.
+    private func prefetch(after index: Int) {
+        if index >= results.items.count - 4 {
+            Task { await results.loadMore() }
+        }
+    }
 
     @ViewBuilder
     private var footer: some View {
@@ -155,14 +180,18 @@ struct SearchResultCard: View {
     }
 }
 
-/// Placeholder rows while the first page loads.
+/// Placeholder rows while the first page loads; placeholder cards in the wide layout's grid.
 struct SearchSkeletonList: View {
     var rows = 5
+    @Environment(\.appLayout) private var layout
+    @State private var width: CGFloat = 0
 
     var body: some View {
         ScrollView {
-            VStack(spacing: Theme.Spacing.m) {
-                ForEach(0..<rows, id: \.self) { _ in
+            LazyVGrid(columns: PageLayout.gridItems(columns, spacing: PageLayout.cardSpacing),
+                      spacing: Theme.Spacing.m) {
+                // The wide layout's grid waits for its width, so it opens in its columns.
+                ForEach(0..<(layout == .wide && width == 0 ? 0 : rows * columns), id: \.self) { _ in
                     HStack(alignment: .top, spacing: Theme.Spacing.l) {
                         SkeletonBlock(width: Theme.Cover.smallWidth,
                                       height: Theme.Cover.height(forWidth: Theme.Cover.smallWidth),
@@ -183,7 +212,12 @@ struct SearchSkeletonList: View {
             .padding(.top, Theme.Spacing.s)
         }
         .scrollDisabled(true)
+        .measuringWidth($width)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Copy.Search.loadingResults)
+    }
+
+    private var columns: Int {
+        layout == .wide ? PageLayout.cardColumns(width: width - Theme.Spacing.l * 2) : 1
     }
 }

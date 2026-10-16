@@ -152,8 +152,9 @@ object Copy {
         /** "When {library} signs you out, sign back in with {method} instead of typing your PIN. Your card number and PIN stay on this phone, locked by {method}." */
         /** iOS: "When {library} signs you out, sign back in with {method} instead of typing your PIN. Your card number and PIN stay on this phone, locked by {method}." */
         /** Desktop: "When {library} signs you out, sign back in with {method} instead of typing your PIN. Your card number and PIN stay on this computer, locked by {method}." */
+        /** Tablet: "When {library} signs you out, sign back in with {method} instead of typing your PIN. Your card number and PIN stay on this tablet, locked by {method}." */
         fun offerMessage(library: String, method: String): String =
-            "When ${library} signs you out, sign back in with ${method} instead of typing your PIN. Your card number and PIN stay on this phone, locked by ${method}."
+            if (CopyDevice.usesTabletWords) "When ${library} signs you out, sign back in with ${method} instead of typing your PIN. Your card number and PIN stay on this tablet, locked by ${method}." else "When ${library} signs you out, sign back in with ${method} instead of typing your PIN. Your card number and PIN stay on this phone, locked by ${method}."
         /** "Use {method}" */
         fun use(method: String): String =
             "Use ${method}"
@@ -593,8 +594,10 @@ object Copy {
         const val subtitleAccount = "Saved on your library account"
         /** iOS: "Saved on this phone" */
         /** Desktop: "Saved on this computer" */
+        /** Tablet: "Saved on this tablet" */
         /** Signed out (was '{n} saved for {library}' / 'Saved on this device for {library}'). */
-        const val subtitlePhone = "Saved on this phone"
+        val subtitlePhone: String get() =
+            if (CopyDevice.usesTabletWords) "Saved on this tablet" else "Saved on this phone"
         /** Bookmark button's screen-reader label (book page and anywhere else a toggle appears), signed in or out (was 'Add to favourites'). */
         const val save = "Save to My Picks"
         /** Bookmark label when saved; also the row's remove action / menu item (was 'Remove from Favourites'). */
@@ -610,8 +613,10 @@ object Copy {
         const val emptyAccountMessage = "Tap the bookmark on a book to save it to your library account."
         /** iOS: "Tap the bookmark on a book to save it on this phone." */
         /** Desktop: "Click the bookmark on a book to save it on this computer." */
+        /** Tablet: "Tap the bookmark on a book to save it on this tablet." */
         /** Signed out (was 'Tap the bookmark on any book to save it here.'); its button is findABook. */
-        const val emptyPhoneMessage = "Tap the bookmark on a book to save it on this phone."
+        val emptyPhoneMessage: String get() =
+            if (CopyDevice.usesTabletWords) "Tap the bookmark on a book to save it on this tablet." else "Tap the bookmark on a book to save it on this phone."
         const val findABook = "Find a book"
         /** Hint on the signed-out list's Edit button (its label is the visible common.edit; was the label 'Edit favourites'); doneEditingHint goes with common.done. */
         const val editHint = "Lets you remove books from My Picks"
@@ -628,20 +633,27 @@ object Copy {
         const val retryLoadingMoreHint = "Loads more picks"
         /** iOS: "Couldn’t load My Picks from this phone." */
         /** Desktop: "Couldn’t load My Picks from this computer." */
+        /** Tablet: "Couldn’t load My Picks from this tablet." */
         /** iOS banner when the phone's list can't be read (was 'Couldn't read favourites: <system error>'). */
-        const val loadFailed = "Couldn’t load My Picks from this phone."
+        val loadFailed: String get() =
+            if (CopyDevice.usesTabletWords) "Couldn’t load My Picks from this tablet." else "Couldn’t load My Picks from this phone."
         /** iOS: "Couldn’t save My Picks on this phone." */
         /** Desktop: "Couldn’t save My Picks on this computer." */
-        const val saveFailed = "Couldn’t save My Picks on this phone."
+        /** Tablet: "Couldn’t save My Picks on this tablet." */
+        val saveFailed: String get() =
+            if (CopyDevice.usesTabletWords) "Couldn’t save My Picks on this tablet." else "Couldn’t save My Picks on this phone."
         /** iOS: "Add this phone’s picks to your library account?" */
         /** Desktop: "Add this computer’s picks to your library account?" */
+        /** Tablet: "Add this tablet’s picks to your library account?" */
         /** §5.11 copy-once alert; buttons common.add / common.notNow. */
-        const val offerTitle = "Add this phone’s picks to your library account?"
+        val offerTitle: String get() =
+            if (CopyDevice.usesTabletWords) "Add this tablet’s picks to your library account?" else "Add this phone’s picks to your library account?"
         /** One: "1 book saved on this phone can be added to My Picks on your library account." · other: "{count} books saved on this phone can be added to My Picks on your library account." */
         /** iOS: One: "1 book saved on this phone can be added to My Picks on your library account." · other: "{count} books saved on this phone can be added to My Picks on your library account." */
         /** Desktop: One: "1 book saved on this computer can be added to My Picks on your library account." · other: "{count} books saved on this computer can be added to My Picks on your library account." */
+        /** Tablet: One: "1 book saved on this tablet can be added to My Picks on your library account." · other: "{count} books saved on this tablet can be added to My Picks on your library account." */
         fun offerMessage(count: Int): String =
-            if (count == 1) "1 book saved on this phone can be added to My Picks on your library account." else "${copyNumber(count)} books saved on this phone can be added to My Picks on your library account."
+            if (CopyDevice.usesTabletWords) (if (count == 1) "1 book saved on this tablet can be added to My Picks on your library account." else "${copyNumber(count)} books saved on this tablet can be added to My Picks on your library account.") else (if (count == 1) "1 book saved on this phone can be added to My Picks on your library account." else "${copyNumber(count)} books saved on this phone can be added to My Picks on your library account.")
         /** One: "Adding 1 book to My Picks…" · other: "Adding {count} books to My Picks…" */
         /** Toast while the copy runs (iOS has it; Android should gain it). */
         fun adding(count: Int): String =
@@ -679,7 +691,9 @@ object Copy {
         const val humanVerification = "Human verification"
         /** iOS: "Verified on this phone" */
         /** Desktop: "Verified on this computer" */
-        const val verified = "Verified on this phone"
+        /** Tablet: "Verified on this tablet" */
+        val verified: String get() =
+            if (CopyDevice.usesTabletWords) "Verified on this tablet" else "Verified on this phone"
         /** "{library} asked you to confirm you’re human. The app sends the library’s verification cookie with its requests." */
         fun verifiedMessage(library: String): String =
             "${library} asked you to confirm you’re human. The app sends the library’s verification cookie with its requests."
@@ -792,9 +806,10 @@ object Copy {
         /** "LibreSpydus signs in directly with {library}. It keeps your PIN on this phone only if you turn on {method}." */
         /** iOS: "LibreSpydus signs in directly with {library}. It keeps your PIN on this phone only if you turn on {method}." */
         /** Desktop: "LibreSpydus signs in directly with {library}. It keeps your PIN on this computer only if you turn on {method}." */
+        /** Tablet: "LibreSpydus signs in directly with {library}. It keeps your PIN on this tablet only if you turn on {method}." */
         /** Replaces privacyNote when the phone can use {method} (§5.14), since turning it on keeps the PIN. */
         fun privacyNoteBiometrics(library: String, method: String): String =
-            "LibreSpydus signs in directly with ${library}. It keeps your PIN on this phone only if you turn on ${method}."
+            if (CopyDevice.usesTabletWords) "LibreSpydus signs in directly with ${library}. It keeps your PIN on this tablet only if you turn on ${method}." else "LibreSpydus signs in directly with ${library}. It keeps your PIN on this phone only if you turn on ${method}."
     }
 
     object Verification {
@@ -850,6 +865,27 @@ object Copy {
         /** Screen-reader label of the library's logo in the sidebar header. */
         fun libraryLogo(library: String): String =
             "${library} logo"
+    }
+}
+
+/** Which device's words a platform variant with a tablet form uses (docs/native-apps.md §6.1). */
+object CopyDevice {
+    /** True on a tablet (`smallestScreenWidthDp >= 600`). The app sets it once at launch, before anything reads the copy. */
+    @Volatile var isTablet: Boolean = false
+    /** Replaces [isTablet] while set: tests pin one device's words ([withTabletWords]). */
+    @Volatile var isTabletOverride: Boolean? = null
+
+    val usesTabletWords: Boolean get() = isTabletOverride ?: isTablet
+
+    /** Runs [block] with a tablet's (or a phone's) words, then restores the override that was set before. */
+    fun <T> withTabletWords(tablet: Boolean, block: () -> T): T {
+        val previous = isTabletOverride
+        isTabletOverride = tablet
+        try {
+            return block()
+        } finally {
+            isTabletOverride = previous
+        }
     }
 }
 

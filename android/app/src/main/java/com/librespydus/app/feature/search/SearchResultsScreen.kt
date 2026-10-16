@@ -37,6 +37,7 @@ import com.librespydus.app.ui.nav.AppNavigator
 import com.librespydus.app.ui.theme.LsColors
 import com.librespydus.app.ui.theme.LsIcons
 import com.librespydus.app.ui.theme.LsType
+import com.librespydus.app.ui.theme.pageColumn
 import kotlinx.coroutines.launch
 
 /**
@@ -65,7 +66,8 @@ fun SearchResultsScreen(route: Route.Results, appState: AppState, navigator: App
         modifier
             .fillMaxSize()
             .background(LsColors.background)
-            .statusBarsPadding(),
+            .statusBarsPadding()
+            .pageColumn(),
     ) {
         LsTopBar(
             title = route.title ?: route.query,
@@ -111,7 +113,8 @@ fun ListResultsScreen(route: Route.ListResults, appState: AppState, navigator: A
         modifier
             .fillMaxSize()
             .background(LsColors.background)
-            .statusBarsPadding(),
+            .statusBarsPadding()
+            .pageColumn(),
     ) {
         LsTopBar(title = route.title, onBack = navigator::back)
         SearchResultsList(

@@ -165,7 +165,7 @@ enum Copy {
         /// Android: "When {library} signs you out, sign back in with {method} instead of typing your PIN. Your card number and PIN stay on this phone, locked by {method}."
         /// Desktop: "When {library} signs you out, sign back in with {method} instead of typing your PIN. Your card number and PIN stay on this computer, locked by {method}."
         static func offerMessage(library: String, method: String) -> String {
-            "When \(library) signs you out, sign back in with \(method) instead of typing your PIN. Your card number and PIN stay on this phone, locked by \(method)."
+            CopyDevice.usesPadWords ? "When \(library) signs you out, sign back in with \(method) instead of typing your PIN. Your card number and PIN stay on this iPad, locked by \(method)." : "When \(library) signs you out, sign back in with \(method) instead of typing your PIN. Your card number and PIN stay on this phone, locked by \(method)."
         }
         /// "Use {method}"
         static func use(method: String) -> String {
@@ -671,7 +671,9 @@ enum Copy {
         /// Android: "Saved on this phone"
         /// Desktop: "Saved on this computer"
         /// Signed out (was '{n} saved for {library}' / 'Saved on this device for {library}').
-        static let subtitlePhone = "Saved on this phone"
+        static var subtitlePhone: String {
+            CopyDevice.usesPadWords ? "Saved on this iPad" : "Saved on this phone"
+        }
         /// Bookmark button's screen-reader label (book page and anywhere else a toggle appears), signed in or out (was 'Add to favourites').
         static let save = "Save to My Picks"
         /// Bookmark label when saved; also the row's remove action / menu item (was 'Remove from Favourites').
@@ -688,7 +690,9 @@ enum Copy {
         /// Android: "Tap the bookmark on a book to save it on this phone."
         /// Desktop: "Click the bookmark on a book to save it on this computer."
         /// Signed out (was 'Tap the bookmark on any book to save it here.'); its button is findABook.
-        static let emptyPhoneMessage = "Tap the bookmark on a book to save it on this phone."
+        static var emptyPhoneMessage: String {
+            CopyDevice.usesPadWords ? "Tap the bookmark on a book to save it on this iPad." : "Tap the bookmark on a book to save it on this phone."
+        }
         static let findABook = "Find a book"
         /// Hint on the signed-out list's Edit button (its label is the visible common.edit; was the label 'Edit favourites'); doneEditingHint goes with common.done.
         static let editHint = "Lets you remove books from My Picks"
@@ -708,19 +712,25 @@ enum Copy {
         /// Android: "Couldn’t load My Picks from this phone."
         /// Desktop: "Couldn’t load My Picks from this computer."
         /// iOS banner when the phone's list can't be read (was 'Couldn't read favourites: <system error>').
-        static let loadFailed = "Couldn’t load My Picks from this phone."
+        static var loadFailed: String {
+            CopyDevice.usesPadWords ? "Couldn’t load My Picks from this iPad." : "Couldn’t load My Picks from this phone."
+        }
         /// Android: "Couldn’t save My Picks on this phone."
         /// Desktop: "Couldn’t save My Picks on this computer."
-        static let saveFailed = "Couldn’t save My Picks on this phone."
+        static var saveFailed: String {
+            CopyDevice.usesPadWords ? "Couldn’t save My Picks on this iPad." : "Couldn’t save My Picks on this phone."
+        }
         /// Android: "Add this phone’s picks to your library account?"
         /// Desktop: "Add this computer’s picks to your library account?"
         /// §5.11 copy-once alert; buttons common.add / common.notNow.
-        static let offerTitle = "Add this phone’s picks to your library account?"
+        static var offerTitle: String {
+            CopyDevice.usesPadWords ? "Add this iPad’s picks to your library account?" : "Add this phone’s picks to your library account?"
+        }
         /// One: "1 book saved on this phone can be added to My Picks on your library account." · other: "{count} books saved on this phone can be added to My Picks on your library account."
         /// Android: One: "1 book saved on this phone can be added to My Picks on your library account." · other: "{count} books saved on this phone can be added to My Picks on your library account."
         /// Desktop: One: "1 book saved on this computer can be added to My Picks on your library account." · other: "{count} books saved on this computer can be added to My Picks on your library account."
         static func offerMessage(count: Int) -> String {
-            count == 1 ? "1 book saved on this phone can be added to My Picks on your library account." : "\(copyNumber(count)) books saved on this phone can be added to My Picks on your library account."
+            CopyDevice.usesPadWords ? (count == 1 ? "1 book saved on this iPad can be added to My Picks on your library account." : "\(copyNumber(count)) books saved on this iPad can be added to My Picks on your library account.") : (count == 1 ? "1 book saved on this phone can be added to My Picks on your library account." : "\(copyNumber(count)) books saved on this phone can be added to My Picks on your library account.")
         }
         /// One: "Adding 1 book to My Picks…" · other: "Adding {count} books to My Picks…"
         /// Toast while the copy runs (iOS has it; Android should gain it).
@@ -764,7 +774,9 @@ enum Copy {
         static let humanVerification = "Human verification"
         /// Android: "Verified on this phone"
         /// Desktop: "Verified on this computer"
-        static let verified = "Verified on this phone"
+        static var verified: String {
+            CopyDevice.usesPadWords ? "Verified on this iPad" : "Verified on this phone"
+        }
         /// "{library} asked you to confirm you’re human. The app sends the library’s verification cookie with its requests."
         static func verifiedMessage(library: String) -> String {
             "\(library) asked you to confirm you’re human. The app sends the library’s verification cookie with its requests."
@@ -890,7 +902,7 @@ enum Copy {
         /// Desktop: "LibreSpydus signs in directly with {library}. It keeps your PIN on this computer only if you turn on {method}."
         /// Replaces privacyNote when the phone can use {method} (§5.14), since turning it on keeps the PIN.
         static func privacyNoteBiometrics(library: String, method: String) -> String {
-            "LibreSpydus signs in directly with \(library). It keeps your PIN on this phone only if you turn on \(method)."
+            CopyDevice.usesPadWords ? "LibreSpydus signs in directly with \(library). It keeps your PIN on this iPad only if you turn on \(method)." : "LibreSpydus signs in directly with \(library). It keeps your PIN on this phone only if you turn on \(method)."
         }
     }
 
@@ -954,6 +966,17 @@ enum Copy {
             "\(library) logo"
         }
     }
+}
+
+/// Which device's words a platform variant with an iPad form uses (docs/native-apps.md §6.1).
+enum CopyDevice {
+    /// True on an iPad. The app sets it once at launch, before anything reads the copy.
+    nonisolated(unsafe) static var isPad = false
+    /// Replaces `isPad` inside `CopyDevice.$isPadOverride.withValue(…)`. It's per task, so tests
+    /// running side by side can each check one device's words.
+    @TaskLocal static var isPadOverride: Bool?
+
+    static var usesPadWords: Bool { isPadOverride ?? isPad }
 }
 
 /// A count as the reader's locale writes it ("1,234").

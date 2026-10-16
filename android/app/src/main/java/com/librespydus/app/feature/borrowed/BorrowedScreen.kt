@@ -15,10 +15,12 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -85,12 +87,17 @@ import com.librespydus.app.ui.components.SectionHeader
 import com.librespydus.app.ui.components.SegmentedToggle
 import com.librespydus.app.ui.components.ToastPill
 import com.librespydus.app.ui.nav.AppNavigator
+import com.librespydus.app.ui.theme.LocalAppLayout
 import com.librespydus.app.ui.theme.LsColors
 import com.librespydus.app.ui.theme.LsIcons
 import com.librespydus.app.ui.theme.LsRadius
 import com.librespydus.app.ui.theme.LsSpacing
 import com.librespydus.app.ui.theme.LsTabBar
 import com.librespydus.app.ui.theme.LsType
+import com.librespydus.app.ui.theme.PageLayout
+import com.librespydus.app.ui.theme.cardRows
+import com.librespydus.app.ui.theme.onRightClick
+import com.librespydus.app.ui.theme.pageColumn
 import kotlinx.coroutines.delay
 import java.time.LocalDate
 import java.util.Date
@@ -187,6 +194,28 @@ fun BorrowedScreen(appState: AppState, navigator: AppNavigator, modifier: Modifi
             .background(LsColors.background)
             .statusBarsPadding(),
     ) {
+        BoxWithConstraints(Modifier.fillMaxSize().pageColumn()) {
+        // The wide layout (§6.1): cards in a grid, the segments beside the title when both fit.
+        val wide = LocalAppLayout.current.isWide
+        val contentWidth = maxWidth - LsSpacing.l * 2
+        val columns = if (wide) PageLayout.cardColumns(contentWidth) else 1
+        val segmentsBeside = wide && session != null && contentWidth >= SEGMENTS_BESIDE_MIN_WIDTH
+        val segments: @Composable (Modifier) -> Unit = { segmentsModifier ->
+            val loanCount = loans.valueOrNull?.size
+            val reservationCount = reservations.valueOrNull?.count
+            Column(segmentsModifier, verticalArrangement = Arrangement.spacedBy(LsSpacing.s)) {
+                SegmentedToggle(
+                    options = listOf(
+                        loanCount?.let(Copy.YourBooks::loansCount) ?: Copy.YourBooks.loans,
+                        reservationCount?.let(Copy.YourBooks::reservationsCount) ?: Copy.YourBooks.reservations,
+                    ),
+                    selectedIndex = segment.ordinal,
+                    onSelect = { model.select(BorrowedModel.Segment.entries[it]) },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                content.status?.let { AccountStatusLine(it, onRetry = vm::retry) }
+            }
+        }
         LazyColumn(
             state = listState,
             contentPadding = PaddingValues(
@@ -195,20 +224,30 @@ fun BorrowedScreen(appState: AppState, navigator: AppNavigator, modifier: Modifi
                 // Clear the raised Search button at max scroll.
                 bottom = LsSpacing.xxl,
             ),
-            verticalArrangement = Arrangement.spacedBy(LsSpacing.l),
+            verticalArrangement = Arrangement.spacedBy(if (wide) PageLayout.cardSpacing else LsSpacing.l),
             modifier = Modifier
                 .fillMaxSize()
                 .closesReservationSwipeOnTap(swipe),
         ) {
             item(key = "title") {
-                Text(
-                    Copy.YourBooks.title,
-                    style = LsType.greeting,
-                    color = LsColors.textPrimary,
-                    modifier = Modifier
-                        .padding(top = LsSpacing.l)
-                        .semantics { heading() },
-                )
+                val title: @Composable (Modifier) -> Unit = { titleModifier ->
+                    Text(
+                        Copy.YourBooks.title,
+                        style = LsType.greeting,
+                        color = LsColors.textPrimary,
+                        modifier = titleModifier
+                            .padding(top = LsSpacing.l)
+                            .semantics { heading() },
+                    )
+                }
+                if (segmentsBeside) {
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(LsSpacing.l), verticalAlignment = Alignment.Top) {
+                        title(Modifier.weight(1f))
+                        segments(Modifier.width(PageLayout.borrowedSegmentsWidth).padding(top = LsSpacing.l))
+                    }
+                } else {
+                    title(Modifier)
+                }
             }
             if (session == null) {
                 item(key = "signed-out") {
@@ -223,21 +262,8 @@ fun BorrowedScreen(appState: AppState, navigator: AppNavigator, modifier: Modifi
                 }
                 return@LazyColumn
             }
-            item(key = "segments") {
-                val loanCount = loans.valueOrNull?.size
-                val reservationCount = reservations.valueOrNull?.count
-                Column(verticalArrangement = Arrangement.spacedBy(LsSpacing.s)) {
-                    SegmentedToggle(
-                        options = listOf(
-                            loanCount?.let(Copy.YourBooks::loansCount) ?: Copy.YourBooks.loans,
-                            reservationCount?.let(Copy.YourBooks::reservationsCount) ?: Copy.YourBooks.reservations,
-                        ),
-                        selectedIndex = segment.ordinal,
-                        onSelect = { model.select(BorrowedModel.Segment.entries[it]) },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    content.status?.let { AccountStatusLine(it, onRetry = vm::retry) }
-                }
+            if (!segmentsBeside) {
+                item(key = "segments") { segments(Modifier) }
             }
             notice?.let { shown ->
                 item(key = "notice-${shown.id}") {
@@ -258,6 +284,7 @@ fun BorrowedScreen(appState: AppState, navigator: AppNavigator, modifier: Modifi
                 BorrowedModel.Segment.LOANS -> loansContent(
                     loans,
                     libraryName,
+                    columns = columns,
                     renewing = renewing,
                     swipe = swipe,
                     onRetry = vm::retry,
@@ -266,6 +293,7 @@ fun BorrowedScreen(appState: AppState, navigator: AppNavigator, modifier: Modifi
                 )
                 BorrowedModel.Segment.RESERVATIONS -> reservationsContent(
                     reservations,
+                    columns = columns,
                     busy = busy,
                     swipe = swipe,
                     onRetry = vm::retry,
@@ -274,6 +302,7 @@ fun BorrowedScreen(appState: AppState, navigator: AppNavigator, modifier: Modifi
                     onEdit = model::edit,
                 )
             }
+        }
         }
         RenewToast(
             toast,
@@ -316,6 +345,9 @@ fun BorrowedScreen(appState: AppState, navigator: AppNavigator, modifier: Modifi
 }
 
 private val STATE_HEIGHT = 380.dp
+
+/** The content width from which the segments sit beside the title in the wide layout (§6.1). */
+private val SEGMENTS_BESIDE_MIN_WIDTH = 640.dp
 
 /**
  * The muted line under the segments: "Updated 12 min ago" (ticking, in the device's time format)
@@ -393,6 +425,7 @@ private fun LazyListScope.stateItem(key: String, content: @Composable () -> Unit
 private fun LazyListScope.loansContent(
     loans: BorrowedLoad<List<LoanRow>>,
     libraryName: String,
+    columns: Int,
     renewing: Set<String>,
     swipe: ReservationSwipeController,
     onRetry: () -> Unit,
@@ -411,7 +444,11 @@ private fun LazyListScope.loansContent(
                 )
             }
         } else {
-            items(loans.value, key = { "loan-${it.id}" }) { row -> LoanCard(row, row.id in renewing, swipe, onOpen, onRenew) }
+            if (columns == 1) {
+                items(loans.value, key = { "loan-${it.id}" }) { row -> LoanCard(row, row.id in renewing, swipe, onOpen, onRenew) }
+            } else {
+                cardRows(loans.value, columns, key = { "loan-${it.id}" }) { _, row, cell -> LoanCard(row, row.id in renewing, swipe, onOpen, onRenew, cell) }
+            }
             if (loans.value.canRenew) {
                 item(key = "loan-swipe-hint") { Footnote(LsIcons.ArrowBack, Copy.YourBooks.loanSwipeHint) }
             }
@@ -445,6 +482,7 @@ private fun LoanCard(
     swipe: ReservationSwipeController,
     onOpen: (LoanRow) -> Unit,
     onRenew: (LoanRow) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val actions = LoanAction.of(row)
     val run: (LoanAction) -> Unit = { onRenew(row) }
@@ -465,7 +503,8 @@ private fun LoanCard(
         longClickLabel = Copy.Common.moreOptions,
         onOpen = { onOpen(row) },
         onAction = run,
-    ) { modifier ->
+        modifier = modifier,
+    ) { cardModifier ->
         BookRowCard(
             title = row.ref.title,
             coverUrl = row.ref.coverUrl,
@@ -474,13 +513,14 @@ private fun LoanCard(
             metaColor = if (row.isUrgent) LsColors.danger else LsColors.textSecondary,
             badge = if (overdue) Copy.Loans.overdue else null,
             badgeColor = LsColors.danger,
-            modifier = modifier,
+            modifier = cardModifier,
         )
     }
 }
 
 private fun LazyListScope.reservationsContent(
     reservations: BorrowedLoad<ReservationSections>,
+    columns: Int,
     busy: Set<String>,
     swipe: ReservationSwipeController,
     onRetry: () -> Unit,
@@ -507,21 +547,38 @@ private fun LazyListScope.reservationsContent(
                 item(key = "ready-header") {
                     SectionHeader(Copy.YourBooks.readyCount(sections.ready.size), Modifier.padding(top = LsSpacing.xs))
                 }
-                items(sections.ready, key = { "reservation-${it.id}" }) { row ->
-                    ReservationCard(row, row.id in busy, swipe, onOpen, onCancel, onEdit)
-                }
+                reservationCards(sections.ready, columns, busy, swipe, onOpen, onCancel, onEdit)
             }
             if (sections.pending.isNotEmpty()) {
                 item(key = "pending-header") {
                     SectionHeader(Copy.YourBooks.pendingCount(sections.pending.size), Modifier.padding(top = LsSpacing.xs))
                 }
-                items(sections.pending, key = { "reservation-${it.id}" }) { row ->
-                    ReservationCard(row, row.id in busy, swipe, onOpen, onCancel, onEdit)
-                }
+                reservationCards(sections.pending, columns, busy, swipe, onOpen, onCancel, onEdit)
             }
             if (sections.hasActions) {
                 item(key = "swipe-hint") { Footnote(LsIcons.ArrowBack, SWIPE_HINT) }
             }
+        }
+    }
+}
+
+/** A section's reservation cards: a list, or rows of [columns] in the wide layout (§6.1). */
+private fun LazyListScope.reservationCards(
+    rows: List<ReservationRow>,
+    columns: Int,
+    busy: Set<String>,
+    swipe: ReservationSwipeController,
+    onOpen: (ReservationRow) -> Unit,
+    onCancel: (ReservationRow) -> Unit,
+    onEdit: (ReservationRow) -> Unit,
+) {
+    if (columns == 1) {
+        items(rows, key = { "reservation-${it.id}" }) { row ->
+            ReservationCard(row, row.id in busy, swipe, onOpen, onCancel, onEdit)
+        }
+    } else {
+        cardRows(rows, columns, key = { "reservation-${it.id}" }) { _, row, cell ->
+            ReservationCard(row, row.id in busy, swipe, onOpen, onCancel, onEdit, cell)
         }
     }
 }
@@ -544,6 +601,7 @@ private fun ReservationCard(
     onOpen: (ReservationRow) -> Unit,
     onCancel: (ReservationRow) -> Unit,
     onEdit: (ReservationRow) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val actions = ReservationAction.of(row)
     val run: (ReservationAction) -> Unit = { action ->
@@ -574,7 +632,8 @@ private fun ReservationCard(
         longClickLabel = Copy.YourBooks.showActions,
         onOpen = { onOpen(row) },
         onAction = run,
-    ) { modifier ->
+        modifier = modifier,
+    ) { cardModifier ->
         BookRowCard(
             title = row.ref.title,
             coverUrl = row.ref.coverUrl,
@@ -584,16 +643,17 @@ private fun ReservationCard(
             badge = row.statusLabel,
             badgeColor = statusColor,
             highlighted = row.isReady,
-            modifier = modifier,
+            modifier = cardModifier,
         )
     }
 }
 
 /**
  * A Your Books card with [actions]: tap runs [onOpen]; the actions are behind a swipe
- * ([ReservationSwipeBox]), in a long-press menu ([longClickLabel]) and in its TalkBack custom
- * actions. TalkBack reads the whole card as one node, [label]. While [busy] the card is dimmed
- * with a spinner and takes no actions. [card] draws the card with the modifier it's given.
+ * ([ReservationSwipeBox]), in a long-press menu ([longClickLabel], a right-click too) and in its
+ * TalkBack custom actions. TalkBack reads the whole card as one node, [label]. While [busy] the
+ * card is dimmed with a spinner and takes no actions. [card] draws the card with the modifier it's
+ * given. In a grid row (§6.1) [modifier] gives the card the row's height, which it fills.
  */
 @Composable
 private fun <A : SwipeAction> ActionCard(
@@ -605,32 +665,37 @@ private fun <A : SwipeAction> ActionCard(
     longClickLabel: String,
     onOpen: () -> Unit,
     onAction: (A) -> Unit,
+    modifier: Modifier = Modifier,
     card: @Composable (Modifier) -> Unit,
 ) {
     var menuShown by remember { mutableStateOf(false) }
     val presses = remember { MutableInteractionSource() }
+    val showMenu = {
+        swipe.close()
+        menuShown = true
+    }
     ReservationSwipeBox(
         id = swipeId,
         controller = swipe,
         actions = actions,
         onAction = onAction,
+        modifier = modifier,
         enabled = !busy,
         surfaceTop = CARD_RISE,
     ) {
         Box(
             Modifier
+                .fillMaxHeight()
                 .combinedClickable(
                     interactionSource = presses,
                     indication = null,
                     enabled = !busy,
                     onLongClickLabel = if (actions.isEmpty()) null else longClickLabel,
-                    onLongClick = if (actions.isEmpty()) null else ({
-                        swipe.close()
-                        menuShown = true
-                    }),
+                    onLongClick = if (actions.isEmpty()) null else showMenu,
                     // A tap while a card is swiped open only closes it.
                     onClick = { if (!swipe.dismiss()) onOpen() },
                 )
+                .then(if (actions.isEmpty() || busy) Modifier else Modifier.onRightClick(showMenu))
                 // Clears the card's own text (and the cover's label) under it; the click actions stay.
                 .clearAndSetSemantics {
                     contentDescription = label
@@ -639,7 +704,7 @@ private fun <A : SwipeAction> ActionCard(
                     }
                 },
         ) {
-            card(Modifier.alpha(if (busy) 0.7f else 1f))
+            card(Modifier.fillMaxHeight().alpha(if (busy) 0.7f else 1f))
             // The press ripple, on the card's surface only (not the strip the cover rises into).
             Box(
                 Modifier

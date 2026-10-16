@@ -70,6 +70,7 @@ struct ProfileView: View {
         }
         .padding(.horizontal, Theme.Spacing.l)
         .padding(.bottom, Theme.Spacing.xxl)
+        .pageColumn()
     }
 
     // MARK: Library

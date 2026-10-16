@@ -12,23 +12,39 @@ import SwiftUI
 /// the saved lists ("Couldn’t refresh · Showing the saved list").
 struct BorrowedView: View {
     @Environment(AppModel.self) private var model
+    @Environment(\.appLayout) private var layout
     @State private var viewModel = BorrowedViewModel()
     @State private var scrollMark = ScrollMark()
+    /// The page's width, for the wide layout's card grid (§6.1).
+    @State private var width: CGFloat = 0
 
     var body: some View {
         @Bindable var viewModel = viewModel
         ScrollView {
             VStack(alignment: .leading, spacing: Theme.Spacing.l) {
-                Text(Copy.YourBooks.title)
-                    .themeFont(.greeting)
-                    .foregroundStyle(Theme.Colors.textPrimary)
-                    .accessibilityAddTraits(.isHeader)
-                    .padding(.top, Theme.Spacing.l)
                 if model.isSignedIn {
                     VStack(alignment: .leading, spacing: Theme.Spacing.s) {
-                        segmentPicker
+                        if layout == .wide {
+                            // Loans | Reservations beside the title when they fit (§6.1).
+                            ViewThatFits(in: .horizontal) {
+                                HStack(alignment: .center, spacing: Theme.Spacing.xl) {
+                                    title
+                                    segmentPicker
+                                        .frame(width: Self.wideSegmentsWidth)
+                                }
+                                VStack(alignment: .leading, spacing: Theme.Spacing.l) {
+                                    title
+                                    segmentPicker
+                                }
+                            }
+                        } else {
+                            title
+                                .padding(.bottom, Theme.Spacing.s)
+                            segmentPicker
+                        }
                         statusLine
                     }
+                    .padding(.top, Theme.Spacing.l)
                     if let notice = viewModel.notice {
                         noticeBanner(notice)
                     }
@@ -37,11 +53,15 @@ struct BorrowedView: View {
                     case .reservations: reservationsContent
                     }
                 } else {
+                    title
+                        .padding(.top, Theme.Spacing.l)
                     signedOut
                 }
             }
             .padding(.horizontal, Theme.Spacing.l)
             .padding(.bottom, Theme.Spacing.xxl)
+            .measuringWidth($width)
+            .pageColumn()
             .animation(.default, value: viewModel.notice)
             // A tap anywhere but a card or control closes an open card's swipe actions.
             .contentShape(Rectangle())
@@ -114,6 +134,21 @@ struct BorrowedView: View {
 
     // MARK: Header
 
+    private var title: some View {
+        Text(Copy.YourBooks.title)
+            .themeFont(.greeting)
+            .foregroundStyle(Theme.Colors.textPrimary)
+            .accessibilityAddTraits(.isHeader)
+    }
+
+    /// Loans | Reservations beside the title (the desktop's width).
+    private static let wideSegmentsWidth: CGFloat = 420
+
+    /// One card a row on a phone; as many as fit in the wide layout (§6.1).
+    private var columns: Int {
+        layout == .wide ? PageLayout.cardColumns(width: width - Theme.Spacing.l * 2) : 1
+    }
+
     private var segmentPicker: some View {
         @Bindable var viewModel = viewModel
         return Picker(Copy.YourBooks.show, selection: $viewModel.segment) {
@@ -183,8 +218,12 @@ struct BorrowedView: View {
                            message: Copy.YourBooks.noLoansMessage(library: model.libraryName))
                 .frame(minHeight: Self.stateHeight)
         } else {
-            ForEach(rows) { row in
-                loanCard(row)
+            if columns > 1 {
+                CardRows(items: rows, columns: columns) { _, row in loanCard(row).gridCell() }
+            } else {
+                ForEach(rows) { row in
+                    loanCard(row)
+                }
             }
             if rows.hasActions {
                 swipeHint(for: .loans)
@@ -259,19 +298,26 @@ struct BorrowedView: View {
             if !sections.ready.isEmpty {
                 SectionHeader(title: Copy.YourBooks.readyCount(count: sections.ready.count))
                     .padding(.top, Theme.Spacing.xs)
-                ForEach(sections.ready) { row in
-                    reservationCard(row)
-                }
+                reservationCards(sections.ready)
             }
             if !sections.pending.isEmpty {
                 SectionHeader(title: Copy.YourBooks.pendingCount(count: sections.pending.count))
                     .padding(.top, Theme.Spacing.xs)
-                ForEach(sections.pending) { row in
-                    reservationCard(row)
-                }
+                reservationCards(sections.pending)
             }
             if sections.hasActions {
                 swipeHint(for: .reservations)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func reservationCards(_ rows: [ReservationRow]) -> some View {
+        if columns > 1 {
+            CardRows(items: rows, columns: columns) { _, row in reservationCard(row).gridCell() }
+        } else {
+            ForEach(rows) { row in
+                reservationCard(row)
             }
         }
     }
@@ -409,4 +455,12 @@ private final class ScrollMark {
     var y: CGFloat = 0
     /// Where the list was when the open card's swipe actions appeared.
     var openedAt: CGFloat?
+}
+
+private extension View {
+    /// A card in the wide layout's grid (§6.1): swiped open, it slides under its own edge instead
+    /// of over the card beside it.
+    func gridCell() -> some View {
+        clipShape(RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
+    }
 }

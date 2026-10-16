@@ -50,8 +50,17 @@ extension View {
     /// Keeps scrolling content clear of the custom tab bar. RootView adds the bar with
     /// `.safeAreaInset`, but on iOS 27 that inset doesn't reach content inside the tabs'
     /// `NavigationStack`s (their safe area ends at the home indicator), so `TabStack` applies this
-    /// to every tab root and pushed screen. Screens don't add it themselves.
+    /// to every tab root and pushed screen. Screens don't add it themselves. The wide layout has
+    /// a sidebar instead (§6.1), so nothing to clear.
     func tabBarClearance() -> some View {
-        safeAreaPadding(.bottom, Theme.TabBar.height)
+        modifier(TabBarClearance())
+    }
+}
+
+private struct TabBarClearance: ViewModifier {
+    @Environment(\.appLayout) private var layout
+
+    func body(content: Content) -> some View {
+        content.safeAreaPadding(.bottom, layout == .compact ? Theme.TabBar.height : 0)
     }
 }

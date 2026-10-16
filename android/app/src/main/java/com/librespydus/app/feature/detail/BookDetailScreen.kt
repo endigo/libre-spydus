@@ -6,11 +6,13 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -48,7 +50,9 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.min
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -64,6 +68,7 @@ import com.librespydus.app.feature.borrowed.LoanRow
 import com.librespydus.app.feature.borrowed.RenewLoanDialog
 import com.librespydus.app.feature.borrowed.RenewToast
 import com.librespydus.app.feature.onboarding.AccountIcons
+import com.librespydus.app.feature.search.BrowseBottomClearance
 import com.librespydus.app.feature.search.BrowseIcons
 import com.librespydus.app.feature.search.browseReporter
 import com.librespydus.app.feature.search.displayLabel
@@ -73,12 +78,15 @@ import com.librespydus.app.ui.components.CircleIconButton
 import com.librespydus.app.ui.components.CoverImage
 import com.librespydus.app.ui.components.PrimaryPillButton
 import com.librespydus.app.ui.nav.AppNavigator
+import com.librespydus.app.ui.theme.LocalAppLayout
 import com.librespydus.app.ui.theme.LsColors
 import com.librespydus.app.ui.theme.LsCover
 import com.librespydus.app.ui.theme.LsIcons
 import com.librespydus.app.ui.theme.LsRadius
 import com.librespydus.app.ui.theme.LsSpacing
 import com.librespydus.app.ui.theme.LsType
+import com.librespydus.app.ui.theme.PageLayout
+import com.librespydus.app.ui.theme.pageColumn
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import uniffi.librespydus_core.SpydusException
@@ -188,67 +196,135 @@ fun BookDetailScreen(book: BookRef, appState: AppState, navigator: AppNavigator,
             snapshot.reservations.pending.items.isNotEmpty()
     } == true
 
+    val header: @Composable (Dp) -> Unit = { inset ->
+        DetailHeader(
+            state = state,
+            onSelectFormat = model::select,
+            onRetryAvailability = { currentBackend?.let { b -> model.viewModelScope.launch { model.loadAvailability(b, report) } } },
+            onRetryLookup = { currentBackend?.let { b -> model.viewModelScope.launch { model.refindFormats(b, report) } } },
+            inset = inset,
+        )
+    }
+    val onStartRelated = { currentBackend?.let(model::startRelated) ?: Unit }
+    val sheet: @Composable (Modifier, Boolean) -> Unit = { sheetModifier, showsRelated ->
+        DetailSheetContent(
+            state = state,
+            onRetry = { currentBackend?.let { b -> model.viewModelScope.launch { model.load(b, report) } } },
+            onStartRelated = onStartRelated,
+            onOpenBook = navigator::openBook,
+            onOpenSubject = { navigator.openResults(it.query, ResultsSort.RELEVANCE, it.label) },
+            onRetryCopies = { currentBackend?.let { b -> model.viewModelScope.launch { model.loadCopies(b, report) } } },
+            modifier = sheetModifier,
+            showsRelated = showsRelated,
+        )
+    }
+    val actions: @Composable (Modifier, Dp) -> Unit = { actionsModifier, inset ->
+        DetailActions(
+            reservable = state.reservableFormat,
+            held = held,
+            awaitingHolding = awaitingHolding,
+            renewing = renewing,
+            // A loan the library lets the patron renew asks to renew it (§5.12); any other pill opens Your Books.
+            onTapHeld = { status ->
+                val loan = status.renewableLoan
+                if (loan != null) model.renewal.ask(LoanRow.of(loan)) else appState.openBorrowed(status.segment)
+            },
+            signedIn = session != null,
+            bookmark = bookmark,
+            onBorrow = ::borrow,
+            onToggleBookmark = ::toggleBookmark,
+            modifier = actionsModifier,
+            inset = inset,
+        )
+    }
+
     Box(modifier.fillMaxSize()) {
-        Column(
+        BoxWithConstraints(
             Modifier
                 .fillMaxSize()
                 .background(LsColors.background),
         ) {
-            // Fixed navy bar: scrolled content passes under it, never under the status bar.
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .background(LsColors.background)
-                    .statusBarsPadding()
-                    .padding(horizontal = LsSpacing.l, vertical = LsSpacing.s),
-            ) {
-                CircleIconButton(
-                    LsIcons.ArrowBack, Copy.Common.back, navigator::back,
-                    size = 44.dp, iconSize = 24.dp, background = LsColors.surface, contentColor = LsColors.textPrimary, shadow = false,
-                )
-            }
-            Column(
-                Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-                    .verticalScroll(rememberScrollState()),
-            ) {
-                DetailHeader(
-                    state = state,
-                    onSelectFormat = model::select,
-                    onRetryAvailability = { currentBackend?.let { b -> model.viewModelScope.launch { model.loadAvailability(b, report) } } },
-                    onRetryLookup = { currentBackend?.let { b -> model.viewModelScope.launch { model.refindFormats(b, report) } } },
-                )
-                Box(Modifier.fillMaxWidth()) {
-                    DetailSheetContent(
-                        state = state,
-                        onRetry = { currentBackend?.let { b -> model.viewModelScope.launch { model.load(b, report) } } },
-                        onStartRelated = { currentBackend?.let(model::startRelated) },
-                        onOpenBook = navigator::openBook,
-                        onOpenSubject = { navigator.openResults(it.query, ResultsSort.RELEVANCE, it.label) },
-                        onRetryCopies = { currentBackend?.let { b -> model.viewModelScope.launch { model.loadCopies(b, report) } } },
-                        modifier = Modifier
-                            .padding(top = ActionsHeight / 2)
+            // The wide layout (§6.1): the page in a centred column; from 820 dp of it, two columns —
+            // the header, Reserve and the sheet (as a rounded card) on the left, the other books on
+            // the right, each scrolling on its own.
+            val page = min(maxWidth, PageLayout.contentMaxWidth) - LsSpacing.l * 2
+            val twoColumns = LocalAppLayout.current.isWide && page >= PageLayout.detailTwoColumnMinWidth
+            Column(Modifier.fillMaxSize().pageColumn()) {
+                // Fixed navy bar: scrolled content passes under it, never under the status bar.
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .background(LsColors.background)
+                        .statusBarsPadding()
+                        .padding(horizontal = LsSpacing.l, vertical = LsSpacing.s),
+                ) {
+                    CircleIconButton(
+                        LsIcons.ArrowBack, Copy.Common.back, navigator::back,
+                        size = 44.dp, iconSize = 24.dp, background = LsColors.surface, contentColor = LsColors.textPrimary, shadow = false,
+                    )
+                }
+                if (twoColumns) {
+                    val showsRelated = DetailRelatedColumn.isShown(state)
+                    Row(
+                        Modifier
+                            .weight(1f)
                             .fillMaxWidth()
-                            .sheetBackground()
-                            .padding(top = ActionsHeight / 2 + LsSpacing.l),
-                    )
-                    DetailActions(
-                        reservable = state.reservableFormat,
-                        held = held,
-                        awaitingHolding = awaitingHolding,
-                        renewing = renewing,
-                    // A loan the library lets the patron renew asks to renew it (§5.12); any other pill opens Your Books.
-                    onTapHeld = { status ->
-                        val loan = status.renewableLoan
-                        if (loan != null) model.renewal.ask(LoanRow.of(loan)) else appState.openBorrowed(status.segment)
-                    },
-                        signedIn = session != null,
-                        bookmark = bookmark,
-                        onBorrow = ::borrow,
-                        onToggleBookmark = ::toggleBookmark,
-                        modifier = Modifier.align(Alignment.TopCenter),
-                    )
+                            .padding(horizontal = LsSpacing.l),
+                        horizontalArrangement = Arrangement.spacedBy(LsSpacing.xl),
+                    ) {
+                        Column(
+                            Modifier
+                                .then(if (showsRelated) Modifier.width(PageLayout.detailLeftWidth) else Modifier.weight(1f))
+                                .fillMaxHeight()
+                                .verticalScroll(rememberScrollState()),
+                        ) {
+                            header(0.dp)
+                            Box(Modifier.fillMaxWidth()) {
+                                sheet(
+                                    Modifier
+                                        .padding(top = ActionsHeight / 2)
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(LsRadius.sheet))
+                                        .background(LsColors.sheet)
+                                        .padding(top = ActionsHeight / 2 + LsSpacing.l),
+                                    false,
+                                )
+                                actions(Modifier.align(Alignment.TopCenter), 0.dp)
+                            }
+                        }
+                        if (showsRelated) {
+                            DetailRelatedColumn(
+                                state = state,
+                                width = page - PageLayout.detailLeftWidth - LsSpacing.xl,
+                                onStartRelated = onStartRelated,
+                                onOpenBook = navigator::openBook,
+                                modifier = Modifier
+                                    .fillMaxHeight()
+                                    .verticalScroll(rememberScrollState())
+                                    .padding(top = LsSpacing.s, bottom = BrowseBottomClearance),
+                            )
+                        }
+                    }
+                } else {
+                    Column(
+                        Modifier
+                            .weight(1f)
+                            .fillMaxWidth()
+                            .verticalScroll(rememberScrollState()),
+                    ) {
+                        header(LsSpacing.xl)
+                        Box(Modifier.fillMaxWidth()) {
+                            sheet(
+                                Modifier
+                                    .padding(top = ActionsHeight / 2)
+                                    .fillMaxWidth()
+                                    .sheetBackground()
+                                    .padding(top = ActionsHeight / 2 + LsSpacing.l),
+                                true,
+                            )
+                            actions(Modifier.align(Alignment.TopCenter), LsSpacing.xl)
+                        }
+                    }
                 }
             }
         }
@@ -306,19 +382,20 @@ private fun Modifier.sheetBackground(): Modifier = drawBehind {
     )
 }
 
-/** The navy top: cover, title, byline, year, availability line and format chips. */
+/** The navy top: cover, title, byline, year, availability line and format chips, [inset] from the sides. */
 @Composable
 private fun DetailHeader(
     state: DetailState,
     onSelectFormat: (Int) -> Unit,
     onRetryAvailability: () -> Unit,
     onRetryLookup: () -> Unit,
+    inset: Dp = LsSpacing.xl,
 ) {
     val ref = state.ref
     Column(
         Modifier
             .fillMaxWidth()
-            .padding(start = LsSpacing.xl, end = LsSpacing.xl, top = LsSpacing.s, bottom = LsSpacing.xl),
+            .padding(start = inset, end = inset, top = LsSpacing.s, bottom = LsSpacing.xl),
         verticalArrangement = Arrangement.spacedBy(LsSpacing.l),
     ) {
         Row(horizontalArrangement = Arrangement.spacedBy(LsSpacing.l), verticalAlignment = Alignment.Top) {
@@ -446,11 +523,13 @@ private fun DetailActions(
     onBorrow: (FormatRef) -> Unit,
     onToggleBookmark: () -> Unit,
     modifier: Modifier = Modifier,
+    /** The row's distance from the sides: the header's. */
+    inset: Dp = LsSpacing.xl,
 ) {
     Row(
         modifier
             .fillMaxWidth()
-            .padding(horizontal = LsSpacing.xl),
+            .padding(horizontal = inset),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(LsSpacing.m),
     ) {

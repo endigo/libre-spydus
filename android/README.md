@@ -84,6 +84,41 @@ On this machine the `Pixel_9` AVD's own image (`android-37.0/google_apis_playsto
 `system.img`. Booting it with `-sysdir ~/Library/Android/sdk/system-images/android-37.2/google_apis_playstore_ps16k/arm64-v8a/`
 (also 16 KB pages) works without changing the AVD.
 
+**Tablet (the wide layout, docs §6.1).** The `Pixel_Tablet` AVD (2560 × 1600 @ 320 dpi = 1280 × 800 dp,
+landscape by default) is wide either way up; a phone, a narrow split screen and a small freeform
+window stay compact. Its AVD also points at the image without a `system.img`, so boot it with the
+same `-sysdir`; use the port your task names (5580 here):
+
+```sh
+~/Library/Android/sdk/emulator/emulator -avd Pixel_Tablet -port 5580 \
+  -sysdir ~/Library/Android/sdk/system-images/android-37.2/google_apis_playstore_ps16k/arm64-v8a/ \
+  -no-window -no-audio -no-boot-anim -no-snapshot-save
+adb -s emulator-5580 install -r app/build/outputs/apk/debug/app-debug.apk
+# Landscape (the default) / portrait:
+adb -s emulator-5580 shell settings put system accelerometer_rotation 0
+adb -s emulator-5580 shell settings put system user_rotation 0      # landscape
+adb -s emulator-5580 shell settings put system user_rotation 1      # portrait
+# A screen in demo mode (the debug launch options below), then a screenshot:
+adb -s emulator-5580 shell am start -S -W -n com.librespydus.app/.MainActivity \
+  --es ls_origin https://canning.spydus.com --ez ls_demo true --es ls_route borrowed
+adb -s emulator-5580 exec-out screencap -p > borrowed.png
+# A freeform window with a caption bar (best effort; the Pixel Tablet image has desktop windowing):
+adb -s emulator-5580 shell settings put global enable_freeform_support 1
+adb -s emulator-5580 shell am start -S -W --windowingMode 5 -n com.librespydus.app/.MainActivity \
+  --es ls_origin https://canning.spydus.com --ez ls_demo true
+# Resize it (task id from `dumpsys activity activities`; 2 px per dp on this tablet):
+adb -s emulator-5580 shell am task resize <TASK_ID> 100 100 2100 1500   # 1000 x 700 dp: wide
+adb -s emulator-5580 shell am task resize <TASK_ID> 200 150 1200 1500   # 500 x 675 dp: compact
+```
+
+The layout follows the window (`AppLayout.of(width, height)` in `ui/theme/Layout.kt`: wide from
+600 × 480 dp); the words follow the device (`CopyDevice.isTablet`, set in
+`LibreSpydusApplication.onCreate` from `smallestScreenWidthDp >= 600` and no hinge sensor), so a
+tablet says "tablet" where a phone says "phone" even in a narrow window, and a foldable says
+"phone" even opened. `LayoutTest`, `DetailRelatedColumnTest` and
+`TabletWordsTest` cover the arithmetic and the words; the screens themselves are checked by eye
+on the tablet AVD, portrait and landscape.
+
 ### Dependency versions
 
 `gradle/libs.versions.toml` pins AndroidX and Coil to the newest releases that still compile

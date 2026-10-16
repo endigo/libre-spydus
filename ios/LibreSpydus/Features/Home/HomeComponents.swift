@@ -12,10 +12,13 @@ struct SkeletonBlock: View {
     var body: some View {
         RoundedRectangle(cornerRadius: radius, style: .continuous)
             .fill(Theme.Colors.surfaceElevated)
+            // Only the pulse repeats: a layout change while it runs (a grid finding its columns,
+            // a rotation) would otherwise slide the block between its old and new places forever.
+            .animation(reduceMotion ? nil : .easeInOut(duration: 0.9).repeatForever(autoreverses: true)) {
+                $0.opacity(dimmed ? 0.45 : 1)
+            }
             .frame(width: width, height: height)
             .frame(maxWidth: width == nil ? .infinity : nil, alignment: .leading)
-            .opacity(dimmed ? 0.45 : 1)
-            .animation(reduceMotion ? nil : .easeInOut(duration: 0.9).repeatForever(autoreverses: true), value: dimmed)
             .onAppear { dimmed = !reduceMotion }
             .accessibilityHidden(true)
     }
