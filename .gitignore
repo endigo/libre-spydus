@@ -23,3 +23,6 @@ android/app/src/main/jniLibs/
 
 # LibreSpydus desktop (GPUI): build output
 desktop/target/
+
+# LibreSpydus CLI (spydus): build output
+cli/target/

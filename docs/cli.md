@@ -55,8 +55,8 @@ Global flags, on every command:
 |---|---|
 | `spydus libraries [<words>] [--all]` | the Spydus directory: name, region, origin; filtered by words; `--all` adds test instances |
 | `spydus use <name or origin>` | choose the library (saved). One match is chosen; several are listed for the user to narrow down |
-| `spydus search <query…> [--newest] [--page <n>]` | numbered results: title, author, year and formats, plus the result count and the next page's command |
-| `spydus show <# or url>` | the book page: title, author, year; each format with its availability; synopsis; details; the branches holding it (`--holdings`); and, when signed in, the held status ("On loan", "Reserved") |
+| `spydus search <query…> [--newest] [--page <n>]` | numbered results: title, author, year and formats, plus the result count and the next page's command. *Note (C1):* Spydus gives one next-page link at a time, so `--page <n>` follows n−1 links; pages beyond 10 are refused before any request |
+| `spydus show <# or url>` | the book page: title, author, year; each format with its availability; synopsis; details; the branches holding it (`--holdings`); and, when signed in, the held status ("On loan", "Reserved"). *Note (C1):* `--holdings` lists copies only where the library's availability fragment links to its copies list (an XHLD link: edition-level cards and some formats); for a format without one it says "No copies listed", as the apps show no copies there either |
 | `spydus login [--card <number>] [--password-stdin]` | sign in to the chosen library. It prompts for the card number if missing and for the password without echo, then prints who's signed in |
 | `spydus logout` | forget this library's session |
 | `spydus profile` | name, library, card number, and counts of loans, reservations and ready to collect |
@@ -127,6 +127,10 @@ the apps' wording plus that hint.
 - **Public reads** (`libraries`, `search`, `show`) go to the live library, as the apps' demo mode
   does.
 - **Nothing is saved:** no config, no lists and no secrets.
+  - *Deviation (C1):* the demo keeps its own last list (public search results or the demo's
+    picks, under `lists/demo/`) so `spydus --demo show 1` and `--demo reserve 1` work across runs,
+    which numbering needs; it is separate from the reader's list. Still no config, no secrets and
+    no local picks. `spydus --demo use <name>` prints the match and saves nothing.
 
 ## 7. Errors and exit codes
 `0` means success. `1` means the library, network or account failed, with the apps' wording (port

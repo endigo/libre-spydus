@@ -41,6 +41,8 @@ Import the Postman collection to inspect request templates. Its JSON API calls a
 
 LibreSpydus is the rebuild: native SwiftUI (`ios/`) and Jetpack Compose (`android/`) apps on a shared Rust core (`core/`, through UniFFI) that talks to the library's OPAC directly from the phone, with no server in between. The build contract is [docs/native-apps.md](docs/native-apps.md), and the core's API is in [core/README.md](core/README.md).
 
+There is also a desktop app (`desktop/`, GPUI) and `spydus`, a command-line client (`cli/`, contract [docs/cli.md](docs/cli.md), usage [cli/README.md](cli/README.md)), both on the same core.
+
 This is a reconstruction of the installed client's observable and compiled contracts. It does not claim an exhaustive inventory of Spydus's server APIs. Authentication exchange/refresh, mutations, tenant-disabled features, and error/expiry cases still have explicitly documented gaps.
 
 Raw APKs, assemblies, screenshots, authenticated HTML, HARs, and capture tools are kept under ignored `.private/`. Reusable docs and collection files do not contain captured credentials. Nothing was published.
