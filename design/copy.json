@@ -126,6 +126,7 @@
     "offerMessage": {
       "ios": "When {library} signs you out, sign back in with {method} instead of typing your PIN. Your card number and PIN stay on this phone, locked by {method}.",
       "ipad": "When {library} signs you out, sign back in with {method} instead of typing your PIN. Your card number and PIN stay on this iPad, locked by {method}.",
+      "tablet": "When {library} signs you out, sign back in with {method} instead of typing your PIN. Your card number and PIN stay on this tablet, locked by {method}.",
       "android": "When {library} signs you out, sign back in with {method} instead of typing your PIN. Your card number and PIN stay on this phone, locked by {method}.",
       "desktop": "When {library} signs you out, sign back in with {method} instead of typing your PIN. Your card number and PIN stay on this computer, locked by {method}."
     },
@@ -475,6 +476,7 @@
     "subtitlePhone": {
       "ios": "Saved on this phone",
       "ipad": "Saved on this iPad",
+      "tablet": "Saved on this tablet",
       "android": "Saved on this phone",
       "desktop": "Saved on this computer"
     },
@@ -492,6 +494,7 @@
     "emptyPhoneMessage": {
       "ios": "Tap the bookmark on a book to save it on this phone.",
       "ipad": "Tap the bookmark on a book to save it on this iPad.",
+      "tablet": "Tap the bookmark on a book to save it on this tablet.",
       "android": "Tap the bookmark on a book to save it on this phone.",
       "desktop": "Click the bookmark on a book to save it on this computer."
     },
@@ -505,18 +508,21 @@
     "loadFailed": {
       "ios": "Couldn’t load My Picks from this phone.",
       "ipad": "Couldn’t load My Picks from this iPad.",
+      "tablet": "Couldn’t load My Picks from this tablet.",
       "android": "Couldn’t load My Picks from this phone.",
       "desktop": "Couldn’t load My Picks from this computer."
     },
     "saveFailed": {
       "ios": "Couldn’t save My Picks on this phone.",
       "ipad": "Couldn’t save My Picks on this iPad.",
+      "tablet": "Couldn’t save My Picks on this tablet.",
       "android": "Couldn’t save My Picks on this phone.",
       "desktop": "Couldn’t save My Picks on this computer."
     },
     "offerTitle": {
       "ios": "Add this phone’s picks to your library account?",
       "ipad": "Add this iPad’s picks to your library account?",
+      "tablet": "Add this tablet’s picks to your library account?",
       "android": "Add this phone’s picks to your library account?",
       "desktop": "Add this computer’s picks to your library account?"
     },
@@ -528,6 +534,10 @@
       "ipad": {
         "one": "1 book saved on this iPad can be added to My Picks on your library account.",
         "other": "{count} books saved on this iPad can be added to My Picks on your library account."
+      },
+      "tablet": {
+        "one": "1 book saved on this tablet can be added to My Picks on your library account.",
+        "other": "{count} books saved on this tablet can be added to My Picks on your library account."
       },
       "android": {
         "one": "1 book saved on this phone can be added to My Picks on your library account.",
@@ -586,6 +596,7 @@
     "verified": {
       "ios": "Verified on this phone",
       "ipad": "Verified on this iPad",
+      "tablet": "Verified on this tablet",
       "android": "Verified on this phone",
       "desktop": "Verified on this computer"
     },
@@ -691,6 +702,7 @@
     "privacyNoteBiometrics": {
       "ios": "LibreSpydus signs in directly with {library}. It keeps your PIN on this phone only if you turn on {method}.",
       "ipad": "LibreSpydus signs in directly with {library}. It keeps your PIN on this iPad only if you turn on {method}.",
+      "tablet": "LibreSpydus signs in directly with {library}. It keeps your PIN on this tablet only if you turn on {method}.",
       "android": "LibreSpydus signs in directly with {library}. It keeps your PIN on this phone only if you turn on {method}.",
       "desktop": "LibreSpydus signs in directly with {library}. It keeps your PIN on this computer only if you turn on {method}."
     },
