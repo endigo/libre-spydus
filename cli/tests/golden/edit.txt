@@ -1,0 +1,8 @@
+Edit the reservation for “The midnight library”
+Collect from  Riverton Library
+Branches:
+  Cannington Library (25353)
+  Riverton Library (25363, current)
+  Willetton & District (25379)
+Delay until  1 Nov
+Not needed after  –

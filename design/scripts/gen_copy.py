@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
 """Generate the apps' Copy files from design/copy.json (docs/native-apps.md §7.1).
 
-    design/scripts/gen_copy.py           write the three files
+    design/scripts/gen_copy.py           write the four files
     design/scripts/gen_copy.py --check   exit 1 when any file is out of date (writes nothing)
 
 Writes ios/LibreSpydus/Core/Copy.swift (`enum Copy { enum Picks { static let title = … } }`),
 android/app/src/main/java/com/librespydus/app/core/Copy.kt (`object Copy { object Picks { const
 val title = … } }`) and desktop/src/copy.rs (`pub mod Copy { pub mod Picks { pub const title:
-&str = …; } }`, docs/desktop-app.md §8.1), with the same names on every platform:
+&str = …; } }`, docs/desktop-app.md §8.1), with the same names on every platform. The Rust module
+is also written, byte for byte the same, to cli/src/copy.rs for the command-line client
+(docs/cli.md §1), so both Rust crates read one file each without a shared workspace:
 
 - each JSON object becomes a nested enum / object (`yourBooks` → `YourBooks`), each leaf a member
   with the leaf's camelCase key;
@@ -45,6 +47,8 @@ SOURCE = ROOT / "design" / "copy.json"
 SWIFT_OUT = ROOT / "ios" / "LibreSpydus" / "Core" / "Copy.swift"
 KOTLIN_OUT = ROOT / "android" / "app" / "src" / "main" / "java" / "com" / "librespydus" / "app" / "core" / "Copy.kt"
 RUST_OUT = ROOT / "desktop" / "src" / "copy.rs"
+# The same Rust module for the CLI crate (docs/cli.md §1): identical to RUST_OUT.
+CLI_RUST_OUT = ROOT / "cli" / "src" / "copy.rs"
 
 PLATFORMS = ("ios", "android", "desktop")
 PLATFORM_NAMES = {"ios": "iOS", "android": "Android", "desktop": "Desktop"}
@@ -623,7 +627,8 @@ def render_rust(root: Group) -> str:
 # ---- main -------------------------------------------------------------------------------------
 
 def outputs(root: Group) -> dict[Path, str]:
-    return {SWIFT_OUT: render_swift(root), KOTLIN_OUT: render_kotlin(root), RUST_OUT: render_rust(root)}
+    rust = render_rust(root)
+    return {SWIFT_OUT: render_swift(root), KOTLIN_OUT: render_kotlin(root), RUST_OUT: rust, CLI_RUST_OUT: rust}
 
 
 def stats(root: Group) -> str:
